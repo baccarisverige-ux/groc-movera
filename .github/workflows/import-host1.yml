@@ -1,0 +1,51 @@
+name: One-shot import from Movera-host1
+
+on:
+  push:
+    paths:
+      - '.github/workflows/import-host1.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: import-host1
+  cancel-in-progress: false
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout destination
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Copy Movera-host1 zipball as-is
+        run: |
+          set -euo pipefail
+          curl -fsSL -H 'Accept: application/vnd.github+json' \
+            -H 'X-GitHub-Api-Version: 2022-11-28' \
+            -o /tmp/host1.zip \
+            'https://api.github.com/repos/baccarisverige-ux/Movera-host1/zipball/main'
+          rm -rf /tmp/host1
+          mkdir /tmp/host1
+          unzip -q /tmp/host1.zip -d /tmp/host1
+          SRC=$(find /tmp/host1 -mindepth 1 -maxdepth 1 -type d)
+          find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
+          cp -a "$SRC"/. .
+          rm -f .github/workflows/import-host1.yml
+
+      - name: Commit exact copy
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git status --short | head -200
+          if git diff --cached --quiet; then
+            echo 'No changes to commit'
+            exit 0
+          fi
+          git commit -m 'Copy Movera-host1 as-is'
+          git push origin HEAD:main
