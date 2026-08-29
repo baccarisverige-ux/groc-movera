@@ -1,0 +1,2 @@
+Force GitHub Pages redeploy after rollback to the version before the full-screen property-type image implementation.
+Rollback target: 748d6e5a89210ab48b8293543d3b816dd1ad6d1c
