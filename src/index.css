@@ -1,0 +1,11 @@
+@import './styles/tokens/index.css';
+@import './styles/reset.css';
+@import './styles/globals.css';
+@import './styles/animations.css';
+@import './styles/utilities.css';
+@import './styles/accessibility.css';
+
+/* Host onboarding uses a pure white canvas; cards and borders provide depth. */
+body .host-onboarding{background:#fff}
+body .host-onboarding .host-onboarding__topbar{background:rgba(255,255,255,.96)}
+body .host-onboarding .host-onboarding__footer{background:rgba(255,255,255,.97)}

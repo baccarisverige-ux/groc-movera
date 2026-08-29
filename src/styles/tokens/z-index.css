@@ -1,0 +1,7 @@
+:root {
+  --z-base: 0;
+  --z-sticky: 100;
+  --z-overlay: 500;
+  --z-modal: 1000;
+  --z-toast: 1200;
+}
