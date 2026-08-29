@@ -156,7 +156,7 @@ export function CollectionPage({
             />
           </label>
           {cityQuery ? (
-            <button className="beach-city-search__clear" type="button" aria-label="Effacer la ville" onClick={() => selectCity('Toutes')}>×</button>
+            <button className="beach-city-search__clear" type="button" aria-label="Effacer la ville" onClick={() => selectCity('Toutes')}>	imes</button>
           ) : <SearchIcon />}
           {focused && suggestions.length > 0 ? (
             <div className="beach-city-suggestions" role="listbox" aria-label="Villes suggérées">
@@ -209,7 +209,7 @@ export function CollectionPage({
                 data-offer-id={item.id}
               >
                 <div className="beach-offer__media">
-                  <img src={item.image} alt={item.title} loading="lazy" decoding="async" />
+                  <img src={item.image} alt="" loading="lazy" decoding="async" />
                   <span className="beach-offer__badge">{item.badge || badgeLabel}</span>
                   <button type="button" className="beach-offer__heart" data-active={favorite ? 'true' : 'false'} aria-pressed={favorite} aria-label={`${favorite ? 'Retirer' : 'Ajouter'} ${item.title} ${favorite ? 'des' : 'aux'} favoris`} onClick={(event) => { event.stopPropagation(); toggleFavorite(item.id) }}>
                     <HeartIcon />

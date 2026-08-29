@@ -94,7 +94,7 @@ function ListingCard({ item, sectionId, favorite, toggleFavorite, index }) {
       aria-label={`${item.title}, ${item.priceTotal}, note ${item.rating}`}
     >
       <div className="b225-offer-card__image">
-        <img src={item.image} alt={item.title} loading="lazy" decoding="async"/>
+        <img src={item.image} alt="" loading="lazy" decoding="async"/>
         {item.badge ? <span className="b225-offer-card__badge">{item.badge}</span> : null}
         <button
           type="button"
