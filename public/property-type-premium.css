@@ -1,0 +1,204 @@
+/* Premium finish for the native property-type screen.
+   Visual-only layer: no route/state/navigation changes and no geometry-changing tap effects. */
+
+.host-onboarding[data-screen="property-type"] {
+  --pt-ink: #11110f;
+  --pt-muted: #74736f;
+  --pt-line: rgba(22, 22, 20, 0.11);
+  --pt-soft-line: rgba(22, 22, 20, 0.075);
+  --pt-surface: rgba(255, 255, 255, 0.94);
+  --pt-shadow: 0 18px 44px rgba(19, 20, 18, 0.065), 0 2px 8px rgba(19, 20, 18, 0.035);
+  --pt-shadow-selected: 0 20px 48px rgba(17, 17, 15, 0.11), 0 2px 8px rgba(17, 17, 15, 0.05);
+  background:
+    radial-gradient(90% 46% at 50% -8%, rgba(229, 232, 224, 0.48), rgba(255, 255, 255, 0) 68%),
+    linear-gradient(180deg, #ffffff 0%, #fdfdfc 68%, #fafaf8 100%) !important;
+}
+
+.host-onboarding[data-screen="property-type"] > .host-onboarding__step {
+  isolation: isolate;
+}
+
+/* Small editorial step badge */
+.host-onboarding[data-screen="property-type"] .host-onboarding__eyebrow {
+  min-height: 40px !important;
+  padding-inline: 17px !important;
+  border-color: rgba(17, 17, 15, 0.12) !important;
+  background: rgba(255, 255, 255, 0.78) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.96), 0 7px 20px rgba(20, 20, 18, 0.035) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(120%);
+  backdrop-filter: blur(14px) saturate(120%);
+}
+
+.host-onboarding[data-screen="property-type"] .host-onboarding__eyebrow::after {
+  color: #302f2b !important;
+  font-size: 15px !important;
+  letter-spacing: -0.01em;
+}
+
+.host-onboarding[data-screen="property-type"] > .host-onboarding__step > h1 {
+  color: var(--pt-ink) !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+
+.host-onboarding[data-screen="property-type"] > .host-onboarding__step > p::after {
+  color: var(--pt-muted) !important;
+}
+
+/* Cards: soft luxury surface, same dimensions in every state */
+.host-onboarding[data-screen="property-type"] .host-onboarding__choice-grid > button {
+  border-color: var(--pt-line) !important;
+  background:
+    radial-gradient(100% 78% at 50% 0%, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0.86) 72%),
+    var(--pt-surface) !important;
+  box-shadow: var(--pt-shadow) !important;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    background-color 150ms ease !important;
+}
+
+.host-onboarding[data-screen="property-type"] .host-onboarding__choice-grid > button::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.34), transparent 38%, transparent 72%, rgba(238, 239, 235, 0.16));
+  pointer-events: none;
+}
+
+.host-onboarding[data-screen="property-type"] .host-onboarding__choice-grid > button[data-active="true"] {
+  border-color: rgba(17, 17, 15, 0.92) !important;
+  background:
+    radial-gradient(110% 84% at 50% 0%, #ffffff, #fbfbf9 72%),
+    #fff !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(17, 17, 15, 0.84),
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    var(--pt-shadow-selected) !important;
+}
+
+.host-onboarding[data-screen="property-type"] .host-onboarding__choice-grid > button > span:first-child {
+  position: relative !important;
+  z-index: 2 !important;
+  filter: contrast(1.025) saturate(0.94);
+}
+
+.host-onboarding[data-screen="property-type"] .host-onboarding__choice-grid > button > strong {
+  color: #1a1916 !important;
+  letter-spacing: -0.02em !important;
+}
+
+/* Premium selected tick: fixed size/position, only paint changes */
+.host-onboarding[data-screen="property-type"] .host-onboarding__choice-grid > button::after {
+  top: 11px !important;
+  right: 11px !important;
+  border: 1px solid transparent;
+  box-shadow: none;
+  transition: background-color 130ms ease, color 130ms ease, box-shadow 130ms ease !important;
+}
+
+.host-onboarding[data-screen="property-type"] .host-onboarding__choice-grid > button[data-active="true"]::after {
+  background: linear-gradient(145deg, #20201d, #090908) !important;
+  border-color: rgba(0, 0, 0, 0.86);
+  color: #fff !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 5px 12px rgba(17, 17, 15, 0.17) !important;
+}
+
+/* Progress block: cleaner, airier and more refined */
+.host-onboarding[data-screen="property-type"] .host-onboarding__phase-tracker {
+  border-color: var(--pt-soft-line) !important;
+  background: rgba(255, 255, 255, 0.79) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 13px 34px rgba(20, 20, 18, 0.045) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(118%);
+  backdrop-filter: blur(16px) saturate(118%);
+}
+
+.host-onboarding[data-screen="property-type"] .host-onboarding__phase-tracker > div:not(:last-child)::after {
+  background: linear-gradient(90deg, rgba(22, 22, 20, 0.12), rgba(22, 22, 20, 0.07)) !important;
+}
+
+.host-onboarding[data-screen="property-type"] .host-onboarding__phase-tracker > div > span {
+  border-color: rgba(17, 17, 15, 0.1) !important;
+  background: linear-gradient(180deg, #fafaf8, #f3f3f0) !important;
+  color: #686762 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95) !important;
+}
+
+.host-onboarding[data-screen="property-type"] .host-onboarding__phase-tracker > div[data-state="active"] > span,
+.host-onboarding[data-screen="property-type"] .host-onboarding__phase-tracker > div[data-state="done"] > span {
+  border-color: #151513 !important;
+  background: linear-gradient(145deg, #22221f, #0b0b0a) !important;
+  color: #fff !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 5px 12px rgba(17, 17, 15, 0.13) !important;
+}
+
+.host-onboarding[data-screen="property-type"] .host-onboarding__phase-tracker > div[data-state="active"] > small {
+  color: #24231f !important;
+}
+
+/* Footer actions: tactile without moving */
+.host-onboarding[data-screen="property-type"] .host-onboarding__back {
+  border-color: rgba(17, 17, 15, 0.74) !important;
+  background: rgba(255, 255, 255, 0.84) !important;
+  color: #181815 !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    0 8px 20px rgba(20, 20, 18, 0.045) !important;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.host-onboarding[data-screen="property-type"] .host-onboarding__primary {
+  border-color: #0d0d0c !important;
+  background: linear-gradient(145deg, #242421 0%, #11110f 52%, #090908 100%) !important;
+  color: #fff !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 10px 24px rgba(17, 17, 15, 0.16) !important;
+}
+
+.host-onboarding[data-screen="property-type"] .host-onboarding__back:active {
+  background: #f7f7f4 !important;
+  box-shadow: inset 0 1px 3px rgba(17, 17, 15, 0.07) !important;
+}
+
+.host-onboarding[data-screen="property-type"] .host-onboarding__primary:active:not(:disabled) {
+  background: #0a0a09 !important;
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.22),
+    0 5px 12px rgba(17, 17, 15, 0.12) !important;
+}
+
+.host-onboarding[data-screen="property-type"] .host-onboarding__primary:disabled {
+  border-color: rgba(17, 17, 15, 0.08) !important;
+  background: linear-gradient(180deg, #d7d7d3, #cbcbc7) !important;
+  color: rgba(255, 255, 255, 0.94) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45) !important;
+}
+
+/* Slightly tighter premium rhythm on phones without changing card geometry on tap. */
+@media (max-width: 430px) {
+  .host-onboarding[data-screen="property-type"] .host-onboarding__choice-grid {
+    row-gap: 14px !important;
+  }
+
+  .host-onboarding[data-screen="property-type"] > .host-onboarding__footer {
+    margin-top: 26px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .host-onboarding[data-screen="property-type"] .host-onboarding__choice-grid > button,
+  .host-onboarding[data-screen="property-type"] .host-onboarding__choice-grid > button::after,
+  .host-onboarding[data-screen="property-type"] .host-onboarding__footer-actions > button {
+    transition: none !important;
+  }
+}

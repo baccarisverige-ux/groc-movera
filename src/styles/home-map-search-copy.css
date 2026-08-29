@@ -1,0 +1,10 @@
+.b225-home .b225-search.b225-home-map-search{pointer-events:auto;height:52px;border:1px solid rgba(0,0,0,.06);border-radius:999px;background:rgba(255,255,255,.95);backdrop-filter:saturate(180%) blur(18px);-webkit-backdrop-filter:saturate(180%) blur(18px);display:flex;align-items:center;gap:10px;padding:0 10px 0 17px;box-shadow:0 8px 26px rgba(25,28,26,.12);margin-inline:-4px;width:calc(100% + 8px);overflow:hidden}
+.b225-home .b225-search.b225-home-map-search:active{transform:none}
+.b225-home .b225-search.b225-home-map-search:focus-within{box-shadow:0 8px 26px rgba(25,28,26,.12)}
+.b225-home .b225-home-map-search>svg{width:18px;height:18px;fill:none;stroke:#202221;stroke-width:2;flex:none}
+.b225-home .b225-home-map-search__copy{min-width:0;display:grid;gap:1px;flex:1;pointer-events:none}
+.b225-home .b225-home-map-search__copy strong{font-size:13px;font-weight:760;letter-spacing:-.15px;color:#171817;line-height:normal}
+.b225-home .b225-home-map-search__copy span{font-size:10.5px;color:#747875;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:normal}
+.b225-home .b225-home-map-filter-button{width:38px;height:38px;flex:0 0 38px;border:1px solid #eceeed;border-radius:50%;background:#fff;display:grid;place-items:center;color:#232523;font-size:17px;line-height:1;box-shadow:0 2px 8px rgba(0,0,0,.04);pointer-events:none}
+@media(max-width:350px){.b225-home .b225-search.b225-home-map-search{height:49px}}
+/* deploy: isolated Home search; Map CSS remains route-owned */

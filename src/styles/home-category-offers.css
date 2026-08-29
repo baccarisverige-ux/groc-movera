@@ -1,0 +1,275 @@
+/* Category offer rails: Airbnb-inspired image-first cards with text below. */
+
+/* Keep the original spacing between every offer section. */
+.b225-home .b225-category-selection{
+  margin-top:24px!important;
+}
+
+/* Lift the whole Tout → Partenaire block by reducing only the first gap after Services Movera. */
+.b225-home .b225-services-mini + .b225-category-selection{
+  margin-top:6px!important;
+}
+
+.b225-home .b225-category-selection .b225-section__title{
+  margin-bottom:12px!important;
+}
+
+.b225-home .b225-category-selection .b225-section__title h2{
+  margin:0!important;
+  font-size:16.8px!important;
+  line-height:1.08!important;
+  font-weight:720!important;
+  letter-spacing:-.55px!important;
+  color:#171816!important;
+}
+
+.b225-home .b225-category-selection__title{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:12px!important;
+}
+
+/* Same two small animated chevrons used in the Tout / Plage category rail. */
+.b225-home .b225-category-selection__title>.b225-section-scroll-hint{
+  position:relative!important;
+  flex:0 0 28px!important;
+  width:28px!important;
+  min-width:28px!important;
+  height:28px!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  color:rgba(71,72,68,.78)!important;
+  box-shadow:none!important;
+  transform:translateY(-1px)!important;
+  cursor:pointer!important;
+  -webkit-tap-highlight-color:transparent!important;
+}
+
+.b225-home .b225-category-selection__title>.b225-section-scroll-hint svg{
+  display:none!important;
+}
+
+.b225-home .b225-category-selection__title>.b225-section-scroll-hint::before,
+.b225-home .b225-category-selection__title>.b225-section-scroll-hint::after{
+  content:'›'!important;
+  position:absolute!important;
+  top:50%!important;
+  width:9px!important;
+  height:20px!important;
+  margin-top:-10px!important;
+  color:currentColor!important;
+  font-family:Arial,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;
+  font-size:18.75px!important;
+  line-height:20px!important;
+  font-weight:300!important;
+  text-align:center!important;
+  text-shadow:0 1px 0 rgba(255,255,255,.94)!important;
+  filter:drop-shadow(0 1.5px 2px rgba(48,48,44,.09))!important;
+  animation:b225-category-chevron-flash 1.28s cubic-bezier(.4,0,.2,1) infinite!important;
+  will-change:transform,opacity!important;
+}
+
+.b225-home .b225-category-selection__title>.b225-section-scroll-hint::before{
+  left:5px!important;
+}
+
+.b225-home .b225-category-selection__title>.b225-section-scroll-hint::after{
+  left:12px!important;
+  animation-delay:.16s!important;
+}
+
+.b225-home .b225-category-selection__title>.b225-section-scroll-hint:active{
+  transform:translateY(0) scale(.94)!important;
+  box-shadow:none!important;
+}
+
+.b225-home .b225-offer-scroll{
+  display:flex!important;
+  gap:13px!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  scroll-snap-type:x proximity!important;
+  scrollbar-width:none!important;
+  padding:1px var(--b225-home-content-edge,16px) 5px!important;
+  margin-inline:0!important;
+  scroll-padding-left:var(--b225-home-content-edge,16px)!important;
+}
+
+.b225-home .b225-offer-scroll::-webkit-scrollbar{
+  display:none!important;
+}
+
+.b225-home .b225-offer-card{
+  flex:0 0 150px!important;
+  min-width:150px!important;
+  max-width:150px!important;
+  scroll-snap-align:start!important;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+}
+
+.b225-home .b225-offer-card__image{
+  position:relative!important;
+  width:100%!important;
+  aspect-ratio:1 / 1!important;
+  overflow:hidden!important;
+  border-radius:15px!important;
+  background:#ececea!important;
+}
+
+.b225-home .b225-offer-card__image img{
+  display:block!important;
+  width:100%!important;
+  height:100%!important;
+  object-fit:cover!important;
+  object-position:center!important;
+}
+
+.b225-home .b225-offer-card__badge{
+  position:absolute!important;
+  top:8px!important;
+  left:8px!important;
+  max-width:calc(100% - 40px)!important;
+  padding:5px 8px!important;
+  border-radius:999px!important;
+  background:rgba(255,255,255,.94)!important;
+  border:1px solid rgba(255,255,255,.76)!important;
+  box-shadow:0 2px 6px rgba(28,28,25,.08)!important;
+  backdrop-filter:blur(7px)!important;
+  -webkit-backdrop-filter:blur(7px)!important;
+  color:#171816!important;
+  font-size:10.5px!important;
+  line-height:1!important;
+  font-weight:690!important;
+  letter-spacing:-.12px!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+
+.b225-home .b225-offer-card__heart{
+  position:absolute!important;
+  z-index:3!important;
+  top:6px!important;
+  right:7px!important;
+  display:grid!important;
+  place-items:center!important;
+  width:26px!important;
+  height:26px!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:50%!important;
+  background:rgba(18,20,18,.10)!important;
+  color:#fff!important;
+  font-size:20px!important;
+  line-height:1!important;
+  font-family:Arial,sans-serif!important;
+  font-weight:400!important;
+  text-shadow:0 1px 2px rgba(0,0,0,.28)!important;
+  user-select:none!important;
+  cursor:pointer!important;
+  -webkit-tap-highlight-color:transparent!important;
+  backdrop-filter:blur(4px)!important;
+  -webkit-backdrop-filter:blur(4px)!important;
+  transition:transform .16s ease,background .16s ease!important;
+}
+
+.b225-home .b225-offer-card__heart[data-active="true"]{
+  background:rgba(255,255,255,.9)!important;
+  color:#292d2a!important;
+  text-shadow:none!important;
+  box-shadow:0 3px 10px rgba(23,27,24,.08)!important;
+}
+
+.b225-home .b225-offer-card__heart:active{
+  transform:scale(.91)!important;
+}
+
+/* Text stack mirrors the supplied Airbnb reference: title, dates, price/rating. */
+.b225-home .b225-offer-card__body{
+  display:grid!important;
+  grid-template-rows:auto auto auto!important;
+  justify-items:start!important;
+  row-gap:2px!important;
+  padding:7px 4px 0!important;
+  overflow:visible!important;
+}
+
+.b225-home .b225-offer-card__title{
+  width:100%!important;
+  margin:0!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+  color:#1b1b1b!important;
+  font-size:12.6px!important;
+  line-height:1.18!important;
+  font-weight:650!important;
+  letter-spacing:-.22px!important;
+}
+
+.b225-home .b225-offer-card__dates{
+  width:100%!important;
+  margin:0!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+  color:#747474!important;
+  font-size:11.2px!important;
+  line-height:1.22!important;
+  font-weight:430!important;
+  letter-spacing:-.10px!important;
+}
+
+.b225-home .b225-offer-card__meta{
+  display:flex!important;
+  align-items:center!important;
+  gap:3px!important;
+  width:100%!important;
+  margin:0!important;
+  min-width:0!important;
+  overflow:hidden!important;
+  white-space:nowrap!important;
+  text-overflow:ellipsis!important;
+  color:#555753!important;
+  font-size:10.9px!important;
+  line-height:1.2!important;
+  font-weight:440!important;
+  letter-spacing:-.08px!important;
+}
+
+.b225-home .b225-offer-card__meta strong{
+  color:#4e504c!important;
+  font-weight:520!important;
+}
+
+.b225-home .b225-offer-card__dot{
+  opacity:.55!important;
+}
+
+@media(max-width:390px){
+  .b225-home .b225-category-selection{margin-top:22px!important}
+  .b225-home .b225-services-mini + .b225-category-selection{margin-top:4px!important}
+  .b225-home .b225-category-selection .b225-section__title h2{font-size:15.4px!important}
+  .b225-home .b225-category-selection__title>.b225-section-scroll-hint{width:27px!important;min-width:27px!important;height:27px!important;flex-basis:27px!important}
+  .b225-home .b225-offer-card{flex-basis:140px!important;min-width:140px!important;max-width:140px!important}
+  .b225-home .b225-offer-card__image{border-radius:14px!important}
+  .b225-home .b225-offer-card__body{padding-inline:3px!important}
+  .b225-home .b225-offer-card__title{font-size:12px!important}
+  .b225-home .b225-offer-card__dates{font-size:10.7px!important}
+  .b225-home .b225-offer-card__meta{font-size:10.3px!important}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .b225-home .b225-category-selection__title>.b225-section-scroll-hint::before,
+  .b225-home .b225-category-selection__title>.b225-section-scroll-hint::after{
+    animation:none!important;
+    opacity:.72!important;
+    transform:none!important;
+  }
+  .b225-home .b225-offer-card__heart{transition:none!important}
+}

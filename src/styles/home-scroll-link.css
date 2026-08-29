@@ -1,0 +1,37 @@
+.b225-home .b225-categories-shell.movera-categories-linked{
+  position:sticky!important;
+  top:var(--movera-home-header-height,0px)!important;
+  z-index:34!important;
+  transform:translate3d(0,calc(0px - var(--movera-category-upward-travel,0px)),0)!important;
+  transform-origin:50% 0!important;
+  backface-visibility:hidden!important;
+  will-change:transform!important;
+}
+
+.b225-home .b225-categories.movera-categories-linked{
+  position:relative!important;
+  top:auto!important;
+  z-index:1!important;
+  transform:translateZ(0)!important;
+  backface-visibility:hidden!important;
+}
+
+.b225-home-header{
+  z-index:35!important;
+  transform:translateZ(0)!important;
+  backface-visibility:hidden!important;
+}
+
+.b225-home .b225-categories-shell.movera-categories-moving-under-header{
+  pointer-events:auto;
+}
+
+.b225-home .b225-categories-shell.movera-categories-under-search{
+  pointer-events:none;
+}
+
+@media(prefers-reduced-motion:reduce){
+  .b225-home .b225-categories-shell.movera-categories-linked{
+    will-change:auto!important;
+  }
+}

@@ -1,0 +1,134 @@
+/* Home scroll stability layer.
+   Keeps vertical page scrolling, horizontal category/offer rails and iPhone
+   safe-area spacing independent from legacy Home styles. */
+
+.b225-home{
+  overflow-x:clip!important;
+  padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))!important;
+}
+
+@supports not (overflow:clip){
+  .b225-home{overflow-x:hidden!important}
+}
+
+.b225-home .b225-categories,
+.b225-home .b225-offer-scroll{
+  -webkit-overflow-scrolling:touch!important;
+  overscroll-behavior-x:contain!important;
+  scroll-behavior:auto!important;
+}
+
+/* Vertical page scrolling must remain native even when the finger starts on
+   Catégories. Horizontal movement is handled immediately by
+   useImmediateCategorySwipe, so Safari no longer has to arbitrate the two axes. */
+.b225-home .b225-categories,
+.b225-home .b225-categories-track,
+.b225-home .b225-categories-track>button,
+.b225-home .b225-category-swipe-hint{
+  touch-action:pan-y!important;
+  -webkit-user-select:none!important;
+  user-select:none!important;
+}
+
+.b225-home .b225-categories{
+  scroll-snap-type:none!important;
+}
+
+.b225-home .b225-categories[data-dragging='true']{
+  cursor:grabbing!important;
+}
+
+.b225-home .b225-category-icon{
+  pointer-events:none!important;
+  -webkit-user-select:none!important;
+  user-select:none!important;
+  -webkit-user-drag:none!important;
+}
+
+/* Offer rails remain native two-axis gesture participants so vertical page
+   scrolling can still begin naturally over offer cards. */
+.b225-home .b225-offer-scroll{
+  touch-action:auto!important;
+}
+
+/* Give transformed category pills enough vertical room so Safari does not
+   crop the pressed state or its lower shadow while the rail scrolls. */
+.b225-home .b225-categories,
+.b225-home .b225-categories-track{
+  min-height:56px!important;
+}
+
+.b225-home .b225-categories-track{
+  padding-top:5px!important;
+  padding-bottom:10px!important;
+}
+
+/* Persistent swipe hint: always visible in Catégories, slightly above the
+   right-most visible category rather than attached to an off-screen item. */
+.b225-home .b225-categories-shell>.b225-category-swipe-hint--overlay{
+  position:absolute!important;
+  z-index:24!important;
+  top:4px!important;
+  right:18px!important;
+  left:auto!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:0!important;
+  width:24px!important;
+  height:15px!important;
+  margin:0!important;
+  transform:none!important;
+  color:rgba(58,59,56,.90)!important;
+  font-size:17px!important;
+  line-height:1!important;
+  letter-spacing:-4px!important;
+  font-weight:350!important;
+  pointer-events:none!important;
+  filter:drop-shadow(0 1px 1.5px rgba(48,48,44,.10))!important;
+}
+
+.b225-home .b225-categories-shell>.b225-category-swipe-hint--overlay>span{
+  display:block!important;
+  width:10px!important;
+}
+
+/* Neutralize the old masked pseudo-element implementation from home-b225.
+   The current category layer draws its own highlights and depth. */
+.b225-home .b225-categories-track>button{
+  -webkit-appearance:none!important;
+  appearance:none!important;
+  -webkit-tap-highlight-color:transparent!important;
+}
+
+.b225-home .b225-categories-track>button::before,
+.b225-home .b225-categories-track>button::after{
+  -webkit-mask:none!important;
+  mask:none!important;
+}
+
+/* Horizontal offer rails stay native and do not leak width into the page. */
+.b225-home .b225-category-selection,
+.b225-home .b225-offer-scroll{
+  min-width:0!important;
+  max-width:100%!important;
+}
+
+.b225-home .b225-offer-scroll{
+  scroll-snap-stop:normal!important;
+}
+
+@media(max-width:350px){
+  .b225-home .b225-categories,
+  .b225-home .b225-categories-track{
+    min-height:54px!important;
+  }
+
+  .b225-home .b225-categories-shell>.b225-category-swipe-hint--overlay{
+    top:3px!important;
+    right:16px!important;
+    width:22px!important;
+    height:14px!important;
+    font-size:16px!important;
+  }
+}

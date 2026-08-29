@@ -1,0 +1,10 @@
+/* Search popup: slower premium opening only. Closing timing stays unchanged. */
+.movera-st--open .movera-st__panel{
+  transition-duration:760ms,610ms,630ms,260ms!important;
+}
+.movera-st--open .movera-st__map-stage{
+  transition-duration:820ms,540ms!important;
+}
+.movera-st--open .movera-st__map-veil{
+  transition-duration:520ms!important;
+}

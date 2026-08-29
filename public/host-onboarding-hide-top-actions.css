@@ -1,0 +1,10 @@
+/* Remove the global host-onboarding top actions from every onboarding screen. */
+.host-onboarding .host-onboarding__topbar {
+  display: none !important;
+}
+
+/* The progress bar no longer needs to sit below the removed top action bar. */
+.host-onboarding .host-onboarding__micro-progress {
+  top: calc(8px + env(safe-area-inset-top, 0px)) !important;
+  margin-top: calc(8px + env(safe-area-inset-top, 0px)) !important;
+}

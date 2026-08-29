@@ -1,0 +1,81 @@
+/* Final Search fit authority.
+   Loaded last and scoped to the Search portal only.
+   Open/close transforms/timings stay owned by searchTransition-stability.css. */
+
+.movera-st[data-exact-fit="true"]{
+  --st-panel-height:var(--st-runtime-panel-height)!important;
+}
+
+.movera-st[data-exact-fit="true"] .movera-st__panel,
+.movera-st[data-exact-fit="true"] .movera-st__panel:has(.movera-st__destination-search input:focus){
+  height:var(--st-runtime-panel-height)!important;
+  max-height:var(--st-runtime-panel-height)!important;
+}
+
+/* Legacy focus sizing must not add a second height animation on top of Motion. */
+.movera-st[data-exact-fit="true"] .movera-st__panel:has(.movera-st__destination-search input:focus){
+  transition:transform 620ms var(--st-motion-ease,cubic-bezier(.16,1,.3,1)),border-radius 360ms var(--st-motion-ease,cubic-bezier(.16,1,.3,1)),box-shadow 360ms var(--st-motion-ease,cubic-bezier(.16,1,.3,1)),opacity 220ms ease-out!important;
+}
+
+/* Motion/react is the only step-enter/exit animation. */
+.movera-st[data-exact-fit="true"] .movera-st__screen{
+  animation:none!important;
+}
+
+/* Natural content participates in measurement down to the last visible control. */
+.movera-st[data-exact-fit="true"] .movera-st__content,
+.movera-st[data-exact-fit="true"] .movera-st__body,
+.movera-st[data-exact-fit="true"] .movera-st__step-motion,
+.movera-st[data-exact-fit="true"] .movera-st__screen{
+  min-height:0!important;
+}
+
+.movera-st[data-exact-fit="true"] .movera-st__body,
+.movera-st[data-exact-fit="true"] .movera-st__step-motion,
+.movera-st[data-exact-fit="true"] .movera-st__screen{
+  height:auto!important;
+  overflow:visible!important;
+}
+
+.movera-st[data-exact-fit="true"][data-address-mode="true"] .movera-st__address-mode{
+  margin-bottom:0!important;
+}
+
+/* The legacy CTA uses margin-top:auto. On the final step that creates artificial
+   flex space below the content; exact-fit uses a physical 10px rhythm instead. */
+.movera-st[data-exact-fit="true"] .movera-st__screen--guests .movera-st__action--search{
+  margin-top:10px!important;
+}
+
+/* Explicit Home -> Map handoff guard. The attribute lives independently from
+   the Search portal, so Safari cannot reveal the Home bar between route frames. */
+body[data-movera-map-handoff="true"] [data-testid="page-home"] .b225-search{
+  opacity:0!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+  transition:none!important;
+}
+
+/* The popup owns a visually identical persistent bar. Hide it as soon as the
+   final handoff begins so neither Home-style bar can flash before MapPage paints. */
+.movera-st--complete .movera-st__persistent-search{
+  opacity:0!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+  transition:none!important;
+}
+
+.movera-st__address-loading{
+  margin:0 0 7px 3px;
+  color:#7e8781;
+  font-size:8.2px;
+  font-weight:650;
+  letter-spacing:.01em;
+  animation:moveraAddressPulse 1s ease-in-out infinite;
+}
+
+@keyframes moveraAddressPulse{0%,100%{opacity:.45}50%{opacity:1}}
+
+@media(prefers-reduced-motion:reduce){
+  .movera-st__address-loading{animation:none}
+}

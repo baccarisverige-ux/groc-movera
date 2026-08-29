@@ -1,0 +1,166 @@
+/* Premium polish for onboarding Étape 4 (address) and Étape 5 (pin).
+   Same Movera palette and white background. */
+
+/* ---------- Étape 4 · premium address form ---------- */
+.host-onboarding[data-screen="address"] {
+  background: #fff !important;
+}
+
+.host-onboarding[data-screen="address"] .host-onboarding__step {
+  width: 100% !important;
+  max-width: 430px !important;
+  margin: 0 auto !important;
+  padding: 42px 22px 34px !important;
+}
+
+.host-onboarding[data-screen="address"] .host-onboarding__eyebrow {
+  min-height: 32px !important;
+  padding: 0 12px !important;
+  border: 1px solid #e8ece8 !important;
+  border-radius: 999px !important;
+  background: #f7f9f7 !important;
+  color: #1f6a43 !important;
+  font-size: 11px !important;
+  font-weight: 720 !important;
+  letter-spacing: .01em !important;
+  box-shadow: 0 5px 16px rgba(28,36,30,.035) !important;
+}
+
+.host-onboarding[data-screen="address"] h1 {
+  max-width: 360px !important;
+  margin-top: 18px !important;
+  font-size: clamp(35px, 9vw, 42px) !important;
+  line-height: 1.02 !important;
+  letter-spacing: -.05em !important;
+  font-weight: 760 !important;
+  color: #101210 !important;
+}
+
+.host-onboarding[data-screen="address"] p {
+  max-width: 350px !important;
+  margin-top: 13px !important;
+  color: #737873 !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+}
+
+.host-onboarding[data-screen="address"] .host-onboarding__step label:not(.host-onboarding__check):not(.host-onboarding__toggle-row) {
+  position: relative !important;
+  display: grid !important;
+  gap: 8px !important;
+  margin-top: 15px !important;
+}
+
+.host-onboarding[data-screen="address"] .host-onboarding__step label:first-of-type {
+  margin-top: 28px !important;
+}
+
+.host-onboarding[data-screen="address"] .host-onboarding__step label > span {
+  padding-left: 3px !important;
+  color: #505650 !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: -.008em !important;
+}
+
+.host-onboarding[data-screen="address"] .host-onboarding__step input:not([type="checkbox"]) {
+  width: 100% !important;
+  height: 62px !important;
+  padding: 0 18px !important;
+  border: 1px solid #dfe2df !important;
+  border-radius: 19px !important;
+  outline: 0 !important;
+  background: #fbfcfb !important;
+  color: #141614 !important;
+  font-size: 15px !important;
+  font-weight: 590 !important;
+  letter-spacing: -.015em !important;
+  box-shadow: 0 8px 24px rgba(21,29,23,.035), inset 0 1px 0 rgba(255,255,255,.95) !important;
+  transition: border-color .16s ease, box-shadow .16s ease, background .16s ease, transform .12s ease !important;
+}
+
+.host-onboarding[data-screen="address"] .host-onboarding__step input:not([type="checkbox"]):hover {
+  border-color: #cfd4cf !important;
+  background: #fff !important;
+}
+
+.host-onboarding[data-screen="address"] .host-onboarding__step input:not([type="checkbox"]):focus {
+  border-color: #1f6a43 !important;
+  background: #fff !important;
+  box-shadow: 0 0 0 3px rgba(31,106,67,.10), 0 11px 28px rgba(21,29,23,.05) !important;
+}
+
+.host-onboarding[data-screen="address"] .host-onboarding__step input::placeholder {
+  color: #a2a6a2 !important;
+  opacity: 1 !important;
+  font-weight: 520 !important;
+}
+
+.host-onboarding[data-screen="address"] .host-onboarding__address-note {
+  min-height: 70px !important;
+  margin-top: 20px !important;
+  padding: 14px 15px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  border: 1px solid #e3e9e4 !important;
+  border-radius: 20px !important;
+  background: linear-gradient(145deg,#f9fbf9,#f4f7f4) !important;
+  box-shadow: 0 10px 26px rgba(24,32,26,.035) !important;
+}
+
+.host-onboarding[data-screen="address"] .host-onboarding__address-note svg {
+  width: 38px !important;
+  height: 38px !important;
+  flex: 0 0 38px !important;
+  padding: 9px !important;
+  border: 1px solid #dce9df !important;
+  border-radius: 13px !important;
+  background: #eef6f0 !important;
+  stroke: #1f6a43 !important;
+  stroke-width: 1.9 !important;
+}
+
+.host-onboarding[data-screen="address"] .host-onboarding__address-note span {
+  color: #59605a !important;
+  font-size: 11.5px !important;
+  line-height: 1.48 !important;
+  letter-spacing: -.008em !important;
+}
+
+.host-onboarding[data-screen="address"] .host-onboarding__footer {
+  border-top: 1px solid rgba(229,232,229,.92) !important;
+  background: rgba(255,255,255,.96) !important;
+  box-shadow: 0 -12px 32px rgba(24,30,26,.045) !important;
+  backdrop-filter: blur(18px) saturate(1.08) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.08) !important;
+}
+
+.host-onboarding[data-screen="address"] .host-onboarding__primary,
+.host-onboarding[data-screen="address"] .host-onboarding__back {
+  border-radius: 18px !important;
+}
+
+/* ---------- Étape 5 · base ---------- */
+.host-onboarding[data-screen="pin"] {
+  background: #f5f3ee !important;
+}
+
+.host-onboarding[data-screen="pin"] .host-onboarding__secondary {
+  transition: transform .12s ease, box-shadow .16s ease, background .16s ease !important;
+}
+
+.host-onboarding[data-screen="pin"] .host-onboarding__secondary:active {
+  transform: scale(.985) !important;
+}
+
+@media (max-width: 360px) {
+  .host-onboarding[data-screen="address"] .host-onboarding__step {
+    padding-left: 18px !important;
+    padding-right: 18px !important;
+  }
+
+  .host-onboarding[data-screen="address"] .host-onboarding__step input:not([type="checkbox"]) {
+    height: 58px !important;
+  }
+}

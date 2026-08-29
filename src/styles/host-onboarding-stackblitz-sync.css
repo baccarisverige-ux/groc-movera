@@ -1,0 +1,42 @@
+/* Source-bundled onboarding overrides.
+   These mirror the latest onboarding UI decisions so Vite/StackBlitz does not
+   depend on public runtime patches for the two critical visible states. */
+
+.host-onboarding .host-onboarding__topbar {
+  display: none !important;
+}
+
+.host-onboarding .host-onboarding__micro-progress {
+  top: calc(8px + env(safe-area-inset-top, 0px)) !important;
+  margin-top: calc(8px + env(safe-area-inset-top, 0px)) !important;
+}
+
+.host-onboarding[data-screen] .host-onboarding__eyebrow {
+  font-size: 0 !important;
+}
+
+.host-onboarding[data-screen] .host-onboarding__eyebrow::after {
+  font-size: 12px !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0.02em !important;
+  text-transform: none !important;
+}
+
+.host-onboarding[data-screen="intro-place"] .host-onboarding__eyebrow::after { content: "Étape 1" !important; }
+.host-onboarding[data-screen="property-type"] .host-onboarding__eyebrow::after { content: "Étape 1.1" !important; }
+.host-onboarding[data-screen="guest-access"] .host-onboarding__eyebrow::after { content: "Étape 1.2" !important; }
+.host-onboarding[data-screen="address"] .host-onboarding__eyebrow::after { content: "Étape 1.3" !important; }
+.host-onboarding[data-screen="pin"] .host-onboarding__eyebrow::after { content: "Étape 1.4" !important; }
+.host-onboarding[data-screen="basics"] .host-onboarding__eyebrow::after { content: "Étape 1.5" !important; }
+.host-onboarding[data-screen="intro-presentation"] .host-onboarding__eyebrow::after { content: "Étape 2" !important; }
+.host-onboarding[data-screen="amenities"] .host-onboarding__eyebrow::after { content: "Étape 2.1" !important; }
+.host-onboarding[data-screen="photos"] .host-onboarding__eyebrow::after { content: "Étape 2.2" !important; }
+.host-onboarding[data-screen="title"] .host-onboarding__eyebrow::after { content: "Étape 3" !important; }
+.host-onboarding[data-screen="highlights"] .host-onboarding__eyebrow::after { content: "Étape 3.1" !important; }
+.host-onboarding[data-screen="description"] .host-onboarding__eyebrow::after { content: "Étape 3.2" !important; }
+.host-onboarding[data-screen="safety"] .host-onboarding__eyebrow::after { content: "Étape 3.3" !important; }
+.host-onboarding[data-screen="intro-publish"] .host-onboarding__eyebrow::after { content: "Étape 3.4" !important; }
+.host-onboarding[data-screen="booking"] .host-onboarding__eyebrow::after { content: "Étape 3.5" !important; }
+.host-onboarding[data-screen="price"] .host-onboarding__eyebrow::after { content: "Étape 3.6" !important; }
+.host-onboarding[data-screen="promotions"] .host-onboarding__eyebrow::after { content: "Étape 3.7" !important; }
+.host-onboarding[data-screen="review"] .host-onboarding__eyebrow::after { content: "Étape 4" !important; }

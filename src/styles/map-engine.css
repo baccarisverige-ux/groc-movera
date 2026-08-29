@@ -1,0 +1,39 @@
+.map-engine { width: min(100%, 960px); margin: 0 auto; }
+.map-surface { position: relative; width: 100%; height: clamp(420px, 68svh, 640px); overflow: clip; contain: layout paint; border: 1px solid var(--color-border-subtle); border-radius: var(--radius-xl); background: #f5f7f8; touch-action: none; user-select: none; overscroll-behavior: contain; cursor: grab; isolation: isolate; }
+.map-surface:active { cursor: grabbing; }
+.map-tiles, .map-marker-layer, .map-cluster-layer { position: absolute; inset: 0; pointer-events: none; }
+.map-tiles { z-index: 0; overflow: hidden; }
+.map-marker-layer, .map-cluster-layer { z-index: 2; }
+.map-tile { position: absolute; width: 256px; height: 256px; overflow: hidden; transform-origin: 0 0; background-color: #f5f7f8; background-image: linear-gradient(135deg, rgba(255,255,255,.72) 25%, transparent 25%), linear-gradient(225deg, rgba(255,255,255,.54) 25%, transparent 25%), linear-gradient(45deg, rgba(218,225,228,.28) 25%, transparent 25%), linear-gradient(315deg, rgba(218,225,228,.24) 25%, #f5f7f8 25%); background-position: 18px 0, 18px 0, 0 0, 0 0; background-size: 36px 36px; will-change: transform; }
+/* B225 baseline plus explicit sizing so CARTO @2x tiles render crisp instead of cropping on Retina screens. */
+.map-tile img { display:block; width:100%; height:100%; object-fit:cover; filter: grayscale(0.1) contrast(1.05) brightness(1.02); backface-visibility:hidden; -webkit-user-drag:none; }
+.map-surface--preview { pointer-events: none; }
+.map-tile::after { content: ''; position: absolute; inset: 0; border: 1px solid rgba(80, 96, 84, .05); pointer-events: none; }
+.b225-map-page .map-surface, .movera-st__map-stage .map-surface { background: #f5f7f8 !important; }
+
+/* Main map: calmer luxury palette, cleaner tile joins and a very light neutral veil. */
+.b225-map-page .map-tile img { filter: grayscale(.06) saturate(.92) contrast(1.045) brightness(1.035); }
+.b225-map-page .map-tile::after { border-color: rgba(255,255,255,.012); }
+.b225-map-page .map-tiles::after { content:''; position:absolute; inset:0; z-index:1; pointer-events:none; background:linear-gradient(180deg,rgba(250,251,250,.035),rgba(239,243,240,.025)); }
+
+.map-marker, .map-cluster { position: absolute; left: 0; top: 0; translate: -50% -50%; pointer-events: auto; will-change: transform; }
+.map-marker { width: 30px; height: 38px; border: 0; background: transparent; padding: 0; cursor: pointer; }
+.map-marker span { position: absolute; left: 50%; top: 2px; width: 22px; height: 22px; translate: -50% 0; border: 3px solid #fff; border-radius: 50% 50% 50% 0; background: #313633; box-shadow: 0 4px 12px rgba(22, 28, 24, .22); transform: rotate(-45deg); transition: transform 160ms ease, box-shadow 160ms ease; }
+.map-marker span::after { content: ''; position: absolute; inset: 6px; border-radius: 50%; background: #fff; }
+.map-marker--selected { z-index: 4; }
+.map-marker--selected span { transform: rotate(-45deg) scale(1.22); box-shadow: 0 7px 18px rgba(22, 28, 24, .3); }
+.map-cluster { min-width: 42px; height: 42px; display: grid; place-items: center; padding: 0 10px; border: 3px solid rgba(255,255,255,.9); border-radius: 999px; background: #343a36; color: #fff; font-weight: 700; box-shadow: 0 8px 20px rgba(20, 26, 22, .22); }
+.map-controls { position: absolute; right: 12px; top: 12px; z-index: 6; display: grid; gap: 6px; }
+.map-controls button { width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid rgba(42, 50, 45, .12); border-radius: 13px; background: rgba(248, 249, 248, .94); color: #2d332f; font: 600 22px/1 var(--font-sans); box-shadow: 0 6px 18px rgba(26, 33, 28, .13); backdrop-filter: blur(12px); cursor: pointer; }
+.map-controls button:active { transform: translateY(1px) scale(.98); }
+.map-controls__reset { font-size: 19px !important; }
+.map-attribution { position: absolute; right: 8px; bottom: 7px; z-index: 5; padding: 3px 6px; border-radius: 5px; background: rgba(255,255,255,.82); color: #5b625e; font-size: 9px; pointer-events: none; }
+.map-engine__status { margin: var(--space-2) 0 0; color: var(--color-text-secondary); font-size: var(--font-size-xs); text-align: right; }
+
+/* Search popup address detector: same fixed-center-pin behavior as host Étape 1.4. */
+.search-map-preview__pin { position: absolute; left: 50%; top: 50%; z-index: 7; width: 34px; height: 42px; translate: -50% -100%; pointer-events: none; filter: drop-shadow(0 7px 9px rgba(26,34,29,.18)); animation: search-map-pin-set .24s cubic-bezier(.2,.8,.2,1); }
+.search-map-preview__pin span { position: absolute; left: 50%; top: 5px; width: 26px; height: 26px; translate: -50% 0; border: 3px solid rgba(255,255,255,.98); border-radius: 50% 50% 50% 0; background: #536d5e; transform: rotate(-45deg); box-shadow: 0 3px 10px rgba(30,44,35,.22), inset 0 1px 0 rgba(255,255,255,.2); }
+.search-map-preview__pin span::after { content: ''; position: absolute; inset: 7px; border-radius: 50%; background: #fff; }
+@keyframes search-map-pin-set { from { opacity: 0; transform: translateY(-7px) scale(.92); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+@media (max-width: 430px) { .map-surface { height: min(62svh, 560px); border-radius: var(--radius-lg); } .map-controls { right: 9px; top: 9px; } .map-controls button { width: 40px; height: 40px; } }

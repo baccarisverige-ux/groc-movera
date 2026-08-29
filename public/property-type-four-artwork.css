@@ -1,0 +1,36 @@
+/* Four supplied property drawings, one per category. */
+.host-onboarding[data-screen="property-type"] .host-onboarding__choice-grid > button > span:first-child {
+  display: block !important;
+  flex: 0 0 auto !important;
+  width: 84% !important;
+  height: clamp(108px, 28vw, 170px) !important;
+  min-height: 108px !important;
+  aspect-ratio: auto !important;
+  margin: auto auto 8px !important;
+  background-size: contain !important;
+  background-position: center bottom !important;
+  background-repeat: no-repeat !important;
+  filter: none !important;
+  opacity: 1 !important;
+}
+
+.host-onboarding[data-screen="property-type"] .host-onboarding__choice-grid > button:nth-child(1) > span:first-child {
+  background-image: url("assets/bootstrap/property/drawing-appartement.png") !important;
+}
+.host-onboarding[data-screen="property-type"] .host-onboarding__choice-grid > button:nth-child(2) > span:first-child {
+  background-image: url("assets/bootstrap/property/drawing-villa.png") !important;
+}
+.host-onboarding[data-screen="property-type"] .host-onboarding__choice-grid > button:nth-child(3) > span:first-child {
+  background-image: url("assets/bootstrap/property/drawing-maison-hote.png") !important;
+}
+.host-onboarding[data-screen="property-type"] .host-onboarding__choice-grid > button:nth-child(4) > span:first-child {
+  background-image: url("assets/bootstrap/property/drawing-hotel.png") !important;
+}
+
+@media (max-width: 360px) {
+  .host-onboarding[data-screen="property-type"] .host-onboarding__choice-grid > button > span:first-child {
+    width: 88% !important;
+    height: 112px !important;
+    min-height: 112px !important;
+  }
+}

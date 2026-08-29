@@ -1,0 +1,437 @@
+/* Full-screen real interactive map for onboarding Étape 5.
+   Keeps the Movera white / green / black palette and existing map behavior. */
+
+.host-onboarding[data-screen="pin"] {
+  width: 100vw !important;
+  max-width: none !important;
+  height: 100svh !important;
+  min-height: 100svh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  background: #f5f3ee !important;
+}
+
+.host-onboarding[data-screen="pin"] .host-onboarding__topbar,
+.host-onboarding[data-screen="pin"] .host-onboarding__eyebrow,
+.host-onboarding[data-screen="pin"] .host-onboarding__step > h1,
+.host-onboarding[data-screen="pin"] .host-onboarding__step > p {
+  display: none !important;
+}
+
+.host-onboarding[data-screen="pin"] .host-onboarding__micro-progress {
+  position: fixed !important;
+  z-index: 92 !important;
+  top: calc(8px + env(safe-area-inset-top,0px)) !important;
+  left: 50% !important;
+  width: min(180px,42vw) !important;
+  height: 3px !important;
+  margin: 0 !important;
+  transform: translateX(-50%) !important;
+  border-radius: 999px !important;
+  background: rgba(255,255,255,.72) !important;
+  box-shadow: 0 1px 5px rgba(0,0,0,.08) !important;
+  overflow: hidden !important;
+}
+
+.host-onboarding[data-screen="pin"] .host-onboarding__step {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+  height: 100svh !important;
+  min-height: 100svh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+.host-onboarding[data-screen="pin"] .host-onboarding__map-card {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100svh !important;
+  min-height: 100svh !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  overflow: hidden !important;
+  background: #f5f3ee !important;
+  box-shadow: none !important;
+  isolation: isolate !important;
+}
+
+.host-onboarding[data-screen="pin"] .host-onboarding__map-card::before,
+.host-onboarding[data-screen="pin"] .host-onboarding__map-card::after,
+.host-onboarding[data-screen="pin"] .host-onboarding__map-road,
+.host-onboarding[data-screen="pin"] .host-onboarding__map-pin,
+.host-onboarding[data-screen="pin"] .host-onboarding__map-zoom,
+.host-onboarding[data-screen="pin"] .host-onboarding__address-chip {
+  display: none !important;
+}
+
+.host-onboarding[data-screen="pin"] .host-step5-real-map {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 3 !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: #f5f3ee !important;
+}
+
+.host-onboarding[data-screen="pin"] .host-step5-real-map .leaflet-container {
+  width: 100% !important;
+  height: 100% !important;
+  background: #f5f3ee !important;
+  font-family: Inter,-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif !important;
+}
+
+/* Floating editable address */
+.host-onboarding[data-screen="pin"] .host-step5-address-search {
+  position: absolute !important;
+  z-index: 96 !important;
+  left: 50% !important;
+  right: auto !important;
+  top: calc(24px + env(safe-area-inset-top,0px)) !important;
+  width: min(calc(100% - 28px), 520px) !important;
+  height: 60px !important;
+  transform: translateX(-50%) !important;
+  display: grid !important;
+  grid-template-columns: 23px minmax(0,1fr) 43px !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 0 7px 0 16px !important;
+  border: 1px solid rgba(224,228,224,.94) !important;
+  border-radius: 22px !important;
+  background: rgba(255,255,255,.94) !important;
+  box-shadow: 0 16px 42px rgba(18,25,20,.13), inset 0 1px 0 rgba(255,255,255,.9) !important;
+  backdrop-filter: blur(22px) saturate(1.15) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(1.15) !important;
+}
+
+.host-onboarding[data-screen="pin"] .host-step5-address-search:focus-within {
+  border-color: rgba(31,106,67,.62) !important;
+  background: rgba(255,255,255,.98) !important;
+  box-shadow: 0 0 0 3px rgba(31,106,67,.10),0 18px 46px rgba(18,25,20,.14) !important;
+}
+
+.host-onboarding[data-screen="pin"] .host-step5-address-search__pin {
+  width: 21px !important;
+  height: 21px !important;
+  fill: none !important;
+  stroke: #1f6a43 !important;
+  stroke-width: 1.9 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+
+.host-onboarding[data-screen="pin"] .host-step5-address-input {
+  min-width: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  padding: 0 !important;
+  border: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #171a17 !important;
+  font-size: 13px !important;
+  font-weight: 650 !important;
+  letter-spacing: -.015em !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.host-onboarding[data-screen="pin"] .host-step5-address-input::placeholder {
+  color: #8d928e !important;
+  opacity: 1 !important;
+}
+
+.host-onboarding[data-screen="pin"] .host-step5-address-search__button {
+  width: 41px !important;
+  height: 41px !important;
+  display: grid !important;
+  place-items: center !important;
+  border: 0 !important;
+  border-radius: 14px !important;
+  background: #1f6a43 !important;
+  color: #fff !important;
+  box-shadow: 0 7px 18px rgba(31,106,67,.22) !important;
+  transition: transform .12s ease, box-shadow .16s ease !important;
+}
+
+.host-onboarding[data-screen="pin"] .host-step5-address-search__button:active {
+  transform: scale(.94) !important;
+}
+
+.host-onboarding[data-screen="pin"] .host-step5-address-search__button svg {
+  width: 19px !important;
+  height: 19px !important;
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 2 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+
+.host-onboarding[data-screen="pin"] .host-step5-address-search__button[data-loading="true"] svg,
+.host-onboarding[data-screen="pin"] .host-step5-location-button[data-loading="true"] svg {
+  animation: host-step5-locate .9s linear infinite !important;
+}
+
+@keyframes host-step5-locate { to { transform: rotate(360deg); } }
+
+/* Premium center pin */
+.host-onboarding[data-screen="pin"] .host-step5-center-pin {
+  position: absolute !important;
+  z-index: 86 !important;
+  left: 50% !important;
+  top: 48% !important;
+  width: 50px !important;
+  height: 50px !important;
+  transform: translate(-50%,-50%) !important;
+  border: 5px solid rgba(255,255,255,.96) !important;
+  border-radius: 50% !important;
+  background: #1f6a43 !important;
+  box-shadow: 0 13px 28px rgba(31,106,67,.28),0 0 0 8px rgba(31,106,67,.12) !important;
+  pointer-events: none !important;
+}
+
+.host-onboarding[data-screen="pin"] .host-step5-center-pin::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 13px !important;
+  border: 2px solid #fff !important;
+  border-radius: 50% !important;
+}
+
+.host-onboarding[data-screen="pin"] .host-step5-center-pin::after {
+  content: "" !important;
+  position: absolute !important;
+  left: 50% !important;
+  bottom: -17px !important;
+  width: 9px !important;
+  height: 9px !important;
+  transform: translateX(-50%) !important;
+  border-radius: 50% !important;
+  background: rgba(31,106,67,.34) !important;
+  box-shadow: 0 5px 9px rgba(31,106,67,.18) !important;
+}
+
+/* GPS button */
+.host-onboarding[data-screen="pin"] .host-step5-location-button {
+  position: absolute !important;
+  z-index: 96 !important;
+  right: 14px !important;
+  top: calc(96px + env(safe-area-inset-top,0px)) !important;
+  width: 48px !important;
+  height: 48px !important;
+  border: 1px solid rgba(224,228,224,.96) !important;
+  border-radius: 16px !important;
+  background: rgba(255,255,255,.94) !important;
+  color: #1f6a43 !important;
+  display: grid !important;
+  place-items: center !important;
+  box-shadow: 0 10px 28px rgba(18,25,20,.12) !important;
+  backdrop-filter: blur(18px) !important;
+  -webkit-backdrop-filter: blur(18px) !important;
+}
+
+.host-onboarding[data-screen="pin"] .host-step5-location-button svg {
+  width: 21px !important;
+  height: 21px !important;
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 1.9 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+
+/* Live address/status hint above the bottom controls */
+.host-onboarding[data-screen="pin"] .host-onboarding__map-hint {
+  position: absolute !important;
+  z-index: 95 !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: calc(190px + env(safe-area-inset-bottom,0px)) !important;
+  width: min(calc(100% - 32px), 440px) !important;
+  min-height: 44px !important;
+  padding: 0 16px !important;
+  transform: translateX(-50%) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 1px solid rgba(255,255,255,.12) !important;
+  border-radius: 16px !important;
+  background: rgba(31,34,31,.90) !important;
+  color: #fff !important;
+  font-size: 11px !important;
+  font-weight: 610 !important;
+  line-height: 1.25 !important;
+  letter-spacing: -.006em !important;
+  text-align: center !important;
+  box-shadow: 0 10px 28px rgba(0,0,0,.16) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  pointer-events: none !important;
+}
+
+/* Confirmation floats over the full-screen map */
+.host-onboarding[data-screen="pin"] .host-onboarding__secondary {
+  position: absolute !important;
+  z-index: 97 !important;
+  left: 50% !important;
+  bottom: calc(126px + env(safe-area-inset-bottom,0px)) !important;
+  width: min(calc(100% - 32px), 440px) !important;
+  min-height: 54px !important;
+  margin: 0 !important;
+  transform: translateX(-50%) !important;
+  border: 1px solid rgba(220,226,221,.95) !important;
+  border-radius: 18px !important;
+  background: rgba(255,255,255,.95) !important;
+  color: #1b1e1b !important;
+  font-size: 12px !important;
+  font-weight: 720 !important;
+  box-shadow: 0 12px 34px rgba(18,25,20,.13) !important;
+  backdrop-filter: blur(20px) saturate(1.1) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.1) !important;
+}
+
+.host-onboarding[data-screen="pin"] .host-onboarding__secondary[data-active="true"] {
+  border-color: rgba(31,106,67,.28) !important;
+  background: rgba(238,246,240,.96) !important;
+  color: #1f6a43 !important;
+  box-shadow: 0 12px 34px rgba(31,106,67,.11) !important;
+}
+
+/* Bottom navigation becomes a compact premium glass sheet */
+.host-onboarding[data-screen="pin"] .host-onboarding__footer {
+  position: fixed !important;
+  z-index: 100 !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: 0 !important;
+  width: min(100%, 520px) !important;
+  padding: 10px 14px calc(10px + env(safe-area-inset-bottom,0px)) !important;
+  transform: translateX(-50%) !important;
+  border: 1px solid rgba(225,229,225,.88) !important;
+  border-bottom: 0 !important;
+  border-radius: 25px 25px 0 0 !important;
+  background: rgba(255,255,255,.93) !important;
+  box-shadow: 0 -14px 40px rgba(18,25,20,.12) !important;
+  backdrop-filter: blur(24px) saturate(1.13) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(1.13) !important;
+}
+
+.host-onboarding[data-screen="pin"] .host-onboarding__phase-tracker {
+  margin: 0 0 8px !important;
+  padding: 0 4px !important;
+  transform: scale(.92) !important;
+  transform-origin: center bottom !important;
+}
+
+.host-onboarding[data-screen="pin"] .host-onboarding__footer-actions {
+  gap: 10px !important;
+}
+
+.host-onboarding[data-screen="pin"] .host-onboarding__back,
+.host-onboarding[data-screen="pin"] .host-onboarding__primary {
+  height: 52px !important;
+  border-radius: 17px !important;
+}
+
+.host-onboarding[data-screen="pin"] .host-onboarding__back {
+  background: rgba(255,255,255,.92) !important;
+}
+
+.host-onboarding[data-screen="pin"] .host-onboarding__primary:not(:disabled) {
+  background: #111 !important;
+  border-color: #111 !important;
+  color: #fff !important;
+  box-shadow: 0 8px 20px rgba(0,0,0,.14) !important;
+}
+
+/* Leaflet native controls */
+.host-onboarding[data-screen="pin"] .leaflet-control-zoom {
+  margin-right: 14px !important;
+  margin-bottom: calc(212px + env(safe-area-inset-bottom,0px)) !important;
+  border: 1px solid rgba(224,228,224,.96) !important;
+  border-radius: 15px !important;
+  overflow: hidden !important;
+  box-shadow: 0 10px 26px rgba(18,25,20,.11) !important;
+}
+
+.host-onboarding[data-screen="pin"] .leaflet-control-zoom a {
+  width: 43px !important;
+  height: 41px !important;
+  line-height: 41px !important;
+  border: 0 !important;
+  background: rgba(255,255,255,.95) !important;
+  color: #1f2420 !important;
+  font-size: 20px !important;
+}
+
+.host-onboarding[data-screen="pin"] .leaflet-control-zoom a + a {
+  border-top: 1px solid #eceeec !important;
+}
+
+.host-onboarding[data-screen="pin"] .leaflet-control-attribution {
+  margin-bottom: calc(106px + env(safe-area-inset-bottom,0px)) !important;
+  padding: 2px 5px !important;
+  border-radius: 6px 0 0 0 !important;
+  background: rgba(255,255,255,.72) !important;
+  font-size: 8px !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+@media (max-width: 360px) {
+  .host-onboarding[data-screen="pin"] .host-step5-address-search {
+    top: calc(21px + env(safe-area-inset-top,0px)) !important;
+    width: calc(100% - 22px) !important;
+    height: 55px !important;
+    grid-template-columns: 20px minmax(0,1fr) 39px !important;
+    padding-left: 13px !important;
+    border-radius: 18px !important;
+  }
+
+  .host-onboarding[data-screen="pin"] .host-step5-address-search__button {
+    width: 37px !important;
+    height: 37px !important;
+    border-radius: 12px !important;
+  }
+
+  .host-onboarding[data-screen="pin"] .host-step5-address-input {
+    font-size: 12px !important;
+  }
+
+  .host-onboarding[data-screen="pin"] .host-step5-location-button {
+    right: 11px !important;
+    top: calc(88px + env(safe-area-inset-top,0px)) !important;
+    width: 43px !important;
+    height: 43px !important;
+    border-radius: 14px !important;
+  }
+
+  .host-onboarding[data-screen="pin"] .host-onboarding__map-hint {
+    bottom: calc(184px + env(safe-area-inset-bottom,0px)) !important;
+    width: calc(100% - 24px) !important;
+    font-size: 10.5px !important;
+  }
+
+  .host-onboarding[data-screen="pin"] .host-onboarding__secondary {
+    bottom: calc(120px + env(safe-area-inset-bottom,0px)) !important;
+    width: calc(100% - 24px) !important;
+  }
+
+  .host-onboarding[data-screen="pin"] .host-onboarding__footer {
+    padding-left: 11px !important;
+    padding-right: 11px !important;
+  }
+
+  .host-onboarding[data-screen="pin"] .leaflet-control-zoom {
+    margin-right: 11px !important;
+    margin-bottom: calc(206px + env(safe-area-inset-bottom,0px)) !important;
+  }
+}

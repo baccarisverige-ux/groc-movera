@@ -1,0 +1,36 @@
+/* Source-bundled property artwork layer. */
+html[data-property-artwork="ready"] .host-onboarding[data-screen="property-type"] .host-onboarding__choice-grid > button > span:first-child {
+  display: block !important;
+  flex: 0 0 auto !important;
+  width: 84% !important;
+  height: clamp(108px, 28vw, 170px) !important;
+  min-height: 108px !important;
+  aspect-ratio: auto !important;
+  margin: auto auto 8px !important;
+  background-image: var(--property-drawings-sprite) !important;
+  background-size: 200% 200% !important;
+  background-repeat: no-repeat !important;
+  filter: none !important;
+  opacity: 1 !important;
+}
+
+html[data-property-artwork="ready"] .host-onboarding[data-screen="property-type"] .host-onboarding__choice-grid > button:nth-child(1) > span:first-child {
+  background-position: left top !important;
+}
+html[data-property-artwork="ready"] .host-onboarding[data-screen="property-type"] .host-onboarding__choice-grid > button:nth-child(2) > span:first-child {
+  background-position: right top !important;
+}
+html[data-property-artwork="ready"] .host-onboarding[data-screen="property-type"] .host-onboarding__choice-grid > button:nth-child(3) > span:first-child {
+  background-position: left bottom !important;
+}
+html[data-property-artwork="ready"] .host-onboarding[data-screen="property-type"] .host-onboarding__choice-grid > button:nth-child(4) > span:first-child {
+  background-position: right bottom !important;
+}
+
+@media (max-width: 360px) {
+  html[data-property-artwork="ready"] .host-onboarding[data-screen="property-type"] .host-onboarding__choice-grid > button > span:first-child {
+    width: 88% !important;
+    height: 112px !important;
+    min-height: 112px !important;
+  }
+}

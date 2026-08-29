@@ -1,0 +1,58 @@
+html { overflow-x: hidden; }
+body, #root { width: 100%; max-width: 100%; overflow-x: clip; }
+*, *::before, *::after { min-width: 0; }
+img, svg, video, canvas { max-width: 100%; height: auto; }
+
+:where(a, button, input, select, textarea, [tabindex]):focus,
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--color-brand-700) !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.24) !important;
+}
+
+:where(button, a, input, select, textarea) { touch-action: manipulation; }
+:where(button, a.app-shell__nav-item, a.host-shell__rail-item, .shell-switch, .route-link-button) { min-height: 44px; }
+
+.app-shell__header {
+  padding-left: max(var(--space-4), env(safe-area-inset-left));
+  padding-right: max(var(--space-4), env(safe-area-inset-right));
+}
+.app-shell__content {
+  padding-left: max(var(--space-4), env(safe-area-inset-left));
+  padding-right: max(var(--space-4), env(safe-area-inset-right));
+  padding-bottom: max(var(--space-6), env(safe-area-inset-bottom));
+}
+.app-shell__nav {
+  padding-left: max(var(--space-2), env(safe-area-inset-left));
+  padding-right: max(var(--space-2), env(safe-area-inset-right));
+  padding-bottom: max(var(--space-2), env(safe-area-inset-bottom));
+}
+
+@media (max-width: 430px) {
+  .app-shell__header { gap: var(--space-2); }
+  .app-shell__nav-item { font-size: clamp(.68rem, 3vw, var(--font-size-xs)); padding-inline: var(--space-1); }
+  .home-hero h1 { overflow-wrap: anywhere; }
+  .home-section__heading { flex-wrap: wrap; }
+}
+
+@media (max-width: 360px) {
+  .app-shell__content { padding-inline: max(var(--space-3), env(safe-area-inset-left)); }
+  .app-shell__nav { gap: 0; }
+  .app-shell__nav-item { font-size: .68rem; }
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+  .app-shell__header { position: relative; }
+  .app-shell__content { padding-block: var(--space-3); }
+  .home-page { gap: var(--space-4); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

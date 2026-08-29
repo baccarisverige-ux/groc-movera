@@ -1,0 +1,315 @@
+.b225-home{
+  --home-premium-edge:16px;
+  --home-premium-text:#1f211f;
+  --home-premium-muted:#717672;
+  --home-premium-line:rgba(32,38,34,.055);
+  --home-premium-shadow:0 8px 24px rgba(28,35,31,.055);
+  --home-premium-shadow-soft:0 5px 16px rgba(28,35,31,.045);
+  color:var(--home-premium-text);
+  letter-spacing:-.01em;
+}
+
+/* Airbnb-like rhythm: more breathing room, without changing the Home structure. */
+.b225-home .b225-section{
+  padding-top:14px;
+}
+
+.b225-home .b225-featured-section{
+  padding-top:18px;
+}
+
+.b225-home .b225-destinations-section{
+  padding-top:18px;
+}
+
+.b225-home .b225-section__title{
+  min-height:48px;
+  padding:13px var(--home-premium-edge) 8px!important;
+}
+
+.b225-home .b225-section__title h2{
+  color:var(--home-premium-text);
+  font-size:20px;
+  line-height:1.08;
+  font-weight:780;
+  letter-spacing:-.55px;
+}
+
+.b225-home .b225-section__title>button{
+  width:30px;
+  height:30px;
+  border:1px solid rgba(31,37,33,.06);
+  background:rgba(255,255,255,.78);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.92),0 3px 10px rgba(29,35,31,.04);
+  transition:transform .16s cubic-bezier(.2,.8,.2,1),background .16s ease,box-shadow .16s ease;
+}
+
+.b225-home .b225-section__title>button:active{
+  transform:scale(.92);
+  background:rgba(246,247,246,.96);
+  box-shadow:inset 0 1px 3px rgba(29,35,31,.07);
+}
+
+/* Search stays the same palette, but gains a cleaner physical surface. */
+.b225-home .b225-search{
+  border-color:rgba(255,255,255,.88)!important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.98),
+    inset 0 -1px 0 rgba(115,123,118,.08),
+    0 4px 13px rgba(29,36,32,.055),
+    0 12px 28px rgba(29,36,32,.028)!important;
+}
+
+.b225-home .b225-search:active{
+  transform:scale(.989);
+}
+
+/* Category row: retain current colors and 3D identity, refine spacing and motion. */
+.b225-home .b225-categories{
+  gap:9px;
+  padding-bottom:12px!important;
+}
+
+.b225-home .b225-categories button{
+  min-height:43px;
+  padding-inline:17px;
+  font-weight:640;
+  box-shadow:0 2px 6px rgba(31,38,34,.035);
+  transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .18s ease,background .18s ease;
+}
+
+.b225-home .b225-categories button:not([data-active='true']):active{
+  transform:translateY(1px) scale(.975);
+}
+
+/* Featured selection: quieter cards, stronger photo hierarchy. */
+.b225-home .b225-featured-scroll{
+  gap:12px!important;
+  padding:3px var(--home-premium-edge) 10px!important;
+}
+
+.b225-home .b225-featured-card{
+  flex-basis:154px!important;
+  width:154px!important;
+  min-width:154px!important;
+  max-width:154px!important;
+}
+
+.b225-home .b225-featured-card .b225-card__image{
+  width:154px;
+  height:132px;
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.72);
+  box-shadow:var(--home-premium-shadow-soft);
+  transform:translateZ(0);
+}
+
+.b225-home .b225-featured-card .b225-card__body{
+  padding:8px 3px 0;
+}
+
+.b225-home .b225-featured-line,
+.b225-home .b225-featured-line strong{
+  color:#242725!important;
+  font-size:12.8px!important;
+  font-weight:620!important;
+  letter-spacing:-.16px;
+}
+
+.b225-home .b225-featured-line span{
+  color:#777c78!important;
+  font-size:11.2px!important;
+  font-weight:500!important;
+}
+
+/* Destination cards: premium photo tiles, minimal chrome. */
+.b225-home .b225-cities{
+  gap:12px;
+  padding:3px var(--home-premium-edge) 14px!important;
+}
+
+.b225-home .b225-city{
+  transition:transform .18s cubic-bezier(.2,.8,.2,1);
+}
+
+.b225-home .b225-city:active{
+  transform:scale(.975);
+}
+
+.b225-home .b225-city__image{
+  border-radius:22px!important;
+  border:1px solid rgba(255,255,255,.7);
+  box-shadow:var(--home-premium-shadow)!important;
+}
+
+.b225-home .b225-city__copy{
+  padding-top:10px;
+}
+
+.b225-home .b225-city__copy>strong{
+  color:#242724;
+  font-size:12.4px;
+  font-weight:690;
+  letter-spacing:-.18px;
+}
+
+.b225-home .b225-city__copy>span{
+  color:var(--home-premium-muted);
+  font-size:10.6px;
+  line-height:1.25;
+}
+
+/* Service shortcuts: lighter Airbnb-like utility tiles with tactile press. */
+.b225-home .b225-services{
+  gap:10px;
+  padding-top:8px;
+  padding-bottom:16px;
+}
+
+.b225-home .b225-service-card{
+  transition:transform .16s cubic-bezier(.2,.8,.2,1);
+}
+
+.b225-home .b225-service-card:active{
+  transform:translateY(2px) scale(.97);
+}
+
+.b225-home .b225-service-visual{
+  border:1px solid rgba(255,255,255,.76);
+  background:linear-gradient(145deg,rgba(250,251,250,.98),rgba(235,238,236,.96))!important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.98),
+    inset 0 -1px 0 rgba(111,120,114,.06),
+    0 6px 17px rgba(29,36,32,.055)!important;
+}
+
+.b225-home .b225-service-card strong{
+  color:#5d625f;
+  font-size:10.6px;
+  font-weight:620;
+}
+
+/* Main listing collections: image-led, clean and understated. */
+.b225-home .b225-section:not(.b225-featured-section):not(.b225-destinations-section) .b225-scroll{
+  gap:14px;
+  padding:4px var(--home-premium-edge) 15px!important;
+}
+
+.b225-home .b225-section:not(.b225-featured-section) .b225-card{
+  flex-basis:68vw;
+  max-width:270px;
+  min-width:230px;
+}
+
+.b225-home .b225-section:not(.b225-featured-section) .b225-card__image{
+  height:194px;
+  border-radius:20px;
+  border:1px solid rgba(255,255,255,.72);
+  box-shadow:0 7px 22px rgba(27,34,30,.055);
+}
+
+.b225-home .b225-section:not(.b225-featured-section) .b225-card__body{
+  padding:10px 3px 4px;
+}
+
+.b225-home .b225-card__topline h3{
+  color:#202320;
+  font-size:12.6px;
+  font-weight:680;
+  letter-spacing:-.16px;
+}
+
+.b225-home .b225-card__topline span{
+  color:#4e534f;
+  font-size:10.5px;
+}
+
+.b225-home .b225-card__body>p{
+  color:#747975;
+  font-size:10.8px;
+}
+
+.b225-home .b225-card__price strong{
+  color:#363a37;
+  font-weight:630;
+}
+
+.b225-home .b225-card__heart{
+  width:34px;
+  height:34px;
+  background:rgba(30,31,30,.16);
+  -webkit-backdrop-filter:blur(7px);
+  backdrop-filter:blur(7px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 4px 12px rgba(0,0,0,.07);
+  transition:transform .15s ease,background .15s ease;
+}
+
+.b225-home .b225-card__heart:active{
+  transform:scale(.88);
+  background:rgba(25,26,25,.22);
+}
+
+/* Experience cards: same neutral palette, cleaner luxury surface. */
+.b225-home .b225-experiences{
+  padding-top:18px;
+}
+
+.b225-home .b225-experience-grid{
+  gap:12px;
+  padding:4px var(--home-premium-edge) 18px!important;
+}
+
+.b225-home .b225-experience-grid button{
+  height:128px;
+  border:1px solid rgba(255,255,255,.72);
+  border-radius:18px;
+  background:linear-gradient(145deg,rgba(248,247,244,.98),rgba(235,238,236,.94));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.96),0 7px 20px rgba(28,35,31,.05);
+  transition:transform .16s cubic-bezier(.2,.8,.2,1),box-shadow .16s ease;
+}
+
+.b225-home .b225-experience-grid button:active{
+  transform:translateY(2px) scale(.98);
+  box-shadow:inset 0 2px 4px rgba(28,35,31,.055),0 3px 10px rgba(28,35,31,.04);
+}
+
+.b225-home .b225-experience-grid strong{
+  color:#292c29;
+  font-size:12.2px;
+  font-weight:660;
+}
+
+.b225-home .b225-experience-grid small{
+  color:#737874;
+}
+
+/* Desktop / tablet presentation remains centered and calm. */
+@media(min-width:431px){
+  .b225-home{
+    box-shadow:0 0 0 1px rgba(27,33,29,.025),0 18px 56px rgba(27,33,29,.06);
+  }
+}
+
+@media(max-width:350px){
+  .b225-home{--home-premium-edge:12px}
+  .b225-home .b225-section__title h2{font-size:19px}
+  .b225-home .b225-featured-card{flex-basis:146px!important;width:146px!important;min-width:146px!important;max-width:146px!important}
+  .b225-home .b225-featured-card .b225-card__image{width:146px;height:126px}
+}
+
+@media(hover:hover) and (pointer:fine){
+  .b225-home .b225-featured-card:hover .b225-card__image,
+  .b225-home .b225-city:hover .b225-city__image,
+  .b225-home .b225-section:not(.b225-featured-section) .b225-card:hover .b225-card__image{
+    box-shadow:0 10px 28px rgba(27,34,30,.075)!important;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .b225-home .b225-city,
+  .b225-home .b225-service-card,
+  .b225-home .b225-experience-grid button,
+  .b225-home .b225-section__title>button{
+    transition:none!important;
+  }
+}

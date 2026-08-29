@@ -1,0 +1,25 @@
+/* Deliberately slow cinematic Search open/close motion. */
+.movera-st__panel{
+  transition-duration:1500ms,1300ms,1300ms,520ms!important;
+}
+.movera-st--open .movera-st__panel{
+  transition-duration:1500ms,1300ms,1300ms,520ms!important;
+}
+.movera-st:not(.movera-st--open) .movera-st__panel{
+  transition-duration:1450ms,1250ms,1250ms,480ms!important;
+}
+.movera-st__map-stage{
+  transition-duration:1600ms,900ms!important;
+}
+.movera-st__map-veil{
+  transition-duration:1100ms!important;
+}
+.movera-st--open .movera-st__content{
+  transition:opacity 420ms ease-out 180ms,transform 820ms var(--st-motion-ease) 100ms!important;
+}
+.movera-st:not(.movera-st--open) .movera-st__content{
+  transition:opacity 260ms ease-in,transform 620ms var(--st-motion-close)!important;
+}
+@media(prefers-reduced-motion:reduce){
+  .movera-st__panel,.movera-st__map-stage,.movera-st__map-veil,.movera-st__content{transition-duration:1ms!important;transition-delay:0ms!important}
+}

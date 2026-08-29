@@ -1,0 +1,7 @@
+.beach-hero{padding-top:14px;background:#fff;perspective:none}
+.beach-hero__image{display:block;width:min(76%,360px);height:auto;max-height:420px;margin:0 auto;object-fit:contain;object-position:center top;filter:none;border-radius:0;background:transparent;border:0;box-shadow:none;transform:none;transform-origin:center}
+.beach-hero__copy{padding:8px 16px 10px}
+.beach-hero__copy>span{margin-bottom:4px;font-size:7px;letter-spacing:.11em}
+.beach-hero__copy h1{font-size:clamp(18px,5vw,22px);line-height:1.02;letter-spacing:-.03em}
+.beach-hero__copy p{max-width:245px;margin-top:5px;font-size:9px;line-height:1.35}
+.beach-results__head h2{font-size:18px}

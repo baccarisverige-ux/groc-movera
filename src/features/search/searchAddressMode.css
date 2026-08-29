@@ -1,0 +1,90 @@
+/* Address-entry mode only. Does not alter the popup open/close motion rules. */
+.movera-st[data-address-mode="true"] .movera-st__steps,
+.movera-st[data-address-mode="true"] .movera-st__body{display:none!important}
+
+.movera-st__address-mode{
+  flex:0 0 auto;
+  margin-top:4px;
+  padding:0 1px 1px;
+  min-height:0;
+}
+
+.movera-st__address-label{
+  display:block;
+  margin:0 0 7px 3px;
+  color:#8c928e;
+  font-size:7.8px;
+  font-weight:820;
+  letter-spacing:.115em;
+  text-transform:uppercase;
+}
+
+.movera-st__address-suggestions{
+  display:grid;
+  gap:7px;
+  max-height:min(48vh,390px);
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+  padding:1px 2px 5px 1px;
+}
+.movera-st__address-suggestions::-webkit-scrollbar{display:none}
+
+.movera-st__address-suggestion{
+  width:100%;
+  min-height:54px;
+  padding:8px 10px;
+  display:grid;
+  grid-template-columns:31px minmax(0,1fr) 14px;
+  align-items:center;
+  gap:9px;
+  border:1px solid rgba(36,43,39,.055);
+  border-radius:15px;
+  background:linear-gradient(150deg,#fff 0%,#fdfdfc 65%,#f7f8f7 100%);
+  box-shadow:0 7px 16px rgba(27,32,29,.065),0 2px 5px rgba(27,32,29,.035),inset 0 1px 0 #fff;
+  text-align:left;
+  transition:transform .16s cubic-bezier(.2,.8,.2,1),box-shadow .16s ease,background .16s ease;
+}
+.movera-st__address-suggestion:active{
+  transform:translateY(1px) scale(.988);
+  background:#f8f9f8;
+  box-shadow:0 3px 8px rgba(27,32,29,.05),inset 0 1px 3px rgba(27,32,29,.035);
+}
+
+.movera-st__address-pin{
+  width:31px;
+  height:31px;
+  border-radius:10px;
+  display:grid;
+  place-items:center;
+  background:linear-gradient(145deg,#f1f5f2,#e7ede9);
+  border:1px solid rgba(63,78,69,.035);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 2px 5px rgba(32,40,35,.04);
+}
+.movera-st__address-pin svg{width:14px;height:14px;fill:none;stroke:#6f8578;stroke-width:1.8}
+.movera-st__address-copy{min-width:0}
+.movera-st__address-copy strong,.movera-st__address-copy small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.movera-st__address-copy strong{color:#242925;font-size:10.5px;font-weight:760}
+.movera-st__address-copy small{margin-top:2px;color:#909692;font-size:7.8px}
+.movera-st__address-arrow{color:#a0a6a2;font-size:17px;font-weight:400}
+
+.movera-st__address-empty,
+.movera-st__address-loading{
+  padding:13px 12px;
+  border:1px solid rgba(36,43,39,.045);
+  border-radius:14px;
+  background:#f7f8f7;
+  color:#818984;
+  font-size:9px;
+  text-align:center;
+}
+
+.movera-st[data-address-mode="true"] .movera-st__persistent-search{
+  box-shadow:0 10px 30px rgba(25,28,26,.13),inset 0 1px 0 rgba(255,255,255,.98)!important;
+}
+
+@media(max-height:700px){
+  .movera-st__address-suggestion{min-height:50px;padding-block:7px}
+  .movera-st__address-suggestions{gap:6px;max-height:min(44vh,310px)}
+}

@@ -1,0 +1,32 @@
+/* Search close hand-off: balanced reverse motion, then reveal Home near the end. */
+.movera-st:not(.movera-st--open):not(.movera-st--complete) .movera-st__map-veil{
+  opacity:0!important;
+  transition:opacity 190ms ease-out 730ms!important;
+}
+
+.movera-st:not(.movera-st--open):not(.movera-st--complete) .movera-st__map-stage{
+  opacity:0!important;
+  transition:
+    transform 900ms var(--st-motion-close),
+    filter 620ms ease-out,
+    opacity 210ms ease-out 710ms!important;
+}
+
+.movera-st:not(.movera-st--open):not(.movera-st--complete) .movera-st__panel{
+  opacity:0!important;
+  pointer-events:none!important;
+  transition:
+    transform 900ms var(--st-motion-close),
+    border-radius 820ms var(--st-motion-close),
+    box-shadow 820ms var(--st-motion-close),
+    opacity 210ms ease-in 710ms!important;
+}
+
+.movera-st:not(.movera-st--open):not(.movera-st--complete) .movera-st__persistent-search{
+  pointer-events:none!important;
+}
+
+/* Content leaves first while the physical panel finishes its reverse motion. */
+.movera-st:not(.movera-st--open):not(.movera-st--complete) .movera-st__content{
+  transition:opacity 190ms ease-in,transform 430ms var(--st-motion-close)!important;
+}

@@ -1,0 +1,88 @@
+.beach-page{width:min(100%,430px);min-height:100svh;margin:0 auto;padding:0 0 92px;background:#f7f7f5;color:#1d1f1e;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.beach-hero{position:relative;height:clamp(310px,43svh,390px);overflow:hidden;background:#e1e3e1;border-radius:0 0 30px 30px;isolation:isolate}
+.beach-hero__image{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 42%;transform:scale(1.01)}
+.beach-hero__copy{position:absolute;z-index:2;left:20px;right:20px;bottom:28px;color:#fff}
+.beach-hero__copy>span{display:inline-block;margin-bottom:8px;font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;opacity:.88}
+.beach-hero__copy h1{margin:0;font-size:clamp(34px,10vw,46px);font-weight:720;line-height:.94;letter-spacing:-.047em;text-shadow:0 3px 18px rgba(20,24,21,.18)}
+.beach-hero__copy p{max-width:290px;margin:11px 0 0;color:rgba(255,255,255,.86);font-size:12px;line-height:1.45}
+
+.beach-discovery{position:relative;z-index:5;margin:-15px 14px 0;padding:14px 0 2px}
+.beach-city-search{position:relative;display:grid;grid-template-columns:30px 1fr 26px;align-items:center;min-height:66px;padding:0 13px;border:1px solid rgba(255,255,255,.88);border-radius:20px;background:rgba(254,254,253,.86);box-shadow:0 15px 38px rgba(27,33,29,.085),0 1px 2px rgba(27,33,29,.04);backdrop-filter:blur(22px) saturate(140%);-webkit-backdrop-filter:blur(22px) saturate(140%);transition:border-color .2s ease,box-shadow .2s ease}
+.beach-city-search.is-focused{border-color:rgba(35,40,37,.18);box-shadow:0 17px 42px rgba(27,33,29,.10),0 0 0 3px rgba(255,255,255,.54)}
+.beach-city-search>svg{width:21px;height:21px;fill:none;stroke:#606561;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.beach-city-search label{display:grid;gap:2px;min-width:0}
+.beach-city-search label>span{font-size:9px;font-weight:760;letter-spacing:.055em;color:#898e8a;text-transform:uppercase}
+.beach-city-search input{min-width:0;width:100%;border:0;outline:0;padding:0;background:transparent;color:#202320;font:650 14px/1.2 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.beach-city-search input::placeholder{color:#999e9a;font-weight:550}
+.beach-city-search__clear{width:26px;height:26px;border:0;border-radius:50%;background:#eff1ef;color:#575c58;font-size:18px;line-height:1}
+.beach-city-suggestions{position:absolute;z-index:20;top:calc(100% + 7px);left:0;right:0;overflow:hidden;border:1px solid rgba(24,29,26,.065);border-radius:18px;padding:5px;background:rgba(254,254,253,.98);box-shadow:0 20px 48px rgba(25,31,27,.13);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
+.beach-city-suggestions button{width:100%;min-height:49px;border:0;border-radius:13px;display:grid;grid-template-columns:30px 1fr auto;align-items:center;text-align:left;background:transparent;color:#202320;padding:0 10px;font:inherit}
+.beach-city-suggestions button:active{background:#f2f3f2}
+.beach-city-suggestions button span{width:26px;height:26px;border-radius:9px;display:grid;place-items:center;background:#f1f2f1}
+.beach-city-suggestions button svg{width:14px;height:14px;fill:none;stroke:#6a6f6b;stroke-width:1.8}
+.beach-city-suggestions strong{font-size:12px;font-weight:700}
+.beach-city-suggestions small{font-size:10px;color:#979c98}
+.beach-quick-head{display:flex;align-items:center;justify-content:space-between;padding:16px 3px 8px}
+.beach-quick-head>span{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#7d827e}
+.beach-quick-head button{border:0;background:transparent;color:#505551;font:700 10px/1 Inter,sans-serif}
+.beach-city-chips{display:flex;gap:7px;overflow-x:auto;padding:1px 1px 5px;scrollbar-width:none}
+.beach-city-chips::-webkit-scrollbar{display:none}
+.beach-city-chips button{flex:0 0 auto;min-height:34px;border:1px solid #dfe2df;border-radius:999px;padding:0 13px;background:#fbfcfb;color:#5e635f;font:680 10px/1 Inter,sans-serif;box-shadow:0 1px 0 rgba(255,255,255,.78)}
+.beach-city-chips button[data-active=true]{border-color:#2a2d2b;background:#2a2d2b;color:#fff;box-shadow:0 6px 16px rgba(27,32,29,.11)}
+
+.beach-results{padding:18px 14px 28px}
+.beach-results__head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:14px;padding:0 3px}
+.beach-results__head>div>span{display:block;margin-bottom:3px;color:#8a8f8b;font-size:10px;font-weight:720}
+.beach-results__head h2{margin:0;font-size:20px;line-height:1.08;letter-spacing:-.035em;font-weight:720}
+.beach-results__count{min-width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:#eaedeb;color:#5b605c;font-size:10px;font-weight:800}
+.beach-offer-list{display:grid;gap:15px}
+.beach-offer{overflow:hidden;border:1px solid rgba(25,30,27,.06);border-radius:25px;background:#fefefd;box-shadow:0 10px 34px rgba(27,33,29,.06);cursor:pointer;transform:translateZ(0)}
+.beach-offer__media{position:relative;aspect-ratio:1.38/1;overflow:hidden;background:#dfe1df}
+.beach-offer__media:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,10,8,.13),transparent 34%,transparent 70%,rgba(8,10,8,.11));pointer-events:none}
+.beach-offer__media img{width:100%;height:100%;display:block;object-fit:cover;transition:transform .45s cubic-bezier(.2,.8,.2,1)}
+.beach-offer:active .beach-offer__media img{transform:scale(1.018)}
+.beach-offer__badge,.beach-offer__rating{position:absolute;z-index:2;top:12px;border:1px solid rgba(255,255,255,.56);border-radius:999px;background:rgba(255,255,255,.82);color:#2b2e2b;backdrop-filter:blur(13px);-webkit-backdrop-filter:blur(13px);box-shadow:0 4px 18px rgba(28,34,30,.045)}
+.beach-offer__badge{left:12px;padding:7px 10px;font-size:9px;font-weight:800;letter-spacing:.025em}
+.beach-offer__rating{right:52px;padding:7px 9px;font-size:9px;font-weight:800}
+.beach-offer__heart{position:absolute;z-index:3;top:10px;right:11px;width:34px;height:34px;border:1px solid rgba(255,255,255,.56);border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.82);color:#2c302d;backdrop-filter:blur(13px);-webkit-backdrop-filter:blur(13px);transition:transform .16s ease,background .16s ease,color .16s ease}
+.beach-offer__heart svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round}
+.beach-offer__heart[data-active=true]{background:rgba(255,255,255,.94);color:#252926;box-shadow:0 5px 16px rgba(28,34,30,.08)}
+.beach-offer__heart[data-active=true] svg{fill:currentColor}
+.beach-offer__heart:active{transform:scale(.93)}
+.beach-offer__body{display:grid;grid-template-columns:1fr auto;align-items:end;gap:12px;padding:15px 15px 10px}
+.beach-offer__location{display:flex;align-items:center;gap:4px;margin-bottom:5px;color:#838884;font-size:9px;font-weight:650}
+.beach-offer__location svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:1.8}
+.beach-offer h3{margin:0;max-width:250px;font-size:14px;line-height:1.22;letter-spacing:-.018em;font-weight:720}
+.beach-offer__price{text-align:right;white-space:nowrap}
+.beach-offer__price strong{display:block;font-size:13px;font-weight:780}
+.beach-offer__price span{font-size:9px;color:#909591}
+.beach-offer__actions{padding:0 12px 12px}
+.beach-offer__map-button{width:100%;min-height:48px;display:grid;grid-template-columns:34px 1fr 18px;align-items:center;gap:9px;padding:5px 11px 5px 8px;border:1px solid rgba(59,64,60,.09);border-radius:16px;background:linear-gradient(180deg,rgba(250,251,250,.98),rgba(239,241,239,.96));color:#343936;text-align:left;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 5px 16px rgba(28,34,30,.045);transition:transform .16s ease,box-shadow .16s ease,background .16s ease;-webkit-tap-highlight-color:transparent}
+.beach-offer__map-icon{width:32px;height:32px;border-radius:11px;display:grid;place-items:center;background:rgba(255,255,255,.88);border:1px solid rgba(46,51,47,.08);box-shadow:0 2px 7px rgba(28,34,30,.045)}
+.beach-offer__map-icon svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round}
+.beach-offer__map-copy{display:grid;gap:2px;min-width:0}
+.beach-offer__map-copy strong{font-size:10.5px;line-height:1;font-weight:780;letter-spacing:-.01em}
+.beach-offer__map-copy small{font-size:8.5px;line-height:1.1;color:#8b908c;font-weight:560}
+.beach-offer__map-arrow{justify-self:end;font-size:20px;line-height:1;color:#7b807c;transform:translateY(-1px)}
+.beach-offer__map-button:active{transform:translateY(1px) scale(.992);background:linear-gradient(180deg,#eef0ee,#e7e9e7);box-shadow:inset 0 2px 4px rgba(32,37,33,.065)}
+.beach-empty{margin-top:5px;border:1px dashed #d9dcda;border-radius:24px;padding:34px 22px;text-align:center;background:rgba(255,255,255,.62)}
+.beach-empty>span{width:42px;height:42px;margin:0 auto 12px;border-radius:50%;display:grid;place-items:center;background:#eceeec;font-size:22px;color:#727773}
+.beach-empty h3{margin:0;font-size:16px}
+.beach-empty p{margin:7px auto 15px;max-width:240px;color:#878c88;font-size:11px;line-height:1.5}
+.beach-empty button{min-height:38px;border:0;border-radius:999px;padding:0 15px;background:#2a2d2b;color:#fff;font:700 10px/1 Inter,sans-serif}
+
+@media(min-width:431px){.beach-page{margin-top:12px;border-radius:30px 30px 0 0;overflow:hidden;box-shadow:0 18px 70px rgba(23,29,25,.065)}}
+@media(prefers-reduced-motion:reduce){.beach-offer__media img,.beach-offer__heart,.beach-offer__map-button{transition:none}.beach-offer__heart:active,.beach-offer__map-button:active{transform:none}}
+
+.beach-hero{height:auto;overflow:visible;background:#fff;border-radius:0;isolation:auto}
+.beach-hero__image{position:relative;inset:auto;width:100%;height:clamp(205px,60vw,255px);display:block;object-fit:contain;object-position:center;transform:none;background:#fff;filter:none}
+.beach-hero__copy{position:relative;left:auto;right:auto;bottom:auto;z-index:1;padding:10px 16px 14px;background:#fff;color:#1d1f1e}
+.beach-hero__copy>span{margin-bottom:5px;font-size:8px;letter-spacing:.13em;opacity:.62}
+.beach-hero__copy h1{font-size:clamp(22px,6.4vw,27px);line-height:1;letter-spacing:-.035em;text-shadow:none}
+.beach-hero__copy p{max-width:270px;margin:7px 0 0;color:#747976;font-size:10px;line-height:1.4}
+.beach-discovery{margin:0;padding:8px 0 2px}
+.beach-city-search{width:100%;box-sizing:border-box;min-height:58px;padding:0 14px;border-radius:0;border-left:0;border-right:0;border-color:#e4e7e4;background:#fff;box-shadow:0 1px 0 rgba(27,32,29,.032);backdrop-filter:none;-webkit-backdrop-filter:none}
+.beach-city-search.is-focused{border-color:#d8dcd9;box-shadow:0 1px 0 rgba(27,32,29,.042)}
+.beach-city-suggestions{left:10px;right:10px;backdrop-filter:none;-webkit-backdrop-filter:none}
+.beach-quick-head{padding:14px 14px 8px}
+.beach-city-chips{padding:1px 14px 5px}

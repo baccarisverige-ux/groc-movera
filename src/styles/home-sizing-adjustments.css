@@ -1,0 +1,80 @@
+/* Requested size-only adjustments: keep section order/position unchanged. */
+
+/* Services Movera: approximately 35% smaller overall. */
+.b225-home .b225-services-mini{
+  margin:4px 0 0!important;
+}
+
+.b225-home .b225-services-mini__head{
+  gap:7px!important;
+  margin:0 var(--b225-home-content-edge,16px) 5px!important;
+}
+
+.b225-home .b225-services-mini__head h2{
+  font-size:9.1px!important;
+  letter-spacing:-.2px!important;
+}
+
+.b225-home .b225-services-mini__tag{
+  padding:2px 5px!important;
+  font-size:6px!important;
+}
+
+.b225-home .b225-services-mini__rail{
+  justify-content:center!important;
+  gap:5px!important;
+  padding-top:1px!important;
+  padding-bottom:3px!important;
+}
+
+.b225-home .b225-service-mini-card{
+  flex-basis:70px!important;
+  min-width:70px!important;
+  max-width:70px!important;
+  min-height:57px!important;
+  grid-template-rows:31px auto!important;
+  border-radius:10.5px!important;
+}
+
+.b225-home .b225-service-mini-card__photo{
+  margin:4px 4px 0!important;
+  border-radius:7px!important;
+}
+
+.b225-home .b225-service-mini-card__copy{
+  gap:0!important;
+  padding:4px 5px 5px!important;
+}
+
+.b225-home .b225-service-mini-card__title{
+  font-size:7px!important;
+  letter-spacing:-.1px!important;
+}
+
+.b225-home .b225-service-mini-card__subtitle{
+  font-size:5.8px!important;
+}
+
+/* Offer stack: keep the original spacing between sections, then lift the whole Tout → Partenaire block together. */
+.b225-home .b225-category-selection{
+  margin-top:24px!important;
+}
+
+.b225-home .b225-services-mini + .b225-category-selection{
+  margin-top:4px!important;
+}
+
+/* Destination cards intentionally inherit their original dimensions from welcome-city-cards.css. */
+
+@media(max-width:390px){
+  .b225-home .b225-category-selection{margin-top:22px!important}
+  .b225-home .b225-services-mini + .b225-category-selection{margin-top:2px!important}
+}
+
+@media(max-width:350px){
+  .b225-home .b225-services-mini{margin-top:3px!important}
+  .b225-home .b225-services-mini__head h2{font-size:8.7px!important}
+  .b225-home .b225-service-mini-card{flex-basis:66px!important;min-width:66px!important;max-width:66px!important;min-height:55px!important;grid-template-rows:29px auto!important}
+  .b225-home .b225-service-mini-card__title{font-size:6.7px!important}
+  .b225-home .b225-service-mini-card__subtitle{font-size:5.5px!important}
+}

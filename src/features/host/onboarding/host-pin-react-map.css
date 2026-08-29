@@ -1,0 +1,56 @@
+.host-step5-react-engine-root {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  width: 100%;
+  height: 100%;
+}
+
+.host-step5-react-map {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+}
+
+/* Safe Phase 6B handoff: keep the proven Leaflet DOM alive underneath.
+   It is hidden only after the React surface has rendered successfully. */
+.host-onboarding[data-screen="pin"] .host-onboarding__map-card[data-react-map-engine="true"] > .host-step5-real-map,
+.host-onboarding[data-screen="pin"] .host-onboarding__map-card[data-react-map-engine="true"] > .host-step5-address-search,
+.host-onboarding[data-screen="pin"] .host-onboarding__map-card[data-react-map-engine="true"] > .host-step5-center-pin,
+.host-onboarding[data-screen="pin"] .host-onboarding__map-card[data-react-map-engine="true"] > .host-step5-location-button {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+.host-onboarding[data-screen="pin"] .host-step5-real-map--react .map-engine,
+.host-onboarding[data-screen="pin"] .host-step5-real-map--react .map-surface {
+  width: 100% !important;
+  max-width: none !important;
+  height: 100% !important;
+  min-height: 100% !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+
+.host-onboarding[data-screen="pin"] .host-step5-real-map--react .map-engine__status {
+  display: none !important;
+}
+
+.host-onboarding[data-screen="pin"] .host-step5-real-map--react .map-controls {
+  right: 14px !important;
+  top: calc(154px + env(safe-area-inset-top, 0px)) !important;
+  z-index: 94 !important;
+}
+
+.host-onboarding[data-screen="pin"] .host-step5-real-map--react .map-attribution {
+  right: 10px !important;
+  bottom: calc(108px + env(safe-area-inset-bottom, 0px)) !important;
+  z-index: 90 !important;
+}
+
+.host-onboarding[data-screen="pin"] .host-step5-real-map--react .map-tile img {
+  visibility: visible;
+}

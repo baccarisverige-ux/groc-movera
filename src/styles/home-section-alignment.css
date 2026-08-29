@@ -1,0 +1,25 @@
+.b225-home {
+  --b225-home-content-edge: 16px;
+  background: #f7f7f7;
+}
+
+/*
+ * One horizontal content edge for the complete Home experience.
+ * "Bienvenue chez Movera" is the visual alignment reference.
+ * Keep vertical spacing owned by each section; only the horizontal
+ * geometry is centralized here so future sections cannot drift.
+ */
+.b225-home .b225-welcome {
+  margin-inline: var(--b225-home-content-edge) !important;
+  background: rgba(238,241,242,.64) !important;
+}
+
+.b225-home .b225-categories,
+.b225-home .b225-section__title,
+.b225-home .b225-scroll,
+.b225-home .b225-cities,
+.b225-home .b225-services,
+.b225-home .b225-experience-grid {
+  padding-left: var(--b225-home-content-edge) !important;
+  padding-right: var(--b225-home-content-edge) !important;
+}

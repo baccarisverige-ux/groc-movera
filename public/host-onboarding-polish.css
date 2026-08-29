@@ -1,0 +1,100 @@
+html body .host-onboarding{--host-green:#175c3a;--host-ink:#101211;--host-muted:#74777a;--host-line:#e4e6e4;width:min(100%,430px);min-height:100svh;margin:0 auto;background:#fff;color:var(--host-ink);padding-bottom:224px;font-family:Inter,-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision;overflow-x:hidden}
+html body .host-onboarding *,html body .host-onboarding *::before,html body .host-onboarding *::after{box-sizing:border-box}
+html body .host-onboarding__topbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:calc(18px + env(safe-area-inset-top,0px)) 24px 14px;background:rgba(255,255,255,.97);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+html body .host-onboarding__top-pill{height:48px;max-width:48%;border:1px solid #e1e3e1;border-radius:999px;background:#fff;color:#171918;display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:0 18px;font-size:15px;line-height:1;font-weight:590;letter-spacing:-.015em;box-shadow:0 4px 16px rgba(0,0,0,.028);white-space:nowrap}
+html body .host-onboarding__top-pill svg{width:21px;height:21px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+html body .host-onboarding__micro-progress{position:sticky;top:calc(80px + env(safe-area-inset-top,0px));z-index:35;height:1px;margin:0 24px;background:#f0f1ef;opacity:.65}
+html body .host-onboarding__micro-progress i{height:100%;border-radius:999px;background:var(--host-green)}
+html body .host-onboarding__step,html body .host-onboarding__phase-intro{padding:38px 24px 34px}
+html body .host-onboarding__eyebrow{display:inline-block;margin-bottom:16px;color:var(--host-green);font-size:15px;line-height:1.15;font-weight:610;letter-spacing:-.018em;text-transform:none}
+html body .host-onboarding h1{margin:0;max-width:390px;color:#0d0f0e;font-size:clamp(38px,10.6vw,46px);line-height:.99;letter-spacing:-.054em;font-weight:690}
+html body .host-onboarding p{margin:18px 0 0;max-width:370px;color:#737679;font-size:17px;line-height:1.45;letter-spacing:-.018em;font-weight:430}
+html body .host-onboarding__phase-intro{padding-top:18px;min-height:calc(100svh - 260px)}
+html body .host-onboarding__phase-visual{height:360px;margin:0 -2px 24px;border:0;border-radius:0;background:#fff;display:grid;place-items:center;box-shadow:none;overflow:visible;filter:drop-shadow(0 14px 22px rgba(16,27,20,.045))}
+html body .host-onboarding__phase-visual::before,html body .host-onboarding__phase-visual::after{display:none}
+html body .host-onboarding__hero-house{display:block;width:100%;height:100%;overflow:visible}
+html body .host-onboarding__phase-intro .host-onboarding__eyebrow{margin-top:2px;padding:8px 12px;border-radius:10px;background:#f3f4f2;color:#171918;font-size:14px}
+html body .host-onboarding__phase-intro h1{font-size:clamp(43px,12vw,53px);max-width:390px}
+html body .host-onboarding__phase-intro p{font-size:18px;line-height:1.46;max-width:360px}
+html body .host-onboarding__choice-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:28px}
+html body .host-onboarding__choice-grid button{min-height:124px;border:1.2px solid #e2e4e2;border-radius:20px;background:#fff;color:#171918;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px 12px;text-align:center;box-shadow:0 8px 24px rgba(13,16,14,.025)}
+html body .host-onboarding__choice-grid button>span{width:51px;height:51px;border:0;border-radius:0;background:transparent;display:grid;place-items:center;color:#171918}
+html body .host-onboarding__choice-grid button>span svg{width:48px;height:48px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+html body .host-onboarding__choice-grid button strong{font-size:16px;line-height:1.12;letter-spacing:-.025em;font-weight:560}
+html body .host-onboarding__choice-grid button[data-active=true]{border:2px solid var(--host-green);background:#fbfefc;box-shadow:0 10px 28px rgba(23,92,58,.08)}
+html body .host-onboarding__choice-grid button[data-active=true]>span{color:var(--host-green)}
+html body .host-onboarding__stacked-options{gap:14px;margin-top:30px}
+html body .host-onboarding__stacked-options button{min-height:128px;border:1.2px solid #e0e2e0;border-radius:21px;background:#fff;color:#171918;grid-template-columns:1fr 52px;gap:14px;padding:20px 20px 20px 22px;box-shadow:0 7px 24px rgba(13,16,14,.02);position:relative}
+html body .host-onboarding__stacked-options button>div{gap:8px;padding-right:14px}
+html body .host-onboarding__stacked-options button strong{font-size:20px;line-height:1.15;letter-spacing:-.032em;font-weight:620}
+html body .host-onboarding__stacked-options button small{font-size:15px;line-height:1.4;color:#767a77}
+html body .host-onboarding__stacked-options button>svg{width:46px;height:46px;stroke:#242725;stroke-width:1.6}
+html body .host-onboarding__stacked-options .host-onboarding__radio-dot{position:absolute;right:18px;top:18px;width:22px;height:22px;border:1.5px solid #c4c8c5;border-radius:50%;background:#fff;display:grid;place-items:center}
+html body .host-onboarding__stacked-options button[data-active=true]{border:2px solid #171918;background:#fcfcfb;box-shadow:0 9px 26px rgba(13,16,14,.035)}
+html body .host-onboarding__stacked-options button[data-active=true] .host-onboarding__radio-dot{border-color:var(--host-green);background:var(--host-green)}
+html body .host-onboarding__step label:not(.host-onboarding__check):not(.host-onboarding__toggle-row){gap:9px;margin-top:24px}
+html body .host-onboarding__step label>span{font-size:13px;font-weight:600;color:#555a57}
+html body .host-onboarding__step input:not([type=checkbox]),html body .host-onboarding__step textarea{border:1.25px solid #d9dcda;border-radius:19px;background:#fff;color:#121413;padding:0 17px;box-shadow:none}
+html body .host-onboarding__step input:not([type=checkbox]){height:58px;font-size:17px;font-weight:500}
+html body .host-onboarding__step textarea{min-height:154px;padding-top:17px;padding-bottom:17px;font-size:17px;line-height:1.48}
+html body .host-onboarding__big-field textarea{min-height:270px;font-size:19px;line-height:1.5}
+html body .host-onboarding__step--description .host-onboarding__big-field textarea{min-height:330px}
+html body .host-onboarding__map-card{height:390px;margin-top:26px;border:1px solid #ebe9e5;border-radius:30px;background:linear-gradient(90deg,transparent 49%,rgba(212,208,201,.4) 50%,transparent 51%),linear-gradient(0deg,transparent 49%,rgba(212,208,201,.35) 50%,transparent 51%),#f6f3ef;box-shadow:0 14px 36px rgba(36,31,25,.045)}
+html body .host-onboarding__address-chip{left:18px;right:18px;top:18px;min-height:62px;border-radius:999px;padding:10px 17px;background:#fff;box-shadow:0 8px 22px rgba(27,25,22,.055)}
+html body .host-onboarding__address-chip span{font-size:16px;line-height:1.25;font-weight:520}
+html body .host-onboarding__map-pin{width:64px;height:64px;background:#191b1a;box-shadow:0 12px 28px rgba(0,0,0,.18)}
+html body .host-onboarding__map-hint{min-width:220px;max-width:270px;padding:11px 16px;border-radius:999px;background:#1a1c1b;color:#fff;font-size:14px;font-weight:560;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+html body .host-onboarding__counter-card{margin-top:28px;border:1px solid #e3e5e3;border-radius:22px;background:#fff;box-shadow:0 10px 30px rgba(13,16,14,.025)}
+html body .host-onboarding__counter-row{min-height:88px;padding:0 20px;border-bottom:1px solid #eceeec}
+html body .host-onboarding__counter-label{gap:13px}
+html body .host-onboarding__counter-label svg{width:30px;height:30px;stroke:#171918;stroke-width:1.55}
+html body .host-onboarding__counter-row strong{font-size:17px;font-weight:560}
+html body .host-onboarding__counter-row>div{grid-template-columns:42px 42px 42px;gap:6px}
+html body .host-onboarding__counter-row button{width:42px;height:42px;border:1px solid #dfe1df;border-radius:50%;background:#fff;color:#171918;font-size:26px}
+html body .host-onboarding__counter-row b{font-size:20px;font-weight:560}
+html body .host-onboarding__amenity-groups{gap:32px;margin-top:30px}
+html body .host-onboarding__amenity-section h2{margin:0 0 14px;font-size:23px;line-height:1.1;letter-spacing:-.035em;font-weight:640}
+html body .host-onboarding__amenity-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:0}
+html body .host-onboarding__amenity-grid button{min-height:132px;border:1.2px solid #dfe2df;border-radius:20px;background:#fff;color:#171918;grid-template-rows:43px auto;align-content:center;justify-items:start;gap:13px;padding:18px 18px 17px;text-align:left;box-shadow:0 7px 22px rgba(13,16,14,.018)}
+html body .host-onboarding__amenity-grid button>svg,html body .host-onboarding__amenity-svg{width:39px;height:39px;fill:none;stroke:#1d201e;stroke-width:1.6;color:#1d201e}
+html body .host-onboarding__amenity-copy{display:grid;gap:4px}
+html body .host-onboarding__amenity-grid button strong{font-size:16px;line-height:1.12;font-weight:570;letter-spacing:-.025em}
+html body .host-onboarding__amenity-grid button small{font-size:13px;line-height:1.32;color:#777b78}
+html body .host-onboarding__amenity-grid button[data-active=true]{border:2px solid #171918;background:#fcfcfb;box-shadow:0 10px 26px rgba(13,16,14,.035)}
+html body .host-onboarding__photo-uploader{min-height:315px;margin-top:30px;border:1.5px dashed #b9bdb9;border-radius:24px;background:#fafafa;gap:16px;padding:24px}
+html body .host-onboarding__photo-stack{width:76px;height:64px}
+html body .host-onboarding__photo-stack>svg{width:64px;height:64px}
+html body .host-onboarding__photo-uploader small{font-size:14px;line-height:1.35;max-width:230px}
+html body .host-onboarding__photo-uploader button{height:50px;padding:0 18px;border-radius:15px;font-size:15px;font-weight:600}
+html body .host-onboarding__photo-slots{grid-template-columns:repeat(5,1fr);gap:8px;margin-top:13px}
+html body .host-onboarding__photo-slots>div{border:1px dashed #c6cac6;border-radius:13px}
+html body .host-onboarding__chips{gap:11px;margin-top:28px}
+html body .host-onboarding__chips button{min-height:50px;border:1.2px solid #dfe2df;border-radius:999px;padding:0 17px;font-size:16px;font-weight:560}
+html body .host-onboarding__safety-card{margin-top:18px;border:1px solid #e2e4e2;border-radius:21px;background:#fff}
+html body .host-onboarding__safety-card>strong{padding:18px 18px 15px;font-size:17px;font-weight:630}
+html body .host-onboarding__toggle-row{min-height:69px;padding:0 18px}
+html body .host-onboarding__toggle-row span{font-size:15px;line-height:1.35}
+html body .host-onboarding__toggle-row input{width:24px;height:24px;accent-color:#111}
+html body .host-onboarding__price>div{height:104px;border:1.2px solid #dfe2df;border-radius:23px;background:#fff;padding:0 20px}
+html body .host-onboarding__price input{font-size:43px;line-height:1;font-weight:690;letter-spacing:-.055em}
+html body .host-onboarding__weekend-card{min-height:104px;border:1.2px solid #dfe2df;border-radius:23px;background:#fff;padding:18px 20px}
+html body .host-onboarding__weekend-card strong{font-size:38px;letter-spacing:-.05em}
+html body .host-onboarding__promotion-list{gap:13px;margin-top:28px}
+html body .host-onboarding__promotion-list button{min-height:106px;border:1.2px solid #dfe2df;border-radius:22px;grid-template-columns:62px 1fr 27px;gap:14px;padding:15px 16px}
+html body .host-onboarding__promotion-list button>b{min-width:58px;height:58px;border:1px solid #d8dbd8;border-radius:16px;font-size:20px;font-weight:650}
+html body .host-onboarding__promotion-list button strong{font-size:16px;font-weight:590}
+html body .host-onboarding__promotion-list button small{font-size:13px;line-height:1.35}
+html body .host-onboarding__footer{position:fixed;z-index:60;left:50%;bottom:0;transform:translateX(-50%);width:min(100%,430px);padding:10px 16px max(12px,env(safe-area-inset-bottom,0px));background:rgba(255,255,255,.98);border-top:1px solid rgba(228,230,228,.9);box-shadow:0 -12px 34px rgba(10,12,11,.045);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+html body .host-onboarding__phase-tracker{min-height:92px;border:1px solid #e6e8e6;border-radius:22px;background:#fff;grid-template-columns:repeat(4,1fr);padding:14px 7px 10px;box-shadow:0 8px 26px rgba(13,16,14,.025)}
+html body .host-onboarding__phase-tracker>div{gap:7px}
+html body .host-onboarding__phase-tracker>div:not(:last-child)::after{top:18px;left:calc(50% + 27px);width:calc(100% - 54px);height:1px;background:repeating-linear-gradient(90deg,#d6d9d6 0 4px,transparent 4px 8px)}
+html body .host-onboarding__phase-tracker>div>span{width:38px;height:38px;border:1px solid #dfe2df;background:#f3f4f3;color:#8b8f8b;font-size:14px;font-weight:600}
+html body .host-onboarding__phase-tracker>div[data-state=active]>span{background:#111;color:#fff;border-color:#111}
+html body .host-onboarding__phase-tracker>div[data-state=done]>span{background:var(--host-green);color:#fff;border-color:var(--host-green)}
+html body .host-onboarding__phase-tracker small{max-width:84px;color:#858985;font-size:10.5px;line-height:1.14}
+html body .host-onboarding__footer-actions{grid-template-columns:.92fr 1.28fr;gap:12px;margin-top:10px}
+html body .host-onboarding__back,html body .host-onboarding__primary{height:62px;border-radius:18px;gap:14px;font-size:17px;font-weight:560;letter-spacing:-.02em}
+html body .host-onboarding__back{border:1px solid #d9dcda;background:#fff;color:#171918}
+html body .host-onboarding__primary{border:1px solid #111;background:#111;color:#fff}
+html body .host-onboarding__back svg,html body .host-onboarding__primary svg{width:24px;height:24px;stroke-width:1.75}
+@media(max-width:360px){html body .host-onboarding{padding-bottom:202px}html body .host-onboarding__topbar{padding-left:16px;padding-right:16px}html body .host-onboarding__top-pill{height:43px;padding:0 13px;font-size:13px;gap:7px}html body .host-onboarding__step,html body .host-onboarding__phase-intro{padding-left:18px;padding-right:18px}html body .host-onboarding h1{font-size:36px}html body .host-onboarding p{font-size:15px}html body .host-onboarding__phase-visual{height:300px}html body .host-onboarding__choice-grid,html body .host-onboarding__amenity-grid{gap:10px}html body .host-onboarding__choice-grid button{min-height:108px}html body .host-onboarding__amenity-grid button{min-height:118px;padding:15px}html body .host-onboarding__phase-tracker{min-height:82px;padding-top:11px}html body .host-onboarding__back,html body .host-onboarding__primary{height:56px;font-size:15px}}
