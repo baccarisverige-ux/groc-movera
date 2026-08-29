@@ -19,17 +19,15 @@ jobs:
       - name: Copy Movera-host1 zipball as-is
         run: |
           set -euo pipefail
-          curl -fsSL -H 'Accept: application/vnd.github+json' \
-            -o /tmp/host1.zip \
-            'https://api.github.com/repos/baccarisverige-ux/Movera-host1/zipball/main'
+          curl -fsSL -o /tmp/host1.zip 'https://api.github.com/repos/baccarisverige-ux/Movera-host1/zipball/main'
           mkdir /tmp/host1
           unzip -q /tmp/host1.zip -d /tmp/host1
           SRC=$(find /tmp/host1 -mindepth 1 -maxdepth 1 -type d)
-          echo "SRC=$SRC" >> "$GITHUB_STEP_SUMMARY"
+          echo "::notice::SRC=$SRC"
           find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
           cp -a "$SRC"/. .
           rm -f .github/workflows/import-host1.yml
-          echo "file count: $(find . -type f ! -path './.git/*' | wc -l)" >> "$GITHUB_STEP_SUMMARY"
+          echo "::notice::files=$(find . -type f ! -path './.git/*' | wc -l)"
 
       - name: Commit exact copy
         env:
@@ -38,23 +36,19 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
-          {
-            echo '## git status'
-            git status --short | wc -l
-            git diff --cached --stat | tail -5
-          } >> "$GITHUB_STEP_SUMMARY" 2>&1
-          git commit -m 'Copy Movera-host1 as-is' > /tmp/commit.txt 2>&1 || {
-            echo '## commit failed' >> "$GITHUB_STEP_SUMMARY"
-            cat /tmp/commit.txt >> "$GITHUB_STEP_SUMMARY"
+          COUNT=$(git diff --cached --name-only | wc -l)
+          echo "::notice::staged=$COUNT"
+          if [ "$COUNT" -eq 0 ]; then
+            echo '::error::nothing staged'
+            git status
             exit 1
-          }
-          echo '## commit ok' >> "$GITHUB_STEP_SUMMARY"
-          cat /tmp/commit.txt >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if ! git commit -m 'Copy Movera-host1 as-is' 2>/tmp/commit.err; then
+            echo "::error::commit failed: $(tr '\n' ' ' </tmp/commit.err)"
+            exit 1
+          fi
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/baccarisverige-ux/groc-movera.git"
-          git push origin HEAD:main > /tmp/push.txt 2>&1 || {
-            echo '## push failed' >> "$GITHUB_STEP_SUMMARY"
-            cat /tmp/push.txt >> "$GITHUB_STEP_SUMMARY"
+          if ! git push origin HEAD:main 2>/tmp/push.err; then
+            echo "::error::push failed: $(tr '\n' ' ' </tmp/push.err)"
             exit 1
-          }
-          echo '## push ok' >> "$GITHUB_STEP_SUMMARY"
-          cat /tmp/push.txt >> "$GITHUB_STEP_SUMMARY"
+          fi
