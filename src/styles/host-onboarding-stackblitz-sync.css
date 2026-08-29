@@ -15,3 +15,37 @@
 .host-onboarding[data-screen] .host-onboarding__eyebrow::after {
   content: none !important;
 }
+
+/* Fill the guest host column; keep existing colors and type. */
+.app-shell--guest.app-shell--host {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+}
+.host-onboarding {
+  width: 100%;
+  max-width: 430px;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.host-onboarding__choice-grid button strong {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  max-width: 100%;
+}
+.host-onboarding__chips button {
+  white-space: normal;
+}
+.host-onboarding__phase-tracker > div small {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
+.host-onboarding__footer {
+  width: min(100%, 430px);
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.host-onboarding__footer-actions {
+  grid-template-columns: minmax(108px, .9fr) minmax(132px, 1.6fr);
+}

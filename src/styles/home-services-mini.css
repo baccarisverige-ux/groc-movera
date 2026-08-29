@@ -9,7 +9,7 @@
   align-items:center!important;
   justify-content:space-between!important;
   gap:10px!important;
-  margin:0 var(--b225-home-content-edge,16px) 8px!important;
+  margin:0 var(--home-premium-edge,var(--b225-home-content-edge,16px)) 8px!important;
 }
 
 .b225-home .b225-services-mini__head h2{
@@ -44,7 +44,7 @@
   width:100%!important;
   overflow-x:auto!important;
   overflow-y:hidden!important;
-  padding:1px var(--b225-home-content-edge,16px) 5px!important;
+  padding:1px calc(var(--home-premium-edge,var(--b225-home-content-edge,16px)) + 12px) 5px var(--home-premium-edge,var(--b225-home-content-edge,16px))!important;
   scrollbar-width:none!important;
   -webkit-overflow-scrolling:touch!important;
   scroll-snap-type:x proximity!important;
@@ -140,4 +140,13 @@
   .b225-home .b225-service-mini-card{flex-basis:101px!important;min-width:101px!important;max-width:101px!important;min-height:84px!important;grid-template-rows:45px auto!important}
   .b225-home .b225-service-mini-card__title{font-size:10.2px!important}
   .b225-home .b225-service-mini-card__subtitle{font-size:8.3px!important}
+}
+
+.b225-home .b225-service-mini-card__photo[data-empty-photo="true"]{
+  display:none!important;
+}
+
+.b225-home .b225-service-mini-card:has(.b225-service-mini-card__photo[data-empty-photo="true"]){
+  grid-template-rows:1fr!important;
+  min-height:64px!important;
 }
