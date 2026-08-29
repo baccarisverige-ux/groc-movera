@@ -7,6 +7,11 @@
   --home-premium-shadow-soft:0 5px 16px rgba(28,35,31,.045);
   color:var(--home-premium-text);
   letter-spacing:-.01em;
+  -webkit-font-smoothing:antialiased;
+}
+
+.b225-home .b225-brand{
+  display:none;
 }
 
 /* Airbnb-like rhythm: more breathing room, without changing the Home structure. */
