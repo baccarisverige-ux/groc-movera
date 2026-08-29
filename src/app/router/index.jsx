@@ -84,7 +84,7 @@ export function AppRouter(){
  const internalPath=toInternalPath(window.location.pathname)
  const resolved=useMemo(()=>resolveRoute(internalPath),[locationKey,internalPath])
  if(new URLSearchParams(window.location.search).get('__testError')==='1')throw new Error('Phase 4 error-boundary verification')
- if(!resolved)return <NotFoundPage onNavigate={navigate}/>
+ if(!resolved)return <GuestLayout currentPath={internalPath} onNavigate={navigate}><NotFoundPage onNavigate={navigate}/></GuestLayout>
  const {route,params}=resolved
  const Page=route.requiresAuth && !isAuthenticated ? AuthRequiredPage : route.component
  const returnTo = `${internalPath}${window.location.search}`

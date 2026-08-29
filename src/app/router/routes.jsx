@@ -11,13 +11,49 @@ import { MessagesPage } from '../../features/messages/MessagesPage.jsx'
 import { MessageThreadPage } from '../../features/messages/MessageThreadPage.jsx'
 import { ProfileGatewayPage } from '../../features/profile/ProfileGatewayPage.jsx'
 import { HostEntryPage } from '../../features/host/HostEntryPage.jsx'
+import '../../features/auth/auth-required-page.css'
 
 const lazyNamed = (loader, name) => lazy(() => loader().then(module => ({ default: module[name] })))
-const CarouselLab = lazyNamed(() => import('../../features/carousel/CarouselShell.jsx'), 'CarouselLab')
-const GestureLab = lazyNamed(() => import('../../features/carousel/GestureLab.jsx'), 'GestureLab')
-const ResilienceLab = lazyNamed(() => import('../../features/resilience/ResilienceLab.jsx'), 'ResilienceLab')
 
-export function NotFoundPage({ onNavigate }) { return <main className="not-found" data-testid="page-404"><p className="route-page__eyebrow">404</p><h1>Page introuvable</h1><p>Cette route n’existe pas dans Movera Host.</p><button className="route-link-button" onClick={() => onNavigate('/')}>Retour à l’accueil</button></main> }
+function MissingIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 8v5" />
+      <circle cx="12" cy="16.2" r=".9" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
+
+export function NotFoundPage({ onNavigate }) {
+  return (
+    <section className="auth-required-page not-found" data-testid="page-404" aria-labelledby="not-found-title">
+      <div className="auth-required-card">
+        <div className="auth-required-icon"><MissingIcon /></div>
+        <span className="auth-required-eyebrow">404</span>
+        <h1 id="not-found-title">Page introuvable</h1>
+        <p>Cette route n’existe pas dans Movera Host.</p>
+        <div className="auth-required-note">
+          <span className="auth-required-note__dot" />
+          <div>
+            <strong>Chemin inconnu</strong>
+            <small>Vérifiez l’URL ou revenez à l’accueil pour continuer.</small>
+          </div>
+        </div>
+        <button type="button" onClick={() => onNavigate('/')}>Retour à l’accueil</button>
+      </div>
+    </section>
+  )
+}
+
+const labRoutes = import.meta.env.DEV
+  ? [
+      { path: '/carousel-lab', area: 'guest', component: lazyNamed(() => import('../../features/carousel/CarouselShell.jsx'), 'CarouselLab') },
+      { path: '/gesture-lab', area: 'guest', component: lazyNamed(() => import('../../features/carousel/GestureLab.jsx'), 'GestureLab') },
+      { path: '/resilience-lab', area: 'guest', component: lazyNamed(() => import('../../features/resilience/ResilienceLab.jsx'), 'ResilienceLab') },
+    ]
+  : []
+
 export const routeDefinitions = [
   { path: '/', area: 'guest', component: HomePage },
   { path: '/plage', area: 'guest', component: BeachPage },
@@ -32,7 +68,5 @@ export const routeDefinitions = [
   { path: '/profile', area: 'guest', component: ProfileGatewayPage },
   { path: '/host', area: 'host', component: HostEntryPage, requiresAuth: true, authFeature: 'votre espace Hôte' },
   { path: '/host/calendar', area: 'host', component: HostEntryPage, requiresAuth: true, authFeature: 'votre calendrier Hôte' },
-  { path: '/carousel-lab', area: 'guest', component: CarouselLab },
-  { path: '/gesture-lab', area: 'guest', component: GestureLab },
-  { path: '/resilience-lab', area: 'guest', component: ResilienceLab },
+  ...labRoutes,
 ]

@@ -20,9 +20,9 @@ const COLLECTION_HEADER_LABELS = Object.freeze({
 
 const mapShellStyle = { maxWidth: 430, margin: '0 auto', background: '#eff1ef' }
 const mapContentStyle = { padding: 0, overflow: 'hidden' }
-const hostShellStyle = { maxWidth: 430, margin: '0 auto', background: '#f4f7f5' }
+const hostShellStyle = { maxWidth: 430, margin: '0 auto', background: '#f4f7f5', gridTemplateColumns: 'minmax(0, 1fr)' }
 const hostContentStyle = { padding: 0, overflow: 'visible', background: '#f4f7f5' }
-const collectionContentStyle = { padding: 0, overflow: 'auto', background: '#f7f7f5' }
+const collectionContentStyle = { paddingTop: 0, paddingLeft: 0, paddingRight: 0, overflow: 'auto', background: '#f7f7f5' }
 
 function AppLink({ children, className, href, onNavigate, active, disabled = false }) {
   return (
