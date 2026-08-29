@@ -114,6 +114,11 @@ export function CollectionPage({
     onNavigate(`/map?listing=${encodeURIComponent(item.id)}`)
   }
 
+  const openOfferListing = (item) => {
+    if (!onNavigate) return
+    onNavigate(`/listing/${item.id}`)
+  }
+
   return (
     <div className={`beach-page${pageClassName ? ` ${pageClassName}` : ''}`} data-testid={hero.testId}>
       <section className="beach-hero collection-hero" aria-label={collectionLabel}>
@@ -156,7 +161,7 @@ export function CollectionPage({
             />
           </label>
           {cityQuery ? (
-            <button className="beach-city-search__clear" type="button" aria-label="Effacer la ville" onClick={() => selectCity('Toutes')}>	imes</button>
+            <button className="beach-city-search__clear" type="button" aria-label="Effacer la ville" onClick={() => selectCity('Toutes')}>\u00d7</button>
           ) : <SearchIcon />}
           {focused && suggestions.length > 0 ? (
             <div className="beach-city-suggestions" role="listbox" aria-label="Villes suggérées">
@@ -207,6 +212,17 @@ export function CollectionPage({
                 index={index}
                 config={COLLECTION_OFFER_MOTION}
                 data-offer-id={item.id}
+                role="link"
+                tabIndex={0}
+                style={{ cursor: 'pointer' }}
+                aria-label={`Voir ${item.title}`}
+                onClick={() => openOfferListing(item)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    openOfferListing(item)
+                  }
+                }}
               >
                 <div className="beach-offer__media">
                   <img src={item.image} alt="" loading="lazy" decoding="async" />
