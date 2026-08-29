@@ -47,7 +47,7 @@ jobs:
           test -f dist/index.html
           test -f dist/404.html
           test -d dist/assets
-          grep -q '/Movera-host1/assets/' dist/index.html
+          grep -q '/groc-movera/assets/' dist/index.html
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
