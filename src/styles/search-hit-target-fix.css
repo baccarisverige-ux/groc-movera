@@ -1,0 +1,31 @@
+.movera-st .movera-st__persistent-search input{
+  width:100%!important;
+  height:18px!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  outline:0!important;
+  background:transparent!important;
+  color:#222624!important;
+  font-family:inherit!important;
+  font-size:16px!important;
+  font-weight:760!important;
+  letter-spacing:-.18px!important;
+  line-height:18px!important;
+  transform:none!important;
+  transform-origin:left center!important;
+  caret-color:#315f4c!important;
+  box-shadow:none!important;
+  appearance:none!important;
+  -webkit-appearance:none!important;
+}
+
+/* Flatten leftover 3D tilt so painted buttons match their clickable rect. */
+.movera-st--open .movera-st__panel{
+  transform:none!important;
+}
+
+.movera-st__step-motion{
+  filter:none!important;
+}
