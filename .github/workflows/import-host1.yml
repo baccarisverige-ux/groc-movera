@@ -16,7 +16,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Copy Movera-host1 zipball as-is
+      - name: Copy Movera-host1 zipball except workflows
         run: |
           set -euo pipefail
           curl -fsSL -o /tmp/host1.zip 'https://api.github.com/repos/baccarisverige-ux/Movera-host1/zipball/main'
@@ -24,9 +24,11 @@ jobs:
           unzip -q /tmp/host1.zip -d /tmp/host1
           SRC=$(find /tmp/host1 -mindepth 1 -maxdepth 1 -type d)
           echo "::notice::SRC=$SRC"
-          find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
-          cp -a "$SRC"/. .
-          rm -f .github/workflows/import-host1.yml
+          find . -mindepth 1 -maxdepth 1 ! -name '.git' ! -name '.github' -exec rm -rf {} +
+          if [ -d .github ]; then
+            find .github -mindepth 1 -maxdepth 1 ! -name 'workflows' -exec rm -rf {} +
+          fi
+          rsync -a --exclude '.github/workflows/' "$SRC"/ .
           echo "::notice::files=$(find . -type f ! -path './.git/*' | wc -l)"
 
       - name: Commit exact copy
@@ -40,13 +42,9 @@ jobs:
           echo "::notice::staged=$COUNT"
           if [ "$COUNT" -eq 0 ]; then
             echo '::error::nothing staged'
-            git status
             exit 1
           fi
-          if ! git commit -m 'Copy Movera-host1 as-is' 2>/tmp/commit.err; then
-            echo "::error::commit failed: $(tr '\n' ' ' </tmp/commit.err)"
-            exit 1
-          fi
+          git commit -m 'Copy Movera-host1 as-is'
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/baccarisverige-ux/groc-movera.git"
           if ! git push origin HEAD:main 2>/tmp/push.err; then
             echo "::error::push failed: $(tr '\n' ' ' </tmp/push.err)"
