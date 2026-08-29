@@ -17,7 +17,7 @@ export function installPropertyArtworkRuntime() {
       }
       if (!clean.startsWith('UklG') || clean.length % 4 !== 0) throw new Error('invalid property artwork')
 
-      const dataUrl = `data:image/webp;base64,${clean}`
+      const dataUrl = `data:${'image/webp'};base64,${clean}`
       const probe = new Image()
       probe.onload = () => {
         root.style.setProperty('--property-drawings-sprite', `url("${dataUrl}")`)

@@ -4,8 +4,8 @@ module.exports = {
       startServerCommand: 'npm run preview -- --host 127.0.0.1',
       startServerReadyPattern: 'Local:',
       url: [
-        'http://127.0.0.1:4173/Movera-host1/',
-        'http://127.0.0.1:4173/Movera-host1/map',
+        'http://127.0.0.1:4173/groc-movera/',
+        'http://127.0.0.1:4173/groc-movera/map',
       ],
       numberOfRuns: 1,
       settings: {

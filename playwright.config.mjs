@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test'
 
-const baseURL = 'http://127.0.0.1:4173/Movera-host1'
+const baseURL = 'http://127.0.0.1:4173/groc-movera'
 
 export default defineConfig({
   testDir: './tests',
