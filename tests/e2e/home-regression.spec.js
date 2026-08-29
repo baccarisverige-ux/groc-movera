@@ -97,7 +97,7 @@ test('separate collection routes keep their own identity and shared filtering', 
     await page.goto(`/Movera-host1${collection.route}`)
     await expect(page.getByTestId(collection.testId)).toBeVisible()
     await expect(page.locator('.app-shell__header')).toBeVisible()
-    await expect(page.locator('.app-shell__header')).toContainText('Movera Host')
+    await expect(page.locator('.app-shell__header strong')).toHaveText('Movera')
     await expect(page.locator('.beach-hero__top, .beach-glass-button, .beach-hero__counter')).toHaveCount(0)
     const hero = page.locator('.portrait-collection-hero__image')
     await expect(hero).toHaveAttribute('src', /hero-.*\.webp$/)

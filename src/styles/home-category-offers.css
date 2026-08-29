@@ -103,6 +103,7 @@
 }
 
 .b225-home .b225-offer-card{
+  cursor:pointer!important;
   flex:0 0 150px!important;
   min-width:150px!important;
   max-width:150px!important;

@@ -11,6 +11,8 @@ import { MessagesPage } from '../../features/messages/MessagesPage.jsx'
 import { MessageThreadPage } from '../../features/messages/MessageThreadPage.jsx'
 import { ProfileGatewayPage } from '../../features/profile/ProfileGatewayPage.jsx'
 import { HostEntryPage } from '../../features/host/HostEntryPage.jsx'
+import { ListingDetailPage } from '../../features/listing/ListingDetailPage.jsx'
+import { ServiceRequestPage } from '../../features/services/ServiceRequestPage.jsx'
 import '../../features/auth/auth-required-page.css'
 
 const lazyNamed = (loader, name) => lazy(() => loader().then(module => ({ default: module[name] })))
@@ -32,7 +34,7 @@ export function NotFoundPage({ onNavigate }) {
         <div className="auth-required-icon"><MissingIcon /></div>
         <span className="auth-required-eyebrow">404</span>
         <h1 id="not-found-title">Page introuvable</h1>
-        <p>Cette route n’existe pas dans Movera Host.</p>
+        <p>Cette route n’existe pas dans Movera.</p>
         <div className="auth-required-note">
           <span className="auth-required-note__dot" />
           <div>
@@ -63,6 +65,8 @@ export const routeDefinitions = [
   { path: '/villa', area: 'guest', component: VillaPage },
   { path: '/map', area: 'guest', component: MapPage },
   { path: '/favorites', area: 'guest', component: FavoritesPage },
+  { path: '/listing/:id', area: 'guest', component: ListingDetailPage },
+  { path: '/services/:slug', area: 'guest', component: ServiceRequestPage },
   { path: '/messages', area: 'guest', component: MessagesPage, requiresAuth: true, authFeature: 'vos messages' },
   { path: '/messages/:threadId', area: 'guest', component: MessageThreadPage, requiresAuth: true, authFeature: 'vos messages' },
   { path: '/profile', area: 'guest', component: ProfileGatewayPage },

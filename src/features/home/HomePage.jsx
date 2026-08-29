@@ -4,6 +4,7 @@ import { MotionList, MotionListItem } from '../../shared/motion/MotionList.jsx'
 import { useFavorites } from '../favorites/favoritesStore.js'
 import { homeCategories, homeCategoryOffers } from './data/homeData.js'
 import { getSelectedHomeCategory, setSelectedHomeCategory } from './homeCategorySelection.js'
+import { MiniServicesSection } from './MiniServicesSection.jsx'
 import { useImmediateCategorySwipe } from './useImmediateCategorySwipe.js'
 import '../../styles/home-b225.css'
 import '../../styles/home-b225-block2.css'
@@ -29,9 +30,6 @@ import GUESTHOUSE_CATEGORY_ICON from './assets/maison-hote-category.png'
 import VILLA_CATEGORY_ICON from './assets/villa-category.png'
 import EXPERIENCE_CATEGORY_ICON from './assets/experience-category.webp'
 import PARTNER_CATEGORY_ICON from './assets/partner-category.png'
-import DRIVER_SERVICE_ICON from './assets/service-chauffeur.webp'
-import CLEANING_SERVICE_ICON from './assets/service-menage.webp'
-import CAR_RENTAL_SERVICE_ICON from './assets/service-car-rental.webp'
 
 const CATEGORY_ARTWORK = {
   all: ALL_CATEGORY_GLOBE,
@@ -66,12 +64,6 @@ const WELCOME_CITIES = [
   { id: 'tabarka', label: 'Tabarka' },
 ]
 
-const HOME_SERVICES = Object.freeze([
-  { id: 'driver', label: 'Chauffeur', subtitle: 'À la demande', image: DRIVER_SERVICE_ICON },
-  { id: 'cleaning', label: 'Ménage', subtitle: 'Pour votre séjour', image: CLEANING_SERVICE_ICON },
-  { id: 'car-rental', label: 'Location voiture', subtitle: 'Simple & rapide', image: CAR_RENTAL_SERVICE_ICON },
-])
-
 function SearchIcon() {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
 }
@@ -85,8 +77,9 @@ function CategoryArtwork({ id }) {
   return src ? <img className="b225-category-icon" data-category-icon={id} src={src} alt="" aria-hidden="true" decoding="async"/> : null
 }
 
-function ListingCard({ item, sectionId, favorite, toggleFavorite, index }) {
+function ListingCard({ item, sectionId, favorite, toggleFavorite, index, onNavigate }) {
   const dates = item.dateLabel || '3–4 sept.'
+  const openListing = () => onNavigate(`/listing/${item.id}`)
 
   return (
     <MotionListItem
@@ -96,6 +89,15 @@ function ListingCard({ item, sectionId, favorite, toggleFavorite, index }) {
       index={index}
       data-testid={`home-card-${sectionId}-${item.id}`}
       aria-label={`${item.title}, ${item.priceTotal}, note ${item.rating}`}
+      role="link"
+      tabIndex={0}
+      onClick={openListing}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          openListing()
+        }
+      }}
     >
       <div className="b225-offer-card__image">
         <img src={item.image} alt="" loading="lazy" decoding="async"/>
@@ -176,6 +178,7 @@ function CategorySelection({ id, title, items, favoriteIdSet, toggleFavorite, on
               sectionId={id}
               favorite={favoriteIdSet.has(item.id)}
               toggleFavorite={toggleFavorite}
+              onNavigate={onNavigate}
             />
           ))}
           <SeeAllCard id={id} title={title} items={items} onNavigate={onNavigate}/>
@@ -185,40 +188,8 @@ function CategorySelection({ id, title, items, favoriteIdSet, toggleFavorite, on
   )
 }
 
-function MiniServicesSection() {
-  return (
-    <section className="b225-services-mini" data-testid="home-services-mini" aria-label="Services Movera">
-      <div className="b225-services-mini__head">
-        <h2>Services Movera</h2>
-        <span className="b225-services-mini__tag">Essentiels</span>
-      </div>
-      <MotionList className="b225-services-mini__rail" data-motion-list="home-services">
-        {HOME_SERVICES.map((service, index) => (
-          <MotionListItem
-            key={service.id}
-            as="article"
-            className="b225-service-mini-card"
-            config={HOME_OFFER_MOTION}
-            index={index}
-            data-service-id={service.id}
-          >
-            <span className="b225-service-mini-card__photo" aria-hidden="true">
-              {service.image ? <img src={service.image} alt="" decoding="async"/> : null}
-            </span>
-            <span className="b225-service-mini-card__copy">
-              <strong className="b225-service-mini-card__title">{service.label}</strong>
-              <span className="b225-service-mini-card__subtitle">{service.subtitle}</span>
-            </span>
-          </MotionListItem>
-        ))}
-      </MotionList>
-    </section>
-  )
-}
-
 export function HomePage({ onNavigate }) {
   const [category, setCategory] = useState(getSelectedHomeCategory)
-  const [query, setQuery] = useState('')
   const { favoriteIds, toggleFavorite } = useFavorites()
   const favoriteIdSet = useMemo(() => new Set(favoriteIds), [favoriteIds])
   const categoryRailRef = useImmediateCategorySwipe()
@@ -230,16 +201,11 @@ export function HomePage({ onNavigate }) {
     if (route) onNavigate(route)
   }
 
-  const categorySelections = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    return homeCategories.map((item) => ({
-      id: item.id,
-      title: item.label,
-      items: (homeCategoryOffers[item.id] || []).filter((listing) =>
-        !q || `${listing.title} ${listing.location}`.toLowerCase().includes(q)
-      ),
-    }))
-  }, [query])
+  const categorySelections = useMemo(() => homeCategories.map((item) => ({
+    id: item.id,
+    title: item.label,
+    items: homeCategoryOffers[item.id] || [],
+  })), [])
 
   const allSelection = categorySelections.find((selection) => selection.id === 'all')
   const remainingSelections = categorySelections.filter((selection) => selection.id !== 'all')
@@ -259,13 +225,12 @@ export function HomePage({ onNavigate }) {
   return (
     <div className="b225-home" data-testid="page-home">
       <header className="b225-home-header">
-        <div className="b225-brand">Movera Host</div>
-        <label className="b225-search b225-home-map-search" aria-label="Rechercher une destination">
+        <div className="b225-brand">Movera</div>
+        <button type="button" className="b225-search b225-home-map-search" data-testid="home-search" aria-label="Rechercher une destination">
           <SearchIcon/>
           <span className="b225-home-map-search__copy"><strong>Explorez autrement</strong><span>Destination · Dates · Voyageurs</span></span>
-          <input data-testid="home-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} aria-label="Destination" readOnly tabIndex={-1}/>
           <span className="b225-home-map-filter-button" aria-hidden="true">≡</span>
-        </label>
+        </button>
       </header>
 
       <div className="b225-categories-shell" aria-label="Catégories">
@@ -294,7 +259,7 @@ export function HomePage({ onNavigate }) {
         </div>
       </section>
 
-      <MiniServicesSection/>
+      <MiniServicesSection onNavigate={onNavigate}/>
 
       {allSelection ? renderSelection(allSelection) : null}
 

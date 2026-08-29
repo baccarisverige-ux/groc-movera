@@ -18,11 +18,12 @@ const COLLECTION_HEADER_LABELS = Object.freeze({
   '/villa': 'Collection Villa',
 })
 
-const mapShellStyle = { maxWidth: 430, margin: '0 auto', background: '#eff1ef' }
+const mapShellStyle = { maxWidth: 430, margin: '0 auto', background: '#f3f4f3' }
 const mapContentStyle = { padding: 0, overflow: 'hidden' }
 const hostShellStyle = { maxWidth: 430, margin: '0 auto', background: '#f4f7f5', gridTemplateColumns: 'minmax(0, 1fr)' }
 const hostContentStyle = { padding: 0, overflow: 'visible', background: '#f4f7f5' }
 const collectionContentStyle = { paddingTop: 0, paddingLeft: 0, paddingRight: 0, overflow: 'auto', background: '#f7f7f5' }
+const stackedContentStyle = { padding: 0, overflow: 'auto', background: '#f7f7f5' }
 
 function AppLink({ children, className, href, onNavigate, active, disabled = false }) {
   return (
@@ -50,14 +51,23 @@ export function GuestLayout({ children, currentPath, onNavigate }) {
   const isHostRoute = currentPath === '/host' || currentPath.startsWith('/host/')
   const isCollectionRoute = isGuestCollectionRoute(currentPath)
   const isBeachRoute = currentPath === '/plage'
+  const isStackedGuestRoute = currentPath.startsWith('/listing/') || currentPath.startsWith('/services/')
   const collectionHeaderLabel = COLLECTION_HEADER_LABELS[currentPath] || ''
   const shellStyle = isMapRoute ? mapShellStyle : isHostRoute ? hostShellStyle : undefined
-  const contentStyle = isMapRoute ? mapContentStyle : isHostRoute ? hostContentStyle : isCollectionRoute ? collectionContentStyle : undefined
+  const contentStyle = isMapRoute
+    ? mapContentStyle
+    : isHostRoute
+      ? hostContentStyle
+      : isCollectionRoute
+        ? collectionContentStyle
+        : isStackedGuestRoute
+          ? stackedContentStyle
+          : undefined
 
   return (
     <div className={`app-shell app-shell--guest${isMapRoute ? ' app-shell--map' : ''}${isHostRoute ? ' app-shell--host' : ''}${isCollectionRoute ? ' app-shell--collection' : ''}${isBeachRoute ? ' app-shell--beach' : ''}`} style={shellStyle}>
-      <header className="app-shell__header" style={isMapRoute || isHostRoute ? { display: 'none' } : undefined}>
-        <strong>Movera Host</strong>
+      <header className="app-shell__header" style={isMapRoute || isHostRoute || isStackedGuestRoute ? { display: 'none' } : undefined}>
+        <strong>Movera</strong>
         {collectionHeaderLabel ? <span className="app-shell__collection-badge">{collectionHeaderLabel}</span> : null}
       </header>
       <main

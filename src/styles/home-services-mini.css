@@ -55,10 +55,10 @@
 .b225-home .b225-service-mini-card{
   box-sizing:border-box!important;
   position:relative!important;
-  flex:0 0 108px!important;
-  min-width:108px!important;
-  max-width:108px!important;
-  min-height:88px!important;
+  flex:0 0 122px!important;
+  min-width:122px!important;
+  max-width:122px!important;
+  min-height:96px!important;
   display:grid!important;
   grid-template-rows:48px auto!important;
   overflow:hidden!important;
@@ -70,6 +70,13 @@
     inset 0 1px 0 rgba(255,255,255,1),
     0 1px 0 rgba(194,194,188,.28),
     0 5px 12px rgba(36,37,33,.055)!important;
+  padding:0!important;
+  font:inherit!important;
+  color:inherit!important;
+  text-align:left!important;
+  cursor:pointer!important;
+  appearance:none!important;
+  -webkit-appearance:none!important;
 }
 
 .b225-home .b225-service-mini-card::after{
@@ -106,7 +113,7 @@
   position:relative!important;
   z-index:2!important;
   display:grid!important;
-  gap:1px!important;
+  gap:2px!important;
   align-content:center!important;
   min-width:0!important;
   padding:6px 8px 8px!important;
@@ -117,7 +124,7 @@
   text-overflow:ellipsis!important;
   white-space:nowrap!important;
   color:#252622!important;
-  font-size:10.6px!important;
+  font-size:13px!important;
   line-height:1.12!important;
   font-weight:680!important;
   letter-spacing:-.16px!important;
@@ -128,7 +135,7 @@
   text-overflow:ellipsis!important;
   white-space:nowrap!important;
   color:#858680!important;
-  font-size:8.6px!important;
+  font-size:11px!important;
   line-height:1.15!important;
   font-weight:470!important;
   letter-spacing:-.04px!important;
@@ -137,9 +144,9 @@
 @media(max-width:350px){
   .b225-home .b225-services-mini{margin-top:14px!important}
   .b225-home .b225-services-mini__head h2{font-size:13.4px!important}
-  .b225-home .b225-service-mini-card{flex-basis:101px!important;min-width:101px!important;max-width:101px!important;min-height:84px!important;grid-template-rows:45px auto!important}
-  .b225-home .b225-service-mini-card__title{font-size:10.2px!important}
-  .b225-home .b225-service-mini-card__subtitle{font-size:8.3px!important}
+  .b225-home .b225-service-mini-card{flex-basis:114px!important;min-width:114px!important;max-width:114px!important;min-height:92px!important;grid-template-rows:45px auto!important}
+  .b225-home .b225-service-mini-card__title{font-size:12.4px!important}
+  .b225-home .b225-service-mini-card__subtitle{font-size:10.4px!important}
 }
 
 .b225-home .b225-service-mini-card__photo[data-empty-photo="true"]{

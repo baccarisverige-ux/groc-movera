@@ -17,5 +17,7 @@ export function isGuestCollectionRoute(pathname) {
 }
 
 export function getGuestNavigationPath(pathname) {
-  return isGuestCollectionRoute(pathname) ? '/' : pathname
+  if (isGuestCollectionRoute(pathname)) return '/'
+  if (pathname.startsWith('/listing/') || pathname.startsWith('/services/')) return '/'
+  return pathname
 }

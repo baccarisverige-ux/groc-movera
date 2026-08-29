@@ -86,6 +86,15 @@ export function FavoritesPage({ onNavigate }) {
                 index={index}
                 config={FAVORITES_ITEM_MOTION}
                 data-favorite-id={item.id}
+                role="link"
+                tabIndex={0}
+                onClick={() => onNavigate(`/listing/${item.id}`)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    onNavigate(`/listing/${item.id}`)
+                  }
+                }}
               >
                 <div className="favorite-card__media">
                   <img src={item.image} alt={item.title} loading="lazy" decoding="async" />
@@ -94,7 +103,10 @@ export function FavoritesPage({ onNavigate }) {
                     type="button"
                     className="favorite-card__heart"
                     aria-label={`Retirer ${item.title} des favoris`}
-                    onClick={() => toggleFavorite(item.id)}
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      toggleFavorite(item.id)
+                    }}
                   >
                     <HeartIcon filled />
                   </button>

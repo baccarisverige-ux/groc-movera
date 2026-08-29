@@ -22,5 +22,7 @@ describe('guest collection route contract', () => {
     }
     expect(isGuestCollectionRoute('/map')).toBe(false)
     expect(getGuestNavigationPath('/map')).toBe('/map')
+    expect(getGuestNavigationPath('/listing/dar-sidi-bleu')).toBe('/')
+    expect(getGuestNavigationPath('/services/chauffeur')).toBe('/')
   })
 })
