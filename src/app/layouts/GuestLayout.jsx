@@ -65,7 +65,7 @@ export function GuestLayout({ children, currentPath, onNavigate }) {
           : undefined
 
   return (
-    <div className={`app-shell app-shell--guest${isMapRoute ? ' app-shell--map' : ''}${isHostRoute ? ' app-shell--host' : ''}${isCollectionRoute ? ' app-shell--collection' : ''}${isBeachRoute ? ' app-shell--beach' : ''}`} style={shellStyle}>
+    <div className={`app-shell app-shell--guest${isMapRoute ? ' app-shell--map' : ''}${isHostRoute ? ' app-shell--host' : ''}${isCollectionRoute ? ' app-shell--collection' : ''}${isBeachRoute ? ' app-shell--beach' : ''}${isStackedGuestRoute ? ' app-shell--stacked' : ''}`} style={shellStyle}>
       <header className="app-shell__header" style={isMapRoute || isHostRoute || isStackedGuestRoute ? { display: 'none' } : undefined}>
         <strong>Movera</strong>
         {collectionHeaderLabel ? <span className="app-shell__collection-badge">{collectionHeaderLabel}</span> : null}
@@ -78,7 +78,7 @@ export function GuestLayout({ children, currentPath, onNavigate }) {
       >
         {children}
       </main>
-      {!isMapRoute && !isHostRoute ? (
+      {!isMapRoute && !isHostRoute && !isStackedGuestRoute ? (
         <nav className="app-shell__nav" aria-label="Navigation principale">
           {guestNav.map(({ label, path, icon, disabled: permanentlyDisabled, requiresAuth }) => {
             const disabled = Boolean(permanentlyDisabled || (requiresAuth && !isAuthenticated))
