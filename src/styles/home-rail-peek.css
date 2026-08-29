@@ -1,0 +1,13 @@
+/* Horizontal rails: keep a small end peek so the last card is not clipped. */
+.b225-home .b225-category-selection .b225-offer-scroll{
+  padding-right:calc(var(--home-premium-edge,16px) + 12px)!important;
+  scroll-padding-right:12px;
+}
+
+.b225-home .b225-category-selection .b225-offer-scroll::after{
+  content:"";
+  flex:0 0 12px;
+  width:12px;
+  min-width:12px;
+  pointer-events:none;
+}
