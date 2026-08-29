@@ -1,4 +1,4 @@
-/* Compact Movera services strip. Photo slots intentionally stay empty until assets arrive. */
+/* Compact Movera services strip. */
 .b225-home .b225-services-mini{
   margin:16px 0 12px!important;
   padding:0!important;
@@ -88,9 +88,9 @@
   display:block!important;
   margin:6px 6px 0!important;
   overflow:hidden!important;
-  border:1px dashed rgba(111,112,106,.12)!important;
+  border:1px solid rgba(111,112,106,.08)!important;
   border-radius:11px!important;
-  background:linear-gradient(145deg,rgba(247,247,244,.98),rgba(238,239,235,.88))!important;
+  background:#fbfbfa!important;
   box-shadow:inset 0 1px 3px rgba(45,45,40,.035)!important;
 }
 
@@ -98,7 +98,7 @@
   display:block!important;
   width:100%!important;
   height:100%!important;
-  object-fit:cover!important;
+  object-fit:contain!important;
   object-position:center!important;
 }
 

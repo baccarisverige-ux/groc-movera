@@ -29,6 +29,9 @@ import GUESTHOUSE_CATEGORY_ICON from './assets/maison-hote-category.png'
 import VILLA_CATEGORY_ICON from './assets/villa-category.png'
 import EXPERIENCE_CATEGORY_ICON from './assets/experience-category.webp'
 import PARTNER_CATEGORY_ICON from './assets/partner-category.png'
+import DRIVER_SERVICE_ICON from './assets/service-chauffeur.webp'
+import CLEANING_SERVICE_ICON from './assets/service-menage.webp'
+import CAR_RENTAL_SERVICE_ICON from './assets/service-car-rental.webp'
 
 const CATEGORY_ARTWORK = {
   all: ALL_CATEGORY_GLOBE,
@@ -64,9 +67,9 @@ const WELCOME_CITIES = [
 ]
 
 const HOME_SERVICES = Object.freeze([
-  { id: 'driver', label: 'Chauffeur', subtitle: 'À la demande', image: '' },
-  { id: 'cleaning', label: 'Ménage', subtitle: 'Pour votre séjour', image: '' },
-  { id: 'car-rental', label: 'Location voiture', subtitle: 'Simple & rapide', image: '' },
+  { id: 'driver', label: 'Chauffeur', subtitle: 'À la demande', image: DRIVER_SERVICE_ICON },
+  { id: 'cleaning', label: 'Ménage', subtitle: 'Pour votre séjour', image: CLEANING_SERVICE_ICON },
+  { id: 'car-rental', label: 'Location voiture', subtitle: 'Simple & rapide', image: CAR_RENTAL_SERVICE_ICON },
 ])
 
 function SearchIcon() {
@@ -189,19 +192,26 @@ function MiniServicesSection() {
         <h2>Services Movera</h2>
         <span className="b225-services-mini__tag">Essentiels</span>
       </div>
-      <div className="b225-services-mini__rail">
-        {HOME_SERVICES.map((service) => (
-          <article key={service.id} className="b225-service-mini-card" data-service-id={service.id}>
-            <span className="b225-service-mini-card__photo" data-empty-photo="true" aria-hidden="true">
-              {service.image ? <img src={service.image} alt=""/> : null}
+      <MotionList className="b225-services-mini__rail" data-motion-list="home-services">
+        {HOME_SERVICES.map((service, index) => (
+          <MotionListItem
+            key={service.id}
+            as="article"
+            className="b225-service-mini-card"
+            config={HOME_OFFER_MOTION}
+            index={index}
+            data-service-id={service.id}
+          >
+            <span className="b225-service-mini-card__photo" aria-hidden="true">
+              {service.image ? <img src={service.image} alt="" decoding="async"/> : null}
             </span>
             <span className="b225-service-mini-card__copy">
               <strong className="b225-service-mini-card__title">{service.label}</strong>
               <span className="b225-service-mini-card__subtitle">{service.subtitle}</span>
             </span>
-          </article>
+          </MotionListItem>
         ))}
-      </div>
+      </MotionList>
     </section>
   )
 }
