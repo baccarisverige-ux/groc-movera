@@ -1,8 +1,22 @@
 import { useState } from 'react'
 import { ArrowLeftIcon } from '../../shared/icons/AppIcons.jsx'
+import { getListingMapPosition } from '../../entities/listing/listingMapPositions.js'
 import { useFavorites } from '../favorites/favoritesStore.js'
 import { getGuestListingById } from './guestListings.js'
 import './listing-detail-page.css'
+
+const TUNIS_CENTER = Object.freeze({ lat: 36.8065, lng: 10.1815 })
+
+const CITY_COORDS = Object.freeze({
+  'la marsa': { lat: 36.8789, lng: 10.3247 },
+  carthage: { lat: 36.8528, lng: 10.3236 },
+  gammarth: { lat: 36.9206, lng: 10.2894 },
+  'sidi bou said': { lat: 36.8685, lng: 10.3417 },
+  tunis: TUNIS_CENTER,
+  hammamet: { lat: 36.4, lng: 10.6167 },
+  sousse: { lat: 35.8256, lng: 10.6411 },
+  djerba: { lat: 33.8075, lng: 10.8451 },
+})
 
 function goBack(onNavigate) {
   if (window.history.length > 1) {
@@ -12,9 +26,9 @@ function goBack(onNavigate) {
   onNavigate('/')
 }
 
-function Glyph({ children }) {
+function Glyph({ children, size = 24 }) {
   return (
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       {children}
     </svg>
   )
@@ -22,7 +36,7 @@ function Glyph({ children }) {
 
 function ShareGlyph() {
   return (
-    <Glyph>
+    <Glyph size={18}>
       <path d="M12 3v12" />
       <path d="m8 7 4-4 4 4" />
       <path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" />
@@ -37,7 +51,7 @@ function HeartGlyph({ filled }) {
         d="M20.8 4.8a5.3 5.3 0 0 0-7.5 0L12 6.1l-1.3-1.3a5.3 5.3 0 0 0-7.5 7.5L12 21l8.8-8.7a5.3 5.3 0 0 0 0-7.5Z"
         fill={filled ? 'currentColor' : 'none'}
         stroke="currentColor"
-        strokeWidth="1.7"
+        strokeWidth="1.6"
         strokeLinejoin="round"
       />
     </svg>
@@ -65,7 +79,7 @@ function HostQualityGlyph() {
 
 function PinGlyph() {
   return (
-    <Glyph>
+    <Glyph size={16}>
       <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" />
       <circle cx="12" cy="10" r="2.3" />
     </Glyph>
@@ -74,7 +88,7 @@ function PinGlyph() {
 
 function ChevronGlyph() {
   return (
-    <Glyph>
+    <Glyph size={18}>
       <path d="m9 6 6 6-6 6" />
     </Glyph>
   )
@@ -112,6 +126,14 @@ function SafetyGlyph() {
     <Glyph>
       <path d="M12 3 5 6.5v5c0 4.2 2.9 8 7 8.9 4.1-.9 7-4.7 7-8.9v-5Z" />
     </Glyph>
+  )
+}
+
+function CheckGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M5 12.5 9.2 17 19 7" />
+    </svg>
   )
 }
 
@@ -215,30 +237,43 @@ function amenityIcon(name) {
   )
 }
 
-function reviewChips(amenities = []) {
-  const keys = amenities.map((name) => String(name)
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-zA-Z0-9]+/g, '')
-    .toLowerCase())
-  const chips = []
-  if (keys.some((key) => key.includes('parking') || key.includes('vue') || key.includes('plage') || key.includes('balcon'))) {
-    chips.push('Emplacement')
-  }
-  if (keys.some((key) => key.includes('clim') || key.includes('cuisine') || key.includes('tv') || key.includes('tele'))) {
-    chips.push('Confort')
-  }
-  if (keys.some((key) => key.includes('piscine') || key.includes('jardin') || key.includes('terrasse') || key.includes('patio'))) {
-    chips.push('Extérieur')
-  }
-  if (!chips.length) chips.push('Emplacement', 'Confort')
-  return chips.slice(0, 3)
-}
-
 function hostYears(since) {
   const match = String(since || '').match(/(20\d{2})/)
   if (!match) return null
   return Math.max(1, 2026 - Number(match[1]))
+}
+
+function foldKey(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+}
+
+function listingMapCenter(listing) {
+  const known = getListingMapPosition(listing.id)
+  if (known) return known
+  const hay = foldKey(listing.location)
+  for (const [city, coords] of Object.entries(CITY_COORDS)) {
+    if (hay.includes(city)) return coords
+  }
+  return TUNIS_CENTER
+}
+
+function osmStaticUrl({ lat, lng }) {
+  return `https://staticmap.openstreetmap.de/staticmap.php?center=${lat},${lng}&zoom=13&size=600x360&maptype=mapnik`
+}
+
+function uniqueSleepCards(photos) {
+  const cards = []
+  const seen = new Set()
+  for (const photo of photos) {
+    if (!photo?.src || seen.has(photo.src)) continue
+    seen.add(photo.src)
+    cards.push(photo)
+    if (cards.length === 2) break
+  }
+  return cards
 }
 
 async function shareListing(title) {
@@ -301,13 +336,13 @@ export function ListingDetailPage({ params, onNavigate }) {
   const photos = listing.photos?.length ? listing.photos : listing.image ? [{ src: listing.image, label: 'Chambre' }] : []
   const visibleAmenities = amenitiesOpen ? listing.amenities : listing.amenities.slice(0, 5)
   const years = hostYears(listing.host?.since)
-  const chips = reviewChips(listing.amenities)
   const hostName = listing.host?.name || 'Movera'
   const hostInitial = hostName.trim().charAt(0).toUpperCase() || 'M'
-  const hostSince = listing.host?.since || 'Hôte Movera'
-  const sleepCards = photos.slice(0, 2)
+  const sleepCards = uniqueSleepCards(photos)
   const photoIndex = photos.length ? 1 : 0
   const photoTotal = Math.max(photos.length, 1)
+  const mapCenter = listingMapCenter(listing)
+  const mapUrl = osmStaticUrl(mapCenter)
 
   const onShare = async () => {
     const result = await shareListing(listing.title)
@@ -344,7 +379,7 @@ export function ListingDetailPage({ params, onNavigate }) {
             </OverlayButton>
           </div>
         </div>
-        <span className="listing-detail-counter">{photoIndex} / {photoTotal}</span>
+        <span className="listing-detail-counter">{photoIndex}/{photoTotal}</span>
       </div>
 
       <div className="listing-detail-sheet">
@@ -355,28 +390,28 @@ export function ListingDetailPage({ params, onNavigate }) {
           <p className="listing-detail-rating-row">
             <span>★ {listing.rating}</span>
             <span className="listing-detail-dot">·</span>
-            <span>{listing.reviews} avis</span>
+            <span className="listing-detail-reviews-link">{listing.reviews} avis</span>
           </p>
         </section>
 
         <div className="listing-detail-host-row">
-          <span className="listing-detail-avatar" aria-hidden="true">{hostInitial}</span>
           <div>
-            <strong>Hôte · {hostName}</strong>
-            <span>{hostSince}</span>
+            <strong>{listing.capacity?.type || 'Logement'}</strong>
+            <span>Hôte : {hostName}</span>
           </div>
+          <span className="listing-detail-avatar" aria-hidden="true">{hostInitial}</span>
         </div>
 
         <ul className="listing-detail-highlights">
           <li>
-            <span className="listing-detail-well"><LockGlyph /></span>
+            <span className="listing-detail-ico"><LockGlyph /></span>
             <div>
               <strong>Arrivée autonome</strong>
               <span>Boîte à clés sur place — entrez à votre rythme, sans rendez-vous.</span>
             </div>
           </li>
           <li>
-            <span className="listing-detail-well"><HostQualityGlyph /></span>
+            <span className="listing-detail-ico"><HostQualityGlyph /></span>
             <div>
               <strong>Hôte attentif</strong>
               <span>{listing.host?.response || 'Un accueil soigné, suivi de près par l’équipe Movera.'}</span>
@@ -388,7 +423,7 @@ export function ListingDetailPage({ params, onNavigate }) {
           <p className={descOpen ? 'listing-detail-copy' : 'listing-detail-copy is-clamped'}>
             {listing.description}
           </p>
-          <button type="button" className="listing-detail-pill" onClick={() => setDescOpen((open) => !open)}>
+          <button type="button" className="listing-detail-more" onClick={() => setDescOpen((open) => !open)}>
             {descOpen ? 'Réduire' : 'Lire la suite'}
           </button>
         </section>
@@ -396,9 +431,9 @@ export function ListingDetailPage({ params, onNavigate }) {
         {sleepCards.length ? (
           <section className="listing-detail-block">
             <h2>Où vous dormirez</h2>
-            <div className="listing-detail-sleep">
+            <div className={sleepCards.length === 1 ? 'listing-detail-sleep is-single' : 'listing-detail-sleep'}>
               {sleepCards.map((photo) => (
-                <article className="listing-detail-sleep-card" key={photo.label}>
+                <article className="listing-detail-sleep-card" key={photo.label || photo.src}>
                   <img src={photo.src} alt="" />
                   <strong>{photo.label || 'Chambre'}</strong>
                   <span>{listing.capacity?.beds ? `${listing.capacity.beds} lit${listing.capacity.beds > 1 ? 's' : ''}` : 'Espace nuit'}</span>
@@ -413,13 +448,13 @@ export function ListingDetailPage({ params, onNavigate }) {
           <ul className="listing-detail-amenities">
             {visibleAmenities.map((name) => (
               <li key={name}>
-                <span className="listing-detail-well">{amenityIcon(name)}</span>
+                <span className="listing-detail-ico">{amenityIcon(name)}</span>
                 <span>{name}</span>
               </li>
             ))}
           </ul>
           {listing.amenities.length > 5 ? (
-            <button type="button" className="listing-detail-pill" onClick={() => setAmenitiesOpen((open) => !open)}>
+            <button type="button" className="listing-detail-more" onClick={() => setAmenitiesOpen((open) => !open)}>
               {amenitiesOpen ? 'Réduire' : 'Voir tout'}
             </button>
           ) : null}
@@ -433,12 +468,9 @@ export function ListingDetailPage({ params, onNavigate }) {
             className="listing-detail-map"
             onClick={() => onNavigate(`/map?listing=${encodeURIComponent(listing.id)}`)}
           >
-            <span className="listing-detail-map-canvas" aria-hidden="true">
-              <span className="listing-detail-map-pin"><PinGlyph /></span>
-            </span>
-            <span className="listing-detail-map-label">
-              <strong>Voir sur la carte</strong>
-              <small>Localiser cette adresse Movera</small>
+            <span className="listing-detail-map-frame">
+              <img src={mapUrl} alt="" width="600" height="360" loading="lazy" decoding="async" />
+              <span className="listing-detail-map-pin" aria-hidden="true"><PinGlyph /></span>
             </span>
           </button>
         </section>
@@ -450,34 +482,33 @@ export function ListingDetailPage({ params, onNavigate }) {
             <span>{listing.reviews} avis</span>
           </div>
           <p className="listing-detail-copy">Les séjours ici sont très bien notés.</p>
-          <div className="listing-detail-chips">
-            {chips.map((chip) => (
-              <span key={chip}>{chip}</span>
-            ))}
-          </div>
+          <button type="button" className="listing-detail-more">Voir les avis</button>
         </section>
 
-        <section className="listing-detail-block">
+        <section className="listing-detail-host-wrap">
           <h2>Votre hôte</h2>
           <article className="listing-detail-host-card">
-            <span className="listing-detail-avatar listing-detail-avatar--lg" aria-hidden="true">{hostInitial}</span>
-            <div>
+            <div className="listing-detail-host-identity">
+              <span className="listing-detail-avatar listing-detail-avatar--lg" aria-hidden="true">
+                {hostInitial}
+                <span className="listing-detail-host-check"><CheckGlyph /></span>
+              </span>
               <strong>{hostName}</strong>
-              <span>{hostSince}</span>
+              <span>Hôte Movera</span>
             </div>
             <dl>
               <div>
-                <dt>Avis</dt>
                 <dd>{listing.reviews}</dd>
+                <dt>Avis</dt>
               </div>
               <div>
-                <dt>Note</dt>
                 <dd>{listing.rating}</dd>
+                <dt>Note</dt>
               </div>
               {years ? (
                 <div>
-                  <dt>Années</dt>
                   <dd>{years}</dd>
+                  <dt>Années</dt>
                 </div>
               ) : null}
             </dl>
@@ -485,7 +516,7 @@ export function ListingDetailPage({ params, onNavigate }) {
         </section>
 
         <button type="button" className="listing-detail-row">
-          <span className="listing-detail-well"><CalendarGlyph /></span>
+          <span className="listing-detail-ico"><CalendarGlyph /></span>
           <div>
             <strong>Disponibilité</strong>
             <span>{listing.dates || '3–4 sept.'}</span>
@@ -497,7 +528,7 @@ export function ListingDetailPage({ params, onNavigate }) {
           <h2>À savoir</h2>
           <ul className="listing-detail-know">
             <li>
-              <span className="listing-detail-well"><CancelGlyph /></span>
+              <span className="listing-detail-ico"><CancelGlyph /></span>
               <div>
                 <strong>Annulation flexible</strong>
                 <span>Remboursement selon les conditions Movera du séjour.</span>
@@ -505,7 +536,7 @@ export function ListingDetailPage({ params, onNavigate }) {
               <ChevronGlyph />
             </li>
             <li>
-              <span className="listing-detail-well"><RulesGlyph /></span>
+              <span className="listing-detail-ico"><RulesGlyph /></span>
               <div>
                 <strong>Règles de la maison</strong>
                 <span>Arrivée 15:00 · Départ 11:00</span>
@@ -513,7 +544,7 @@ export function ListingDetailPage({ params, onNavigate }) {
               <ChevronGlyph />
             </li>
             <li>
-              <span className="listing-detail-well"><SafetyGlyph /></span>
+              <span className="listing-detail-ico"><SafetyGlyph /></span>
               <div>
                 <strong>Sécurité</strong>
                 <span>Conseils de séjour et contacts utiles partagés après réservation.</span>
