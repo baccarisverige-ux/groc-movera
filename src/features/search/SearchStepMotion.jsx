@@ -16,11 +16,11 @@ export function SearchStepMotion({ step, children }) {
 
   const initial = reduceMotion
     ? { opacity: 1 }
-    : { opacity: 0, x: 18 * direction, y: 3, scale: 0.994, filter: 'blur(2px)' }
-  const animate = { opacity: 1, x: 0, y: 0, scale: 1, filter: 'blur(0px)' }
+    : { opacity: 0, x: 18 * direction, y: 3, scale: 0.994 }
+  const animate = { opacity: 1, x: 0, y: 0, scale: 1 }
   const exit = reduceMotion
     ? { opacity: 0 }
-    : { opacity: 0, x: -12 * direction, y: -2, scale: 0.997, filter: 'blur(1.5px)' }
+    : { opacity: 0, x: -12 * direction, y: -2, scale: 0.997 }
 
   return (
     <AnimatePresence initial={false} mode="popLayout">
