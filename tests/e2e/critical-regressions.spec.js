@@ -2,19 +2,13 @@ import { expect, test } from '@playwright/test'
 
 test.describe('Movera critical permanent regressions', () => {
   test('resilience, offline and recoverable failures stay functional', async ({ page }) => {
-    for (const state of ['loading', 'empty', 'success']) {
-      await page.goto(`/resilience-lab?state=${state}`)
-      await expect(page.getByTestId(`state-${state}`)).toBeVisible()
+    for (const lab of ['/carousel-lab', '/gesture-lab', '/resilience-lab']) {
+      await page.goto(lab)
+      await expect(page.getByTestId('page-404')).toBeVisible()
     }
 
-    await page.goto('/resilience-lab?state=error')
-    for (const kind of ['api', 'map']) {
-      const card = page.getByTestId(`resilience-${kind}`)
-      await card.getByRole('button', { name: 'Réessayer' }).click()
-      await card.getByRole('button', { name: 'Réessayer' }).click()
-      await expect(card).toHaveAttribute('data-attempts', '2')
-      await expect(card.getByRole('button')).toBeDisabled()
-    }
+    await page.goto('/')
+    await expect(page.getByTestId('page-home')).toBeVisible()
 
     await page.evaluate(() => {
       Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => false })

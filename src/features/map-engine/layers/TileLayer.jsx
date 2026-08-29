@@ -2,15 +2,21 @@ import { TILE_SIZE, project } from '../geometry/geometry.js'
 import { GoogleMapLayer } from './GoogleMapLayer.jsx'
 
 const CARTO_SUBDOMAINS = Object.freeze(['a', 'b', 'c', 'd'])
+const CARTO_API_KEY = String(import.meta.env.VITE_CARTO_API_KEY || '').trim()
 
 function cartoVoyagerUrl(zoom, x, y) {
   const subdomain = CARTO_SUBDOMAINS[Math.abs(x + y) % CARTO_SUBDOMAINS.length]
   const retina = typeof window !== 'undefined' && window.devicePixelRatio > 1 ? '@2x' : ''
-  return `https://${subdomain}.basemaps.cartocdn.com/rastertiles/voyager/${zoom}/${x}/${y}${retina}.png`
+  const key = CARTO_API_KEY ? `?apikey=${encodeURIComponent(CARTO_API_KEY)}` : ''
+  return `https://${subdomain}.basemaps.cartocdn.com/rastertiles/voyager/${zoom}/${x}/${y}${retina}.png${key}`
 }
 
 function openStreetMapFallbackUrl(zoom, x, y) {
   return `https://tile.openstreetmap.org/${zoom}/${x}/${y}.png`
+}
+
+function rasterTileUrl(zoom, x, y) {
+  return CARTO_API_KEY ? cartoVoyagerUrl(zoom, x, y) : openStreetMapFallbackUrl(zoom, x, y)
 }
 
 function fallbackTiles(viewport, size) {
@@ -62,12 +68,12 @@ export function TileLayer({
           data-tile-count={fallback.tiles.length}
           data-tile-zoom={fallback.zoom}
           data-scale={fallback.scale}
-          data-tile-provider="carto-voyager"
+          data-tile-provider={CARTO_API_KEY ? 'carto-voyager' : 'osm'}
           aria-hidden="true"
         >
           {fallback.tiles.map((tile) => {
-            const src = cartoVoyagerUrl(fallback.zoom, tile.wrappedX, tile.y)
-            const fallbackSrc = openStreetMapFallbackUrl(fallback.zoom, tile.wrappedX, tile.y)
+            const src = rasterTileUrl(fallback.zoom, tile.wrappedX, tile.y)
+            const fallbackSrc = CARTO_API_KEY ? openStreetMapFallbackUrl(fallback.zoom, tile.wrappedX, tile.y) : ''
             return (
               <div
                 className="map-tile"
