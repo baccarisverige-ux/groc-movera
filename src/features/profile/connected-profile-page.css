@@ -226,8 +226,13 @@
   pointer-events:none;
 }
 
+.connected-profile__slot[data-slot="profile-favorites"]{
+  background:#fff;
+}
+
 .connected-profile__slot[data-slot="profile-favorites"] img{
-  object-position:center;
+  object-fit:cover;
+  object-position:center 42%;
 }
 
 .connected-profile__slot--host{
