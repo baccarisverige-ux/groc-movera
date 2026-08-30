@@ -18,7 +18,7 @@ const COLLECTION_HEADER_LABELS = Object.freeze({
   '/villa': 'Collection Villa',
 })
 
-const mapShellStyle = { maxWidth: 430, margin: '0 auto', background: '#f3f4f3' }
+const mapShellStyle = { maxWidth: 430, margin: '0 auto', background: '#eff1ef' }
 const mapContentStyle = { padding: 0, overflow: 'hidden' }
 const hostShellStyle = { maxWidth: 430, margin: '0 auto', background: '#f4f7f5', gridTemplateColumns: 'minmax(0, 1fr)' }
 const hostContentStyle = { padding: 0, overflow: 'visible', background: '#f4f7f5' }
@@ -71,7 +71,7 @@ export function GuestLayout({ children, currentPath, onNavigate }) {
   return (
     <div className={`app-shell app-shell--guest${isMapRoute ? ' app-shell--map' : ''}${isHostRoute ? ' app-shell--host' : ''}${isCollectionRoute ? ' app-shell--collection' : ''}${isBeachRoute ? ' app-shell--beach' : ''}${isStackedGuestRoute ? ' app-shell--stacked' : ''}${isProfileRoute ? ' app-shell--profile' : ''}`} style={shellStyle}>
       <header className="app-shell__header" style={isMapRoute || isHostRoute || isStackedGuestRoute || isProfileRoute ? { display: 'none' } : undefined}>
-        <strong>Movera</strong>
+        <strong>Movera Host</strong>
         {collectionHeaderLabel ? <span className="app-shell__collection-badge">{collectionHeaderLabel}</span> : null}
       </header>
       <main
