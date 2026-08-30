@@ -5,9 +5,18 @@ import { MAP_OFFER_ITEM_MOTION } from './motion/mapOfferSheetMotion.config.js'
 import { useMapOfferScrollSheetHandoff } from './motion/useMapOfferScrollSheetHandoff.js'
 import './map-offer-sheet.css'
 
-const COLLAPSED_PANEL_VISIBLE_PX = 62
+const COLLAPSED_PANEL_VISIBLE_PX = 110
 const ATTACHED_ENTER_PROGRESS = 0.995
 const ATTACHED_EXIT_PROGRESS = 0.92
+
+const MAP_PROPERTY_FILTERS = Object.freeze([
+  { id: 'all', label: 'Tout' },
+  { id: 'apartment', label: 'Appartement' },
+  { id: 'house', label: 'Maison' },
+  { id: 'villa', label: 'Villa' },
+  { id: 'guesthouse', label: "Maison d’hôte" },
+  { id: 'beach', label: 'Plage' },
+])
 
 function useStableAttached(progress) {
   const [attached, setAttached] = useState(() => progress >= ATTACHED_ENTER_PROGRESS)
@@ -38,7 +47,20 @@ function listingPriceCopy(listing) {
   return ''
 }
 
-function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListingId, onSelectedListingChange, onNavigate, progress, startDrag, toggleExpanded, externalDrag }) {
+function MapOfferSheetContent({
+  listings,
+  cityLabel,
+  headerHeight,
+  selectedListingId,
+  propertyFilter,
+  onPropertyFilterChange,
+  onSelectedListingChange,
+  onNavigate,
+  progress,
+  startDrag,
+  toggleExpanded,
+  externalDrag,
+}) {
   const attached = useStableAttached(progress)
   const listRef = useMapOfferScrollSheetHandoff({ expanded: attached, externalDrag })
   const safeHeaderHeight = Math.max(0, headerHeight || 0)
@@ -73,6 +95,27 @@ function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListi
             </span>
             <span className="map-offer-sheet__chevron" data-open={progress > 0.72 ? 'true' : 'false'}><ChevronIcon /></span>
           </button>
+        </div>
+
+        <div className="map-offer-sheet__property-dock" data-testid="map-sheet-property-filters" aria-label="Type de logement">
+          <div className="map-offer-sheet__property-rail">
+            {MAP_PROPERTY_FILTERS.map((filter) => {
+              const active = propertyFilter === filter.id
+              return (
+                <button
+                  key={filter.id}
+                  type="button"
+                  className="map-offer-sheet__property-chip"
+                  data-property-filter={filter.id}
+                  data-active={active ? 'true' : 'false'}
+                  aria-pressed={active}
+                  onClick={() => onPropertyFilterChange?.(filter.id)}
+                >
+                  <span>{filter.label}</span>
+                </button>
+              )
+            })}
+          </div>
         </div>
 
         {listings.length ? (
@@ -133,7 +176,18 @@ function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListi
   )
 }
 
-export function MapOfferSheet({ listings, cityLabel, headerHeight = 0, selectedListingId, onSelectedListingChange, onProgressChange, onNavigate, hidden = false }) {
+export function MapOfferSheet({
+  listings,
+  cityLabel,
+  headerHeight = 0,
+  selectedListingId,
+  propertyFilter = 'all',
+  onPropertyFilterChange,
+  onSelectedListingChange,
+  onProgressChange,
+  onNavigate,
+  hidden = false,
+}) {
   const safeHeaderHeight = Math.max(0, headerHeight || 0)
 
   return (
@@ -149,6 +203,8 @@ export function MapOfferSheet({ listings, cityLabel, headerHeight = 0, selectedL
           cityLabel={cityLabel}
           headerHeight={safeHeaderHeight}
           selectedListingId={selectedListingId}
+          propertyFilter={propertyFilter}
+          onPropertyFilterChange={onPropertyFilterChange}
           onSelectedListingChange={onSelectedListingChange}
           onNavigate={onNavigate}
           progress={progress}
