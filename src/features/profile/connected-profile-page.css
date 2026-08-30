@@ -231,8 +231,8 @@
 }
 
 .connected-profile__slot[data-slot="profile-favorites"] img{
-  object-fit:cover;
-  object-position:center 42%;
+  object-fit:contain;
+  object-position:center;
 }
 
 .connected-profile__slot--host{
