@@ -17,11 +17,11 @@
 .b225-map-page .map-tiles::after { content:''; position:absolute; inset:0; z-index:1; pointer-events:none; background:linear-gradient(180deg,rgba(250,251,250,.035),rgba(239,243,240,.025)); }
 
 .map-marker, .map-cluster { position: absolute; left: 0; top: 0; translate: -50% -50%; pointer-events: auto; will-change: transform; }
-.map-marker { width: 30px; height: 38px; border: 0; background: transparent; padding: 0; cursor: pointer; }
-.map-marker span { position: absolute; left: 50%; top: 2px; width: 22px; height: 22px; translate: -50% 0; border: 3px solid #fff; border-radius: 50% 50% 50% 0; background: #313633; box-shadow: 0 4px 12px rgba(22, 28, 24, .22); transform: rotate(-45deg); transition: transform 160ms ease, box-shadow 160ms ease; }
-.map-marker span::after { content: ''; position: absolute; inset: 6px; border-radius: 50%; background: #fff; }
+.map-marker { min-width: 72px; height: 40px; border: 0; background: transparent; padding: 0; cursor: pointer; display: grid; place-items: center; }
+.map-marker span, .map-marker__pill { position: relative; display: inline-flex; align-items: center; justify-content: center; min-width: 64px; height: 28px; padding: 0 11px; border: 0; border-radius: 999px; background: #fefefd; color: #1d1f1e; font: 700 12px/1 var(--font-sans); letter-spacing: -.02em; box-shadow: 0 4px 12px rgba(22, 28, 24, .16), 0 1px 0 rgba(255,255,255,.9); white-space: nowrap; transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease, color 160ms ease; }
+.map-marker span::after { content: none; }
 .map-marker--selected { z-index: 4; }
-.map-marker--selected span { transform: rotate(-45deg) scale(1.22); box-shadow: 0 7px 18px rgba(22, 28, 24, .3); }
+.map-marker--selected span, .map-marker--selected .map-marker__pill { background: #1d1f1e; color: #fff; transform: scale(1.06); box-shadow: 0 8px 18px rgba(22, 28, 24, .28); }
 .map-cluster { min-width: 42px; height: 42px; display: grid; place-items: center; padding: 0 10px; border: 3px solid rgba(255,255,255,.9); border-radius: 999px; background: #343a36; color: #fff; font-weight: 700; box-shadow: 0 8px 20px rgba(20, 26, 22, .22); }
 .map-controls { position: absolute; right: 12px; top: 12px; z-index: 6; display: grid; gap: 6px; }
 .map-controls button { width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid rgba(42, 50, 45, .12); border-radius: 13px; background: rgba(248, 249, 248, .94); color: #2d332f; font: 600 22px/1 var(--font-sans); box-shadow: 0 6px 18px rgba(26, 33, 28, .13); backdrop-filter: blur(12px); cursor: pointer; }

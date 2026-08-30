@@ -6,21 +6,25 @@ function numberAttribute(locator, name) {
 
 test('La Marsa map exposes only its mapped offers in the full-width Motion bottom sheet', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/Movera-host1/map?destination=la-marsa')
+  await page.goto('/groc-movera/map?destination=la-marsa')
 
   const pageMap = page.getByTestId('page-map')
   const sheet = page.getByTestId('map-offer-sheet')
   const panel = sheet.locator('.map-offer-sheet__panel')
   await expect(pageMap).toBeVisible()
-  await expect(pageMap).toHaveAttribute('data-city-offer-count', '2')
+  await expect(pageMap).toHaveAttribute('data-city-offer-count', '4')
   await expect(sheet).toBeVisible()
   await expect(sheet).toHaveAttribute('data-motion-engine', 'motion')
   await expect(sheet).toHaveAttribute('data-motion-boundary', 'shared')
   await expect(sheet).toHaveAttribute('data-snap-state', 'collapsed')
   await expect(sheet.locator('[data-motion-list="map-offers"]')).toBeVisible()
-  await expect(sheet.locator('[data-listing-id]')).toHaveCount(2)
-  await expect(sheet.locator('[data-listing-id="loft-cote"]')).toHaveCount(1)
-  await expect(sheet.locator('[data-listing-id="riad-marsa"]')).toHaveCount(1)
+  await expect(sheet.locator('[data-listing-id]')).toHaveCount(4)
+  await expect(sheet.locator('[data-listing-id="maison-jasmin"]')).toHaveCount(1)
+  await expect(sheet.locator('[data-listing-id="sea-breeze-marsa"]')).toHaveCount(1)
+  await expect(sheet.locator('[data-listing-id="apartment-marsa"]')).toHaveCount(1)
+  await expect(sheet.locator('[data-listing-id="partner-marsa"]')).toHaveCount(1)
+  await expect(sheet.locator('[data-listing-id="loft-cote"]')).toHaveCount(0)
+  await expect(sheet.locator('[data-listing-id="riad-marsa"]')).toHaveCount(0)
   await expect(sheet.locator('[data-listing-id="villa-perle"]')).toHaveCount(0)
 
   const mapBox = await pageMap.boundingBox()
@@ -37,7 +41,7 @@ test('La Marsa map exposes only its mapped offers in the full-width Motion botto
 
 test('sheet attachment uses one Motion translation with a stable structural header offset', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/Movera-host1/map?destination=la-marsa')
+  await page.goto('/groc-movera/map?destination=la-marsa')
 
   const pageMap = page.getByTestId('page-map')
   const surface = page.getByTestId('map-surface')
@@ -112,9 +116,9 @@ test('sheet attachment uses one Motion translation with a stable structural head
   expect(Math.abs(attachedPanelBox.y - (headerBox.y + headerBox.height))).toBeLessThanOrEqual(2)
 })
 
-test('Grand Tunis fully expanded keeps 8 offers summary and first offer visible below the fixed header', async ({ page }) => {
+test('Grand Tunis fully expanded keeps 16 offers summary and first offer visible below the fixed header', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/Movera-host1/map')
+  await page.goto('/groc-movera/map')
 
   const pageMap = page.getByTestId('page-map')
   const sheet = page.getByTestId('map-offer-sheet')
@@ -124,13 +128,13 @@ test('Grand Tunis fully expanded keeps 8 offers summary and first offer visible 
   const topPanel = page.locator('.b225-map-top')
   const dragZone = page.getByTestId('map-offer-sheet-handle')
 
-  await expect(pageMap).toHaveAttribute('data-city-offer-count', '8')
+  await expect(pageMap).toHaveAttribute('data-city-offer-count', '16')
   await page.getByRole('button', { name: 'Afficher la liste des offres' }).click()
   await expect(sheet).toHaveAttribute('data-expanded', 'true')
   await expect(sheet).toHaveAttribute('data-snap-state', 'expanded')
   await expect(panel).toHaveAttribute('data-attachment-state', 'attached')
-  await expect(sheet.locator('[data-listing-id]')).toHaveCount(8)
-  await expect(dragZone).toContainText('8 offres')
+  await expect(sheet.locator('[data-listing-id]')).toHaveCount(16)
+  await expect(dragZone).toContainText('16 offres')
   await expect(dragZone).toContainText('Grand Tunis')
   await expect(panel).toHaveCSS('box-shadow', 'none')
   await expect(panel).toHaveCSS('border-top-left-radius', '0px')
@@ -148,7 +152,7 @@ test('Grand Tunis fully expanded keeps 8 offers summary and first offer visible 
   const panelBox = await panel.boundingBox()
   const topPanelBox = await topPanel.boundingBox()
   const dragZoneBox = await dragZone.boundingBox()
-  const mediaBox = await sheet.locator('[data-listing-id="villa-perle"] .map-offer-sheet__media').boundingBox()
+  const mediaBox = await sheet.locator('[data-listing-id="dar-sidi-bleu"] .map-offer-sheet__media').boundingBox()
   expect(mapBox).not.toBeNull()
   expect(sheetBox).not.toBeNull()
   expect(panelBox).not.toBeNull()
@@ -193,14 +197,13 @@ test('Grand Tunis fully expanded keeps 8 offers summary and first offer visible 
 
 test('one remaining offer can close the fully open sheet by swiping directly on its image', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/Movera-host1/map?destination=gammarth')
+  await page.goto('/groc-movera/map?destination=tozeur')
 
   const pageMap = page.getByTestId('page-map')
   const sheet = page.getByTestId('map-offer-sheet')
-  await page.getByRole('button', { name: 'Piscine' }).click()
   await expect(pageMap).toHaveAttribute('data-city-offer-count', '1')
   await expect(sheet.locator('[data-listing-id]')).toHaveCount(1)
-  await expect(sheet.locator('[data-listing-id="villa-emeraude"]')).toHaveCount(1)
+  await expect(sheet.locator('[data-listing-id="sahara-night"]')).toHaveCount(1)
 
   await page.getByRole('button', { name: 'Afficher la liste des offres' }).click()
   await expect(sheet).toHaveAttribute('data-expanded', 'true')
@@ -209,7 +212,7 @@ test('one remaining offer can close the fully open sheet by swiping directly on 
   const list = sheet.locator('.map-offer-sheet__list')
   await expect(list).toHaveAttribute('data-sheet-handoff', 'drag-from-offer')
   await list.evaluate((node) => { node.scrollTop = 0 })
-  const image = sheet.locator('[data-listing-id="villa-emeraude"] .map-offer-sheet__media')
+  const image = sheet.locator('[data-listing-id="sahara-night"] .map-offer-sheet__media')
   await expect(image).toBeVisible()
 
   await image.evaluate((node) => {
@@ -234,11 +237,11 @@ test('one remaining offer can close the fully open sheet by swiping directly on 
 
 test('downward swipe starting on an offer can close the fully open sheet', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/Movera-host1/map?destination=gammarth')
+  await page.goto('/groc-movera/map?destination=gammarth')
 
   const sheet = page.getByTestId('map-offer-sheet')
   const list = sheet.locator('.map-offer-sheet__list')
-  const firstOffer = sheet.locator('[data-listing-id="villa-perle"]')
+  const firstOffer = sheet.locator('[data-listing-id="villa-saphir"]')
 
   await page.getByRole('button', { name: 'Afficher la liste des offres' }).click()
   await expect(sheet).toHaveAttribute('data-expanded', 'true')
@@ -269,7 +272,7 @@ test('downward swipe starting on an offer can close the fully open sheet', async
 
 test('a destination with no mapped offers shows an honest empty state', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/Movera-host1/map?destination=sousse')
+  await page.goto('/groc-movera/map?destination=tabarka')
 
   await expect(page.getByTestId('page-map')).toHaveAttribute('data-city-offer-count', '0')
   await expect(page.getByTestId('map-offer-sheet')).toHaveAttribute('data-motion-engine', 'motion')

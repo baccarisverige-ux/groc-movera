@@ -1,10 +1,10 @@
 import { expect, test } from '@playwright/test'
 
 test('offer map provides a return path to its category list', async ({ page }) => {
-  await page.goto('/Movera-host1/plage')
+  await page.goto('/groc-movera/plage')
   await expect(page.getByTestId('page-beach')).toBeVisible()
 
-  const offer = page.locator('.beach-offer[data-offer-id="villa-perle"]')
+  const offer = page.locator('.beach-offer[data-offer-id="sea-breeze-marsa"]')
   await offer.locator('.beach-offer__map-button').click()
 
   await expect(page.getByTestId('page-map')).toBeVisible()

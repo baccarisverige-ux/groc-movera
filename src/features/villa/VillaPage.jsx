@@ -1,14 +1,14 @@
-import { listingCatalog } from '../../entities/listing/listingCatalog.js'
+import { listHomeOffersByCategory } from '../listing/guestListings.js'
 import { CollectionPage } from '../../shared/collection/CollectionPage.jsx'
 import '../../shared/collection/portrait-collection.css'
 import HERO_IMAGE from './assets/hero.webp'
 
-const VILLA_OFFERS = listingCatalog.filter((item) => item.category.split(' ').includes('prestige'))
+const OFFERS = listHomeOffersByCategory('prestige')
 
 export function VillaPage({ onNavigate }) {
   return (
     <CollectionPage
-      offers={VILLA_OFFERS}
+      offers={OFFERS}
       onNavigate={onNavigate}
       pageClassName="portrait-collection-page"
       hero={{

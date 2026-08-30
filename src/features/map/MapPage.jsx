@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { listingCatalog } from '../../entities/listing/listingCatalog.js'
 import { getListingMapPosition } from '../../entities/listing/listingMapPositions.js'
+import { getGuestListingById, listUniqueHomeOffers } from '../listing/guestListings.js'
 import { ArrowLeftIcon } from '../../shared/icons/AppIcons.jsx'
 import '../../styles/map-b225.css'
 import '../../styles/map-return-offers.css'
@@ -14,11 +14,29 @@ import { MapSearchFilters } from './MapSearchFilters.jsx'
 const MAP_MOTION_PROGRESS_LIMIT = 0.72
 const MAP_GESTURE_SETTLE_MS = 500
 
+const GRAND_TUNIS_LOCATIONS = Object.freeze(['La Marsa', 'Sidi Bou Saïd', 'Gammarth', 'Carthage', 'Tunis'])
+const HOME_OFFERS = Object.freeze(listUniqueHomeOffers())
+
+function formatMapPrice(listing) {
+  const source = `${listing.priceTotal || listing.priceLabel || ''}`
+  const match = source.match(/(\d[\d\s]*)\s*TND/i)
+  if (match) return `${match[1].replace(/\s/g, '')} TND`
+  const rate = listing.nightlyRate ?? listing.price
+  if (rate != null && Number.isFinite(Number(rate))) return `${Number(rate)} ${listing.currency || 'TND'}`
+  return 'TND'
+}
+
 const LISTING_MARKERS = Object.freeze(
-  listingCatalog
+  HOME_OFFERS
     .map((listing) => {
       const position = getListingMapPosition(listing.id)
-      return position ? Object.freeze({ id: listing.id, label: listing.title, ...position }) : null
+      if (!position) return null
+      return Object.freeze({
+        id: listing.id,
+        label: listing.title,
+        price: formatMapPrice(listing),
+        ...position,
+      })
     })
     .filter(Boolean),
 )
@@ -36,7 +54,11 @@ const DESTINATION_LISTING_LOCATIONS = Object.freeze({
   'sidi-bou-said': ['Sidi Bou Saïd'],
   gammarth: ['Gammarth'],
   carthage: ['Carthage'],
-  tunis: ['La Marsa', 'Sidi Bou Saïd', 'Gammarth', 'Carthage'],
+  tunis: ['Tunis'],
+  hammamet: ['Hammamet'],
+  sousse: ['Sousse'],
+  djerba: ['Djerba'],
+  tozeur: ['Tozeur'],
 })
 
 const DESTINATION_LABELS = Object.freeze({
@@ -67,9 +89,9 @@ function viewportFromSearch(searchParams) {
 }
 
 function collectionFallbackPath(listingId) {
-  const listing = listingCatalog.find((item) => item.id === listingId)
+  const listing = getGuestListingById(listingId)
   if (!listing) return '/'
-  const categories = listing.category.split(' ')
+  const categories = String(listing.category || '').split(' ')
   const category = categories.find((item) => COLLECTION_ROUTE_BY_CATEGORY[item])
   return category ? COLLECTION_ROUTE_BY_CATEGORY[category] : '/'
 }
@@ -78,16 +100,16 @@ function listingsForMapContext(requestedDestination, requestedListing) {
   if (requestedDestination) {
     const locations = DESTINATION_LISTING_LOCATIONS[requestedDestination]
     if (!locations) return []
-    return listingCatalog.filter((listing) => locations.includes(listing.location))
+    return HOME_OFFERS.filter((listing) => locations.includes(listing.location))
   }
 
   if (requestedListing) {
-    const selected = listingCatalog.find((listing) => listing.id === requestedListing)
+    const selected = HOME_OFFERS.find((listing) => listing.id === requestedListing)
     if (!selected) return []
-    return listingCatalog.filter((listing) => listing.location === selected.location)
+    return HOME_OFFERS.filter((listing) => listing.location === selected.location)
   }
 
-  return listingCatalog
+  return HOME_OFFERS.filter((listing) => GRAND_TUNIS_LOCATIONS.includes(listing.location))
 }
 
 export function MapPage({ onNavigate }) {
@@ -169,7 +191,7 @@ export function MapPage({ onNavigate }) {
   const cityLabel = requestedDestination
     ? DESTINATION_LABELS[requestedDestination] || 'Cette destination'
     : requestedListing
-      ? listingCatalog.find((listing) => listing.id === requestedListing)?.location || 'Cette ville'
+      ? HOME_OFFERS.find((listing) => listing.id === requestedListing)?.location || 'Cette ville'
       : 'Grand Tunis'
 
   const toggleAmenityFilter = useCallback((amenityId) => {
@@ -329,6 +351,7 @@ export function MapPage({ onNavigate }) {
         selectedListingId={selectedListingId}
         onSelectedListingChange={handleSheetSelectedListingChange}
         onProgressChange={handleSheetProgress}
+        onNavigate={onNavigate}
       />
     </section>
   )

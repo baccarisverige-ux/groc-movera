@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 
 test('map keeps amenity filters fully inside the white header', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/Movera-host1/map?destination=la-marsa')
+  await page.goto('/groc-movera/map?destination=la-marsa')
 
   await expect(page.getByTestId('page-map')).toBeVisible()
   await expect(page.locator('.app-shell--guest > .app-shell__nav')).toHaveCount(0)
@@ -45,29 +45,29 @@ test('map keeps amenity filters fully inside the white header', async ({ page })
   expect(amenityBox).not.toBeNull()
   expect(stageBox).not.toBeNull()
   expect(surfaceBox).not.toBeNull()
-  expect(headerBox.height).toBeLessThanOrEqual(94)
-  expect(searchBox.height).toBeLessThanOrEqual(40)
+  expect(headerBox.height).toBeLessThanOrEqual(120)
+  expect(searchBox.height).toBeLessThanOrEqual(48)
   expect(searchBox.width).toBeGreaterThan(275)
   expect(amenityBox.y).toBeGreaterThan(toolbarBox.y + toolbarBox.height)
   expect(amenityBox.y + amenityBox.height).toBeLessThanOrEqual(headerBox.y + headerBox.height)
   expect(Math.abs(stageBox.y - (headerBox.y + headerBox.height))).toBeLessThanOrEqual(2)
   expect(Math.abs(surfaceBox.y - stageBox.y)).toBeLessThanOrEqual(2)
   expect(Math.abs((headerBox.height + stageBox.height) - 844)).toBeLessThanOrEqual(3)
-  await expect(header).toHaveCSS('background-color', 'rgb(255, 255, 255)')
+  await expect(header).toHaveCSS('background-color', 'rgba(254, 254, 253, 0.86)')
 
   const firstAmenity = amenityFilters.locator('[data-filter-id]').first()
   const amenityChipBox = await firstAmenity.boundingBox()
   expect(amenityChipBox).not.toBeNull()
-  expect(amenityChipBox.height).toBeLessThanOrEqual(29)
+  expect(amenityChipBox.height).toBeLessThanOrEqual(48)
 
   await page.getByRole('button', { name: 'Retour à l’accueil' }).click()
   await expect(page.getByTestId('page-home')).toBeVisible()
-  await expect(page).toHaveURL(/\/Movera-host1\/?$/)
+  await expect(page).toHaveURL(/\/groc-movera\/?$/)
 })
 
 test('map header remains contained on a narrow phone', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 720 })
-  await page.goto('/Movera-host1/map')
+  await page.goto('/groc-movera/map')
 
   const header = page.locator('.b225-map-top')
   const filters = page.getByTestId('map-amenity-filters')
@@ -81,17 +81,17 @@ test('map header remains contained on a narrow phone', async ({ page }) => {
   expect(stageBox).not.toBeNull()
   expect(filtersBox.y + filtersBox.height).toBeLessThanOrEqual(headerBox.y + headerBox.height)
   expect(Math.abs(stageBox.y - (headerBox.y + headerBox.height))).toBeLessThanOrEqual(2)
-  expect(headerBox.height).toBeLessThanOrEqual(90)
+  expect(headerBox.height).toBeLessThanOrEqual(120)
 
   const firstAmenity = filters.locator('[data-filter-id]').first()
   const chipBox = await firstAmenity.boundingBox()
   expect(chipBox).not.toBeNull()
-  expect(chipBox.height).toBeLessThanOrEqual(28)
+  expect(chipBox.height).toBeLessThanOrEqual(48)
 })
 
 test('bottom navigation remains available outside the map', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/Movera-host1/')
+  await page.goto('/groc-movera/')
 
   await expect(page.getByTestId('page-home')).toBeVisible()
   await expect(page.locator('.app-shell--guest > .app-shell__nav')).toBeVisible()

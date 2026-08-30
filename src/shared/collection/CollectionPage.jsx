@@ -238,8 +238,8 @@ export function CollectionPage({
                     <h3>{item.title}</h3>
                   </div>
                   <div className="beach-offer__price">
-                    <strong>{item.price} {item.currency}</strong>
-                    <span>/ nuit</span>
+                    <strong>{item.priceLabel || item.priceTotal || `${item.price ?? ''} ${item.currency ?? ''}`.trim()}</strong>
+                    {item.priceLabel || item.priceTotal ? null : <span>/ nuit</span>}
                   </div>
                 </div>
                 <div className="beach-offer__actions">

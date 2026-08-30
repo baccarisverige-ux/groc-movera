@@ -30,13 +30,22 @@ function StarIcon() {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7L6.8 19l1-5.8-4.2-4.1 5.8-.8L12 3Z" /></svg>
 }
 
-function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListingId, onSelectedListingChange, progress, startDrag, toggleExpanded, externalDrag }) {
+function listingPriceCopy(listing) {
+  if (listing.priceLabel) return listing.priceLabel
+  if (listing.priceTotal) return listing.priceTotal
+  if (listing.nightlyRate != null) return `${listing.nightlyRate} ${listing.currency || 'TND'}`
+  if (listing.price != null) return `${listing.price} ${listing.currency || 'TND'}`
+  return ''
+}
+
+function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListingId, onSelectedListingChange, onNavigate, progress, startDrag, toggleExpanded, externalDrag }) {
   const attached = useStableAttached(progress)
   const listRef = useMapOfferScrollSheetHandoff({ expanded: attached, externalDrag })
   const safeHeaderHeight = Math.max(0, headerHeight || 0)
 
-  const selectListing = (listingId) => {
+  const openListing = (listingId) => {
     onSelectedListingChange?.(listingId)
+    onNavigate?.(`/listing/${listingId}`)
   }
 
   return (
@@ -89,7 +98,7 @@ function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListi
                     className="map-offer-sheet__card"
                     data-listing-id={listing.id}
                     data-active={selected ? 'true' : 'false'}
-                    onClick={() => selectListing(listing.id)}
+                    onClick={() => openListing(listing.id)}
                   >
                     <span className="map-offer-sheet__media">
                       <img src={listing.image} alt="" loading={index < 2 ? 'eager' : 'lazy'} />
@@ -104,7 +113,7 @@ function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListi
                         </span>
                         <span className="map-offer-sheet__rating"><StarIcon />{listing.rating}</span>
                       </span>
-                      <span className="map-offer-sheet__price"><b>{listing.price} {listing.currency}</b> <span>/ nuit</span></span>
+                      <span className="map-offer-sheet__price"><b>{listingPriceCopy(listing)}</b></span>
                     </span>
                   </MotionListItem>
                 )
@@ -124,7 +133,7 @@ function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListi
   )
 }
 
-export function MapOfferSheet({ listings, cityLabel, headerHeight = 0, selectedListingId, onSelectedListingChange, onProgressChange }) {
+export function MapOfferSheet({ listings, cityLabel, headerHeight = 0, selectedListingId, onSelectedListingChange, onProgressChange, onNavigate }) {
   const safeHeaderHeight = Math.max(0, headerHeight || 0)
 
   return (
@@ -141,6 +150,7 @@ export function MapOfferSheet({ listings, cityLabel, headerHeight = 0, selectedL
           headerHeight={safeHeaderHeight}
           selectedListingId={selectedListingId}
           onSelectedListingChange={onSelectedListingChange}
+          onNavigate={onNavigate}
           progress={progress}
           startDrag={startDrag}
           toggleExpanded={toggleExpanded}

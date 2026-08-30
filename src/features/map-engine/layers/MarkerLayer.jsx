@@ -8,18 +8,21 @@ export function MarkerLayer({ markers, viewport, size, selectedListingId, onSele
         const state = getMarkerState(marker, { selectedListingId, hiddenIds })
         if (state === MarkerState.HIDDEN) return null
         const point = screenPoint(marker.lat, marker.lng, viewport, size)
-        const visible = point.x > -60 && point.x < size.width + 60 && point.y > -60 && point.y < size.height + 60
+        const visible = point.x > -80 && point.x < size.width + 80 && point.y > -80 && point.y < size.height + 80
         if (!visible) return null
+        const price = marker.price || marker.label
+        const selected = state === MarkerState.SELECTED
         return (
           <button
             className={`map-marker map-marker--${state}`}
             data-testid={`map-marker-${marker.id}`}
             data-marker-state={state}
-            aria-pressed={state === MarkerState.SELECTED}
+            data-price={price}
+            aria-pressed={selected}
             aria-disabled={interactive ? undefined : 'true'}
             key={marker.id}
             type="button"
-            aria-label={marker.label}
+            aria-label={`${marker.label}, ${price}`}
             tabIndex={interactive ? 0 : -1}
             style={{
               transform: `translate3d(${Math.round(point.x)}px, ${Math.round(point.y)}px, 0)`,
@@ -30,7 +33,7 @@ export function MarkerLayer({ markers, viewport, size, selectedListingId, onSele
               onSelect(marker)
             } : undefined}
           >
-            <span aria-hidden="true" />
+            <span className="map-marker__pill">{price}</span>
           </button>
         )
       })}

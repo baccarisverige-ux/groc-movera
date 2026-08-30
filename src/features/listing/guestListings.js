@@ -148,3 +148,23 @@ export function getGuestListingById(id) {
 export function listGuestListingsByIds(ids) {
   return ids.map((id) => guestListingById.get(id)).filter(Boolean)
 }
+
+export function listUniqueHomeOffers() {
+  const seen = new Set()
+  const offers = []
+  for (const items of Object.values(homeCategoryOffers)) {
+    for (const item of items) {
+      if (seen.has(item.id)) continue
+      seen.add(item.id)
+      const listing = guestListingById.get(item.id)
+      if (listing) offers.push(listing)
+    }
+  }
+  return offers
+}
+
+export function listHomeOffersByCategory(category) {
+  return (homeCategoryOffers[category] || [])
+    .map((item) => guestListingById.get(item.id))
+    .filter(Boolean)
+}
