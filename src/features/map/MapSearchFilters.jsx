@@ -26,7 +26,7 @@ export function MapSearchFilters({
         aria-hidden={compact ? 'true' : undefined}
         inert={compact ? true : undefined}
       >
-        <div className="map-search-filter-stack__toolbar map-search-filter-stack__toolbar--explore">
+        <div className="map-search-filter-stack__toolbar">
           <button
             type="button"
             className="map-search-filter-stack__side-button map-search-filter-stack__back"
@@ -36,10 +36,14 @@ export function MapSearchFilters({
             <ArrowLeftIcon />
           </button>
 
-          <div className="map-search-filter-stack__explore-copy" aria-label={`Explorer ${cityLabel}`}>
-            <small>Explorer</small>
-            <strong>{cityLabel}</strong>
-          </div>
+          <button
+            type="button"
+            className="map-search-filter-stack__search-pill"
+            onClick={onHome}
+            aria-label="Modifier la recherche"
+          >
+            <strong>Logements à {cityLabel}</strong>
+          </button>
 
           <button
             type="button"
