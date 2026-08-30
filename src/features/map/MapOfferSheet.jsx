@@ -7,6 +7,7 @@ import './map-offer-sheet.css'
 import '../../styles/map-offer-sheet-premium.css'
 
 const COLLAPSED_PANEL_VISIBLE_PX = 110
+const TOP_BAR_SEAM_OVERLAP_PX = 2
 const ATTACHED_ENTER_PROGRESS = 0.995
 const ATTACHED_EXIT_PROGRESS = 0.92
 
@@ -189,7 +190,7 @@ export function MapOfferSheet({
   onNavigate,
   hidden = false,
 }) {
-  const safeHeaderHeight = Math.max(0, headerHeight || 0)
+  const safeHeaderHeight = Math.max(0, (headerHeight || 0) - TOP_BAR_SEAM_OVERLAP_PX)
 
   return (
     <MapOfferSheetMotionSurface
