@@ -2,15 +2,16 @@
 
 .app-shell--guest > .app-shell__nav{
   position:fixed!important;
-  left:50%!important;
-  right:auto!important;
+  left:0!important;
+  right:0!important;
   bottom:-1px!important;
   z-index:90!important;
-  width:min(100%,430px)!important;
+  width:100vw!important;
+  max-width:none!important;
   height:calc(70px + env(safe-area-inset-bottom,0px))!important;
   min-height:0!important;
   max-height:none!important;
-  transform:translateX(-50%)!important;
+  transform:none!important;
   display:grid!important;
   grid-template-columns:repeat(5,minmax(0,1fr))!important;
   align-items:start!important;
