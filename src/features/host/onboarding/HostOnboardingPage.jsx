@@ -17,7 +17,6 @@ import {
   screenPhase,
 } from './hostOnboardingModel.js'
 import './host-onboarding-page.css'
-import './host-onboarding-fit.css'
 
 function ArrowIcon({ back = false }) {
   return (
@@ -388,9 +387,7 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
             <div className="host-onboarding__map-zoom"><button type="button" aria-label="Zoom avant">+</button><button type="button" aria-label="Zoom arrière">−</button></div>
             <div className="host-onboarding__map-hint">Déplacez la carte pour ajuster le repère</div>
           </div>
-          <div className="host-onboarding__pin-dock">
-            <button type="button" className="host-onboarding__secondary" data-active={draft.pinConfirmed ? 'true' : 'false'} onClick={() => updateDraft({ pinConfirmed: true })}>{draft.pinConfirmed ? 'Emplacement confirmé' : 'Confirmer cet emplacement'} {draft.pinConfirmed ? <CheckIcon /> : <PinIcon />}</button>
-          </div>
+          <button type="button" className="host-onboarding__secondary" data-active={draft.pinConfirmed ? 'true' : 'false'} onClick={() => updateDraft({ pinConfirmed: true })}>{draft.pinConfirmed ? 'Emplacement confirmé' : 'Confirmer cet emplacement'} {draft.pinConfirmed ? <CheckIcon /> : <PinIcon />}</button>
         </main>
       ) : null}
 
