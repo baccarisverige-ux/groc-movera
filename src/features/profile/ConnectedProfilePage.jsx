@@ -4,6 +4,7 @@ import { clearHostProfile, useHostProfile } from '../../entities/host/hostProfil
 import { authProviderLabel } from '../auth/authClient.js'
 import { clearAuthSession, useAuthSession } from '../auth/authSession.js'
 import tripsArt from './assets/profile-trips.webp'
+import favoritesArt from './assets/profile-favorites.webp'
 import './connected-profile-page.css'
 
 function BellIcon() {
@@ -61,8 +62,13 @@ const LEGAL_ROWS = [
   { id: 'legal', label: 'Informations légales', Icon: DocumentIcon },
 ]
 
+const PROFILE_SLOT_ART = {
+  'profile-trips': tripsArt,
+  'profile-favorites': favoritesArt,
+}
+
 function IllustrationSlot({ name, className = '' }) {
-  const src = name === 'profile-trips' ? tripsArt : null
+  const src = PROFILE_SLOT_ART[name]
   return (
     <div className={`connected-profile__slot${className ? ` ${className}` : ''}${src ? ' connected-profile__slot--photo' : ''}`} data-slot={name} aria-hidden="true">
       {src ? <img src={src} alt="" /> : null}
@@ -109,7 +115,7 @@ export function ConnectedProfilePage({ onNavigate }) {
 
   return (
     <section className="connected-profile" data-testid="page-profile" data-auth-flow="connected">
-      {/* drop profile-avatar.png, profile-favorites.png, profile-host.png into src/features/profile/assets/ later */}
+      {/* drop profile-avatar.png, profile-host.png into src/features/profile/assets/ later */}
       <header className="connected-profile__header">
         <h1>Profil</h1>
         <button type="button" className="connected-profile__bell" aria-label="Notifications" onClick={() => showPrototypeNotice('Notifications')}>

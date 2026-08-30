@@ -226,6 +226,10 @@
   pointer-events:none;
 }
 
+.connected-profile__slot[data-slot="profile-favorites"] img{
+  object-position:center 48%;
+}
+
 .connected-profile__slot--host{
   width:92px;
   height:92px;
