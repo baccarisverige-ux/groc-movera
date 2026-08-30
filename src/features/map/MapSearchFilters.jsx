@@ -5,21 +5,11 @@ import {
 import { MAP_AMENITY_FILTERS } from './mapListingFilters.js'
 import './map-search-filters.css'
 
-const MAP_PROPERTY_FILTERS = Object.freeze([
-  { id: 'all', label: 'Tout' },
-  { id: 'apartment', label: 'Appartement' },
-  { id: 'house', label: 'Maison' },
-  { id: 'villa', label: 'Villa' },
-  { id: 'guesthouse', label: "Maison d’hôte" },
-  { id: 'beach', label: 'Plage' },
-])
-
 export function MapSearchFilters({
+  cityLabel,
   amenityFilters,
-  propertyFilter = 'all',
   compact = false,
   onHome,
-  onPropertyFilterChange,
   onAmenityFilterToggle,
   onResetFilters,
 }) {
@@ -36,7 +26,7 @@ export function MapSearchFilters({
         aria-hidden={compact ? 'true' : undefined}
         inert={compact ? true : undefined}
       >
-        <div className="map-search-filter-stack__toolbar map-search-filter-stack__toolbar--categories">
+        <div className="map-search-filter-stack__toolbar map-search-filter-stack__toolbar--explore">
           <button
             type="button"
             className="map-search-filter-stack__side-button map-search-filter-stack__back"
@@ -46,23 +36,9 @@ export function MapSearchFilters({
             <ArrowLeftIcon />
           </button>
 
-          <div className="map-property-rail" data-testid="map-property-filters" aria-label="Type de logement">
-            {MAP_PROPERTY_FILTERS.map((filter) => {
-              const active = propertyFilter === filter.id
-              return (
-                <button
-                  key={filter.id}
-                  type="button"
-                  className="map-property-chip"
-                  data-property-filter={filter.id}
-                  data-active={active ? 'true' : 'false'}
-                  aria-pressed={active}
-                  onClick={() => onPropertyFilterChange?.(filter.id)}
-                >
-                  <span>{filter.label}</span>
-                </button>
-              )
-            })}
+          <div className="map-search-filter-stack__explore-copy" aria-label={`Explorer ${cityLabel}`}>
+            <small>Explorer</small>
+            <strong>{cityLabel}</strong>
           </div>
 
           <button
