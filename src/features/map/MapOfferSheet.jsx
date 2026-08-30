@@ -133,12 +133,12 @@ function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListi
   )
 }
 
-export function MapOfferSheet({ listings, cityLabel, headerHeight = 0, selectedListingId, onSelectedListingChange, onProgressChange, onNavigate }) {
+export function MapOfferSheet({ listings, cityLabel, headerHeight = 0, selectedListingId, onSelectedListingChange, onProgressChange, onNavigate, hidden = false }) {
   const safeHeaderHeight = Math.max(0, headerHeight || 0)
 
   return (
     <MapOfferSheetMotionSurface
-      className="map-offer-sheet"
+      className={`map-offer-sheet${hidden ? ' map-offer-sheet--popup-hidden' : ''}`}
       ariaLabel={`Offres ${cityLabel}`}
       collapsedVisiblePx={COLLAPSED_PANEL_VISIBLE_PX + safeHeaderHeight}
       onProgressChange={onProgressChange}
