@@ -3,8 +3,28 @@
    The sheet itself must always remain full-width from the physical left edge
    to the physical right edge; only its top surface receives the premium finish. */
 
+.map-offer-sheet__header-spacer{
+  position:relative!important;
+  z-index:0!important;
+  background:transparent!important;
+}
+
+/* Seam plate: follows the sheet and fills only the area revealed by its
+   rounded top corners, so no map pixel can appear between top bar and sheet. */
+.map-offer-sheet__header-spacer::after{
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:-34px;
+  height:36px;
+  pointer-events:none;
+  background:linear-gradient(180deg,#fbfbfa 0%,#fff 72%,#fff 100%);
+}
+
 .map-offer-sheet__panel{
   position:relative!important;
+  z-index:1!important;
   isolation:isolate!important;
   align-self:stretch!important;
   width:100%!important;
