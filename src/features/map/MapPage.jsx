@@ -32,6 +32,24 @@ function formatMapPrice(listing) {
   return 'TND'
 }
 
+function listingMatchesPropertyFilter(listing, filterId) {
+  if (!filterId || filterId === 'all') return true
+  const title = String(listing?.title || '').toLowerCase()
+  const category = String(listing?.category || '').toLowerCase()
+  const type = String(listing?.capacity?.type || '').toLowerCase()
+  const haystack = `${title} ${category} ${type}`
+
+  if (filterId === 'apartment') return category.includes('family') || haystack.includes('appartement') || haystack.includes('loft')
+  if (filterId === 'villa') return category.includes('prestige') || haystack.includes('villa')
+  if (filterId === 'guesthouse') return category.includes('guesthouse')
+  if (filterId === 'beach') return category.includes('beach') || haystack.includes('plage')
+  if (filterId === 'house') {
+    return !category.includes('guesthouse')
+      && (haystack.includes('maison') || haystack.includes('dar') || haystack.includes('riad'))
+  }
+  return true
+}
+
 const LISTING_MARKERS = Object.freeze(
   HOME_OFFERS
     .map((listing) => {
@@ -140,6 +158,7 @@ export function MapPage({ onNavigate }) {
   const [selectionState, setSelectionState] = useState(() => ({ contextKey: mapContextKey, id: selectedMarker?.id || null }))
   const [viewportState, setViewportState] = useState(() => ({ contextKey: mapContextKey, command: null }))
   const [amenityFilters, setAmenityFilters] = useState(() => new Set())
+  const [propertyFilter, setPropertyFilter] = useState('all')
   const [mapInteracting, setMapInteracting] = useState(false)
   const [popupOpen, setPopupOpen] = useState(false)
   const selectedListingId = selectionState.contextKey === mapContextKey ? selectionState.id : selectedMarker?.id || null
@@ -186,8 +205,11 @@ export function MapPage({ onNavigate }) {
   )
 
   const cityListings = useMemo(
-    () => contextListings.filter((listing) => listingMatchesMapFilters(listing, amenityFilters)),
-    [contextListings, amenityFilters],
+    () => contextListings.filter((listing) => (
+      listingMatchesPropertyFilter(listing, propertyFilter)
+      && listingMatchesMapFilters(listing, amenityFilters)
+    )),
+    [contextListings, propertyFilter, amenityFilters],
   )
 
   const visibleMarkers = useMemo(() => {
@@ -210,12 +232,19 @@ export function MapPage({ onNavigate }) {
     })
   }, [])
 
+  const handlePropertyFilterChange = useCallback((filterId) => {
+    setPropertyFilter(filterId)
+    setSelectedListingId(null)
+    setPopupOpen(false)
+  }, [setSelectedListingId])
+
   const resetFilters = useCallback(() => {
     setAmenityFilters(new Set())
   }, [])
 
   useEffect(() => {
     setPopupOpen(false)
+    setPropertyFilter('all')
   }, [mapContextKey])
 
   useEffect(() => {
@@ -380,6 +409,7 @@ export function MapPage({ onNavigate }) {
       data-city-offer-count={cityListings.length}
       data-context-offer-count={contextListings.length}
       data-amenity-filter-count={amenityFilters.size}
+      data-property-filter={propertyFilter}
       data-map-interacting={mapInteracting ? 'true' : 'false'}
       data-offer-popup={popupOpen ? 'open' : 'closed'}
     >
@@ -387,8 +417,10 @@ export function MapPage({ onNavigate }) {
         <MapSearchFilters
           cityLabel={cityLabel}
           amenityFilters={amenityFilters}
+          propertyFilter={propertyFilter}
           compact={popupOpen}
           onHome={() => onNavigate('/')}
+          onPropertyFilterChange={handlePropertyFilterChange}
           onAmenityFilterToggle={toggleAmenityFilter}
           onResetFilters={resetFilters}
         />
