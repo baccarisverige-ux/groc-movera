@@ -214,11 +214,7 @@
 
 .connected-profile__slot--photo{
   height:92px;
-  background:#c9d7e6;
-}
-
-.connected-profile__slot[data-slot="profile-favorites"]{
-  background:#f4f5f6;
+  background:#f3f4f3;
 }
 
 .connected-profile__slot img{
@@ -231,9 +227,7 @@
 }
 
 .connected-profile__slot[data-slot="profile-favorites"] img{
-  object-fit:contain;
   object-position:center;
-  padding:2px 4px;
 }
 
 .connected-profile__slot--host{
