@@ -228,7 +228,7 @@ export function MapContainer({
         onGoogleClusterFocus={focusCluster}
       />
       <ClusterLayer markers={markers} viewport={viewport} size={size} onFocus={focusCluster} interactive={!googleNativeGestures} />
-      {viewport.zoom > 10 ? <MarkerLayer markers={markers} viewport={viewport} size={size} selectedListingId={selectedListingId} onSelect={selectMarker} interactive={!googleNativeGestures} /> : null}
+      {viewport.zoom > 10 ? <MarkerLayer markers={markers} viewport={viewport} size={size} selectedListingId={selectedListingId} onSelect={selectMarker} interactive /> : null}
       <MapControls onZoomIn={() => zoomBy(1)} onZoomOut={() => zoomBy(-1)} />
       <div className="map-attribution">© OpenStreetMap contributors · © CARTO</div>
       <ResizeManager targetRef={surfaceRef} onSize={setSize} />

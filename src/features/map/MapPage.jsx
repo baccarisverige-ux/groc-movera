@@ -8,6 +8,7 @@ import { INITIAL_VIEWPORT, MapContainer } from '../map-engine/MapContainer.jsx'
 import { announceMapReady } from '../search/mapHandoff.js'
 import { DESTINATION_VIEWPORTS } from './constants/map.constants.js'
 import { listingMatchesMapFilters } from './mapListingFilters.js'
+import { MapOfferPopup } from './MapOfferPopup.jsx'
 import { MapOfferSheet } from './MapOfferSheet.jsx'
 import { MapSearchFilters } from './MapSearchFilters.jsx'
 
@@ -135,6 +136,7 @@ export function MapPage({ onNavigate }) {
   const [viewportState, setViewportState] = useState(() => ({ contextKey: mapContextKey, command: null }))
   const [amenityFilters, setAmenityFilters] = useState(() => new Set())
   const [mapInteracting, setMapInteracting] = useState(false)
+  const [popupOpen, setPopupOpen] = useState(false)
   const selectedListingId = selectionState.contextKey === mapContextKey ? selectionState.id : selectedMarker?.id || null
   const viewportCommand = viewportState.contextKey === mapContextKey ? viewportState.command : null
 
@@ -208,9 +210,14 @@ export function MapPage({ onNavigate }) {
   }, [])
 
   useEffect(() => {
+    setPopupOpen(false)
+  }, [mapContextKey])
+
+  useEffect(() => {
     if (!selectedListingId) return
     if (cityListings.some((listing) => listing.id === selectedListingId)) return
     setSelectedListingId(null)
+    setPopupOpen(false)
   }, [cityListings, selectedListingId, setSelectedListingId])
 
   const returnToOffers = () => {
@@ -256,6 +263,20 @@ export function MapPage({ onNavigate }) {
       zoom: Math.min(17, Math.max(13.6, base.zoom + 1.65)),
     })
   }, [visibleMarkers, handoffViewport, listingViewport, destinationViewport, setSelectedListingId, issueViewportCommand])
+
+  const handlePinSelectedListingChange = useCallback((listingId) => {
+    setSelectedListingId(listingId)
+    setPopupOpen(Boolean(listingId))
+  }, [setSelectedListingId])
+
+  const handlePopupListingChange = useCallback((listingId) => {
+    handleSheetSelectedListingChange(listingId)
+  }, [handleSheetSelectedListingChange])
+
+  const handlePopupClose = useCallback(() => {
+    setPopupOpen(false)
+    setSelectedListingId(null)
+  }, [setSelectedListingId])
 
   useEffect(() => {
     let frame = 0
@@ -313,6 +334,7 @@ export function MapPage({ onNavigate }) {
       data-context-offer-count={contextListings.length}
       data-amenity-filter-count={amenityFilters.size}
       data-map-interacting={mapInteracting ? 'true' : 'false'}
+      data-offer-popup={popupOpen ? 'open' : 'closed'}
     >
       <div ref={headerRef} className="b225-map-top">
         <MapSearchFilters
@@ -336,12 +358,22 @@ export function MapPage({ onNavigate }) {
           key={`map-${mapContextKey}`}
           markers={visibleMarkers}
           selectedListingId={selectedListingId}
-          onSelectedListingChange={setSelectedListingId}
+          onSelectedListingChange={handlePinSelectedListingChange}
           onInteractionChange={handleMapInteractionChange}
           initialViewport={initialViewport}
           viewportCommand={viewportCommand}
         />
       </div>
+
+      {popupOpen && selectedListingId ? (
+        <MapOfferPopup
+          listings={cityListings}
+          selectedListingId={selectedListingId}
+          onSelectedListingChange={handlePopupListingChange}
+          onClose={handlePopupClose}
+          onNavigate={onNavigate}
+        />
+      ) : null}
 
       <MapOfferSheet
         key={`sheet-${mapContextKey}`}

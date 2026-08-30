@@ -1,5 +1,5 @@
 import { getListingDetail, listingCatalog } from '../../entities/listing/listingCatalog.js'
-import { homeCategoryOffers } from '../home/data/homeData.js'
+import { homeCategoryOffers, homeDestinations } from '../home/data/homeData.js'
 
 const DEFAULT_DATES = '3–4 sept.'
 const DEFAULT_AMENITIES = Object.freeze([
@@ -65,9 +65,50 @@ function buildDescription(title, location, subtitle) {
   return `${lead} ${title} se trouve à ${place}, en Tunisie. L’espace est pensé pour un séjour simple et confortable : lumière, calme, et les essentiels du quotidien. Vous êtes proche des lieux de vie, dans une atmosphère Movera, sans chichi.`
 }
 
-function photosFrom(image) {
+const PHOTO_LABELS = Object.freeze(['Chambre', 'Séjour', 'Extérieur'])
+
+const GALLERY_EXTRA_POOL = (() => {
+  const urls = []
+  const seen = new Set()
+  const add = (src) => {
+    if (typeof src !== 'string' || !src.includes('images.unsplash.com') || seen.has(src)) return
+    seen.add(src)
+    urls.push(src)
+  }
+  for (const items of Object.values(homeCategoryOffers)) {
+    for (const item of items) add(item.image)
+  }
+  for (const item of listingCatalog) add(item.image)
+  for (const item of homeDestinations) add(item.image)
+  return Object.freeze(urls)
+})()
+
+function hashString(value) {
+  let hash = 2166136261
+  for (let i = 0; i < value.length; i += 1) {
+    hash ^= value.charCodeAt(i)
+    hash = Math.imul(hash, 16777619)
+  }
+  return hash >>> 0
+}
+
+function extraGallerySources(image, listingId) {
+  const pool = GALLERY_EXTRA_POOL.filter((src) => src !== image)
+  if (pool.length < 2) return pool.slice()
+  const hash = hashString(String(listingId || image))
+  const first = pool[hash % pool.length]
+  let second = pool[(hash + 5 + (hash % 7)) % pool.length]
+  if (second === first) second = pool[(hash + 1) % pool.length]
+  return [first, second]
+}
+
+function photosFrom(image, listingId) {
   if (!image) return []
-  return [{ src: image, label: 'Chambre' }]
+  const extras = extraGallerySources(image, listingId)
+  return [image, ...extras].map((src, index) => ({
+    src,
+    label: PHOTO_LABELS[index] || 'Galerie',
+  }))
 }
 
 function toGuestListing(item, extras = {}) {
@@ -94,7 +135,7 @@ function toGuestListing(item, extras = {}) {
     title,
     location,
     image,
-    photos: photosFrom(image),
+    photos: photosFrom(image, item.id),
     rating,
     reviews,
     badge: item.badge || extras.badge || '',
