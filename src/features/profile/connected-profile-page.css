@@ -214,7 +214,7 @@
 
 .connected-profile__slot--photo{
   height:92px;
-  background:#f3f4f3;
+  background:#fff;
 }
 
 .connected-profile__slot img{
@@ -226,10 +226,7 @@
   pointer-events:none;
 }
 
-.connected-profile__slot[data-slot="profile-favorites"]{
-  background:#fff;
-}
-
+.connected-profile__slot[data-slot="profile-trips"] img,
 .connected-profile__slot[data-slot="profile-favorites"] img{
   object-fit:contain;
   object-position:center;
