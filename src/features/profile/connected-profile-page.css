@@ -209,6 +209,21 @@
   border-radius:16px;
   background:#f3f4f3;
   box-shadow:inset 0 0 0 1px rgba(29,31,30,.03);
+  overflow:hidden;
+}
+
+.connected-profile__slot--photo{
+  height:92px;
+  background:#c9d7e6;
+}
+
+.connected-profile__slot img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center 38%;
+  display:block;
+  pointer-events:none;
 }
 
 .connected-profile__slot--host{
@@ -410,6 +425,7 @@
   .connected-profile__avatar{font-size:30px}
   .connected-profile__quick-card{min-height:136px;padding:12px}
   .connected-profile__slot{height:68px}
+  .connected-profile__slot--photo{height:80px}
   .connected-profile__host-card{grid-template-columns:minmax(0,1fr) 80px}
   .connected-profile__slot--host{width:80px;height:80px;flex-basis:80px}
   .connected-profile__host-copy strong{font-size:16px}
