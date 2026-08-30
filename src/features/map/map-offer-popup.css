@@ -41,8 +41,8 @@
 
 .map-offer-popup__media{
   position:relative;
-  flex:1 1 68%;
-  min-height:58%;
+  flex:1 1 auto;
+  min-height:0;
   background:#ececea;
 }
 
@@ -135,9 +135,10 @@
 .map-offer-popup__heart.is-on{color:#315f4c}
 
 .map-offer-popup__body{
-  flex:0 1 32%;
-  padding:9px 14px 10px;
-  overflow:hidden;
+  flex:0 0 auto;
+  min-height:108px;
+  padding:10px 14px 11px;
+  overflow:visible;
 }
 .map-offer-popup__title-row{
   display:flex;
@@ -147,8 +148,9 @@
 }
 .map-offer-popup__body h2{
   margin:0;
+  min-width:0;
   font-size:15px;
-  line-height:1.2;
+  line-height:1.22;
   letter-spacing:-.03em;
   font-weight:650;
   white-space:nowrap;
@@ -178,6 +180,7 @@
 .map-offer-popup__price{
   margin:5px 0 0;
   font-size:13.5px;
+  line-height:1.2;
   font-weight:700;
   letter-spacing:-.02em;
   color:#1d1f1e;
@@ -284,9 +287,8 @@
 }
 
 @media (max-height:700px){
-  .map-offer-popup{bottom:26px;min-height:232px;max-height:286px;height:36svh}
-  .map-offer-popup__media{min-height:56%}
-  .map-offer-popup__body{padding:8px 12px 9px}
+  .map-offer-popup{bottom:26px;min-height:246px;max-height:300px;height:37svh}
+  .map-offer-popup__body{min-height:104px;padding:8px 12px 9px}
 }
 
 @media (max-width:350px){
