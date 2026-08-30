@@ -10,7 +10,18 @@
   background:transparent;
   overflow:visible;
   pointer-events:none;
-  will-change:transform;
+  will-change:transform,opacity;
+  opacity:1;
+  visibility:visible;
+  transition:opacity .18s ease,visibility 0s linear 0s;
+}
+
+.b225-map-page[data-offer-popup=open] .map-offer-sheet,
+.map-offer-sheet--popup-hidden{
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transition:opacity .14s ease,visibility 0s linear .14s;
 }
 
 .map-offer-sheet__header-spacer{
@@ -324,6 +335,7 @@
 }
 
 @media(prefers-reduced-motion:reduce){
+  .map-offer-sheet,
   .map-offer-sheet__panel,
   .map-offer-sheet__chevron,
   .map-offer-sheet__card{transition:none}
