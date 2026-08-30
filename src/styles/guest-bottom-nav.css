@@ -7,7 +7,7 @@
   bottom:-1px!important;
   z-index:90!important;
   width:min(100%,430px)!important;
-  height:calc(61px + env(safe-area-inset-bottom,0px))!important;
+  height:calc(70px + env(safe-area-inset-bottom,0px))!important;
   min-height:0!important;
   max-height:none!important;
   transform:translateX(-50%)!important;
@@ -15,14 +15,14 @@
   grid-template-columns:repeat(5,minmax(0,1fr))!important;
   align-items:start!important;
   gap:0!important;
-  padding:7px 6px calc(env(safe-area-inset-bottom,0px) + 1px)!important;
+  padding:8px 5px calc(env(safe-area-inset-bottom,0px) + 1px)!important;
   box-sizing:border-box!important;
   overflow:visible!important;
-  border-top:1px solid rgba(31,37,33,.05)!important;
-  background:rgba(254,254,253,.96)!important;
-  -webkit-backdrop-filter:saturate(175%) blur(20px)!important;
-  backdrop-filter:saturate(175%) blur(20px)!important;
-  box-shadow:0 -4px 20px rgba(30,36,32,.022)!important;
+  border-top:1px solid rgba(31,37,33,.055)!important;
+  background:rgba(254,254,253,.97)!important;
+  -webkit-backdrop-filter:saturate(180%) blur(22px)!important;
+  backdrop-filter:saturate(180%) blur(22px)!important;
+  box-shadow:0 -6px 22px rgba(30,36,32,.035)!important;
 }
 
 .app-shell--guest > .app-shell__nav::after{
@@ -30,42 +30,42 @@
   position:absolute;
   left:0;
   right:0;
-  bottom:-2px;
-  height:3px;
+  bottom:-3px;
+  height:4px;
   background:inherit;
   pointer-events:none;
 }
 
-.app-shell--guest > .app-shell__content{padding-bottom:calc(70px + env(safe-area-inset-bottom,0px))}
+.app-shell--guest > .app-shell__content{padding-bottom:calc(80px + env(safe-area-inset-bottom,0px))}
 
 .app-shell--guest > .app-shell__nav > .app-shell__nav-item,
 .app-shell--guest:has(.b225-home) > .app-shell__nav > .app-shell__nav-item{
   position:relative!important;
   min-width:0!important;
   width:auto!important;
-  min-height:45px!important;
-  height:45px!important;
-  max-height:45px!important;
+  min-height:52px!important;
+  height:52px!important;
+  max-height:52px!important;
   margin:0!important;
-  padding:1px 2px 0!important;
+  padding:2px 2px 0!important;
   display:flex!important;
   flex-direction:column!important;
   align-items:center!important;
   justify-content:flex-start!important;
   align-self:start!important;
-  gap:3px!important;
+  gap:4px!important;
   border:0!important;
-  border-radius:12px!important;
+  border-radius:14px!important;
   background:transparent!important;
-  color:#6d716f!important;
-  font-size:9.5px!important;
-  font-weight:500!important;
+  color:#747976!important;
+  font-size:10.2px!important;
+  font-weight:520!important;
   line-height:1!important;
-  letter-spacing:normal!important;
+  letter-spacing:-.01em!important;
   text-decoration:none!important;
   box-sizing:border-box!important;
   overflow:visible!important;
-  transition:transform .18s ease,color .18s ease,opacity .18s ease!important;
+  transition:transform .16s ease,color .16s ease,opacity .16s ease!important;
 }
 
 .app-shell--guest > .app-shell__nav > .app-shell__nav-item::before,
@@ -78,19 +78,19 @@
   display:none!important;
 }
 
-.app-shell--guest > .app-shell__nav > .app-shell__nav-item:active{transform:scale(.92)!important}
+.app-shell--guest > .app-shell__nav > .app-shell__nav-item:active{transform:scale(.93)!important}
 
 .app-shell--guest > .app-shell__nav > .app-shell__nav-item svg{
-  width:21px!important;
-  height:21px!important;
-  min-width:21px!important;
-  min-height:21px!important;
-  flex:0 0 21px!important;
+  width:23px!important;
+  height:23px!important;
+  min-width:23px!important;
+  min-height:23px!important;
+  flex:0 0 23px!important;
   margin:0!important;
   padding:0!important;
   fill:none!important;
   stroke:currentColor!important;
-  stroke-width:1.7!important;
+  stroke-width:1.75!important;
   stroke-linecap:round!important;
   stroke-linejoin:round!important;
   box-sizing:content-box!important;
@@ -98,12 +98,12 @@
 
 .app-shell--guest > .app-shell__nav > .app-shell__nav-item span{
   display:block!important;
-  min-height:10px!important;
+  min-height:11px!important;
   margin:0!important;
   padding:0!important;
   color:inherit!important;
   font:inherit!important;
-  line-height:1!important;
+  line-height:1.05!important;
   white-space:nowrap!important;
   overflow:visible!important;
 }
@@ -118,11 +118,13 @@
 .app-shell--guest:has(.b225-home) > .app-shell__nav > .app-shell__nav-item[data-active='true'] svg{
   stroke:var(--movera-nav-active)!important;
   color:var(--movera-nav-active)!important;
+  stroke-width:1.95!important;
 }
 
 .app-shell--guest > .app-shell__nav > .app-shell__nav-item[data-active='true'] span,
 .app-shell--guest:has(.b225-home) > .app-shell__nav > .app-shell__nav-item[data-active='true'] span{
   color:var(--movera-nav-active)!important;
+  font-weight:650!important;
 }
 
 .app-shell--guest > .app-shell__nav > .app-shell__nav-item[aria-disabled='true']{
@@ -138,12 +140,12 @@
 .app-shell--guest > .app-shell__nav > .app-shell__nav-item[aria-disabled='true'][data-active='true'],
 .app-shell--guest > .app-shell__nav > .app-shell__nav-item[aria-disabled='true'][data-active='true'] svg,
 .app-shell--guest > .app-shell__nav > .app-shell__nav-item[aria-disabled='true'][data-active='true'] span{
-  color:#6d716f!important;
-  stroke:#6d716f!important;
+  color:#747976!important;
+  stroke:#747976!important;
 }
 
 @media(max-width:350px){
-  .app-shell--guest > .app-shell__nav{padding-inline:2px!important}
-  .app-shell--guest > .app-shell__nav > .app-shell__nav-item{font-size:9px!important}
-  .app-shell--guest > .app-shell__nav > .app-shell__nav-item svg{width:20px!important;height:20px!important;min-width:20px!important;min-height:20px!important;flex-basis:20px!important}
+  .app-shell--guest > .app-shell__nav{padding-inline:2px!important;height:calc(67px + env(safe-area-inset-bottom,0px))!important}
+  .app-shell--guest > .app-shell__nav > .app-shell__nav-item{font-size:9.5px!important;min-height:49px!important;height:49px!important;max-height:49px!important}
+  .app-shell--guest > .app-shell__nav > .app-shell__nav-item svg{width:22px!important;height:22px!important;min-width:22px!important;min-height:22px!important;flex-basis:22px!important}
 }
