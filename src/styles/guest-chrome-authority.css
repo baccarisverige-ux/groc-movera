@@ -37,14 +37,19 @@
   background:inherit!important;
 }
 
-/* Keep the category rail visible, but remove the oversized floating-card gap. */
+/* Keep the category rail visible and compact. Its surface is deliberately
+   fully opaque so page content can never bleed through the category bar. */
 .b225-home.b225-home .b225-categories-shell{
   display:block!important;
   margin:8px 10px 10px!important;
   padding:7px 8px 5px 10px!important;
   border-radius:20px!important;
+  opacity:1!important;
+  background:linear-gradient(180deg,#faf9f8 0%,#f7f7f6 62%,#f6f6f5 100%)!important;
+  -webkit-backdrop-filter:none!important;
+  backdrop-filter:none!important;
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,1),
+    inset 0 1px 0 #fff,
     inset 0 -1px 0 rgba(124,116,107,.06),
     0 5px 13px rgba(75,67,58,.055)!important;
 }
