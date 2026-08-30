@@ -24,6 +24,7 @@ const hostShellStyle = { maxWidth: 430, margin: '0 auto', background: '#f4f7f5',
 const hostContentStyle = { padding: 0, overflow: 'visible', background: '#f4f7f5' }
 const collectionContentStyle = { paddingTop: 0, paddingLeft: 0, paddingRight: 0, overflow: 'auto', background: '#f7f7f5' }
 const stackedContentStyle = { padding: 0, overflow: 'auto', background: '#f7f7f5' }
+const profileContentStyle = { padding: 0, overflow: 'auto', background: '#fefefd' }
 
 function AppLink({ children, className, href, onNavigate, active, disabled = false }) {
   return (
@@ -52,6 +53,7 @@ export function GuestLayout({ children, currentPath, onNavigate }) {
   const isCollectionRoute = isGuestCollectionRoute(currentPath)
   const isBeachRoute = currentPath === '/plage'
   const isStackedGuestRoute = currentPath.startsWith('/listing/') || currentPath.startsWith('/services/')
+  const isProfileRoute = currentPath === '/profile'
   const collectionHeaderLabel = COLLECTION_HEADER_LABELS[currentPath] || ''
   const shellStyle = isMapRoute ? mapShellStyle : isHostRoute ? hostShellStyle : undefined
   const contentStyle = isMapRoute
@@ -62,11 +64,13 @@ export function GuestLayout({ children, currentPath, onNavigate }) {
         ? collectionContentStyle
         : isStackedGuestRoute
           ? stackedContentStyle
-          : undefined
+          : isProfileRoute
+            ? profileContentStyle
+            : undefined
 
   return (
-    <div className={`app-shell app-shell--guest${isMapRoute ? ' app-shell--map' : ''}${isHostRoute ? ' app-shell--host' : ''}${isCollectionRoute ? ' app-shell--collection' : ''}${isBeachRoute ? ' app-shell--beach' : ''}${isStackedGuestRoute ? ' app-shell--stacked' : ''}`} style={shellStyle}>
-      <header className="app-shell__header" style={isMapRoute || isHostRoute || isStackedGuestRoute ? { display: 'none' } : undefined}>
+    <div className={`app-shell app-shell--guest${isMapRoute ? ' app-shell--map' : ''}${isHostRoute ? ' app-shell--host' : ''}${isCollectionRoute ? ' app-shell--collection' : ''}${isBeachRoute ? ' app-shell--beach' : ''}${isStackedGuestRoute ? ' app-shell--stacked' : ''}${isProfileRoute ? ' app-shell--profile' : ''}`} style={shellStyle}>
+      <header className="app-shell__header" style={isMapRoute || isHostRoute || isStackedGuestRoute || isProfileRoute ? { display: 'none' } : undefined}>
         <strong>Movera</strong>
         {collectionHeaderLabel ? <span className="app-shell__collection-badge">{collectionHeaderLabel}</span> : null}
       </header>

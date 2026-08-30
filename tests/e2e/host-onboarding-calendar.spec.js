@@ -20,11 +20,11 @@ test('first-time traveler completes the full Movera host procedure before reachi
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/Movera-host1/profile')
   await page.getByTestId('profile-test-login').click()
-  await expect(page.getByTestId('switch-to-hosting')).toContainText('Devenir hôte')
+  await expect(page.getByTestId('switch-to-hosting')).toContainText('Passer en mode Hôte')
 
   await clearHostState(page)
   await page.reload()
-  await expect(page.getByTestId('switch-to-hosting')).toContainText('Devenir hôte')
+  await expect(page.getByTestId('switch-to-hosting')).toContainText('Passer en mode Hôte')
   await page.getByTestId('switch-to-hosting').click()
 
   await expect(page).toHaveURL(/\/host$/)

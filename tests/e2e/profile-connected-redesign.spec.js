@@ -17,7 +17,7 @@ async function seedDemoSession(page) {
 test('connected profile uses the new Movera hierarchy without duplicating the reference layout', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await seedDemoSession(page)
-  await page.goto('/Movera-host1/profile')
+  await page.goto('/groc-movera/profile')
 
   const profile = page.getByTestId('page-profile')
   await expect(profile).toHaveAttribute('data-auth-flow', 'connected')
@@ -30,6 +30,7 @@ test('connected profile uses the new Movera hierarchy without duplicating the re
   await expect(page.getByRole('button', { name: /Favoris/ })).toBeVisible()
   await expect(page.getByRole('button', { name: /Messages/ })).toBeVisible()
   await expect(page.getByTestId('switch-to-hosting')).toBeVisible()
+  await expect(page.getByTestId('switch-to-hosting')).toContainText('Passer en mode Hôte')
   await expect(page.getByRole('button', { name: 'Paramètres du compte' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Aide et assistance' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Confidentialité' })).toBeVisible()
@@ -42,19 +43,23 @@ test('connected profile uses the new Movera hierarchy without duplicating the re
   expect(identityBox.width).toBeGreaterThan(340)
   expect(hostBox.width).toBeGreaterThan(340)
 
+  await expect(page.locator('[data-slot="profile-trips"]')).toHaveCount(1)
+  await expect(page.locator('[data-slot="profile-favorites"]')).toHaveCount(1)
+  await expect(page.locator('[data-slot="profile-host"]')).toHaveCount(1)
+
   await page.getByTestId('switch-to-hosting').click()
-  await expect(page.getByRole('status')).toContainText('Transition Voyageur → Hôte prête à lancer')
+  await expect(page).toHaveURL(/\/host$/)
 })
 
 test('connected profile shortcuts and logout keep existing app behavior', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await seedDemoSession(page)
-  await page.goto('/Movera-host1/profile')
+  await page.goto('/groc-movera/profile')
 
   await page.getByRole('button', { name: /Favoris/ }).click()
   await expect(page).toHaveURL(/\/favorites$/)
 
-  await page.goto('/Movera-host1/profile')
+  await page.goto('/groc-movera/profile')
   await page.getByRole('button', { name: 'Se déconnecter' }).click()
   await expect(page.getByTestId('page-profile')).toHaveAttribute('data-auth-flow', 'entry')
   const stored = await page.evaluate((key) => window.localStorage.getItem(key), AUTH_SESSION_KEY)
