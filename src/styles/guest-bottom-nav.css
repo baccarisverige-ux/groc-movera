@@ -6,24 +6,40 @@
   right:0!important;
   bottom:-1px!important;
   z-index:90!important;
-  width:100vw!important;
+  width:auto!important;
+  min-width:100%!important;
   max-width:none!important;
   height:calc(70px + env(safe-area-inset-bottom,0px))!important;
   min-height:0!important;
   max-height:none!important;
+  margin:0!important;
   transform:none!important;
   display:grid!important;
   grid-template-columns:repeat(5,minmax(0,1fr))!important;
   align-items:start!important;
   gap:0!important;
-  padding:8px 5px calc(env(safe-area-inset-bottom,0px) + 1px)!important;
+  padding:8px 0 calc(env(safe-area-inset-bottom,0px) + 1px)!important;
   box-sizing:border-box!important;
   overflow:visible!important;
+  border:0!important;
   border-top:1px solid rgba(31,37,33,.055)!important;
+  border-radius:0!important;
   background:rgba(254,254,253,.97)!important;
   -webkit-backdrop-filter:saturate(180%) blur(22px)!important;
   backdrop-filter:saturate(180%) blur(22px)!important;
   box-shadow:0 -6px 22px rgba(30,36,32,.035)!important;
+}
+
+.app-shell--guest > .app-shell__nav::before{
+  content:""!important;
+  position:fixed!important;
+  left:0!important;
+  right:0!important;
+  bottom:0!important;
+  height:calc(70px + env(safe-area-inset-bottom,0px))!important;
+  background:rgba(254,254,253,.97)!important;
+  pointer-events:none!important;
+  z-index:-1!important;
 }
 
 .app-shell--guest > .app-shell__nav::after{
@@ -43,12 +59,12 @@
 .app-shell--guest:has(.b225-home) > .app-shell__nav > .app-shell__nav-item{
   position:relative!important;
   min-width:0!important;
-  width:auto!important;
+  width:100%!important;
   min-height:52px!important;
   height:52px!important;
   max-height:52px!important;
   margin:0!important;
-  padding:2px 2px 0!important;
+  padding:2px 0 0!important;
   display:flex!important;
   flex-direction:column!important;
   align-items:center!important;
@@ -134,9 +150,7 @@
   cursor:default!important;
 }
 
-.app-shell--guest > .app-shell__nav > .app-shell__nav-item[aria-disabled='true']:active{
-  transform:none!important;
-}
+.app-shell--guest > .app-shell__nav > .app-shell__nav-item[aria-disabled='true']:active{transform:none!important}
 
 .app-shell--guest > .app-shell__nav > .app-shell__nav-item[aria-disabled='true'][data-active='true'],
 .app-shell--guest > .app-shell__nav > .app-shell__nav-item[aria-disabled='true'][data-active='true'] svg,
@@ -146,7 +160,8 @@
 }
 
 @media(max-width:350px){
-  .app-shell--guest > .app-shell__nav{padding-inline:2px!important;height:calc(67px + env(safe-area-inset-bottom,0px))!important}
+  .app-shell--guest > .app-shell__nav{height:calc(67px + env(safe-area-inset-bottom,0px))!important}
+  .app-shell--guest > .app-shell__nav::before{height:calc(67px + env(safe-area-inset-bottom,0px))!important}
   .app-shell--guest > .app-shell__nav > .app-shell__nav-item{font-size:9.5px!important;min-height:49px!important;height:49px!important;max-height:49px!important}
   .app-shell--guest > .app-shell__nav > .app-shell__nav-item svg{width:22px!important;height:22px!important;min-width:22px!important;min-height:22px!important;flex-basis:22px!important}
 }
