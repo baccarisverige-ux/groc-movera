@@ -5,6 +5,7 @@ import { authProviderLabel } from '../auth/authClient.js'
 import { clearAuthSession, useAuthSession } from '../auth/authSession.js'
 import tripsArt from './assets/profile-trips.webp'
 import favoritesArt from './assets/profile-favorites.webp'
+import hostArt from './assets/profile-host.webp'
 import './connected-profile-page.css'
 
 function BellIcon() {
@@ -65,6 +66,7 @@ const LEGAL_ROWS = [
 const PROFILE_SLOT_ART = {
   'profile-trips': tripsArt,
   'profile-favorites': favoritesArt,
+  'profile-host': hostArt,
 }
 
 function IllustrationSlot({ name, className = '' }) {
@@ -115,7 +117,7 @@ export function ConnectedProfilePage({ onNavigate }) {
 
   return (
     <section className="connected-profile" data-testid="page-profile" data-auth-flow="connected">
-      {/* drop profile-avatar.png, profile-host.png into src/features/profile/assets/ later */}
+      {/* drop profile-avatar.png into src/features/profile/assets/ later */}
       <header className="connected-profile__header">
         <h1>Profil</h1>
         <button type="button" className="connected-profile__bell" aria-label="Notifications" onClick={() => showPrototypeNotice('Notifications')}>

@@ -227,7 +227,8 @@
 }
 
 .connected-profile__slot[data-slot="profile-trips"] img,
-.connected-profile__slot[data-slot="profile-favorites"] img{
+.connected-profile__slot[data-slot="profile-favorites"] img,
+.connected-profile__slot[data-slot="profile-host"] img{
   object-fit:contain;
   object-position:center;
 }
@@ -237,6 +238,7 @@
   height:92px;
   flex:0 0 92px;
   border-radius:20px;
+  background:#fff;
 }
 
 .connected-profile__host-card{
