@@ -265,11 +265,6 @@ export function MapPage({ onNavigate }) {
 
   const handleSheetProgress = useCallback((progress) => {
     const autoCameraBlocked = mapInteractionRef.current || performance.now() < mapAutoCameraBlockedUntilRef.current
-
-    // The map gets exclusive camera ownership from the first pointer-down until
-    // a short settling window after Google reports the gesture complete. Using
-    // refs here is intentional: it blocks sheet commands synchronously, before
-    // a React state render can lag one frame behind the native touch event.
     if (autoCameraBlocked || progress > MAP_MOTION_PROGRESS_LIMIT) return
 
     if (progress > 0.14 && !selectedListingId && cityListings[0]) setSelectedListingId(cityListings[0].id)
@@ -417,10 +412,8 @@ export function MapPage({ onNavigate }) {
         <MapSearchFilters
           cityLabel={cityLabel}
           amenityFilters={amenityFilters}
-          propertyFilter={propertyFilter}
           compact={popupOpen}
           onHome={() => onNavigate('/')}
-          onPropertyFilterChange={handlePropertyFilterChange}
           onAmenityFilterToggle={toggleAmenityFilter}
           onResetFilters={resetFilters}
         />
@@ -462,6 +455,8 @@ export function MapPage({ onNavigate }) {
         cityLabel={cityLabel}
         headerHeight={headerHeight}
         selectedListingId={selectedListingId}
+        propertyFilter={propertyFilter}
+        onPropertyFilterChange={handlePropertyFilterChange}
         onSelectedListingChange={handleSheetSelectedListingChange}
         onProgressChange={handleSheetProgress}
         onNavigate={onNavigate}
