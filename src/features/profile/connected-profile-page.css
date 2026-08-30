@@ -226,7 +226,6 @@
   pointer-events:none;
 }
 
-.connected-profile__slot[data-slot="profile-trips"] img,
 .connected-profile__slot[data-slot="profile-favorites"] img{
   object-fit:contain;
   object-position:center;
