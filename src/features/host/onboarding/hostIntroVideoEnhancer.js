@@ -11,7 +11,7 @@ const STEP_TWO_VIDEO_SOURCES = [
   `${BASE_URL}assets/up.mp4`,
   `${BASE_URL}assets/bootstrap/up.mp4`,
 ]
-const STEP_THREE_VIDEO_SRC = `${BASE_URL}assets/host-publish.mp4?v=movera-host6`
+const STEP_THREE_VIDEO_SRC = `${BASE_URL}assets/host-publish.mp4?v=movera-host7`
 
 function configureVideo(video) {
   video.muted = true
