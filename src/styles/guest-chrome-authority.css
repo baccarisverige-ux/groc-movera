@@ -58,6 +58,38 @@
   padding:3px 0 5px!important;
 }
 
+/* Search title continuity: Home and popup use the same 13px visual metric.
+   Keep the popup input at a native 16px to prevent iOS focus zoom, then lock
+   its visual scale so opening/closing cannot interpolate the title size. */
+.b225-home .b225-home-map-search__copy strong{
+  font-size:13px!important;
+  line-height:18px!important;
+  font-weight:760!important;
+  letter-spacing:-.15px!important;
+}
+
+.movera-st .movera-st__persistent-search input,
+.movera-st--open .movera-st__persistent-search input{
+  font-size:16px!important;
+  line-height:18px!important;
+  font-weight:760!important;
+  letter-spacing:-.184615px!important;
+  width:123.076923%!important;
+  transform:scale(.8125)!important;
+  transform-origin:left center!important;
+  transition:none!important;
+  animation:none!important;
+  -webkit-text-size-adjust:100%!important;
+  text-size-adjust:100%!important;
+}
+
+.movera-st .movera-st__persistent-search input::placeholder,
+.movera-st--open .movera-st__persistent-search input::placeholder{
+  font-size:16px!important;
+  line-height:18px!important;
+  font-weight:760!important;
+}
+
 @media(max-width:350px){
   .b225-home.b225-home .b225-categories-shell{
     margin:7px 8px 9px!important;
