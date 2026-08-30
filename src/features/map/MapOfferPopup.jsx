@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useFavorites } from '../favorites/favoritesStore.js'
 import { listingLocationLine, listingRatingCopy, nextListingId, rotateListingsForPopup } from './mapOfferPopupModel.js'
 import './map-offer-popup.css'
@@ -21,6 +21,14 @@ function CloseGlyph() {
   return (
     <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
       <path d="M7 7l10 10M17 7 7 17" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function NextGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+      <path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
@@ -90,16 +98,7 @@ function PhotoCarousel({ photos, alt, onOpen }) {
   )
 }
 
-function OfferCard({
-  listing,
-  current,
-  peek,
-  favorite,
-  onToggleFavorite,
-  onClose,
-  onOpen,
-  onPeek,
-}) {
+function OfferCard({ listing, favorite, onToggleFavorite, onClose, onOpen }) {
   const photos = listingPhotos(listing)
   const locationLine = listingLocationLine(listing)
   const ratingCopy = listingRatingCopy(listing)
@@ -107,44 +106,42 @@ function OfferCard({
   return (
     <article
       className="map-offer-popup__card"
-      data-testid={current ? 'map-offer-popup-card' : peek ? 'map-offer-popup-peek' : undefined}
+      data-testid="map-offer-popup-card"
       data-listing-id={listing.id}
-      data-current={current ? 'true' : 'false'}
-      onClick={current ? onOpen : onPeek}
+      data-current="true"
+      onClick={onOpen}
     >
       <div className="map-offer-popup__media">
-        <PhotoCarousel photos={photos} alt={listing.title} onOpen={current ? onOpen : onPeek} />
+        <PhotoCarousel photos={photos} alt={listing.title} onOpen={onOpen} />
         {listing.badge ? <span className="map-offer-popup__badge">{listing.badge}</span> : null}
-        {current ? (
-          <div className="map-offer-popup__orbs">
-            <button
-              type="button"
-              className="map-offer-popup__orb"
-              aria-label={`${favorite ? 'Retirer' : 'Ajouter'} ${listing.title} ${favorite ? 'des' : 'aux'} favoris`}
-              aria-pressed={favorite}
-              onClick={(event) => {
-                event.stopPropagation()
-                onToggleFavorite(listing.id)
-              }}
-            >
-              <span className={favorite ? 'map-offer-popup__heart is-on' : 'map-offer-popup__heart'}>
-                <HeartGlyph filled={favorite} />
-              </span>
-            </button>
-            <button
-              type="button"
-              className="map-offer-popup__orb"
-              data-testid="map-offer-popup-close"
-              aria-label="Fermer"
-              onClick={(event) => {
-                event.stopPropagation()
-                onClose()
-              }}
-            >
-              <CloseGlyph />
-            </button>
-          </div>
-        ) : null}
+        <div className="map-offer-popup__orbs">
+          <button
+            type="button"
+            className="map-offer-popup__orb"
+            aria-label={`${favorite ? 'Retirer' : 'Ajouter'} ${listing.title} ${favorite ? 'des' : 'aux'} favoris`}
+            aria-pressed={favorite}
+            onClick={(event) => {
+              event.stopPropagation()
+              onToggleFavorite(listing.id)
+            }}
+          >
+            <span className={favorite ? 'map-offer-popup__heart is-on' : 'map-offer-popup__heart'}>
+              <HeartGlyph filled={favorite} />
+            </span>
+          </button>
+          <button
+            type="button"
+            className="map-offer-popup__orb"
+            data-testid="map-offer-popup-close"
+            aria-label="Fermer"
+            onClick={(event) => {
+              event.stopPropagation()
+              onClose()
+            }}
+          >
+            <CloseGlyph />
+          </button>
+        </div>
       </div>
       <div className="map-offer-popup__body">
         <div className="map-offer-popup__title-row">
@@ -167,20 +164,9 @@ export function MapOfferPopup({
   onNavigate,
 }) {
   const { favoriteIds, toggleFavorite } = useFavorites()
-  const trackRef = useRef(null)
-  const suppressScrollRef = useRef(false)
   const ordered = rotateListingsForPopup(listings, selectedListingId)
   const current = ordered[0]
-  const showPeek = ordered.length > 1
-
-  useLayoutEffect(() => {
-    const track = trackRef.current
-    if (!track) return
-    suppressScrollRef.current = true
-    track.scrollLeft = 0
-    const id = window.requestAnimationFrame(() => { suppressScrollRef.current = false })
-    return () => window.cancelAnimationFrame(id)
-  }, [selectedListingId])
+  const showNext = ordered.length > 1
 
   if (!current) return null
 
@@ -193,16 +179,6 @@ export function MapOfferPopup({
     if (nextId && nextId !== selectedListingId) onSelectedListingChange?.(nextId)
   }
 
-  const onTrackScroll = (event) => {
-    if (suppressScrollRef.current || !showPeek) return
-    const track = event.currentTarget
-    const card = track.querySelector('[data-current="true"]')
-    if (!card) return
-    const gap = 8
-    const width = card.getBoundingClientRect().width + gap
-    if (width > 0 && track.scrollLeft > width * 0.45) goNext()
-  }
-
   return (
     <div
       className="map-offer-popup"
@@ -210,25 +186,30 @@ export function MapOfferPopup({
       data-listing-id={current.id}
       data-offer-count={ordered.length}
     >
-      <div
-        ref={trackRef}
-        className="map-offer-popup__track"
-        data-peek={showPeek ? 'true' : 'false'}
-        onScroll={onTrackScroll}
-      >
-        {ordered.map((listing, index) => (
-          <OfferCard
-            key={listing.id}
-            listing={listing}
-            current={index === 0}
-            peek={index === 1}
-            favorite={favoriteIds.includes(listing.id)}
-            onToggleFavorite={toggleFavorite}
-            onClose={onClose}
-            onOpen={() => openListing(listing.id)}
-            onPeek={goNext}
-          />
-        ))}
+      <div className="map-offer-popup__single">
+        <OfferCard
+          listing={current}
+          favorite={favoriteIds.includes(current.id)}
+          onToggleFavorite={toggleFavorite}
+          onClose={onClose}
+          onOpen={() => openListing(current.id)}
+        />
+        {showNext ? (
+          <button
+            type="button"
+            className="map-offer-popup__next-band"
+            data-testid="map-offer-popup-next"
+            aria-label="Offre suivante"
+            onClick={(event) => {
+              event.stopPropagation()
+              goNext()
+            }}
+          >
+            <span className="map-offer-popup__next-line" />
+            <span className="map-offer-popup__next-icon"><NextGlyph /></span>
+            <span className="map-offer-popup__next-copy">Suivante</span>
+          </button>
+        ) : null}
       </div>
     </div>
   )
