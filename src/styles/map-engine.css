@@ -24,8 +24,8 @@
 .map-marker--selected span, .map-marker--selected .map-marker__pill { background: #1d1f1e; color: #fff; transform: scale(1.06); box-shadow: 0 8px 18px rgba(22, 28, 24, .28); }
 .map-cluster { min-width: 42px; height: 42px; display: grid; place-items: center; padding: 0 10px; border: 3px solid rgba(255,255,255,.9); border-radius: 999px; background: #343a36; color: #fff; font-weight: 700; box-shadow: 0 8px 20px rgba(20, 26, 22, .22); }
 .map-controls { position: absolute; right: 12px; top: 12px; z-index: 6; display: grid; gap: 6px; }
-.map-controls button { width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid rgba(42, 50, 45, .12); border-radius: 13px; background: rgba(248, 249, 248, .94); color: #2d332f; font: 600 22px/1 var(--font-sans); box-shadow: 0 6px 18px rgba(26, 33, 28, .13); backdrop-filter: blur(12px); cursor: pointer; }
-.map-controls button:active { transform: translateY(1px) scale(.98); }
+.map-controls button { width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid rgba(0,0,0,.16); border-radius: 13px; background: rgba(0,0,0,.16); color: #111; font: 650 22px/1 var(--font-sans); box-shadow: 0 5px 16px rgba(0,0,0,.10); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); cursor: pointer; }
+.map-controls button:active { transform: translateY(1px) scale(.98); background: rgba(0,0,0,.23); }
 .map-controls__reset { font-size: 19px !important; }
 .map-attribution { position: absolute; right: 8px; bottom: 7px; z-index: 5; padding: 3px 6px; border-radius: 5px; background: rgba(255,255,255,.82); color: #5b625e; font-size: 9px; pointer-events: none; }
 .map-engine__status { margin: var(--space-2) 0 0; color: var(--color-text-secondary); font-size: var(--font-size-xs); text-align: right; }
