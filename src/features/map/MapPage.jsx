@@ -8,6 +8,11 @@ import { INITIAL_VIEWPORT, MapContainer } from '../map-engine/MapContainer.jsx'
 import { announceMapReady } from '../search/mapHandoff.js'
 import { DESTINATION_VIEWPORTS } from './constants/map.constants.js'
 import { listingMatchesMapFilters } from './mapListingFilters.js'
+import {
+  panToKeepMarkerAbovePopup,
+  parseMapSurfaceViewport,
+  uncoveredMapBottom,
+} from './mapPopupCamera.js'
 import { MapOfferPopup } from './MapOfferPopup.jsx'
 import { MapOfferSheet } from './MapOfferSheet.jsx'
 import { MapSearchFilters } from './MapSearchFilters.jsx'
@@ -270,8 +275,50 @@ export function MapPage({ onNavigate }) {
   }, [setSelectedListingId])
 
   const handlePopupListingChange = useCallback((listingId) => {
-    handleSheetSelectedListingChange(listingId)
-  }, [handleSheetSelectedListingChange])
+    setSelectedListingId(listingId)
+  }, [setSelectedListingId])
+
+  const panSelectedMarkerAbovePopup = useCallback((listingId) => {
+    const marker = visibleMarkers.find((item) => item.id === listingId)
+    const surface = document.querySelector('.b225-map-page [data-testid="map-surface"]')
+    const parsed = parseMapSurfaceViewport(surface)
+    if (!marker || !parsed) return
+
+    const { width, height, ...viewport } = parsed
+    const size = { width, height }
+    const surfaceRect = surface.getBoundingClientRect()
+    const popup = document.querySelector('[data-testid="map-offer-popup"]')
+    const popupTop = popup ? popup.getBoundingClientRect().top : Number.NaN
+    const uncoveredBottom = uncoveredMapBottom({
+      surfaceTop: surfaceRect.top,
+      surfaceHeight: height,
+      popupTop,
+    })
+    const next = panToKeepMarkerAbovePopup({
+      viewport,
+      size,
+      marker,
+      uncoveredBottom,
+    })
+    if (!next) return
+    issueViewportCommand({ lat: next.lat, lng: next.lng, zoom: viewport.zoom })
+  }, [visibleMarkers, issueViewportCommand])
+
+  useEffect(() => {
+    if (!popupOpen || !selectedListingId) return undefined
+    let cancelled = false
+    let frame2 = 0
+    const frame1 = window.requestAnimationFrame(() => {
+      frame2 = window.requestAnimationFrame(() => {
+        if (!cancelled) panSelectedMarkerAbovePopup(selectedListingId)
+      })
+    })
+    return () => {
+      cancelled = true
+      window.cancelAnimationFrame(frame1)
+      window.cancelAnimationFrame(frame2)
+    }
+  }, [popupOpen, selectedListingId, headerHeight, panSelectedMarkerAbovePopup])
 
   const handlePopupClose = useCallback(() => {
     setPopupOpen(false)
@@ -340,6 +387,7 @@ export function MapPage({ onNavigate }) {
         <MapSearchFilters
           cityLabel={cityLabel}
           amenityFilters={amenityFilters}
+          compact={popupOpen}
           onHome={() => onNavigate('/')}
           onAmenityFilterToggle={toggleAmenityFilter}
           onResetFilters={resetFilters}
@@ -362,6 +410,7 @@ export function MapPage({ onNavigate }) {
           onInteractionChange={handleMapInteractionChange}
           initialViewport={initialViewport}
           viewportCommand={viewportCommand}
+          cameraOnSelect="none"
         />
       </div>
 

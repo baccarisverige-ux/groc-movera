@@ -8,6 +8,7 @@ import './map-search-filters.css'
 export function MapSearchFilters({
   cityLabel,
   amenityFilters,
+  compact = false,
   onHome,
   onAmenityFilterToggle,
   onResetFilters,
@@ -15,7 +16,16 @@ export function MapSearchFilters({
   const activeFilterCount = amenityFilters.size
 
   return (
-    <div className="map-search-filter-stack" data-testid="map-search-filter-stack">
+    <div
+      className="map-search-filter-stack"
+      data-testid="map-search-filter-stack"
+      data-compact={compact ? 'true' : 'false'}
+    >
+      <div
+        className="map-search-filter-stack__toolbar-clip"
+        aria-hidden={compact ? 'true' : undefined}
+        inert={compact ? true : undefined}
+      >
       <div className="map-search-filter-stack__toolbar">
         <button
           type="button"
@@ -44,6 +54,7 @@ export function MapSearchFilters({
           <SlidersHorizontalIcon />
           {activeFilterCount ? <span className="map-search-filter-stack__filter-count">{activeFilterCount}</span> : null}
         </button>
+      </div>
       </div>
 
       <div className="map-filter-rail map-filter-rail--amenities" data-testid="map-amenity-filters" aria-label="Équipements">

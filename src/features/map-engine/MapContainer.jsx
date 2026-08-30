@@ -45,6 +45,7 @@ export function MapContainer({
   onViewportChange,
   onInteractionChange,
   viewportCommand = null,
+  cameraOnSelect = 'focus',
 }) {
   const surfaceRef = useRef(null)
   const pointersRef = useRef(new Map())
@@ -106,8 +107,8 @@ export function MapContainer({
   }), 'app'), [commitViewport])
   const selectMarker = useCallback((marker) => {
     setSelected(marker.id)
-    focusMarker(marker)
-  }, [focusMarker, setSelected])
+    if (cameraOnSelect !== 'none') focusMarker(marker)
+  }, [cameraOnSelect, focusMarker, setSelected])
   const focusCluster = useCallback((point) => focusPoint(point, CLUSTER_FOCUS_ZOOM), [focusPoint])
 
   const handleGoogleStatus = useCallback((status) => {
@@ -136,10 +137,11 @@ export function MapContainer({
   useEffect(() => {
     if (previousSelectedRef.current === selectedListingId) return
     previousSelectedRef.current = selectedListingId
+    if (cameraOnSelect === 'none') return
     if (!selectedListingId) return
     const marker = markers.find((item) => item.id === selectedListingId)
     if (marker) focusMarker(marker)
-  }, [selectedListingId, markers, focusMarker])
+  }, [cameraOnSelect, selectedListingId, markers, focusMarker])
 
   useEffect(() => {
     if (![commandedLat, commandedLng, commandedZoom].every(Number.isFinite)) return
@@ -209,7 +211,7 @@ export function MapContainer({
     try { if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId) } catch { /* no capture */ }
   }
 
-  return <section className="map-engine" data-testid="map-engine" data-selected-listing-id={selectedListingId || ''} data-map-provider={mapProvider} data-native-gestures={googleNativeGestures ? 'true' : 'false'} data-viewport-source={viewportSourceRef.current}>
+  return <section className="map-engine" data-testid="map-engine" data-selected-listing-id={selectedListingId || ''} data-map-provider={mapProvider} data-native-gestures={googleNativeGestures ? 'true' : 'false'} data-viewport-source={viewportSourceRef.current} data-camera-on-select={cameraOnSelect}>
     <div ref={surfaceRef} className="map-surface" data-testid="map-surface" data-lat={viewport.lat.toFixed(6)} data-lng={viewport.lng.toFixed(6)} data-zoom={viewport.zoom}
       data-width={size.width} data-height={size.height} data-update-count={updateCountRef.current} data-render-count={renderCountRef.current} data-listener-count="7" data-lifecycle-events={lifecycleEvents}
       onDoubleClick={googleNativeGestures ? undefined : (event) => { if (!event.target.closest('button')) zoomBy(1) }} onPointerCancel={releasePointer} onPointerDown={onPointerDown} onPointerMove={onPointerMove}
