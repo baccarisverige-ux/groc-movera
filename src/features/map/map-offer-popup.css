@@ -4,9 +4,9 @@
   left:0;
   right:0;
   bottom:34px;
-  height:38svh;
-  min-height:254px;
-  max-height:338px;
+  height:42svh;
+  min-height:286px;
+  max-height:378px;
   padding:0 12px;
   pointer-events:none;
 }
@@ -42,7 +42,7 @@
 .map-offer-popup__media{
   position:relative;
   flex:1 1 auto;
-  min-height:0;
+  min-height:178px;
   background:#ececea;
 }
 
@@ -136,8 +136,8 @@
 
 .map-offer-popup__body{
   flex:0 0 auto;
-  min-height:108px;
-  padding:10px 14px 11px;
+  min-height:106px;
+  padding:9px 14px 10px;
   overflow:visible;
 }
 .map-offer-popup__title-row{
@@ -287,8 +287,9 @@
 }
 
 @media (max-height:700px){
-  .map-offer-popup{bottom:26px;min-height:246px;max-height:300px;height:37svh}
-  .map-offer-popup__body{min-height:104px;padding:8px 12px 9px}
+  .map-offer-popup{bottom:22px;min-height:272px;max-height:326px;height:40svh}
+  .map-offer-popup__media{min-height:168px}
+  .map-offer-popup__body{min-height:100px;padding:8px 12px 9px}
 }
 
 @media (max-width:350px){
