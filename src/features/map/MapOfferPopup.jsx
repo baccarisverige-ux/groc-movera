@@ -25,10 +25,11 @@ function CloseGlyph() {
   )
 }
 
-function NextGlyph() {
+function RailGlyph({ direction }) {
+  const path = direction === 'previous' ? 'm15 6-6 6 6 6' : 'm9 6 6 6-6 6'
   return (
     <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-      <path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d={path} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
@@ -166,7 +167,7 @@ export function MapOfferPopup({
   const { favoriteIds, toggleFavorite } = useFavorites()
   const ordered = rotateListingsForPopup(listings, selectedListingId)
   const current = ordered[0]
-  const showNext = ordered.length > 1
+  const showNavigation = ordered.length > 1
 
   if (!current) return null
 
@@ -177,6 +178,14 @@ export function MapOfferPopup({
   const goNext = () => {
     const nextId = nextListingId(listings, selectedListingId)
     if (nextId && nextId !== selectedListingId) onSelectedListingChange?.(nextId)
+  }
+
+  const goPrevious = () => {
+    const currentIndex = listings.findIndex((listing) => listing.id === selectedListingId)
+    if (currentIndex < 0 || listings.length < 2) return
+    const previousIndex = (currentIndex - 1 + listings.length) % listings.length
+    const previousId = listings[previousIndex]?.id
+    if (previousId && previousId !== selectedListingId) onSelectedListingChange?.(previousId)
   }
 
   return (
@@ -194,21 +203,36 @@ export function MapOfferPopup({
           onClose={onClose}
           onOpen={() => openListing(current.id)}
         />
-        {showNext ? (
-          <button
-            type="button"
-            className="map-offer-popup__next-band"
-            data-testid="map-offer-popup-next"
-            aria-label="Offre suivante"
-            onClick={(event) => {
-              event.stopPropagation()
-              goNext()
-            }}
-          >
-            <span className="map-offer-popup__next-line" />
-            <span className="map-offer-popup__next-icon"><NextGlyph /></span>
-            <span className="map-offer-popup__next-copy">Suivante</span>
-          </button>
+        {showNavigation ? (
+          <div className="map-offer-popup__rail" aria-label="Navigation entre les offres">
+            <button
+              type="button"
+              className="map-offer-popup__rail-section"
+              data-testid="map-offer-popup-previous"
+              aria-label="Offre précédente"
+              onClick={(event) => {
+                event.stopPropagation()
+                goPrevious()
+              }}
+            >
+              <span className="map-offer-popup__rail-icon"><RailGlyph direction="previous" /></span>
+              <span className="map-offer-popup__rail-copy">Préc.</span>
+            </button>
+            <span className="map-offer-popup__rail-divider" aria-hidden="true" />
+            <button
+              type="button"
+              className="map-offer-popup__rail-section"
+              data-testid="map-offer-popup-next"
+              aria-label="Offre suivante"
+              onClick={(event) => {
+                event.stopPropagation()
+                goNext()
+              }}
+            >
+              <span className="map-offer-popup__rail-copy">Suiv.</span>
+              <span className="map-offer-popup__rail-icon"><RailGlyph direction="next" /></span>
+            </button>
+          </div>
         ) : null}
       </div>
     </div>
