@@ -93,7 +93,8 @@ function MapOfferSheetContent({
             <span className="map-offer-sheet__grabber" />
             <span className="map-offer-sheet__heading">
               <strong>{listings.length ? `${listings.length} offre${listings.length > 1 ? 's' : ''}` : 'Aucune offre'}</strong>
-              <span>{cityLabel}</span>
+              <span className="map-offer-sheet__city-label">{cityLabel}</span>
+              <span className="map-offer-sheet__brand-badge">Movera Host</span>
             </span>
             <span className="map-offer-sheet__chevron" data-open={progress > 0.72 ? 'true' : 'false'}><ChevronIcon /></span>
           </button>
