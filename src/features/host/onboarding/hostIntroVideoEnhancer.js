@@ -2,6 +2,7 @@ import './host-intro-premium.css'
 
 const INTRO_SELECTOR = '.host-onboarding[data-screen="intro-place"] .host-onboarding__phase-visual'
 const PRESENTATION_SELECTOR = '.host-onboarding[data-screen="intro-presentation"] .host-onboarding__phase-visual'
+const PUBLISH_SELECTOR = '.host-onboarding[data-screen="intro-publish"] .host-onboarding__phase-visual'
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)'
 const BASE_URL = import.meta.env.BASE_URL
 const HOST_INTRO_VIDEO_SRC = `${BASE_URL}assets/host-intro.mp4?v=movera-host5`
@@ -10,6 +11,7 @@ const STEP_TWO_VIDEO_SOURCES = [
   `${BASE_URL}assets/up.mp4`,
   `${BASE_URL}assets/bootstrap/up.mp4`,
 ]
+const STEP_THREE_VIDEO_SRC = `${BASE_URL}assets/host-publish.mp4?v=movera-host6`
 
 function configureVideo(video) {
   video.muted = true
@@ -67,6 +69,13 @@ function createStepTwoVideo(container) {
   return video
 }
 
+function createStepThreeVideo() {
+  const video = configureVideo(document.createElement('video'))
+  video.className = 'host-onboarding__step-three-video'
+  video.src = STEP_THREE_VIDEO_SRC
+  return video
+}
+
 function enhanceHostIntro() {
   const intro = document.querySelector(INTRO_SELECTOR)
   if (intro && !intro.querySelector('.host-onboarding__intro-video')) {
@@ -77,6 +86,12 @@ function enhanceHostIntro() {
   const presentation = document.querySelector(PRESENTATION_SELECTOR)
   if (presentation && !presentation.querySelector('.host-onboarding__step-two-video')) {
     presentation.append(createStepTwoVideo(presentation))
+  }
+
+  const publish = document.querySelector(PUBLISH_SELECTOR)
+  if (publish && !publish.querySelector('.host-onboarding__step-three-video')) {
+    publish.classList.add('host-onboarding__phase-visual--step-three-video')
+    publish.append(createStepThreeVideo())
   }
 }
 
