@@ -226,7 +226,11 @@
   pointer-events:none;
 }
 
-.connected-profile__slot[data-slot="profile-trips"] img,
+.connected-profile__slot[data-slot="profile-trips"] img{
+  object-fit:cover;
+  object-position:center 32%;
+}
+
 .connected-profile__slot[data-slot="profile-favorites"] img,
 .connected-profile__slot[data-slot="profile-host"] img{
   object-fit:contain;
