@@ -4,6 +4,7 @@ import { MapOfferSheetMotionSurface } from './motion/MapOfferSheetMotionSurface.
 import { MAP_OFFER_ITEM_MOTION } from './motion/mapOfferSheetMotion.config.js'
 import { useMapOfferScrollSheetHandoff } from './motion/useMapOfferScrollSheetHandoff.js'
 import './map-offer-sheet.css'
+import '../../styles/map-offer-sheet-premium.css'
 
 const COLLAPSED_PANEL_VISIBLE_PX = 110
 const ATTACHED_ENTER_PROGRESS = 0.995
