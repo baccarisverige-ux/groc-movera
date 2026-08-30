@@ -4,10 +4,10 @@
   position:fixed!important;
   left:50%!important;
   right:auto!important;
-  bottom:0!important;
+  bottom:-1px!important;
   z-index:90!important;
   width:min(100%,430px)!important;
-  height:calc(60px + env(safe-area-inset-bottom,0px))!important;
+  height:calc(61px + env(safe-area-inset-bottom,0px))!important;
   min-height:0!important;
   max-height:none!important;
   transform:translateX(-50%)!important;
@@ -15,14 +15,25 @@
   grid-template-columns:repeat(5,minmax(0,1fr))!important;
   align-items:start!important;
   gap:0!important;
-  padding:7px 6px env(safe-area-inset-bottom,0px)!important;
+  padding:7px 6px calc(env(safe-area-inset-bottom,0px) + 1px)!important;
   box-sizing:border-box!important;
   overflow:visible!important;
   border-top:1px solid rgba(31,37,33,.05)!important;
-  background:rgba(254,254,253,.92)!important;
+  background:rgba(254,254,253,.96)!important;
   -webkit-backdrop-filter:saturate(175%) blur(20px)!important;
   backdrop-filter:saturate(175%) blur(20px)!important;
   box-shadow:0 -4px 20px rgba(30,36,32,.022)!important;
+}
+
+.app-shell--guest > .app-shell__nav::after{
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:-2px;
+  height:3px;
+  background:inherit;
+  pointer-events:none;
 }
 
 .app-shell--guest > .app-shell__content{padding-bottom:calc(70px + env(safe-area-inset-bottom,0px))}
