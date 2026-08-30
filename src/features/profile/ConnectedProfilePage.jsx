@@ -140,12 +140,24 @@ export function ConnectedProfilePage({ onNavigate }) {
           </button>
         </section>
 
-        <section className="connected-profile__host-card" aria-label={isHost ? 'Ouvrir le mode Hôte' : 'Devenir hôte'}>
+        <section className="connected-profile__host-card" aria-label={isHost ? 'Ouvrir le mode Hôte' : 'Devenir hôte'} onClick={requestHostMode}>
           <div className="connected-profile__host-copy">
             <strong>{isHost ? 'Espace Hôte' : 'Devenir hôte'}</strong>
             <p>{isHost ? 'Votre calendrier vous attend.' : 'Publiez un logement et gagnez à votre rythme.'}</p>
           </div>
           <IllustrationSlot name="profile-host" className="connected-profile__slot--host" />
+          <button
+            type="button"
+            className="connected-profile__host-cta"
+            onClick={(event) => {
+              event.stopPropagation()
+              requestHostMode()
+            }}
+            data-testid="switch-to-hosting"
+          >
+            <HostGlyph />
+            <span>{isHost ? 'Ouvrir l’espace Hôte' : 'Passer en mode Hôte'}</span>
+          </button>
         </section>
 
         {isDemoSession && isHost ? (
@@ -190,13 +202,6 @@ export function ConnectedProfilePage({ onNavigate }) {
 
         {notice ? <div className="connected-profile__notice" role="status">{notice}</div> : null}
       </main>
-
-      <div className="connected-profile__fab-slot">
-        <button type="button" className="connected-profile__host-fab" onClick={requestHostMode} data-testid="switch-to-hosting">
-          <HostGlyph />
-          <span>{isHost ? 'Ouvrir l’espace Hôte' : 'Passer en mode Hôte'}</span>
-        </button>
-      </div>
     </section>
   )
 }

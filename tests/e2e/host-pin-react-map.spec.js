@@ -58,7 +58,7 @@ async function clearHostState(page) {
 async function reachPinStep(page, { react = false } = {}) {
   await page.setViewportSize({ width: 390, height: 844 })
   await mockTunisiaGeocoding(page)
-  await page.goto(`/Movera-host1/profile${react ? '?hostMap=react' : ''}`)
+  await page.goto(`/groc-movera/profile${react ? '?hostMap=react' : ''}`)
   await page.getByTestId('profile-test-login').click()
   await clearHostState(page)
   await page.reload()

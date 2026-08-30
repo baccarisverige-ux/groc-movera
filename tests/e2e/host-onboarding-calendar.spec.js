@@ -18,7 +18,7 @@ async function continueOnboarding(page) {
 
 test('first-time traveler completes the full Movera host procedure before reaching the calendar', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/Movera-host1/profile')
+  await page.goto('/groc-movera/profile')
   await page.getByTestId('profile-test-login').click()
   await expect(page.getByTestId('switch-to-hosting')).toContainText('Passer en mode Hôte')
 
@@ -132,7 +132,7 @@ test('first-time traveler completes the full Movera host procedure before reachi
 
 test('host onboarding draft resumes the last logical screen after save and exit', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/Movera-host1/profile')
+  await page.goto('/groc-movera/profile')
   await page.getByTestId('profile-test-login').click()
   await clearHostState(page)
   await page.reload()
@@ -154,7 +154,7 @@ test('host onboarding draft resumes the last logical screen after save and exit'
 
 test('host calendar supports month navigation, day pricing, blocking and booking detail', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/Movera-host1/profile')
+  await page.goto('/groc-movera/profile')
   await page.getByTestId('profile-test-login').click()
 
   await page.evaluate(([profilesKey, calendarKey]) => {
@@ -170,7 +170,7 @@ test('host calendar supports month navigation, day pricing, blocking and booking
     window.localStorage.removeItem(calendarKey)
   }, [HOST_PROFILES_KEY, HOST_CALENDAR_KEY])
 
-  await page.goto('/Movera-host1/host/calendar')
+  await page.goto('/groc-movera/host/calendar')
   const calendarPage = page.getByTestId('host-calendar-page')
   await expect(calendarPage).toBeVisible()
 
@@ -205,7 +205,7 @@ test('host calendar supports month navigation, day pricing, blocking and booking
 
 test('existing host sees direct host access in profile', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/Movera-host1/profile')
+  await page.goto('/groc-movera/profile')
   await page.getByTestId('profile-test-login').click()
   await page.evaluate((key) => {
     const userId = 'movera-demo-user'
@@ -229,7 +229,7 @@ test('existing host sees direct host access in profile', async ({ page }) => {
 
 test('demo host can reset only host test data and restart Devenir hôte from the beginning', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/Movera-host1/profile')
+  await page.goto('/groc-movera/profile')
   await page.getByTestId('profile-test-login').click()
 
   await page.evaluate(([profilesKey, calendarKey]) => {
