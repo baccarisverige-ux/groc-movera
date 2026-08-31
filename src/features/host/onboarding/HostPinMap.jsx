@@ -5,7 +5,12 @@ import './host-pin-react-map.css'
 
 const FALLBACK_VIEWPORT = Object.freeze({ lat: 36.8065, lng: 10.1815, zoom: 13 })
 const PIN_ZOOM = 17
-const REVERSE_DELAY_MS = 420
+const REVERSE_DELAY_MS = 360
+
+export function hostPinHasCoordinates(value = {}) {
+  return Number.isFinite(Number(value.latitude ?? value.lat))
+    && Number.isFinite(Number(value.longitude ?? value.lng))
+}
 
 export function hostPinViewportFromDraft(draft = {}) {
   const lat = Number(draft.latitude)
@@ -26,6 +31,13 @@ export function hostLocationFromResult(result, viewport, fallback = {}) {
     address: String(result?.label || fallback.address || '').trim(),
     city: String(location.city || fallback.city || '').trim(),
   }
+}
+
+function searchQuery(address, city) {
+  const street = String(address || '').trim()
+  const locality = String(city || '').trim()
+  if (!locality || street.toLocaleLowerCase('fr').includes(locality.toLocaleLowerCase('fr'))) return street
+  return [street, locality].filter(Boolean).join(', ')
 }
 
 function LocationIcon() {
@@ -59,6 +71,7 @@ export function HostPinMap({
   onLocationChange,
   onHintChange,
 }) {
+  const initialSnapshotRef = useRef({ initialAddress, initialCity, latitude, longitude })
   const initialViewport = useMemo(
     () => hostPinViewportFromDraft({ latitude, longitude }),
     [latitude, longitude],
@@ -67,23 +80,32 @@ export function HostPinMap({
   const [viewportCommand, setViewportCommand] = useState(null)
   const [loading, setLoading] = useState('')
   const currentViewportRef = useRef(initialViewport)
+  const currentAddressRef = useRef(initialAddress)
+  const currentCityRef = useRef(initialCity)
   const reverseTimerRef = useRef(0)
   const reverseRevisionRef = useRef(0)
-  const initializationRef = useRef(true)
+  const userInteractionRef = useRef(false)
+
+  currentAddressRef.current = query
+  currentCityRef.current = initialCity
 
   const setHint = useCallback((message) => {
     onHintChange?.(message)
   }, [onHintChange])
 
-  const publishResult = useCallback((result, viewport, fallbackAddress = query) => {
+  const publishResult = useCallback((result, viewport, fallback = {}) => {
     const location = hostLocationFromResult(result, viewport, {
-      address: fallbackAddress,
-      city: initialCity,
+      address: fallback.address || currentAddressRef.current,
+      city: fallback.city || currentCityRef.current,
     })
     if (!location) return
-    if (location.address) setQuery(location.address)
+    if (location.address) {
+      currentAddressRef.current = location.address
+      setQuery(location.address)
+    }
+    if (location.city) currentCityRef.current = location.city
     onLocationChange?.(location)
-  }, [initialCity, onLocationChange, query])
+  }, [onLocationChange])
 
   const reverseAt = useCallback(async (viewport, hint = 'Adresse ajustée · déplacez la carte si nécessaire') => {
     const revision = ++reverseRevisionRef.current
@@ -94,8 +116,9 @@ export function HostPinMap({
       setHint(hint)
     } catch {
       if (revision !== reverseRevisionRef.current) return
+      // A reverse-geocoding outage must never discard the coordinate the host chose.
       publishResult(null, viewport)
-      setHint('Position ajustée · adresse non disponible')
+      setHint('Position enregistrée · adresse momentanément indisponible')
     }
   }, [publishResult, setHint])
 
@@ -107,8 +130,17 @@ export function HostPinMap({
 
   const handleViewportChange = useCallback((viewport) => {
     currentViewportRef.current = viewport
-    if (initializationRef.current) return
-    scheduleReverse(viewport)
+  }, [])
+
+  const handleInteractionChange = useCallback((active) => {
+    if (active) {
+      userInteractionRef.current = true
+      window.clearTimeout(reverseTimerRef.current)
+      return
+    }
+    if (!userInteractionRef.current) return
+    userInteractionRef.current = false
+    scheduleReverse(currentViewportRef.current)
   }, [scheduleReverse])
 
   const moveTo = useCallback((lat, lng, zoom = PIN_ZOOM) => {
@@ -120,30 +152,42 @@ export function HostPinMap({
 
   useEffect(() => {
     let cancelled = false
-    const hasCoordinates = Number.isFinite(Number(latitude)) && Number.isFinite(Number(longitude))
-    const typed = [initialAddress, initialCity].filter(Boolean).join(', ').trim()
+    const snapshot = initialSnapshotRef.current
+    const hasCoordinates = hostPinHasCoordinates({ latitude: snapshot.latitude, longitude: snapshot.longitude })
+    const typed = searchQuery(snapshot.initialAddress, snapshot.initialCity)
 
     const initialize = async () => {
-      if (!hasCoordinates && typed.length >= 3) {
-        setHint('Recherche de l’adresse…')
-        try {
-          const [found] = await searchAddress(typed, { countryCode: 'tn', language: 'fr', limit: 1 })
-          if (!cancelled && found?.viewport) {
-            const next = { ...found.viewport, zoom: PIN_ZOOM }
-            publishResult(found, next, initialAddress)
-            initializationRef.current = false
-            moveTo(next.lat, next.lng, PIN_ZOOM)
-            setHint('Adresse trouvée · ajustez la carte si nécessaire')
-            return
-          }
-        } catch {
-          // Keep the Tunis fallback and let the fixed pin resolve the visible position.
-        }
+      if (hasCoordinates) {
+        setHint('Emplacement détecté · ajustez la carte si nécessaire')
+        return
       }
 
-      if (cancelled) return
-      initializationRef.current = false
-      scheduleReverse(currentViewportRef.current)
+      if (typed.length < 3) {
+        setHint('Écrivez une adresse ou utilisez votre position')
+        return
+      }
+
+      setHint('Recherche de l’adresse…')
+      try {
+        const [found] = await searchAddress(typed, { countryCode: 'tn', language: 'fr', limit: 1 })
+        if (cancelled) return
+        if (found?.viewport) {
+          const next = { ...found.viewport, zoom: PIN_ZOOM }
+          publishResult(found, next, {
+            address: snapshot.initialAddress,
+            city: snapshot.initialCity,
+          })
+          moveTo(next.lat, next.lng, PIN_ZOOM)
+          setHint('Adresse trouvée · ajustez la carte si nécessaire')
+          return
+        }
+      } catch {
+        // Keep the host-entered address untouched. The fallback map is presentation only.
+      }
+
+      if (!cancelled) {
+        setHint('Adresse non localisée automatiquement · recherchez-la ici ou utilisez votre position')
+      }
     }
 
     initialize()
@@ -152,7 +196,7 @@ export function HostPinMap({
       window.clearTimeout(reverseTimerRef.current)
       reverseRevisionRef.current += 1
     }
-  }, [initialAddress, initialCity, latitude, longitude, moveTo, publishResult, scheduleReverse, setHint])
+  }, [moveTo, publishResult, setHint])
 
   const submitSearch = async (event) => {
     event.preventDefault()
@@ -165,13 +209,14 @@ export function HostPinMap({
     setLoading('search')
     setHint('Recherche de l’adresse…')
     try {
-      const [found] = await searchAddress(text, { countryCode: 'tn', language: 'fr', limit: 1 })
+      const fullQuery = searchQuery(text, currentCityRef.current)
+      const [found] = await searchAddress(fullQuery, { countryCode: 'tn', language: 'fr', limit: 1 })
       if (!found?.viewport) {
         setHint('Adresse introuvable · vérifiez puis réessayez')
         return
       }
       const next = { ...found.viewport, zoom: PIN_ZOOM }
-      publishResult(found, next, text)
+      publishResult(found, next, { address: text, city: currentCityRef.current })
       moveTo(next.lat, next.lng, PIN_ZOOM)
       setHint('Adresse trouvée · ajustez la carte si nécessaire')
     } catch {
@@ -198,7 +243,7 @@ export function HostPinMap({
       },
       () => {
         setLoading('')
-        setHint('Autorisez la localisation ou déplacez la carte')
+        setHint('Autorisez la localisation ou recherchez l’adresse')
       },
       { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 },
     )
@@ -211,6 +256,7 @@ export function HostPinMap({
           markers={[]}
           initialViewport={initialViewport}
           onViewportChange={handleViewportChange}
+          onInteractionChange={handleInteractionChange}
           viewportCommand={viewportCommand}
         />
       </div>
@@ -225,7 +271,10 @@ export function HostPinMap({
           aria-label="Rechercher ou modifier l’adresse"
           placeholder="Écrivez une adresse"
           value={query}
-          onChange={(event) => setQuery(event.target.value)}
+          onChange={(event) => {
+            currentAddressRef.current = event.target.value
+            setQuery(event.target.value)
+          }}
         />
         <button className="host-step5-address-search__button" type="submit" aria-label="Rechercher cette adresse" data-loading={loading === 'search' ? 'true' : 'false'}>
           <SearchArrowIcon />
