@@ -174,6 +174,7 @@ export function HostCalendarPage({ onNavigate, hostProfile = null }) {
       : `${nextTotal} chambre${nextTotal > 1 ? 's' : ''} identique${nextTotal > 1 ? 's' : ''}`)
   }
 
+  const listingPhoto = listing?.photos?.[0] || listing?.roomTypes?.flatMap((room) => room.photos || []).find(Boolean) || ''
   if (!profile || !listing) return null
 
   return (
@@ -192,7 +193,9 @@ export function HostCalendarPage({ onNavigate, hostProfile = null }) {
 
       <main className="host-calendar-page__content">
         <section className="host-calendar-page__listing" aria-label="Logement actif">
-          <span className="host-calendar-page__listing-icon"><CalendarIcon /></span>
+          {listingPhoto
+            ? <img className="host-calendar-page__listing-photo" src={listingPhoto} alt="" />
+            : <span className="host-calendar-page__listing-icon"><CalendarIcon /></span>}
           <span><small>Logement actif</small><strong>{listing.name}</strong><em>{listing.type} · {listing.city}</em></span>
           <b>{categorizedRooms ? `Dès ${startingPrice}` : startingPrice} TND</b>
         </section>
