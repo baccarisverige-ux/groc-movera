@@ -16,7 +16,7 @@ async function continueOnboarding(page) {
   await page.getByRole('button', { name: 'Continuer' }).click()
 }
 
-test('first-time traveler completes the full Movera host procedure before reaching the calendar', async ({ page }) => {
+test('first-time traveler completes the full Movera host procedure before reaching the host workspace and calendar', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/groc-movera/profile')
   await page.getByTestId('profile-test-login').click()
@@ -113,6 +113,11 @@ test('first-time traveler completes the full Movera host procedure before reachi
   await page.locator('.host-onboarding__check input').nth(1).check()
   await page.getByRole('button', { name: 'Publier le logement' }).click()
 
+  const workspace = page.getByTestId('host-workspace')
+  await expect(workspace).toHaveAttribute('data-view', 'dashboard')
+  await expect(workspace).toContainText('Villa Saphir — Front de mer')
+  await page.getByRole('navigation', { name: 'Navigation Hôte' }).getByRole('button', { name: 'Calendrier' }).click()
+
   const calendarPage = page.getByTestId('host-calendar-page')
   await expect(calendarPage).toBeVisible()
   await expect(calendarPage).toContainText('Villa Saphir — Front de mer')
@@ -203,7 +208,7 @@ test('host calendar supports month navigation, day pricing, blocking and booking
   await expect(bookingSheet).toContainText('1 260 TND')
 })
 
-test('existing host sees direct host access in profile', async ({ page }) => {
+test('existing host sees direct host workspace access in profile', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/groc-movera/profile')
   await page.getByTestId('profile-test-login').click()
@@ -223,8 +228,10 @@ test('existing host sees direct host access in profile', async ({ page }) => {
   await expect(page.getByTestId('switch-to-hosting')).toContainText('Ouvrir l’espace Hôte')
   await expect(page.getByTestId('restart-host-onboarding')).toContainText('Recommencer')
   await page.getByTestId('switch-to-hosting').click()
+  await expect(page.getByTestId('host-workspace')).toHaveAttribute('data-view', 'dashboard')
+  await expect(page.getByTestId('host-workspace')).toContainText('Dar Movera')
+  await page.getByRole('navigation', { name: 'Navigation Hôte' }).getByRole('button', { name: 'Calendrier' }).click()
   await expect(page.getByTestId('host-calendar-page')).toBeVisible()
-  await expect(page.getByTestId('host-calendar-page')).toContainText('Dar Movera')
 })
 
 test('demo host can reset only host test data and restart Devenir hôte from the beginning', async ({ page }) => {
