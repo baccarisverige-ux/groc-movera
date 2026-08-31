@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { HOST_CALENDAR_EVENT, readHostCalendarForListing } from '../../entities/host/hostCalendarStore.js'
 import { findHostProfileByListingId } from '../../entities/host/hostProfileStore.js'
+import { createGuestReservation } from '../../entities/reservation/reservationService.js'
+import { useAuthSession } from '../auth/authSession.js'
 import './listing-availability.css'
 import './listing-availability-modal.css'
 
@@ -42,9 +44,8 @@ function buildMonthCells(year, month) {
   return [...Array(padding).fill(null), ...Array.from({ length: total }, (_, index) => index + 1)]
 }
 
-function defaultNightlyPrice(basePrice, day) {
-  const offsets = [-20, -10, 0, 10, 20, 30, 40]
-  return Math.max(0, Math.round(basePrice + offsets[day % offsets.length]))
+function defaultNightlyPrice(basePrice) {
+  return Math.max(0, Math.round(Number(basePrice) || 0))
 }
 
 function monthLabel(year, month) {
@@ -96,7 +97,7 @@ function rangeTotal(days, checkIn, checkOut, basePrice) {
   while (cursor < end) {
     const key = keyFromDate(cursor)
     const settings = days[key] || {}
-    total += settings.price ?? defaultNightlyPrice(basePrice, cursor.getDate())
+    total += settings.price ?? defaultNightlyPrice(basePrice)
     cursor.setDate(cursor.getDate() + 1)
   }
   return Math.max(0, Math.round(total))
@@ -121,6 +122,7 @@ function bestDiscount(promotions, checkIn, nights, now) {
 }
 
 export function ListingAvailabilityModal({ listing, onClose }) {
+  const { session, isAuthenticated } = useAuthSession()
   const now = useMemo(() => new Date(), [])
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth())
@@ -128,11 +130,14 @@ export function ListingAvailabilityModal({ listing, onClose }) {
   const [checkIn, setCheckIn] = useState('')
   const [checkOut, setCheckOut] = useState('')
   const [selectionError, setSelectionError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [reservationResult, setReservationResult] = useState(null)
 
   const cells = useMemo(() => buildMonthCells(year, month), [year, month])
   const hostProfile = useMemo(() => findHostProfileByListingId(listing.id), [listing.id])
   const promotions = hostProfile?.listing?.promotions || []
-  const basePrice = Number(listing.nightlyRate) > 0 ? Number(listing.nightlyRate) : Number(hostProfile?.listing?.basePrice) > 0 ? Number(hostProfile.listing.basePrice) : 180
+  const bookingMode = hostProfile?.listing?.bookingMode === 'instant' ? 'instant' : 'request-first'
+  const basePrice = Number(listing.nightlyRate) > 0 ? Number(listing.nightlyRate) : Number(hostProfile?.listing?.basePrice) > 0 ? Number(hostProfile.listing.basePrice) : 0
   const currency = listing.currency || hostProfile?.listing?.currency || 'TND'
   const nights = nightCount(checkIn, checkOut)
   const originalTotal = nights ? rangeTotal(calendar.days, checkIn, checkOut, basePrice) : 0
@@ -185,6 +190,47 @@ export function ListingAvailabilityModal({ listing, onClose }) {
     setCheckOut(key)
   }
 
+  const submitReservation = () => {
+    if (!nights || submitting || reservationResult) return
+    if (!hostProfile || !calendar.linked) {
+      setSelectionError('Cette annonce n’est pas reliée à un calendrier Hôte publiable.')
+      return
+    }
+    if (!isAuthenticated || !session?.userId) {
+      setSelectionError('Connectez-vous à votre profil Movera avant d’envoyer une réservation.')
+      return
+    }
+    if (hostProfile.userId === session.userId) {
+      setSelectionError('Vous ne pouvez pas réserver votre propre annonce depuis le même compte.')
+      return
+    }
+
+    setSubmitting(true)
+    setSelectionError('')
+    try {
+      const reservation = createGuestReservation({
+        listingId: listing.id,
+        roomTypeId: listing.roomTypeId || '',
+        guestUserId: session.userId,
+        guestLabel: session.displayName || session.email || 'Voyageur Movera',
+        checkIn,
+        checkOut,
+        units: 1,
+        status: bookingMode === 'instant' ? 'confirmed' : 'pending',
+        originalTotal,
+        total: finalTotal,
+        discountValue: discount?.value || 0,
+        currency,
+      })
+      setReservationResult(reservation)
+    } catch (error) {
+      setSelectionError(error?.message || 'Impossible d’enregistrer cette réservation.')
+      setCalendar(readHostCalendarForListing(listing.id, listing.roomTypeId || ''))
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   const previousDisabled = year === now.getFullYear() && month === now.getMonth()
   const startDate = dateFromKey(checkIn)
   const endDate = dateFromKey(checkOut)
@@ -196,13 +242,19 @@ export function ListingAvailabilityModal({ listing, onClose }) {
         <header className="listing-availability-modal__head">
           <div>
             <span className="listing-availability-modal__eyebrow">Movera Host</span>
-            <h2 id="listing-availability-title">Choisissez vos dates</h2>
-            <p>{listing.roomTypeName ? `${listing.roomTypeName} · ` : ''}Arrivée puis départ · aucune nuit indisponible entre les deux</p>
+            <h2 id="listing-availability-title">{reservationResult ? 'Réservation enregistrée' : 'Choisissez vos dates'}</h2>
+            <p>{reservationResult ? (reservationResult.status === 'confirmed' ? 'Ces dates sont maintenant confirmées dans le calendrier.' : 'Votre demande attend la validation de l’hôte.') : `${listing.roomTypeName ? `${listing.roomTypeName} · ` : ''}Arrivée puis départ · aucune nuit indisponible entre les deux`}</p>
           </div>
           <button type="button" className="listing-availability-modal__close" aria-label="Fermer le calendrier" onClick={onClose}><CloseIcon /></button>
         </header>
 
-        {calendar.linked ? (
+        {reservationResult ? (
+          <div className="listing-availability-modal__unlinked" data-testid="reservation-created">
+            <strong>{reservationResult.status === 'confirmed' ? 'Réservation confirmée' : 'Demande envoyée'}</strong>
+            <p>{formatShortDate(reservationResult.checkIn)} → {formatShortDate(reservationResult.checkOut)} · {reservationResult.total} {reservationResult.currency}</p>
+            <small>Référence {reservationResult.id}</small>
+          </div>
+        ) : calendar.linked ? (
           <>
             <div className="listing-availability-modal__selection" aria-label="Dates du séjour">
               <span data-active={checkIn ? 'true' : 'false'}><small>Arrivée</small><strong>{formatShortDate(checkIn)}</strong></span>
@@ -232,7 +284,7 @@ export function ListingAvailabilityModal({ listing, onClose }) {
                   const isAfterStart = Boolean(startDate && date > startDate && !endDate)
                   const unreachable = isAfterStart && rangeHasBlockedNight(calendar.days, startDate, date)
                   const disabled = past || blocked || unreachable
-                  const price = settings.price ?? defaultNightlyPrice(basePrice, day)
+                  const price = settings.price ?? defaultNightlyPrice(basePrice)
                   const status = past ? 'past' : blocked ? 'blocked' : unreachable ? 'unreachable' : 'free'
                   const selectedStart = key === checkIn
                   const selectedEnd = key === checkOut
@@ -266,7 +318,7 @@ export function ListingAvailabilityModal({ listing, onClose }) {
                 <span><i data-kind="free" />Libre</span>
                 <span><i data-kind="blocked" />Indisponible</span>
               </div>
-              <p className="listing-availability-modal__hint">Touchez d’abord le jour d’arrivée, puis le jour de départ.</p>
+              <p className="listing-availability-modal__hint">Les jours sans tarif spécial utilisent exactement le prix de base défini par l’hôte.</p>
               {selectionError ? <p className="listing-availability-modal__error" role="alert">{selectionError}</p> : null}
             </section>
 
@@ -297,7 +349,11 @@ export function ListingAvailabilityModal({ listing, onClose }) {
           </div>
         )}
 
-        {nights > 0 ? <button type="button" className="listing-availability-modal__done" onClick={onClose}>Choisir ces dates</button> : null}
+        {!reservationResult && nights > 0 && calendar.linked ? (
+          <button type="button" className="listing-availability-modal__done" disabled={submitting} onClick={submitReservation}>
+            {submitting ? 'Enregistrement…' : bookingMode === 'instant' ? 'Confirmer la réservation' : 'Envoyer la demande à l’hôte'}
+          </button>
+        ) : reservationResult ? <button type="button" className="listing-availability-modal__done" onClick={onClose}>Terminer</button> : null}
       </section>
     </div>
   )
