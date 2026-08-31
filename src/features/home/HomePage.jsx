@@ -234,7 +234,6 @@ export function HomePage({ onNavigate }) {
       </header>
 
       <div className="b225-categories-shell" aria-label="Catégories">
-        <span className="b225-category-swipe-hint b225-category-swipe-hint--overlay" aria-hidden="true"><span>›</span><span>›</span></span>
         <div ref={categoryRailRef} className="b225-categories" data-testid="home-categories">
           <div className="b225-categories-track">
             {homeCategories.map((item) => (
