@@ -16,6 +16,7 @@ const MAP_PROPERTY_FILTERS = Object.freeze([
   { id: 'apartment', label: 'Appartement' },
   { id: 'house', label: 'Maison' },
   { id: 'villa', label: 'Villa' },
+  { id: 'hotel', label: 'Hôtel' },
   { id: 'guesthouse', label: "Maison d’hôte" },
   { id: 'beach', label: 'Plage' },
 ])
@@ -49,6 +50,18 @@ function listingPriceCopy(listing) {
   return ''
 }
 
+function listingMatchesSheetPropertyFilter(listing, filterId) {
+  if (filterId !== 'hotel') return true
+  const category = String(listing?.category || '').toLowerCase()
+  const title = String(listing?.title || '').toLowerCase()
+  const type = String(listing?.capacity?.type || '').toLowerCase()
+  const haystack = `${category} ${title} ${type}`
+  return category.includes('hotel')
+    || haystack.includes('hôtel')
+    || haystack.includes('hotel')
+    || haystack.includes('palace')
+}
+
 function MapOfferSheetContent({
   listings,
   cityLabel,
@@ -66,6 +79,7 @@ function MapOfferSheetContent({
   const attached = useStableAttached(progress)
   const listRef = useMapOfferScrollSheetHandoff({ expanded: attached, externalDrag })
   const safeHeaderHeight = Math.max(0, headerHeight || 0)
+  const displayedListings = listings.filter((listing) => listingMatchesSheetPropertyFilter(listing, propertyFilter))
 
   const openListing = (listingId) => {
     onSelectedListingChange?.(listingId)
@@ -92,7 +106,7 @@ function MapOfferSheetContent({
           <button type="button" className="map-offer-sheet__handle-button" onClick={toggleExpanded} aria-label={progress > 0.72 ? 'Réduire la liste des offres' : 'Afficher la liste des offres'}>
             <span className="map-offer-sheet__grabber" />
             <span className="map-offer-sheet__heading">
-              <strong>{listings.length ? `${listings.length} offre${listings.length > 1 ? 's' : ''}` : 'Aucune offre'}</strong>
+              <strong>{displayedListings.length ? `${displayedListings.length} offre${displayedListings.length > 1 ? 's' : ''}` : 'Aucune offre'}</strong>
               <span className="map-offer-sheet__city-label">{cityLabel}</span>
               <span className="map-offer-sheet__brand-badge">Movera Host</span>
             </span>
@@ -121,7 +135,7 @@ function MapOfferSheetContent({
           </div>
         </div>
 
-        {listings.length ? (
+        {displayedListings.length ? (
           <MotionList
             nodeRef={listRef}
             className="map-offer-sheet__list"
@@ -131,7 +145,7 @@ function MapOfferSheetContent({
             data-sheet-handoff="drag-from-offer"
           >
             <div className="map-offer-sheet__list-content" data-testid="map-offer-sheet-list-content">
-              {listings.map((listing, index) => {
+              {displayedListings.map((listing, index) => {
                 const selected = listing.id === selectedListingId || (!selectedListingId && index === 0 && progress > 0.12)
                 return (
                   <MotionListItem
@@ -149,7 +163,7 @@ function MapOfferSheetContent({
                     <span className="map-offer-sheet__media">
                       <img src={listing.image} alt="" loading={index < 2 ? 'eager' : 'lazy'} />
                       {listing.badge ? <span className="map-offer-sheet__badge">{listing.badge}</span> : null}
-                      <span className="map-offer-sheet__position" aria-hidden="true">{index + 1}/{listings.length}</span>
+                      <span className="map-offer-sheet__position" aria-hidden="true">{index + 1}/{displayedListings.length}</span>
                     </span>
                     <span className="map-offer-sheet__card-copy">
                       <span className="map-offer-sheet__card-head">
