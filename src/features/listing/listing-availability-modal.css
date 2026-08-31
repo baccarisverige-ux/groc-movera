@@ -14,7 +14,7 @@
   width:min(100%,430px);
   max-height:min(88svh,760px);
   overflow:auto;
-  padding:9px 12px calc(14px + env(safe-area-inset-bottom,0px));
+  padding:9px 14px calc(14px + env(safe-area-inset-bottom,0px));
   border:1px solid rgba(255,255,255,.9);
   border-bottom:0;
   border-radius:28px 28px 0 0;
@@ -85,20 +85,41 @@
 }
 .listing-availability-modal__calendar{
   margin-top:12px;
+  padding:13px 12px 12px;
+  border:1px solid rgba(43,65,52,.065);
+  border-radius:20px;
   background:linear-gradient(180deg,#fbfdfb,#eef4f0);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 5px 18px rgba(27,48,35,.035);
 }
-.listing-availability-modal .host-calendar__monthbar button:disabled{
-  opacity:.28;
-  pointer-events:none;
+.listing-availability-modal__calendar .listing-availability__head{margin-bottom:10px}
+.listing-availability-modal__calendar .listing-availability__head button:disabled{opacity:.28;pointer-events:none}
+.listing-availability-modal__calendar .listing-availability__day{cursor:default}
+.listing-availability-modal__hint{
+  margin:10px 2px 0;
+  color:#77817a;
+  font-size:9.5px;
+  line-height:1.45;
 }
-.listing-availability-modal .host-calendar__day{
-  cursor:default;
+.listing-availability-modal__unlinked{
+  margin-top:14px;
+  padding:18px 17px;
+  border:1px solid rgba(43,65,52,.065);
+  border-radius:18px;
+  background:rgba(255,255,255,.72);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.96);
 }
-.listing-availability-modal .host-calendar__day.is-past{
-  opacity:.55;
+.listing-availability-modal__unlinked strong{
+  display:block;
+  color:#303a33;
+  font-size:13px;
+  font-weight:720;
+  letter-spacing:-.015em;
 }
-.listing-availability-modal .host-calendar__day.has-booking .host-calendar__price{
-  color:#8a948e;
+.listing-availability-modal__unlinked p{
+  margin:7px 0 0;
+  color:#768079;
+  font-size:10.5px;
+  line-height:1.5;
 }
 .listing-availability-modal__done{
   width:100%;
@@ -113,9 +134,10 @@
 }
 .listing-availability-modal__done:active{transform:scale(.99)}
 @media(max-width:350px){
-  .listing-availability-modal__sheet{padding-left:9px;padding-right:9px}
+  .listing-availability-modal__sheet{padding-left:10px;padding-right:10px}
   .listing-availability-modal__head{padding-left:4px;padding-right:4px}
   .listing-availability-modal__head h2{font-size:23px}
+  .listing-availability-modal__calendar{padding-left:9px;padding-right:9px}
 }
 @media(prefers-reduced-motion:reduce){
   .listing-availability-modal,
