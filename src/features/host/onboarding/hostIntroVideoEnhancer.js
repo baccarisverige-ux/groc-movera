@@ -1,4 +1,5 @@
 import './host-intro-premium.css'
+import './hostRoomTypesOnboardingEnhancer.js'
 
 const INTRO_SELECTOR = '.host-onboarding[data-screen="intro-place"] .host-onboarding__phase-visual'
 const PRESENTATION_SELECTOR = '.host-onboarding[data-screen="intro-presentation"] .host-onboarding__phase-visual'
