@@ -161,34 +161,21 @@ export function ConnectedProfilePage({ onNavigate }) {
 
   return (
     <section className="connected-profile" data-testid="page-profile" data-auth-flow="connected">
-      {/* drop profile-avatar.png into src/features/profile/assets/ later */}
       <header className="connected-profile__header">
         <h1>Profil</h1>
-        <button type="button" className="connected-profile__bell" aria-label="Notifications" onClick={() => showPrototypeNotice('Notifications')}>
-          <BellIcon />
-        </button>
+        <button type="button" className="connected-profile__bell" aria-label="Notifications" onClick={() => showPrototypeNotice('Notifications')}><BellIcon /></button>
       </header>
 
       <main className="connected-profile__content">
         <section className="connected-profile__identity" aria-label="Profil Movera">
-          <div className="connected-profile__avatar-wrap">
-            <div className="connected-profile__avatar" data-slot="profile-avatar" aria-hidden="true">{initial}</div>
-            <span className="connected-profile__verified" aria-label="Session vérifiée"><CheckIcon /></span>
-          </div>
-          <div className="connected-profile__identity-copy">
-            <strong>{displayName}</strong>
-            <span>{isHost ? 'Voyageur & Hôte Movera' : 'Voyageur Movera'}</span>
-          </div>
+          <div className="connected-profile__avatar-wrap"><div className="connected-profile__avatar" data-slot="profile-avatar" aria-hidden="true">{initial}</div><span className="connected-profile__verified" aria-label="Session vérifiée"><CheckIcon /></span></div>
+          <div className="connected-profile__identity-copy"><strong>{displayName}</strong><span>{isHost ? 'Voyageur & Hôte Movera' : 'Voyageur Movera'}</span></div>
         </section>
 
-        <p className="connected-profile__contact">
-          <span>{contact}</span>
-          <small>Session Movera active</small>
-        </p>
+        <p className="connected-profile__contact"><span>{contact}</span><small>Session Movera active</small></p>
 
         <section className="connected-profile__quick-grid" aria-label="Raccourcis">
-          <button type="button" className="connected-profile__quick-card" onClick={() => showPrototypeNotice('Voyages')}>
-            <span className="connected-profile__nouveau">Nouveau</span>
+          <button type="button" className="connected-profile__quick-card" onClick={() => onNavigate('/trips')} data-testid="profile-trips">
             <IllustrationSlot name="profile-trips" />
             <strong>Voyages</strong>
           </button>
@@ -199,62 +186,22 @@ export function ConnectedProfilePage({ onNavigate }) {
         </section>
 
         <section className="connected-profile__host-card" aria-label={isHost ? 'Ouvrir le mode Hôte' : 'Devenir hôte'} onClick={requestHostMode}>
-          <div className="connected-profile__host-copy">
-            <strong>{isHost ? 'Espace Hôte' : 'Devenir hôte'}</strong>
-            <p>{isHost ? 'Votre calendrier vous attend.' : 'Publiez un logement et gagnez à votre rythme.'}</p>
-          </div>
+          <div className="connected-profile__host-copy"><strong>{isHost ? 'Espace Hôte' : 'Devenir hôte'}</strong><p>{isHost ? 'Gérez votre activité et vos réservations.' : 'Publiez un logement et gagnez à votre rythme.'}</p></div>
           <HostCardVideo />
-          <button
-            type="button"
-            className="connected-profile__host-cta"
-            onClick={(event) => {
-              event.stopPropagation()
-              requestHostMode()
-            }}
-            data-testid="switch-to-hosting"
-          >
-            <HostGlyph />
-            <span>{isHost ? 'Ouvrir l’espace Hôte' : 'Passer en mode Hôte'}</span>
-          </button>
+          <button type="button" className="connected-profile__host-cta" onClick={(event) => { event.stopPropagation(); requestHostMode() }} data-testid="switch-to-hosting"><HostGlyph /><span>{isHost ? 'Ouvrir l’espace Hôte' : 'Passer en mode Hôte'}</span></button>
         </section>
 
-        {isDemoSession && isHost ? (
-          <button type="button" className="connected-profile__restart" onClick={restartDemoHostOnboarding} data-testid="restart-host-onboarding">
-            Recommencer « Devenir hôte »
-          </button>
-        ) : null}
+        {isDemoSession && isHost ? <button type="button" className="connected-profile__restart" onClick={restartDemoHostOnboarding} data-testid="restart-host-onboarding">Recommencer « Devenir hôte »</button> : null}
 
         <section className="connected-profile__settings" aria-label="Compte et assistance">
-          <div className="connected-profile__section-heading">
-            <span>Compte</span>
-            <small>Connecté avec {provider}</small>
+          <div className="connected-profile__section-heading"><span>Compte</span><small>Connecté avec {provider}</small></div>
+          <div className="connected-profile__rows">
+            {SUPPORT_ROWS.map(({ id, label, Icon }) => <button key={id} type="button" className="connected-profile__row" onClick={() => showPrototypeNotice(label)}><span className="connected-profile__row-icon"><Icon /></span><span className="connected-profile__row-copy"><strong>{label}</strong></span><ChevronIcon /></button>)}
           </div>
           <div className="connected-profile__rows">
-            {SUPPORT_ROWS.map(({ id, label, Icon }) => (
-              <button key={id} type="button" className="connected-profile__row" onClick={() => showPrototypeNotice(label)}>
-                <span className="connected-profile__row-icon"><Icon /></span>
-                <span className="connected-profile__row-copy"><strong>{label}</strong></span>
-                <ChevronIcon />
-              </button>
-            ))}
-          </div>
-          <div className="connected-profile__rows">
-            {LEGAL_ROWS.map(({ id, label, Icon }) => (
-              <button key={id} type="button" className="connected-profile__row" onClick={() => showPrototypeNotice(label)}>
-                <span className="connected-profile__row-icon"><Icon /></span>
-                <span className="connected-profile__row-copy"><strong>{label}</strong></span>
-                <ChevronIcon />
-              </button>
-            ))}
-            <button type="button" className="connected-profile__row" onClick={() => onNavigate('/messages')}>
-              <span className="connected-profile__row-icon"><MessageIcon /></span>
-              <span className="connected-profile__row-copy"><strong>Messages</strong></span>
-              <ChevronIcon />
-            </button>
-            <button type="button" className="connected-profile__row connected-profile__row--logout" onClick={signOut}>
-              <span className="connected-profile__row-icon"><LogoutIcon /></span>
-              <span className="connected-profile__row-copy"><strong>Se déconnecter</strong></span>
-            </button>
+            {LEGAL_ROWS.map(({ id, label, Icon }) => <button key={id} type="button" className="connected-profile__row" onClick={() => showPrototypeNotice(label)}><span className="connected-profile__row-icon"><Icon /></span><span className="connected-profile__row-copy"><strong>{label}</strong></span><ChevronIcon /></button>)}
+            <button type="button" className="connected-profile__row" onClick={() => onNavigate('/messages')}><span className="connected-profile__row-icon"><MessageIcon /></span><span className="connected-profile__row-copy"><strong>Messages</strong></span><ChevronIcon /></button>
+            <button type="button" className="connected-profile__row connected-profile__row--logout" onClick={signOut}><span className="connected-profile__row-icon"><LogoutIcon /></span><span className="connected-profile__row-copy"><strong>Se déconnecter</strong></span></button>
           </div>
         </section>
 
