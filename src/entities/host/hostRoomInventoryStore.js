@@ -83,6 +83,13 @@ function readReservations(listingId, fallbackRoomTypeId = '') {
   return reservations
 }
 
+export function listConfirmedRoomReservationsForListing(listingId) {
+  if (!listingId) return []
+  const config = roomConfig(listingId)
+  return Object.values(readReservations(listingId, config.roomTypeId))
+    .sort((left, right) => left.checkIn.localeCompare(right.checkIn) || left.createdAt.localeCompare(right.createdAt))
+}
+
 function dispatchInventoryChange(listingId, roomTypeId = '') {
   if (typeof window === 'undefined') return
   const detail = { listingId, roomTypeId }
