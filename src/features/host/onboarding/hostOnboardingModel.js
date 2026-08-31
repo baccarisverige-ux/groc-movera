@@ -56,14 +56,12 @@ export const HOST_AMENITIES = Object.freeze([
   { id: 'tv', label: 'Télévision', group: 'essentials' },
   { id: 'washer', label: 'Lave-linge', group: 'essentials' },
   { id: 'wifi', label: 'Wi-Fi haut débit', group: 'essentials' },
-
   { id: 'coffee-maker', label: 'Machine à café', group: 'popular' },
   { id: 'cooking-basics', label: 'Ustensiles de cuisine', detail: 'Casseroles, poêles et condiments de base', group: 'popular' },
   { id: 'hair-dryer', label: 'Sèche-cheveux', group: 'popular' },
   { id: 'hangers', label: 'Cintres', group: 'popular' },
   { id: 'iron', label: 'Fer à repasser', group: 'popular' },
   { id: 'shampoo', label: 'Produits douche', group: 'popular' },
-
   { id: 'crib', label: 'Lit bébé', group: 'features' },
   { id: 'workspace', label: 'Coin bureau', group: 'features' },
   { id: 'ev-charger', label: 'Borne de recharge', group: 'features' },
@@ -73,7 +71,6 @@ export const HOST_AMENITIES = Object.freeze([
   { id: 'fireplace', label: 'Cheminée intérieure', group: 'features' },
   { id: 'outdoor', label: 'Mobilier de terrasse', group: 'features' },
   { id: 'pool', label: 'Piscine', group: 'features' },
-
   { id: 'beach-access', label: 'Accès plage', group: 'location' },
   { id: 'waterfront', label: 'Bord de mer', group: 'location' },
 ])
@@ -94,6 +91,19 @@ export const HOST_PROMOTIONS = Object.freeze([
   { id: 'monthly', label: 'Réduction mensuelle', value: 25, detail: 'Pour les séjours de 28 nuits ou plus.' },
 ])
 
+export const DEFAULT_HOST_ROOM_TYPE = Object.freeze({
+  id: 'room-standard',
+  name: 'Chambre Standard',
+  view: '',
+  description: '',
+  guests: 2,
+  beds: 1,
+  bathrooms: 1,
+  basePrice: '180',
+  totalUnits: 1,
+  photos: [],
+})
+
 export const DEFAULT_HOST_DRAFT = Object.freeze({
   propertyType: 'Appartement',
   guestAccess: 'entire',
@@ -106,6 +116,7 @@ export const DEFAULT_HOST_DRAFT = Object.freeze({
   bedrooms: 1,
   beds: 1,
   bathrooms: 1,
+  roomTypes: [DEFAULT_HOST_ROOM_TYPE],
   amenities: ['wifi'],
   title: '',
   highlights: [],
