@@ -238,6 +238,7 @@
 }
 
 .connected-profile__slot--host{
+  position:relative;
   width:100%;
   height:auto;
   aspect-ratio:16/9;
@@ -248,12 +249,19 @@
 }
 
 .connected-profile__host-video{
+  position:absolute;
+  inset:0;
   width:100%;
   height:100%;
   display:block;
   object-fit:cover;
   object-position:center;
   pointer-events:none;
+  opacity:0;
+}
+
+.connected-profile__host-video[data-active=true]{
+  opacity:1;
 }
 
 .connected-profile__host-card{

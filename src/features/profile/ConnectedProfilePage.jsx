@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { clearHostCalendar } from '../../entities/host/hostCalendarStore.js'
 import { clearHostProfile, useHostProfile } from '../../entities/host/hostProfileStore.js'
 import { authProviderLabel } from '../auth/authClient.js'
@@ -77,22 +77,47 @@ function IllustrationSlot({ name, className = '' }) {
 }
 
 function HostCardVideo() {
+  const videosRef = useRef([])
+  const [active, setActive] = useState(0)
+  const sources = [
+    `${import.meta.env.BASE_URL}assets/profile-host.mp4?v=hostcard2`,
+    `${import.meta.env.BASE_URL}assets/profile-host-2.mp4?v=hostcard2`,
+  ]
+
+  const playClip = (index) => {
+    videosRef.current.forEach((video, i) => {
+      if (!video) return
+      if (i === index) {
+        video.currentTime = 0
+        const playPromise = video.play()
+        if (playPromise?.catch) playPromise.catch(() => {})
+      } else {
+        video.pause()
+      }
+    })
+  }
+
   return (
     <div className="connected-profile__slot connected-profile__slot--host connected-profile__slot--video" data-slot="profile-host" aria-hidden="true">
-      <video
-        className="connected-profile__host-video"
-        src={`${import.meta.env.BASE_URL}assets/profile-host.mp4?v=hostcard1`}
-        muted
-        loop
-        playsInline
-        autoPlay
-        preload="metadata"
-        tabIndex={-1}
-        onCanPlay={(event) => {
-          const playPromise = event.currentTarget.play()
-          if (playPromise?.catch) playPromise.catch(() => {})
-        }}
-      />
+      {sources.map((src, index) => (
+        <video
+          key={src}
+          ref={(node) => { videosRef.current[index] = node }}
+          className="connected-profile__host-video"
+          data-active={index === active ? 'true' : 'false'}
+          src={src}
+          muted
+          playsInline
+          autoPlay={index === 0}
+          preload="auto"
+          tabIndex={-1}
+          onEnded={() => {
+            const next = (index + 1) % sources.length
+            setActive(next)
+            playClip(next)
+          }}
+        />
+      ))}
     </div>
   )
 }
