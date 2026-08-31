@@ -4,35 +4,38 @@ import { listingLocationLine, listingRatingCopy, nextListingId, rotateListingsFo
 import './map-offer-popup.css'
 
 function HeartGlyph({ filled }) {
-  return (
-    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-      <path
-        d="M20.8 4.8a5.3 5.3 0 0 0-7.5 0L12 6.1l-1.3-1.3a5.3 5.3 0 0 0-7.5 7.5L12 21l8.8-8.7a5.3 5.3 0 0 0 0-7.5Z"
-        fill={filled ? 'currentColor' : 'none'}
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
+  return <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M20.8 4.8a5.3 5.3 0 0 0-7.5 0L12 6.1l-1.3-1.3a5.3 5.3 0 0 0-7.5 7.5L12 21l8.8-8.7a5.3 5.3 0 0 0 0-7.5Z" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/></svg>
 }
 
 function CloseGlyph() {
-  return (
-    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-      <path d="M7 7l10 10M17 7 7 17" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  )
+  return <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
 }
 
-function listingPhotos(listing) {
+function roomLots(listing) {
+  return Array.isArray(listing?.roomLots) ? listing.roomLots : Array.isArray(listing?.roomTypes) ? listing.roomTypes : []
+}
+
+function lotPhotos(lot, listing) {
+  if (lot?.photos?.length) return lot.photos
   if (listing?.photos?.length) return listing.photos
   if (listing?.image) return [{ src: listing.image, label: 'Chambre' }]
   return []
 }
 
-function listingPriceCopy(listing) {
+function priceCopy(listing, lot) {
+  if (lot?.basePrice) return `${lot.basePrice} ${lot.currency || listing.currency || 'TND'} / nuit`
   return listing.priceLabel || listing.priceTotal || ''
+}
+
+function lotMeta(lot, listing) {
+  if (!lot) return listing.capacityLine || ''
+  const parts = []
+  if (lot.sizeM2) parts.push(`${lot.sizeM2} m²`)
+  parts.push(`${lot.guests} voyageur${lot.guests > 1 ? 's' : ''}`)
+  parts.push(`${lot.beds} lit${lot.beds > 1 ? 's' : ''}`)
+  if (lot.bedType) parts.push(lot.bedType)
+  if (lot.bathrooms) parts.push(`${lot.bathrooms} sdb ${lot.bathroomType === 'shared' ? 'partagée' : 'privée'}`)
+  return parts.join(' · ')
 }
 
 function PhotoCarousel({ photos, alt, onOpen }) {
@@ -50,120 +53,67 @@ function PhotoCarousel({ photos, alt, onOpen }) {
 
   return (
     <div className="map-offer-popup__photos">
-      <div
-        className="map-offer-popup__photo-track"
-        data-testid="map-offer-popup-photos"
-        onScroll={onScroll}
-        onPointerDown={(event) => {
-          event.stopPropagation()
-          movedRef.current = false
-          startXRef.current = event.clientX
-        }}
-        onPointerMove={(event) => {
-          if (Math.abs(event.clientX - startXRef.current) > 8) movedRef.current = true
-        }}
-        onClick={(event) => {
-          event.stopPropagation()
-          if (!movedRef.current) onOpen?.()
-        }}
-      >
-        {photos.map((photo, photoIndex) => (
-          <img
-            key={`${photo.src}-${photoIndex}`}
-            src={photo.src}
-            alt={photoIndex === 0 ? alt : ''}
-            draggable="false"
-          />
-        ))}
+      <div className="map-offer-popup__photo-track" data-testid="map-offer-popup-photos" onScroll={onScroll} onPointerDown={(event) => { event.stopPropagation(); movedRef.current = false; startXRef.current = event.clientX }} onPointerMove={(event) => { if (Math.abs(event.clientX - startXRef.current) > 8) movedRef.current = true }} onClick={(event) => { event.stopPropagation(); if (!movedRef.current) onOpen?.() }}>
+        {photos.map((photo, photoIndex) => <img key={`${photo.src}-${photoIndex}`} src={photo.src} alt={photoIndex === 0 ? alt : ''} draggable="false" />)}
       </div>
-      {photos.length > 1 ? (
-        <div className="map-offer-popup__dots" aria-hidden="true">
-          {photos.map((photo, photoIndex) => (
-            <span
-              key={`${photo.src}-dot`}
-              className={photoIndex === index ? 'is-active' : undefined}
-            />
-          ))}
-        </div>
-      ) : null}
+      {photos.length > 1 ? <div className="map-offer-popup__dots" aria-hidden="true">{photos.map((photo, photoIndex) => <span key={`${photo.src}-dot`} className={photoIndex === index ? 'is-active' : undefined}/>)}</div> : null}
     </div>
   )
 }
 
 function OfferCard({ listing, favorite, onToggleFavorite, onClose, onOpen }) {
-  const photos = listingPhotos(listing)
+  const lots = roomLots(listing)
+  const [selectedLotId, setSelectedLotId] = useState(() => lots[0]?.id || '')
+  const selectedLot = lots.find((lot) => lot.id === selectedLotId) || lots[0] || null
+  const photos = lotPhotos(selectedLot, listing)
   const locationLine = listingLocationLine(listing)
   const ratingCopy = listingRatingCopy(listing)
 
+  useEffect(() => { setSelectedLotId(lots[0]?.id || '') }, [listing.id])
+
+  const openSelected = () => onOpen?.(selectedLot?.id || '')
+
   return (
-    <article
-      className="map-offer-popup__card"
-      data-testid="map-offer-popup-card"
-      data-listing-id={listing.id}
-      data-current="true"
-      onClick={onOpen}
-    >
+    <article className="map-offer-popup__card" data-testid="map-offer-popup-card" data-listing-id={listing.id} data-room-lot-id={selectedLot?.id || ''} data-current="true" onClick={openSelected}>
       <div className="map-offer-popup__media">
-        <PhotoCarousel photos={photos} alt={listing.title} onOpen={onOpen} />
-        {listing.badge ? <span className="map-offer-popup__badge">{listing.badge}</span> : null}
+        <PhotoCarousel photos={photos} alt={`${listing.title}${selectedLot ? ` — ${selectedLot.name}` : ''}`} onOpen={openSelected}/>
+        {lots.length > 1 ? <span className="map-offer-popup__multi-badge">{lots.length} catégories de chambres</span> : listing.badge ? <span className="map-offer-popup__badge">{listing.badge}</span> : null}
         <div className="map-offer-popup__orbs">
-          <button
-            type="button"
-            className="map-offer-popup__orb"
-            aria-label={`${favorite ? 'Retirer' : 'Ajouter'} ${listing.title} ${favorite ? 'des' : 'aux'} favoris`}
-            aria-pressed={favorite}
-            onClick={(event) => {
-              event.stopPropagation()
-              onToggleFavorite(listing.id)
-            }}
-          >
-            <span className={favorite ? 'map-offer-popup__heart is-on' : 'map-offer-popup__heart'}>
-              <HeartGlyph filled={favorite} />
-            </span>
-          </button>
-          <button
-            type="button"
-            className="map-offer-popup__orb"
-            data-testid="map-offer-popup-close"
-            aria-label="Fermer"
-            onClick={(event) => {
-              event.stopPropagation()
-              onClose()
-            }}
-          >
-            <CloseGlyph />
-          </button>
+          <button type="button" className="map-offer-popup__orb" aria-label={`${favorite ? 'Retirer' : 'Ajouter'} ${listing.title} ${favorite ? 'des' : 'aux'} favoris`} aria-pressed={favorite} onClick={(event) => { event.stopPropagation(); onToggleFavorite(listing.id) }}><span className={favorite ? 'map-offer-popup__heart is-on' : 'map-offer-popup__heart'}><HeartGlyph filled={favorite}/></span></button>
+          <button type="button" className="map-offer-popup__orb" data-testid="map-offer-popup-close" aria-label="Fermer" onClick={(event) => { event.stopPropagation(); onClose() }}><CloseGlyph/></button>
         </div>
       </div>
+
       <div className="map-offer-popup__body">
-        <div className="map-offer-popup__title-row">
-          <h2>{listing.title}</h2>
-          <span className="map-offer-popup__rating">{ratingCopy}</span>
-        </div>
+        <div className="map-offer-popup__title-row"><h2>{listing.title}</h2><span className="map-offer-popup__rating">{ratingCopy}</span></div>
         <p className="map-offer-popup__place">{locationLine}</p>
-        {listing.capacityLine ? <p className="map-offer-popup__capacity">{listing.capacityLine}</p> : null}
-        <p className="map-offer-popup__price">{listingPriceCopy(listing)}</p>
+
+        {lots.length > 1 ? (
+          <div className="map-offer-popup__lot-switch" role="radiogroup" aria-label="Catégories de chambres" onClick={(event) => event.stopPropagation()}>
+            {lots.map((lot) => <button type="button" role="radio" aria-checked={lot.id === selectedLot?.id} data-active={lot.id === selectedLot?.id ? 'true' : 'false'} key={lot.id} onClick={() => setSelectedLotId(lot.id)}><strong>{lot.name}</strong><span>{lot.basePrice} {lot.currency || listing.currency || 'TND'}</span></button>)}
+          </div>
+        ) : null}
+
+        {selectedLot ? <p className="map-offer-popup__lot-name"><strong>{selectedLot.name}</strong>{selectedLot.view ? <span>{selectedLot.view}</span> : null}</p> : null}
+        <p className="map-offer-popup__capacity">{lotMeta(selectedLot, listing)}</p>
+        {selectedLot?.description ? <p className="map-offer-popup__lot-description">{selectedLot.description}</p> : null}
+        {selectedLot?.features?.length ? <p className="map-offer-popup__lot-features">{selectedLot.features.slice(0, 3).join(' · ')}</p> : null}
+        <p className="map-offer-popup__price">{priceCopy(listing, selectedLot)}</p>
       </div>
     </article>
   )
 }
 
-export function MapOfferPopup({
-  listings,
-  selectedListingId,
-  onSelectedListingChange,
-  onClose,
-  onNavigate,
-}) {
+export function MapOfferPopup({ listings, selectedListingId, onSelectedListingChange, onClose, onNavigate }) {
   const { favoriteIds, toggleFavorite } = useFavorites()
   const ordered = rotateListingsForPopup(listings, selectedListingId)
   const current = ordered[0]
   const showNavigation = ordered.length > 1
-
   if (!current) return null
 
-  const openListing = (listingId) => {
-    onNavigate?.(`/listing/${listingId}`)
+  const openListing = (listingId, roomLotId = '') => {
+    const suffix = roomLotId ? `?roomLot=${encodeURIComponent(roomLotId)}` : ''
+    onNavigate?.(`/listing/${listingId}${suffix}`)
   }
 
   const goNext = () => {
@@ -180,49 +130,10 @@ export function MapOfferPopup({
   }
 
   return (
-    <div
-      className="map-offer-popup"
-      data-testid="map-offer-popup"
-      data-listing-id={current.id}
-      data-offer-count={ordered.length}
-    >
+    <div className="map-offer-popup" data-testid="map-offer-popup" data-listing-id={current.id} data-offer-count={ordered.length}>
       <div className="map-offer-popup__single">
-        <OfferCard
-          listing={current}
-          favorite={favoriteIds.includes(current.id)}
-          onToggleFavorite={toggleFavorite}
-          onClose={onClose}
-          onOpen={() => openListing(current.id)}
-        />
-        {showNavigation ? (
-          <div className="map-offer-popup__rail" aria-label="Navigation entre les offres">
-            <button
-              type="button"
-              className="map-offer-popup__rail-section map-offer-popup__rail-section--previous"
-              data-testid="map-offer-popup-previous"
-              aria-label="Offre précédente"
-              onClick={(event) => {
-                event.stopPropagation()
-                goPrevious()
-              }}
-            >
-              <span className="map-offer-popup__rail-copy">Préc.</span>
-            </button>
-            <span className="map-offer-popup__rail-divider" aria-hidden="true" />
-            <button
-              type="button"
-              className="map-offer-popup__rail-section map-offer-popup__rail-section--next"
-              data-testid="map-offer-popup-next"
-              aria-label="Offre suivante"
-              onClick={(event) => {
-                event.stopPropagation()
-                goNext()
-              }}
-            >
-              <span className="map-offer-popup__rail-copy">Suiv.</span>
-            </button>
-          </div>
-        ) : null}
+        <OfferCard listing={current} favorite={favoriteIds.includes(current.id)} onToggleFavorite={toggleFavorite} onClose={onClose} onOpen={(roomLotId) => openListing(current.id, roomLotId)}/>
+        {showNavigation ? <div className="map-offer-popup__rail" aria-label="Navigation entre les offres"><button type="button" className="map-offer-popup__rail-section map-offer-popup__rail-section--previous" data-testid="map-offer-popup-previous" aria-label="Offre précédente" onClick={(event) => { event.stopPropagation(); goPrevious() }}><span className="map-offer-popup__rail-copy">Préc.</span></button><span className="map-offer-popup__rail-divider" aria-hidden="true"/><button type="button" className="map-offer-popup__rail-section map-offer-popup__rail-section--next" data-testid="map-offer-popup-next" aria-label="Offre suivante" onClick={(event) => { event.stopPropagation(); goNext() }}><span className="map-offer-popup__rail-copy">Suiv.</span></button></div> : null}
       </div>
     </div>
   )
