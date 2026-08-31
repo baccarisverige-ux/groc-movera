@@ -51,7 +51,7 @@ function NumberField({ label, value, min = 0, max = 999, onChange }) {
   )
 }
 
-export function HostRoomTypeManager({ profile, userId }) {
+export function HostRoomTypeManager({ profile, userId, onNavigate }) {
   const listing = profile?.listing
   const enabled = supportsPooledRoomInventory(listing?.type)
   const [open, setOpen] = useState(() => needsInitialSetup(listing))
@@ -109,6 +109,9 @@ export function HostRoomTypeManager({ profile, userId }) {
 
   return (
     <>
+      <button type="button" className="host-room-type-manager__preview" onClick={() => onNavigate?.(`/listing/${encodeURIComponent(listing.id)}`)}>
+        Voir comme voyageur
+      </button>
       <button type="button" className="host-room-type-manager__launcher" onClick={() => { setRooms(cloneRooms(listing.roomTypes)); setFeedback(''); setOpen(true) }}>
         <span>Types de chambres</span>
         <b>{listing.roomTypes.length}</b>
@@ -128,6 +131,8 @@ export function HostRoomTypeManager({ profile, userId }) {
             </header>
 
             <div className="host-room-type-manager__notice">
+              <strong>Visible au voyageur</strong>
+              <span>Nom, vue, caractéristiques, description et prix de chaque type.</span>
               <strong>Privé côté hôte</strong>
               <span>Le nombre total et le stock restant ne sont jamais affichés aux voyageurs.</span>
             </div>
