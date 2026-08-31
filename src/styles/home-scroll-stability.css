@@ -68,7 +68,7 @@
 .b225-home .b225-categories-shell>.b225-category-swipe-hint--overlay{
   position:absolute!important;
   z-index:24!important;
-  top:1px!important;
+  top:-2px!important;
   right:18px!important;
   left:auto!important;
   display:flex!important;
@@ -125,7 +125,7 @@
   }
 
   .b225-home .b225-categories-shell>.b225-category-swipe-hint--overlay{
-    top:0!important;
+    top:-2px!important;
     right:16px!important;
     width:22px!important;
     height:14px!important;
