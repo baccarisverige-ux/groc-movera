@@ -1,0 +1,189 @@
+import { findHostProfileByListingId } from './hostProfileStore.js'
+import { storageAdapter } from '../../services/storage/storageAdapter.js'
+
+export const HOST_ROOM_INVENTORY_KEY = 'movera:host-room-inventory:v1'
+export const HOST_ROOM_INVENTORY_EVENT = 'movera:host-room-inventory-change'
+const HOST_CALENDAR_EVENT = 'movera:host-calendar-change'
+
+function readObject() {
+  const value = storageAdapter.getJson(HOST_ROOM_INVENTORY_KEY, {})
+  return value && typeof value === 'object' && !Array.isArray(value) ? value : {}
+}
+
+function dateFromKey(key) {
+  if (typeof key !== 'string') return null
+  const [year, month, day] = key.split('-').map(Number)
+  if (!year || !month || !day) return null
+  const date = new Date(year, month - 1, day, 12, 0, 0, 0)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+function dateKey(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
+function stayNightKeys(checkIn, checkOut) {
+  const start = dateFromKey(checkIn)
+  const end = dateFromKey(checkOut)
+  if (!start || !end || end <= start) return []
+  const keys = []
+  const cursor = new Date(start)
+  while (cursor < end) {
+    keys.push(dateKey(cursor))
+    cursor.setDate(cursor.getDate() + 1)
+  }
+  return keys
+}
+
+function normalizeReservation(value, fallbackId = '') {
+  if (!value || typeof value !== 'object') return null
+  const id = typeof value.id === 'string' && value.id.trim() ? value.id.trim() : fallbackId
+  const listingId = typeof value.listingId === 'string' ? value.listingId.trim() : ''
+  const checkIn = typeof value.checkIn === 'string' ? value.checkIn : ''
+  const checkOut = typeof value.checkOut === 'string' ? value.checkOut : ''
+  const units = Math.max(1, Math.round(Number(value.units) || 1))
+  if (!id || !listingId || !stayNightKeys(checkIn, checkOut).length) return null
+  return {
+    id,
+    listingId,
+    checkIn,
+    checkOut,
+    units,
+    createdAt: typeof value.createdAt === 'string' ? value.createdAt : new Date().toISOString(),
+  }
+}
+
+function readReservations(listingId) {
+  const source = readObject()[listingId]
+  const values = source?.reservations && typeof source.reservations === 'object' && !Array.isArray(source.reservations)
+    ? source.reservations
+    : {}
+  const reservations = {}
+  Object.entries(values).forEach(([id, value]) => {
+    const normalized = normalizeReservation(value, id)
+    if (normalized?.listingId === listingId) reservations[id] = normalized
+  })
+  return reservations
+}
+
+function dispatchInventoryChange(listingId) {
+  if (typeof window === 'undefined') return
+  const detail = { listingId }
+  window.dispatchEvent(new CustomEvent(HOST_ROOM_INVENTORY_EVENT, { detail }))
+  window.dispatchEvent(new CustomEvent(HOST_CALENDAR_EVENT, { detail }))
+}
+
+function roomConfig(listingId) {
+  const profile = findHostProfileByListingId(listingId)
+  const config = profile?.listing?.roomInventory
+  const enabled = config?.mode === 'pooled'
+  return {
+    profile,
+    enabled,
+    totalUnits: enabled ? Math.max(1, Math.round(Number(config.totalUnits) || 1)) : 1,
+  }
+}
+
+function buildReservedByDay(reservations) {
+  const reservedByDay = {}
+  Object.values(reservations).forEach((reservation) => {
+    stayNightKeys(reservation.checkIn, reservation.checkOut).forEach((key) => {
+      reservedByDay[key] = (reservedByDay[key] || 0) + reservation.units
+    })
+  })
+  return reservedByDay
+}
+
+export function readHostRoomInventoryForListing(listingId) {
+  const config = roomConfig(listingId)
+  const reservations = config.enabled ? readReservations(listingId) : {}
+  const reservedByDay = buildReservedByDay(reservations)
+  const remainingByDay = {}
+  Object.entries(reservedByDay).forEach(([key, reserved]) => {
+    remainingByDay[key] = Math.max(0, config.totalUnits - reserved)
+  })
+
+  return {
+    listingId,
+    enabled: config.enabled,
+    totalUnits: config.totalUnits,
+    reservations,
+    reservedByDay,
+    remainingByDay,
+  }
+}
+
+export function remainingRoomUnitsForDay(inventory, key) {
+  if (!inventory?.enabled) return 1
+  const reserved = Math.max(0, Number(inventory.reservedByDay?.[key]) || 0)
+  return Math.max(0, inventory.totalUnits - reserved)
+}
+
+export function applyRoomInventoryAvailability(listingId, days = {}) {
+  const inventory = readHostRoomInventoryForListing(listingId)
+  if (!inventory.enabled) return days
+
+  let changed = false
+  const next = { ...days }
+  Object.keys(inventory.reservedByDay).forEach((key) => {
+    if (remainingRoomUnitsForDay(inventory, key) > 0) return
+    next[key] = { ...(next[key] || {}), blocked: true }
+    changed = true
+  })
+  return changed ? next : days
+}
+
+export function canReserveRoomUnits({ listingId, checkIn, checkOut, units = 1 }) {
+  const inventory = readHostRoomInventoryForListing(listingId)
+  const requested = Math.max(1, Math.round(Number(units) || 1))
+  const nights = stayNightKeys(checkIn, checkOut)
+  if (!inventory.enabled) return { ok: true, inventory, requested, nights }
+  if (!nights.length) return { ok: false, reason: 'invalid-dates', inventory, requested, nights }
+  const soldOutKey = nights.find((key) => remainingRoomUnitsForDay(inventory, key) < requested)
+  if (soldOutKey) return { ok: false, reason: 'not-enough-rooms', soldOutKey, inventory, requested, nights }
+  return { ok: true, inventory, requested, nights }
+}
+
+export function registerConfirmedRoomReservation({ reservationId, listingId, checkIn, checkOut, units = 1 }) {
+  const id = typeof reservationId === 'string' ? reservationId.trim() : ''
+  if (!id || !listingId) throw new Error('Reservation and listing are required')
+
+  const availability = canReserveRoomUnits({ listingId, checkIn, checkOut, units })
+  if (!availability.ok) throw new Error(availability.reason === 'not-enough-rooms' ? 'No room inventory remains for the selected stay' : 'Invalid reservation dates')
+  if (!availability.inventory.enabled) return availability.inventory
+
+  const all = readObject()
+  const reservations = readReservations(listingId)
+  const existing = reservations[id]
+  if (existing) {
+    const same = existing.checkIn === checkIn && existing.checkOut === checkOut && existing.units === availability.requested
+    if (same) return readHostRoomInventoryForListing(listingId)
+    throw new Error('Reservation inventory is already registered with different dates or units')
+  }
+
+  reservations[id] = {
+    id,
+    listingId,
+    checkIn,
+    checkOut,
+    units: availability.requested,
+    createdAt: new Date().toISOString(),
+  }
+  all[listingId] = { reservations }
+  storageAdapter.setJson(HOST_ROOM_INVENTORY_KEY, all)
+  dispatchInventoryChange(listingId)
+  return readHostRoomInventoryForListing(listingId)
+}
+
+export function releaseConfirmedRoomReservation({ reservationId, listingId }) {
+  const id = typeof reservationId === 'string' ? reservationId.trim() : ''
+  if (!id || !listingId) return readHostRoomInventoryForListing(listingId)
+  const all = readObject()
+  const reservations = readReservations(listingId)
+  if (!reservations[id]) return readHostRoomInventoryForListing(listingId)
+  delete reservations[id]
+  all[listingId] = { reservations }
+  storageAdapter.setJson(HOST_ROOM_INVENTORY_KEY, all)
+  dispatchInventoryChange(listingId)
+  return readHostRoomInventoryForListing(listingId)
+}
