@@ -112,7 +112,7 @@ export function HostCalendarPage({ onNavigate, hostProfile = null }) {
     const next = writeHostCalendarDays(session?.userId, selectedArray, {
       price: Number(editPrice),
       blocked: editBlocked,
-    })
+    }, listing?.id)
     setCalendar(next)
     setNotice(`Réglages appliqués à ${selectedArray.length} jour${selectedArray.length > 1 ? 's' : ''}`)
   }
