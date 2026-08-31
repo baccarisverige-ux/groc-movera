@@ -3,10 +3,10 @@ import { hostLocationFromResult, hostPinViewportFromDraft } from '../../src/feat
 import { shouldUseReactHostPinMap } from '../../src/features/host/onboarding/hostPinReactEngineEnhancer.jsx'
 
 describe('React host pin map migration boundary', () => {
-  it('keeps the React engine opt-in only during the safe migration phase', () => {
-    expect(shouldUseReactHostPinMap('')).toBe(false)
-    expect(shouldUseReactHostPinMap('?hostMap=legacy')).toBe(false)
+  it('uses the React engine by default and keeps an explicit legacy rollback', () => {
+    expect(shouldUseReactHostPinMap('')).toBe(true)
     expect(shouldUseReactHostPinMap('?hostMap=react')).toBe(true)
+    expect(shouldUseReactHostPinMap('?hostMap=legacy')).toBe(false)
   })
 
   it('restores a saved host coordinate as the initial viewport', () => {

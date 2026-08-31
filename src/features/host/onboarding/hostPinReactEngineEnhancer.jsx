@@ -2,11 +2,13 @@ import { createRoot } from 'react-dom/client'
 import { HostPinMap } from './HostPinMap.jsx'
 
 export const HOST_PIN_REACT_QUERY_VALUE = 'react'
+export const HOST_PIN_LEGACY_QUERY_VALUE = 'legacy'
 export const HOST_MAP_LOCATION_EVENT = 'movera:host-map-address-change'
+const HOST_DRAFT_KEY = 'movera:host-onboarding-drafts:v1'
 const REACT_READY_SELECTOR = '[data-testid="host-pin-react-map"]'
 
 export function shouldUseReactHostPinMap(search = typeof window !== 'undefined' ? window.location.search : '') {
-  return new URLSearchParams(search).get('hostMap') === HOST_PIN_REACT_QUERY_VALUE
+  return new URLSearchParams(search).get('hostMap') !== HOST_PIN_LEGACY_QUERY_VALUE
 }
 
 function publishLocation(location) {
@@ -16,6 +18,39 @@ function publishLocation(location) {
 
 function readInitialAddress(card) {
   return card.querySelector('.host-onboarding__address-chip span')?.textContent?.trim() || ''
+}
+
+function readInitialDraft(card) {
+  const visibleAddress = readInitialAddress(card)
+  const fallback = {
+    initialAddress: visibleAddress,
+    initialCity: '',
+    latitude: null,
+    longitude: null,
+  }
+
+  try {
+    const drafts = JSON.parse(window.localStorage.getItem(HOST_DRAFT_KEY) || '{}')
+    const candidates = Object.values(drafts || {}).filter((draft) => draft && typeof draft === 'object')
+    const normalize = (value) => String(value || '').trim().replace(/\s+/g, ' ').toLowerCase()
+    const visible = normalize(visibleAddress)
+    const match = candidates.find((draft) => {
+      const label = [draft.address, draft.city].filter(Boolean).join(', ')
+      return visible && normalize(label) === visible
+    }) || (candidates.length === 1 ? candidates[0] : null)
+
+    if (!match) return fallback
+    const latitude = Number(match.latitude)
+    const longitude = Number(match.longitude)
+    return {
+      initialAddress: String(match.address || visibleAddress || '').trim(),
+      initialCity: String(match.city || '').trim(),
+      latitude: Number.isFinite(latitude) ? latitude : null,
+      longitude: Number.isFinite(longitude) ? longitude : null,
+    }
+  } catch {
+    return fallback
+  }
 }
 
 export function installHostPinReactEngine() {
@@ -80,12 +115,16 @@ export function installHostPinReactEngine() {
       if (hint && message) hint.textContent = message
     }
 
+    const initial = readInitialDraft(card)
     reactNode = node
     mountedCard = card
     reactRoot = createRoot(node)
     reactRoot.render(
       <HostPinMap
-        initialAddress={readInitialAddress(card)}
+        initialAddress={initial.initialAddress}
+        initialCity={initial.initialCity}
+        latitude={initial.latitude}
+        longitude={initial.longitude}
         onLocationChange={publishLocation}
         onHintChange={setHint}
       />,
