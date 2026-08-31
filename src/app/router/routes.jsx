@@ -13,6 +13,7 @@ import { ProfileGatewayPage } from '../../features/profile/ProfileGatewayPage.js
 import { HostEntryPage } from '../../features/host/HostEntryPage.jsx'
 import { ListingDetailPage } from '../../features/listing/ListingDetailPage.jsx'
 import { ServiceRequestPage } from '../../features/services/ServiceRequestPage.jsx'
+import { TripsPage } from '../../features/trips/TripsPage.jsx'
 import '../../features/auth/auth-required-page.css'
 
 const lazyNamed = (loader, name) => lazy(() => loader().then(module => ({ default: module[name] })))
@@ -67,6 +68,7 @@ export const routeDefinitions = [
   { path: '/villa', area: 'guest', component: VillaPage },
   { path: '/map', area: 'guest', component: MapPage },
   { path: '/favorites', area: 'guest', component: FavoritesPage },
+  { path: '/trips', area: 'guest', component: TripsPage, requiresAuth: true, authFeature: 'vos voyages' },
   { path: '/listing/:id', area: 'guest', component: ListingDetailPage },
   { path: '/services/:slug', area: 'guest', component: ServiceRequestPage },
   { path: '/messages', area: 'guest', component: MessagesPage, requiresAuth: true, authFeature: 'vos messages' },
