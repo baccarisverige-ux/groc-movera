@@ -8,9 +8,17 @@ function readAllDrafts() {
   return value && typeof value === 'object' && !Array.isArray(value) ? value : {}
 }
 
+function cloneRoomTypes(roomTypes) {
+  return (Array.isArray(roomTypes) ? roomTypes : []).map((room) => ({
+    ...room,
+    photos: Array.isArray(room?.photos) ? [...room.photos] : [],
+  }))
+}
+
 function cloneDefaultDraft() {
   return {
     ...DEFAULT_HOST_DRAFT,
+    roomTypes: cloneRoomTypes(DEFAULT_HOST_DRAFT.roomTypes),
     amenities: [...DEFAULT_HOST_DRAFT.amenities],
     highlights: [...DEFAULT_HOST_DRAFT.highlights],
     promotions: [...DEFAULT_HOST_DRAFT.promotions],
@@ -26,6 +34,7 @@ export function readHostOnboardingDraft(userId) {
   return {
     ...fallback,
     ...draft,
+    roomTypes: Array.isArray(draft.roomTypes) && draft.roomTypes.length ? cloneRoomTypes(draft.roomTypes) : fallback.roomTypes,
     amenities: Array.isArray(draft.amenities) ? draft.amenities : fallback.amenities,
     highlights: Array.isArray(draft.highlights) ? draft.highlights : fallback.highlights,
     promotions: Array.isArray(draft.promotions) ? draft.promotions : fallback.promotions,
