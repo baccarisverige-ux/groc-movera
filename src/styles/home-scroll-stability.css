@@ -63,22 +63,22 @@
   padding-bottom:10px!important;
 }
 
-/* Persistent swipe hint: always visible in Catégories, slightly above the
-   right-most visible category rather than attached to an off-screen item. */
+/* Persistent swipe hint: keep it outside the category button lane so the
+   chevrons never crowd or cover the right-most visible pill. */
 .b225-home .b225-categories-shell>.b225-category-swipe-hint--overlay{
   position:absolute!important;
   z-index:24!important;
-  top:4px!important;
-  right:18px!important;
+  top:50%!important;
+  right:-9px!important;
   left:auto!important;
   display:flex!important;
   align-items:center!important;
   justify-content:center!important;
   gap:0!important;
-  width:24px!important;
-  height:15px!important;
+  width:16px!important;
+  height:22px!important;
   margin:0!important;
-  transform:none!important;
+  transform:translateY(-50%)!important;
   color:rgba(58,59,56,.90)!important;
   font-size:17px!important;
   line-height:1!important;
@@ -90,7 +90,7 @@
 
 .b225-home .b225-categories-shell>.b225-category-swipe-hint--overlay>span{
   display:block!important;
-  width:10px!important;
+  width:8px!important;
 }
 
 /* Neutralize the old masked pseudo-element implementation from home-b225.
@@ -125,10 +125,9 @@
   }
 
   .b225-home .b225-categories-shell>.b225-category-swipe-hint--overlay{
-    top:3px!important;
-    right:16px!important;
-    width:22px!important;
-    height:14px!important;
+    right:-7px!important;
+    width:14px!important;
+    height:20px!important;
     font-size:16px!important;
   }
 }
