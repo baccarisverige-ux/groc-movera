@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { MapContainer } from '../../map-engine/MapContainer.jsx'
 import { reverseGeocode, searchAddress } from '../../../services/geocoding/index.js'
+import { invalidateHostMapLocation } from './hostLocationSync.js'
 import './host-pin-react-map.css'
 
 const FALLBACK_VIEWPORT = Object.freeze({ lat: 36.8065, lng: 10.1815, zoom: 13 })
@@ -79,6 +80,7 @@ export function HostPinMap({
   const [query, setQuery] = useState(initialAddress)
   const [viewportCommand, setViewportCommand] = useState(null)
   const [loading, setLoading] = useState('')
+  const [locationReady, setLocationReady] = useState(() => hostPinHasCoordinates({ latitude, longitude }))
   const currentViewportRef = useRef(initialViewport)
   const currentAddressRef = useRef(initialAddress)
   const currentCityRef = useRef(initialCity)
@@ -104,6 +106,7 @@ export function HostPinMap({
       setQuery(location.address)
     }
     if (location.city) currentCityRef.current = location.city
+    setLocationReady(true)
     onLocationChange?.(location)
   }, [onLocationChange])
 
@@ -186,6 +189,7 @@ export function HostPinMap({
       }
 
       if (!cancelled) {
+        setLocationReady(false)
         setHint('Adresse non localisée automatiquement · recherchez-la ici ou utilisez votre position')
       }
     }
@@ -250,7 +254,7 @@ export function HostPinMap({
   }
 
   return (
-    <div className="host-step5-react-map" data-testid="host-pin-react-map">
+    <div className="host-step5-react-map" data-testid="host-pin-react-map" data-location-ready={locationReady ? 'true' : 'false'}>
       <div className="host-step5-real-map host-step5-real-map--react">
         <MapContainer
           markers={[]}
@@ -274,6 +278,8 @@ export function HostPinMap({
           onChange={(event) => {
             currentAddressRef.current = event.target.value
             setQuery(event.target.value)
+            setLocationReady(false)
+            invalidateHostMapLocation()
           }}
         />
         <button className="host-step5-address-search__button" type="submit" aria-label="Rechercher cette adresse" data-loading={loading === 'search' ? 'true' : 'false'}>
