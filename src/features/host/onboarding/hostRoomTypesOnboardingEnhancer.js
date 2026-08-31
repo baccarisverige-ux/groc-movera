@@ -30,11 +30,17 @@ function fallbackFromDraft(draft) {
   }
 }
 
+function textElement(tag, text, className = '') {
+  const element = document.createElement(tag)
+  if (className) element.className = className
+  element.textContent = text
+  return element
+}
+
 function inputField(label, value, onInput, options = {}) {
   const wrapper = document.createElement('label')
   wrapper.className = options.wide ? 'host-onboarding-room-types__field is-wide' : 'host-onboarding-room-types__field'
-  const title = document.createElement('span')
-  title.textContent = label
+  const title = textElement('span', label)
   const input = options.multiline ? document.createElement('textarea') : document.createElement('input')
   if (options.multiline) input.rows = 2
   if (options.type) input.type = options.type
@@ -48,6 +54,13 @@ function inputField(label, value, onInput, options = {}) {
   return wrapper
 }
 
+function staticInfoBlock(className, rows) {
+  const block = document.createElement('div')
+  block.className = className
+  rows.forEach(([tag, text]) => block.append(textElement(tag, text)))
+  return block
+}
+
 function renderEditor(target, userId, draft) {
   if (!target || target.querySelector(`.${ROOM_EDITOR_CLASS}`)) return
 
@@ -57,13 +70,18 @@ function renderEditor(target, userId, draft) {
   section.className = ROOM_EDITOR_CLASS
   section.setAttribute('aria-label', 'Types de chambres de cette publication')
 
-  const header = document.createElement('div')
-  header.className = 'host-onboarding-room-types__header'
-  header.innerHTML = '<span>Hôtel / Maison d’hôte</span><h2>Types de chambres</h2><p>Une seule publication peut contenir plusieurs catégories de chambres. Configurez chaque lot séparément pour que le voyageur comprenne clairement la différence.</p>'
+  const header = staticInfoBlock('host-onboarding-room-types__header', [
+    ['span', 'Hôtel / Maison d’hôte'],
+    ['h2', 'Types de chambres'],
+    ['p', 'Une seule publication peut contenir plusieurs catégories de chambres. Configurez chaque lot séparément pour que le voyageur comprenne clairement la différence.'],
+  ])
 
-  const privacy = document.createElement('div')
-  privacy.className = 'host-onboarding-room-types__privacy'
-  privacy.innerHTML = '<strong>Visible au client</strong><span>Nom, vue, détails, capacité et prix.</span><strong>Privé côté hôte</strong><span>Nombre total et stock restant.</span>'
+  const privacy = staticInfoBlock('host-onboarding-room-types__privacy', [
+    ['strong', 'Visible au client'],
+    ['span', 'Nom, vue, détails, capacité et prix.'],
+    ['strong', 'Privé côté hôte'],
+    ['span', 'Nombre total et stock restant.'],
+  ])
 
   const list = document.createElement('div')
   list.className = 'host-onboarding-room-types__list'
@@ -81,7 +99,9 @@ function renderEditor(target, userId, draft) {
       const cardHead = document.createElement('div')
       cardHead.className = 'host-onboarding-room-types__card-head'
       const heading = document.createElement('div')
-      heading.innerHTML = `<small>Lot ${index + 1}</small><strong>${room.name || `Type ${index + 1}`}</strong>`
+      const lot = textElement('small', `Lot ${index + 1}`)
+      const roomTitle = textElement('strong', room.name || `Type ${index + 1}`)
+      heading.append(lot, roomTitle)
       const remove = document.createElement('button')
       remove.type = 'button'
       remove.textContent = 'Supprimer'
@@ -97,7 +117,7 @@ function renderEditor(target, userId, draft) {
       const grid = document.createElement('div')
       grid.className = 'host-onboarding-room-types__grid'
       grid.append(
-        inputField('Nom visible au client', room.name, (value) => { room.name = value; heading.querySelector('strong').textContent = value || `Type ${index + 1}`; persist() }, { wide: true, placeholder: 'Ex. Deluxe Vue Mer' }),
+        inputField('Nom visible au client', room.name, (value) => { room.name = value; roomTitle.textContent = value || `Type ${index + 1}`; persist() }, { wide: true, placeholder: 'Ex. Deluxe Vue Mer' }),
         inputField('Vue / particularité', room.view, (value) => { room.view = value; persist() }, { wide: true, placeholder: 'Ex. Vue mer panoramique' }),
         inputField('Détails de cette chambre', room.description, (value) => { room.description = value; persist() }, { wide: true, multiline: true, placeholder: 'Ex. 28 m², balcon privé, étage élevé…' }),
         inputField('Voyageurs', room.guests, (value) => { room.guests = Math.max(1, Number(value) || 1); persist() }, { type: 'number', inputMode: 'numeric', min: 1, max: 20 }),
@@ -107,9 +127,10 @@ function renderEditor(target, userId, draft) {
         inputField('Chambres identiques dans ce lot', room.totalUnits, (value) => { room.totalUnits = Math.max(1, Number(value) || 1); persist() }, { type: 'number', inputMode: 'numeric', min: 1, max: 999 })
       )
 
-      const photoNote = document.createElement('div')
-      photoNote.className = 'host-onboarding-room-types__photo-note'
-      photoNote.innerHTML = '<strong>Photos propres à ce type</strong><span>Elles seront associées à cette catégorie dans le module Photos. Les autres types garderont leurs propres images.</span>'
+      const photoNote = staticInfoBlock('host-onboarding-room-types__photo-note', [
+        ['strong', 'Photos propres à ce type'],
+        ['span', 'Elles seront associées à cette catégorie dans le module Photos. Les autres types garderont leurs propres images.'],
+      ])
 
       card.append(cardHead, grid, photoNote)
       list.append(card)
@@ -138,9 +159,7 @@ function renderEditor(target, userId, draft) {
     drawRooms()
   })
 
-  const note = document.createElement('p')
-  note.className = 'host-onboarding-room-types__note'
-  note.textContent = 'Exemple : Standard vue jardin × 5, Deluxe vue mer × 3, Suite terrasse × 2. Le voyageur choisira le type, jamais un numéro de chambre.'
+  const note = textElement('p', 'Exemple : Standard vue jardin × 5, Deluxe vue mer × 3, Suite terrasse × 2. Le voyageur choisira le type, jamais un numéro de chambre.', 'host-onboarding-room-types__note')
 
   drawRooms()
   persist()
@@ -156,8 +175,26 @@ function renderReview(target, userId, draft) {
   const rooms = readHostRoomTypeDraft(userId, fallbackFromDraft(draft))
   const section = document.createElement('section')
   section.className = REVIEW_CLASS
-  const rows = rooms.map((room) => `<li><strong>${room.name}</strong><span>${room.view || 'Vue non précisée'} · ${room.guests} voyageur${room.guests > 1 ? 's' : ''} · ${room.beds} lit${room.beds > 1 ? 's' : ''} · ${room.basePrice} TND/nuit</span><small>Stock privé : ${room.totalUnits} chambre${room.totalUnits > 1 ? 's' : ''} identique${room.totalUnits > 1 ? 's' : ''}</small></li>`).join('')
-  section.innerHTML = `<div><span>Avant publication</span><h2>${rooms.length} type${rooms.length > 1 ? 's' : ''} de chambres</h2><p>Le client verra chaque catégorie séparément dans cette même publication.</p></div><ul>${rows}</ul>`
+
+  const intro = document.createElement('div')
+  intro.append(
+    textElement('span', 'Avant publication'),
+    textElement('h2', `${rooms.length} type${rooms.length > 1 ? 's' : ''} de chambres`),
+    textElement('p', 'Le client verra chaque catégorie séparément dans cette même publication.')
+  )
+
+  const list = document.createElement('ul')
+  rooms.forEach((room) => {
+    const item = document.createElement('li')
+    item.append(
+      textElement('strong', room.name),
+      textElement('span', `${room.view || 'Vue non précisée'} · ${room.guests} voyageur${room.guests > 1 ? 's' : ''} · ${room.beds} lit${room.beds > 1 ? 's' : ''} · ${room.basePrice} TND/nuit`),
+      textElement('small', `Stock privé : ${room.totalUnits} chambre${room.totalUnits > 1 ? 's' : ''} identique${room.totalUnits > 1 ? 's' : ''}`)
+    )
+    list.append(item)
+  })
+
+  section.append(intro, list)
   target.prepend(section)
 }
 
