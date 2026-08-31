@@ -152,16 +152,42 @@ function osmStaticUrl({ lat, lng }) {
   return `https://staticmap.openstreetmap.de/staticmap.php?center=${lat},${lng}&zoom=13&size=600x360&maptype=mapnik`
 }
 
-function uniqueSleepCards(photos) {
+function uniqueSpaceCards(photos) {
   const cards = []
   const seen = new Set()
   for (const photo of photos) {
     if (!photo?.src || seen.has(photo.src)) continue
     seen.add(photo.src)
     cards.push(photo)
-    if (cards.length === 2) break
+    if (cards.length === 4) break
   }
   return cards
+}
+
+function spaceDetail(photo, listing, index) {
+  const label = foldKey(photo?.label)
+  const capacity = listing.capacity || {}
+  const amenities = Array.isArray(listing.amenities) ? listing.amenities : []
+
+  if (label.includes('chambre') || index === 0) {
+    const bedrooms = capacity.bedrooms ? `${capacity.bedrooms} chambre${capacity.bedrooms > 1 ? 's' : ''}` : 'Espace nuit'
+    const beds = capacity.beds ? `${capacity.beds} lit${capacity.beds > 1 ? 's' : ''}` : ''
+    return [bedrooms, beds].filter(Boolean).join(' · ')
+  }
+
+  if (label.includes('sejour')) {
+    return `${capacity.guests || 2} voyageurs · espace de vie`
+  }
+
+  if (label.includes('cuisine')) {
+    return amenities.find((name) => foldKey(name).includes('cuisine')) || 'Cuisine avec les essentiels'
+  }
+
+  if (label.includes('exterieur')) {
+    return amenities.find((name) => /(balcon|terrasse|jardin|piscine|patio|vue)/.test(foldKey(name))) || `Extérieur à ${listing.location}`
+  }
+
+  return amenities[index] || 'Espace du logement'
 }
 
 async function shareListing(title) {
@@ -228,7 +254,7 @@ export function ListingDetailPage({ params, onNavigate }) {
   const years = hostYears(listing.host?.since)
   const hostName = listing.host?.name || 'Movera'
   const hostInitial = hostName.trim().charAt(0).toUpperCase() || 'M'
-  const sleepCards = uniqueSleepCards(photos)
+  const spaceCards = uniqueSpaceCards(photos)
   const mapCenter = listingMapCenter(listing)
   const mapUrl = osmStaticUrl(mapCenter)
 
@@ -325,15 +351,15 @@ export function ListingDetailPage({ params, onNavigate }) {
           <button type="button" className="listing-detail-more" aria-expanded={descOpen} onClick={() => setDescOpen((open) => !open)}>{descOpen ? 'Réduire' : 'Lire la suite'}</button>
         </section>
 
-        {sleepCards.length ? (
+        {spaceCards.length ? (
           <section className="listing-detail-block">
-            <h2>Où vous dormirez</h2>
-            <div className={sleepCards.length === 1 ? 'listing-detail-sleep is-single' : 'listing-detail-sleep'}>
-              {sleepCards.map((photo, index) => (
+            <h2>Le logement en détail</h2>
+            <div className={spaceCards.length === 1 ? 'listing-detail-sleep is-single' : 'listing-detail-sleep'}>
+              {spaceCards.map((photo, index) => (
                 <article className="listing-detail-sleep-card" key={photo.label || photo.src}>
-                  <img src={photo.src} alt={photo.label || `Espace nuit ${index + 1}`} loading="lazy" decoding="async"/>
-                  <strong>{photo.label || 'Chambre'}</strong>
-                  <span>{listing.capacity?.beds ? `${listing.capacity.beds} lit${listing.capacity.beds > 1 ? 's' : ''}` : 'Espace nuit'}</span>
+                  <img src={photo.src} alt={`${listing.title} — ${photo.label || `Espace ${index + 1}`}`} loading="lazy" decoding="async"/>
+                  <strong>{photo.label || `Espace ${index + 1}`}</strong>
+                  <span>{spaceDetail(photo, listing, index)}</span>
                 </article>
               ))}
             </div>
