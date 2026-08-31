@@ -1,0 +1,123 @@
+.listing-availability-modal{
+  position:fixed;
+  z-index:85;
+  inset:0;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  background:rgba(20,25,22,.42);
+  -webkit-backdrop-filter:blur(6px);
+  backdrop-filter:blur(6px);
+  animation:listing-backdrop-in .18s ease both;
+}
+.listing-availability-modal__sheet{
+  width:min(100%,430px);
+  max-height:min(88svh,760px);
+  overflow:auto;
+  padding:9px 12px calc(14px + env(safe-area-inset-bottom,0px));
+  border:1px solid rgba(255,255,255,.9);
+  border-bottom:0;
+  border-radius:28px 28px 0 0;
+  background:linear-gradient(180deg,#fbfdfb,#f2f6f3);
+  box-shadow:0 -20px 56px rgba(19,28,23,.22),inset 0 1px 0 #fff;
+  animation:listing-sheet-up .24s cubic-bezier(.2,.8,.2,1) both;
+  overscroll-behavior:contain;
+}
+.listing-availability-modal__handle{
+  width:40px;
+  height:4px;
+  margin:0 auto 10px;
+  border-radius:99px;
+  background:#c9d1cc;
+}
+.listing-availability-modal__head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  padding:4px 5px 2px;
+}
+.listing-availability-modal__head>div{min-width:0}
+.listing-availability-modal__eyebrow{
+  display:block;
+  color:#315f4c;
+  font-size:8px;
+  font-weight:850;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+.listing-availability-modal__head h2{
+  margin:4px 0 0;
+  color:#172019;
+  font-size:25px;
+  line-height:1;
+  font-weight:780;
+  letter-spacing:-.045em;
+}
+.listing-availability-modal__head p{
+  margin:5px 0 0;
+  max-width:290px;
+  color:#78827b;
+  font-size:9px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.listing-availability-modal__close{
+  width:34px;
+  height:34px;
+  flex:0 0 auto;
+  border:1px solid rgba(43,65,52,.07);
+  border-radius:50%;
+  background:#fff;
+  color:#465149;
+  display:grid;
+  place-items:center;
+  box-shadow:0 3px 10px rgba(24,40,30,.06);
+}
+.listing-availability-modal__close svg{
+  width:16px;
+  height:16px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.8;
+  stroke-linecap:round;
+}
+.listing-availability-modal__calendar{
+  margin-top:12px;
+  background:linear-gradient(180deg,#fbfdfb,#eef4f0);
+}
+.listing-availability-modal .host-calendar__monthbar button:disabled{
+  opacity:.28;
+  pointer-events:none;
+}
+.listing-availability-modal .host-calendar__day{
+  cursor:default;
+}
+.listing-availability-modal .host-calendar__day.is-past{
+  opacity:.55;
+}
+.listing-availability-modal .host-calendar__day.has-booking .host-calendar__price{
+  color:#8a948e;
+}
+.listing-availability-modal__done{
+  width:100%;
+  height:46px;
+  margin-top:10px;
+  border:0;
+  border-radius:15px;
+  background:#203d2c;
+  color:#fff;
+  font:780 10px/1 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  box-shadow:0 6px 16px rgba(25,57,38,.14),inset 0 1px 0 rgba(255,255,255,.10);
+}
+.listing-availability-modal__done:active{transform:scale(.99)}
+@media(max-width:350px){
+  .listing-availability-modal__sheet{padding-left:9px;padding-right:9px}
+  .listing-availability-modal__head{padding-left:4px;padding-right:4px}
+  .listing-availability-modal__head h2{font-size:23px}
+}
+@media(prefers-reduced-motion:reduce){
+  .listing-availability-modal,
+  .listing-availability-modal__sheet{animation:none!important}
+}
