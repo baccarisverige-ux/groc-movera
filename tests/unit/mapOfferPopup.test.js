@@ -22,12 +22,13 @@ describe('map offer popup model', () => {
     expect(nextListingId([{ id: 'solo' }], 'solo')).toBe('solo')
   })
 
-  it('formats copy from the canonical seed listing without changing its property type', () => {
+  it('formats only rating data actually present in the source', () => {
     const listing = listUniqueHomeOffers().find((item) => item.id === 'dar-sidi-bleu')
     expect(listingLocationLine(listing)).toBe('Maison d’hôte · Sidi Bou Saïd')
-    expect(listingRatingCopy(listing)).toBe('★ 4.91 (41)')
+    expect(listingRatingCopy(listing)).toBe('★ 4.91')
     expect(listing.priceLabel).toBe('380 TND total')
     expect(listing.origin).toBe('seed')
+    expect(listingRatingCopy({ rating: null, reviews: 0 })).toBe('Nouveau')
   })
 })
 
