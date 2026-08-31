@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { HOST_CALENDAR_EVENT, readHostCalendarForListing } from '../../entities/host/hostCalendarStore.js'
-import { findHostProfileByListingId, HOST_PROFILE_EVENT } from '../../entities/host/hostProfileStore.js'
+import { HOST_PROFILE_EVENT } from '../../entities/host/hostProfileStore.js'
+import { getGuestListingById } from './guestListings.js'
 import { ListingAvailabilityModal } from './ListingAvailabilityModal.jsx'
 import './listing-availability.css'
 import './listing-room-types.css'
@@ -47,32 +48,38 @@ function roomMeta(room) {
   return parts.join(' · ')
 }
 
+function roomPhoto(room) {
+  const first = Array.isArray(room?.photos) ? room.photos[0] : null
+  if (typeof first === 'string') return first
+  return typeof first?.src === 'string' ? first.src : ''
+}
+
 export function ListingAvailability({ listingId, basePrice = 0, currency = 'TND' }) {
   const now = useMemo(() => new Date(), [])
-  const initialProfile = useMemo(() => findHostProfileByListingId(listingId), [listingId])
-  const initialRoomTypeId = initialProfile?.listing?.roomTypes?.[0]?.id || ''
+  const initialListing = useMemo(() => getGuestListingById(listingId), [listingId])
+  const initialRoomTypeId = initialListing?.roomTypes?.[0]?.id || ''
   const [open, setOpen] = useState(false)
-  const [profile, setProfile] = useState(initialProfile)
+  const [publicListing, setPublicListing] = useState(initialListing)
   const [selectedRoomTypeId, setSelectedRoomTypeId] = useState(initialRoomTypeId)
   const [calendar, setCalendar] = useState(() => readHostCalendarForListing(listingId, initialRoomTypeId))
 
-  const roomTypes = Array.isArray(profile?.listing?.roomTypes) ? profile.listing.roomTypes : []
+  const roomTypes = Array.isArray(publicListing?.roomTypes) ? publicListing.roomTypes : []
   const selectedRoom = roomTypes.find((room) => room.id === selectedRoomTypeId) || roomTypes[0] || null
   const selectedPrice = selectedRoom?.basePrice || basePrice
 
   useEffect(() => {
-    const syncProfile = () => {
-      const next = findHostProfileByListingId(listingId)
-      setProfile(next)
-      const nextRooms = next?.listing?.roomTypes || []
+    const syncListing = () => {
+      const next = getGuestListingById(listingId)
+      setPublicListing(next)
+      const nextRooms = next?.roomTypes || []
       setSelectedRoomTypeId((current) => nextRooms.some((room) => room.id === current) ? current : nextRooms[0]?.id || '')
     }
-    syncProfile()
-    window.addEventListener(HOST_PROFILE_EVENT, syncProfile)
-    window.addEventListener('storage', syncProfile)
+    syncListing()
+    window.addEventListener(HOST_PROFILE_EVENT, syncListing)
+    window.addEventListener('storage', syncListing)
     return () => {
-      window.removeEventListener(HOST_PROFILE_EVENT, syncProfile)
-      window.removeEventListener('storage', syncProfile)
+      window.removeEventListener(HOST_PROFILE_EVENT, syncListing)
+      window.removeEventListener('storage', syncListing)
     }
   }, [listingId])
 
@@ -95,12 +102,13 @@ export function ListingAvailability({ listingId, basePrice = 0, currency = 'TND'
         {roomTypes.length > 1 ? (
           <div className="listing-room-types" aria-labelledby="listing-room-types-title">
             <div className="listing-room-types__head">
-              <span>Choisissez votre chambre</span>
-              <small>Chaque type possède ses propres détails et tarifs.</small>
+              <span id="listing-room-types-title">Choisissez votre type de chambre</span>
+              <small>{roomTypes.length} catégories dans cette même publication · chaque type a ses propres caractéristiques et tarifs.</small>
             </div>
             <div className="listing-room-types__rail" role="radiogroup" aria-label="Type de chambre">
               {roomTypes.map((room) => {
                 const active = room.id === selectedRoom?.id
+                const photo = roomPhoto(room)
                 return (
                   <button
                     type="button"
@@ -110,6 +118,7 @@ export function ListingAvailability({ listingId, basePrice = 0, currency = 'TND'
                     key={room.id}
                     onClick={() => { setSelectedRoomTypeId(room.id); setOpen(false) }}
                   >
+                    {photo ? <img className="listing-room-types__photo" src={photo} alt={`${room.name}${room.view ? ` — ${room.view}` : ''}`} loading="lazy" decoding="async" /> : null}
                     <span className="listing-room-types__check">{active ? <CheckGlyph /> : null}</span>
                     <strong>{room.name}</strong>
                     {room.view ? <em>{room.view}</em> : null}
