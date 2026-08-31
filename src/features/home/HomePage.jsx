@@ -3,8 +3,8 @@ import { HOST_PROFILE_EVENT } from '../../entities/host/hostProfileStore.js'
 import { getCollectionRouteForCategory } from '../../shared/navigation/guestCollectionRoutes.js'
 import { MotionList, MotionListItem } from '../../shared/motion/MotionList.jsx'
 import { useFavorites } from '../favorites/favoritesStore.js'
-import { listPublishedHostGuestListings } from '../listing/guestListings.js'
-import { homeCategories, homeCategoryOffers } from './data/homeData.js'
+import { listHomeOffersByCategory } from '../listing/guestListings.js'
+import { homeCategories } from './data/homeData.js'
 import { getSelectedHomeCategory, setSelectedHomeCategory } from './homeCategorySelection.js'
 import { MiniServicesSection } from './MiniServicesSection.jsx'
 import { useImmediateCategorySwipe } from './useImmediateCategorySwipe.js'
@@ -80,7 +80,9 @@ function CategoryArtwork({ id }) {
 }
 
 function ListingCard({ item, sectionId, favorite, toggleFavorite, index, onNavigate }) {
-  const dates = item.dateLabel || '3–4 sept.'
+  const dates = item.dates || item.dateLabel || ''
+  const price = item.priceLabel || item.priceTotal || (item.nightlyRate != null ? `${item.nightlyRate} ${item.currency || 'TND'} / nuit` : 'Tarif à confirmer')
+  const rating = item.rating ? `★ ${item.rating}` : 'Nouveau'
   const openListing = () => onNavigate(`/listing/${item.id}`)
 
   return (
@@ -90,7 +92,8 @@ function ListingCard({ item, sectionId, favorite, toggleFavorite, index, onNavig
       config={HOME_OFFER_MOTION}
       index={index}
       data-testid={`home-card-${sectionId}-${item.id}`}
-      aria-label={`${item.title}, ${item.priceTotal}, note ${item.rating}`}
+      data-origin={item.origin || 'seed'}
+      aria-label={`${item.title}, ${price}, ${rating}`}
       role="link"
       tabIndex={0}
       onClick={openListing}
@@ -102,7 +105,7 @@ function ListingCard({ item, sectionId, favorite, toggleFavorite, index, onNavig
       }}
     >
       <div className="b225-offer-card__image">
-        <img src={item.image} alt="" loading="lazy" decoding="async"/>
+        {item.image ? <img src={item.image} alt="" loading="lazy" decoding="async"/> : <span aria-hidden="true">MH</span>}
         {item.badge ? <span className="b225-offer-card__badge">{item.badge}</span> : null}
         <button
           type="button"
@@ -117,8 +120,8 @@ function ListingCard({ item, sectionId, favorite, toggleFavorite, index, onNavig
       </div>
       <div className="b225-offer-card__body">
         <h3 className="b225-offer-card__title">{item.title}</h3>
-        <p className="b225-offer-card__dates">{dates}</p>
-        <p className="b225-offer-card__meta"><strong>{item.priceTotal}</strong><span className="b225-offer-card__dot">·</span><span>★ {item.rating}</span></p>
+        <p className="b225-offer-card__dates">{dates || item.location}</p>
+        <p className="b225-offer-card__meta"><strong>{price}</strong><span className="b225-offer-card__dot">·</span><span>{rating}</span></p>
       </div>
     </MotionListItem>
   )
@@ -144,7 +147,7 @@ function SeeAllCard({ id, title, items, onNavigate }) {
       <span className="b225-see-all-card__gallery" aria-hidden="true">
         {previewItems.map((item) => (
           <span key={`${id}-preview-${item.id}`} className="b225-see-all-card__photo">
-            <img src={item.image} alt="" loading="lazy" decoding="async"/>
+            {item.image ? <img src={item.image} alt="" loading="lazy" decoding="async"/> : <span>MH</span>}
           </span>
         ))}
         <span className="b225-see-all-card__mark">M</span>
@@ -215,31 +218,12 @@ export function HomePage({ onNavigate }) {
   }
 
   const categorySelections = useMemo(() => {
-    const hosted = (hostTick >= 0 ? listPublishedHostGuestListings() : []).map((listing) => ({
-      id: listing.id,
-      title: listing.title,
-      location: listing.location,
-      priceTotal: listing.priceLabel,
-      rating: listing.rating,
-      badge: listing.badge || 'Nouveau',
-      image: listing.image,
-      dateLabel: listing.dates,
-      category: listing.category,
+    void hostTick
+    return homeCategories.map((item) => ({
+      id: item.id,
+      title: item.label,
+      items: listHomeOffersByCategory(item.id),
     }))
-    return homeCategories.map((item) => {
-      const catalog = homeCategoryOffers[item.id] || []
-      const seen = new Set(catalog.map((offer) => offer.id))
-      const extra = hosted.filter((listing) => {
-        if (seen.has(listing.id)) return false
-        if (item.id === 'all') return true
-        return String(listing.category || '').split(/\s+/).includes(item.id)
-      })
-      return {
-        id: item.id,
-        title: item.label,
-        items: [...extra, ...catalog],
-      }
-    })
   }, [hostTick])
 
   const allSelection = categorySelections.find((selection) => selection.id === 'all')
