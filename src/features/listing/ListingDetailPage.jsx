@@ -288,13 +288,6 @@ export function ListingDetailPage({ params, onNavigate }) {
           </div>
         </div>
 
-        {photos.length > 1 ? (
-          <div className="listing-detail-gallery-controls" aria-label="Galerie photos">
-            <OverlayButton label="Photo précédente" onClick={previousPhoto} className="listing-detail-gallery-arrow"><ChevronGlyph direction="left"/></OverlayButton>
-            <OverlayButton label="Photo suivante" onClick={nextPhoto} className="listing-detail-gallery-arrow"><ChevronGlyph/></OverlayButton>
-          </div>
-        ) : null}
-
         <div className="listing-detail-gallery-meta">
           {photos.length > 1 ? (
             <span className="listing-detail-gallery-dots" aria-hidden="true">
