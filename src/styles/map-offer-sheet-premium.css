@@ -181,7 +181,7 @@
   height:9px!important;
 }
 
-/* Property category rail — remaining chips are 9% larger. */
+/* Property category rail — remaining chips are 16% larger than the previous size. */
 .map-offer-sheet__property-dock{
   flex:0 0 33.5px!important;
   min-height:33.5px!important;
@@ -198,11 +198,11 @@
 }
 
 .map-offer-sheet__property-chip{
-  height:22.3px!important;
-  min-height:22.3px!important;
-  padding:0 8.2px!important;
+  height:25.9px!important;
+  min-height:25.9px!important;
+  padding:0 9.5px!important;
   border-radius:999px!important;
-  font-size:8.8px!important;
+  font-size:10.2px!important;
   line-height:1!important;
   box-shadow:0 1px 3px rgba(27,33,29,.03),inset 0 1px 0 rgba(255,255,255,.98)!important;
 }
@@ -222,7 +222,7 @@
   .map-offer-sheet__brand-badge{height:14.5px!important;padding:0 5px!important;font-size:8px!important}
   .map-offer-sheet__chevron{margin-left:3px!important}
   .map-offer-sheet__property-dock{margin-left:6.5px!important;margin-right:6.5px!important}
-  .map-offer-sheet__property-chip{height:21.3px!important;min-height:21.3px!important;padding:0 7.1px!important;font-size:8.5px!important}
+  .map-offer-sheet__property-chip{height:24.7px!important;min-height:24.7px!important;padding:0 8.2px!important;font-size:9.9px!important}
 }
 
 @media(prefers-reduced-motion:reduce){
