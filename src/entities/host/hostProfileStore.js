@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { storageAdapter } from '../../services/storage/storageAdapter.js'
+import { clearHostRoomTypeDraft, readHostRoomTypeDraft } from './hostRoomTypeDraftStore.js'
 
 export const HOST_PROFILES_KEY = 'movera:host-profiles:v1'
 export const HOST_PROFILE_EVENT = 'movera:host-profile-change'
@@ -171,11 +172,16 @@ export function readHostProfile(userId) {
   return normalizeHostProfile(readAllProfiles()[userId], userId)
 }
 
+export function listActiveHostProfiles() {
+  return Object.entries(readAllProfiles())
+    .map(([userId, value]) => normalizeHostProfile(value, userId))
+    .filter(Boolean)
+}
+
 export function findHostProfileByListingId(listingId) {
   if (!listingId) return null
   const matches = []
-  for (const [userId, value] of Object.entries(readAllProfiles())) {
-    const profile = normalizeHostProfile(value, userId)
+  for (const profile of listActiveHostProfiles()) {
     if (profile?.listing?.id === listingId) matches.push(profile)
   }
   return matches.length === 1 ? matches[0] : null
@@ -183,7 +189,21 @@ export function findHostProfileByListingId(listingId) {
 
 export function activateHostProfile(userId, listing) {
   if (!userId) throw new Error('A user is required to activate host mode')
-  const normalizedListing = normalizeListing(listing, `host-${userId}`)
+  const roomTypeFallback = {
+    guests: listing?.guests,
+    beds: listing?.beds,
+    bathrooms: listing?.bathrooms,
+    basePrice: listing?.basePrice,
+  }
+  const listingForActivation = supportsPooledRoomInventory(listing?.type)
+    ? {
+        ...listing,
+        roomTypes: Array.isArray(listing?.roomTypes) && listing.roomTypes.length
+          ? listing.roomTypes
+          : readHostRoomTypeDraft(userId, roomTypeFallback),
+      }
+    : listing
+  const normalizedListing = normalizeListing(listingForActivation, `host-${userId}`)
   if (!normalizedListing) throw new Error('Invalid host listing')
   const profiles = readAllProfiles()
   const profile = {
@@ -194,6 +214,7 @@ export function activateHostProfile(userId, listing) {
   }
   profiles[userId] = profile
   storageAdapter.setJson(HOST_PROFILES_KEY, profiles)
+  clearHostRoomTypeDraft(userId)
   if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent(HOST_PROFILE_EVENT, { detail: profile }))
   return profile
 }
