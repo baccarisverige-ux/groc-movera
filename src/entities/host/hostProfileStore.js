@@ -31,6 +31,23 @@ function normalizeSafety(value) {
   }
 }
 
+function normalizeStayRules(value) {
+  const source = value && typeof value === 'object' ? value : {}
+  const minNights = clampInt(source.minNights, 1, 365, 1)
+  const maxNights = clampInt(source.maxNights, minNights, 365, Math.max(minNights, 30))
+  return {
+    minNights,
+    maxNights,
+    advanceNoticeDays: clampInt(source.advanceNoticeDays, 0, 365, 0),
+    preparationDays: clampInt(source.preparationDays, 0, 7, 0),
+    checkInFrom: typeof source.checkInFrom === 'string' && /^\d{2}:\d{2}$/.test(source.checkInFrom) ? source.checkInFrom : '15:00',
+    checkOutUntil: typeof source.checkOutUntil === 'string' && /^\d{2}:\d{2}$/.test(source.checkOutUntil) ? source.checkOutUntil : '11:00',
+    petsAllowed: Boolean(source.petsAllowed),
+    smokingAllowed: Boolean(source.smokingAllowed),
+    eventsAllowed: Boolean(source.eventsAllowed),
+  }
+}
+
 function normalizeCoordinate(value) {
   const coordinate = Number(value)
   return Number.isFinite(coordinate) ? coordinate : null
@@ -178,6 +195,7 @@ function normalizeListing(value, fallbackId = 'primary-listing') {
     bookingMode: value.bookingMode === 'instant' ? 'instant' : 'request-first',
     promotions: stringArray(value.promotions),
     safety: normalizeSafety(value.safety),
+    stayRules: normalizeStayRules(value.stayRules),
     roomTypes,
     roomInventory: normalizeRoomInventory(value.roomInventory, type, roomTypes),
     photos: stringArray(value.photos),
@@ -194,6 +212,14 @@ function normalizeHostProfile(value, userId) {
     createdAt: typeof value.createdAt === 'string' ? value.createdAt : new Date().toISOString(),
     listing,
   }
+}
+
+function persistProfile(userId, profile) {
+  const profiles = readAllProfiles()
+  profiles[userId] = profile
+  storageAdapter.setJson(HOST_PROFILES_KEY, profiles)
+  if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent(HOST_PROFILE_EVENT, { detail: profile }))
+  return profile
 }
 
 export function readHostProfile(userId) {
@@ -239,19 +265,31 @@ export function activateHostProfile(userId, listing) {
     : listing
   const normalizedListing = normalizeListing(listingForActivation, `host-${userId}`)
   if (!normalizedListing) throw new Error('Invalid host listing')
-  const profiles = readAllProfiles()
   const profile = {
     status: 'active',
     userId,
     createdAt: new Date().toISOString(),
     listing: normalizedListing,
   }
-  profiles[userId] = profile
-  storageAdapter.setJson(HOST_PROFILES_KEY, profiles)
+  persistProfile(userId, profile)
   clearHostRoomTypeDraft(userId)
   ensureHostListingCalendar(userId, normalizedListing.id)
-  if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent(HOST_PROFILE_EVENT, { detail: profile }))
   return profile
+}
+
+export function updateHostListing(userId, patch) {
+  if (!userId) throw new Error('A user is required to update a listing')
+  const current = readHostProfile(userId)
+  if (!current) throw new Error('Host profile not found')
+  const sourcePatch = patch && typeof patch === 'object' ? patch : {}
+  const protectedPatch = { ...sourcePatch }
+  delete protectedPatch.id
+  delete protectedPatch.type
+  delete protectedPatch.roomTypes
+  delete protectedPatch.roomInventory
+  const normalizedListing = normalizeListing({ ...current.listing, ...protectedPatch }, current.listing.id)
+  if (!normalizedListing) throw new Error('Invalid listing update')
+  return persistProfile(userId, { ...current, listing: normalizedListing })
 }
 
 export function updateHostRoomTypeTotal(userId, roomTypeIdValue, totalUnits) {
@@ -278,10 +316,7 @@ export function updateHostRoomTypeTotal(userId, roomTypeIdValue, totalUnits) {
     },
   }
 
-  profiles[userId] = next
-  storageAdapter.setJson(HOST_PROFILES_KEY, profiles)
-  if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent(HOST_PROFILE_EVENT, { detail: next }))
-  return next
+  return persistProfile(userId, next)
 }
 
 export function updateHostRoomInventoryTotal(userId, totalUnits) {
