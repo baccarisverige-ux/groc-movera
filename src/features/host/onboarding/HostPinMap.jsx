@@ -8,22 +8,30 @@ const FALLBACK_VIEWPORT = Object.freeze({ lat: 36.8065, lng: 10.1815, zoom: 13 }
 const PIN_ZOOM = 17
 const REVERSE_DELAY_MS = 360
 
+function coordinateNumber(value, min, max) {
+  if (value === null || value === undefined || String(value).trim() === '') return null
+  const number = Number(value)
+  if (!Number.isFinite(number) || number < min || number > max) return null
+  return number
+}
+
 export function hostPinHasCoordinates(value = {}) {
-  return Number.isFinite(Number(value.latitude ?? value.lat))
-    && Number.isFinite(Number(value.longitude ?? value.lng))
+  const lat = coordinateNumber(value.latitude ?? value.lat, -90, 90)
+  const lng = coordinateNumber(value.longitude ?? value.lng, -180, 180)
+  return lat !== null && lng !== null
 }
 
 export function hostPinViewportFromDraft(draft = {}) {
-  const lat = Number(draft.latitude)
-  const lng = Number(draft.longitude)
-  if (Number.isFinite(lat) && Number.isFinite(lng)) return { lat, lng, zoom: PIN_ZOOM }
+  const lat = coordinateNumber(draft.latitude, -90, 90)
+  const lng = coordinateNumber(draft.longitude, -180, 180)
+  if (lat !== null && lng !== null) return { lat, lng, zoom: PIN_ZOOM }
   return { ...FALLBACK_VIEWPORT }
 }
 
 export function hostLocationFromResult(result, viewport, fallback = {}) {
-  const lat = Number(viewport?.lat)
-  const lng = Number(viewport?.lng)
-  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null
+  const lat = coordinateNumber(viewport?.lat, -90, 90)
+  const lng = coordinateNumber(viewport?.lng, -180, 180)
+  if (lat === null || lng === null) return null
 
   const location = result?.location || {}
   return {
@@ -89,7 +97,6 @@ export function HostPinMap({
   const userInteractionRef = useRef(false)
 
   currentAddressRef.current = query
-  currentCityRef.current = initialCity
 
   const setHint = useCallback((message) => {
     onHintChange?.(message)
