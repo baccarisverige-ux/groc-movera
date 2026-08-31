@@ -26,9 +26,12 @@ describe('Home offers on the map', () => {
     expect(laMarsa.map((item) => item.id).sort()).toEqual([...LA_MARSA_IDS].sort())
   })
 
-  it('matches guest amenities with fuzzy Wi-Fi / TV / Clim labels', () => {
+  it('does not invent amenities for a seed card that never supplied them', () => {
     const listing = listUniqueHomeOffers().find((item) => item.id === 'dar-sidi-bleu')
-    expect(listingMatchesMapFilters(listing, new Set(['wifi', 'tv', 'ac', 'parking']))).toBe(true)
+    expect(listing.amenities).toEqual([])
+    expect(listingMatchesMapFilters(listing, new Set(['wifi']))).toBe(false)
+    expect(listingMatchesMapFilters(listing, new Set(['tv']))).toBe(false)
+    expect(listingMatchesMapFilters(listing, new Set(['ac']))).toBe(false)
     expect(listingMatchesMapFilters(listing, new Set(['pool']))).toBe(false)
   })
 })
