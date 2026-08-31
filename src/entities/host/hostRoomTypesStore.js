@@ -1,4 +1,5 @@
 import { HOST_PROFILE_EVENT, HOST_PROFILES_KEY, readHostProfile, supportsPooledRoomInventory } from './hostProfileStore.js'
+import { normalizeRoomLots, roomLotTotalUnits, validateRoomLotPlan } from './roomLotModel.js'
 import { storageAdapter } from '../../services/storage/storageAdapter.js'
 
 function readProfiles() {
@@ -6,44 +7,38 @@ function readProfiles() {
   return value && typeof value === 'object' && !Array.isArray(value) ? value : {}
 }
 
-function cleanRoom(room, index) {
-  const source = room && typeof room === 'object' ? room : {}
-  const id = typeof source.id === 'string' && source.id.trim() ? source.id.trim() : `room-type-${index + 1}`
-  return {
-    id,
-    name: typeof source.name === 'string' && source.name.trim() ? source.name.trim() : `Type de chambre ${index + 1}`,
-    view: typeof source.view === 'string' ? source.view.trim() : '',
-    description: typeof source.description === 'string' ? source.description.trim() : '',
-    guests: Math.max(1, Math.min(20, Math.round(Number(source.guests) || 2))),
-    beds: Math.max(1, Math.min(20, Math.round(Number(source.beds) || 1))),
-    bathrooms: Math.max(0, Math.min(10, Math.round(Number(source.bathrooms) || 1))),
-    basePrice: Math.max(1, Math.round(Number(source.basePrice) || 1)),
-    totalUnits: Math.max(1, Math.min(999, Math.round(Number(source.totalUnits) || 1))),
-    photos: Array.isArray(source.photos) ? source.photos.filter((item) => typeof item === 'string' && item.trim()) : [],
-  }
-}
-
-export function saveHostRoomTypes(userId, roomTypes) {
-  if (!userId) throw new Error('A user is required to update room types')
+export function saveHostRoomLots(userId, roomLots) {
+  if (!userId) throw new Error('A user is required to update room lots')
   const current = readHostProfile(userId)
-  if (!current || !supportsPooledRoomInventory(current.listing.type)) throw new Error('Room types are only available for hotels and guest houses')
+  if (!current || !supportsPooledRoomInventory(current.listing.type)) {
+    throw new Error('Room lots are only available for hotels and guest houses')
+  }
 
-  const cleaned = (Array.isArray(roomTypes) ? roomTypes : []).slice(0, 12).map(cleanRoom)
-  if (!cleaned.length) throw new Error('At least one room type is required')
-  const ids = new Set(cleaned.map((room) => room.id))
-  if (ids.size !== cleaned.length) throw new Error('Room type identifiers must be unique')
+  const cleaned = normalizeRoomLots(roomLots, {
+    basePrice: current.listing.basePrice,
+    guests: current.listing.guests,
+    beds: current.listing.beds,
+    bathrooms: current.listing.bathrooms,
+  })
+  const totalRooms = roomLotTotalUnits(cleaned)
+  const validation = validateRoomLotPlan({ totalRooms, roomLots: cleaned })
+  if (!validation.ok) throw new Error(validation.issues[0] || 'Invalid room lot plan')
 
   const profiles = readProfiles()
   const raw = profiles[userId]
   if (!raw?.listing) throw new Error('Host listing not found')
+
   const nextRaw = {
     ...raw,
     listing: {
       ...raw.listing,
-      roomTypes: cleaned,
+      totalRooms,
+      roomLots: validation.roomLots,
+      roomTypes: validation.roomLots,
+      basePrice: Math.min(...validation.roomLots.map((lot) => lot.basePrice)),
       roomInventory: {
-        mode: 'room-types',
-        totalUnits: cleaned.reduce((sum, room) => sum + room.totalUnits, 0),
+        mode: 'room-lots',
+        totalUnits: totalRooms,
       },
     },
   }
@@ -52,4 +47,8 @@ export function saveHostRoomTypes(userId, roomTypes) {
   const next = readHostProfile(userId)
   if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent(HOST_PROFILE_EVENT, { detail: next }))
   return next
+}
+
+export function saveHostRoomTypes(userId, roomTypes) {
+  return saveHostRoomLots(userId, roomTypes)
 }
