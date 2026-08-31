@@ -52,13 +52,14 @@ async function clearHostState(page) {
     window.localStorage.removeItem(profilesKey)
     window.localStorage.removeItem(calendarKey)
     window.localStorage.removeItem(draftKey)
+    window.localStorage.removeItem('movera:host-pin-location:v1')
   }, [HOST_PROFILES_KEY, HOST_CALENDAR_KEY, HOST_DRAFT_KEY])
 }
 
-async function reachPinStep(page, { react = false } = {}) {
+async function reachPinStep(page) {
   await page.setViewportSize({ width: 390, height: 844 })
   await mockTunisiaGeocoding(page)
-  await page.goto(`/groc-movera/profile${react ? '?hostMap=react' : ''}`)
+  await page.goto('/groc-movera/profile')
   await page.getByTestId('profile-test-login').click()
   await clearHostState(page)
   await page.reload()
@@ -77,14 +78,8 @@ async function reachPinStep(page, { react = false } = {}) {
   return onboarding
 }
 
-test('normal host onboarding keeps the proven Leaflet path and does not mount the React switch', async ({ page }) => {
+test('address entered on the previous step automatically positions the single host map without a second search', async ({ page }) => {
   await reachPinStep(page)
-  await expect(page.getByTestId('host-pin-react-map')).toHaveCount(0)
-  await expect(page.locator('.host-onboarding__map-card')).not.toHaveAttribute('data-react-map-engine', 'true')
-})
-
-test('React host pin switch mounts one visible Movera map engine and synchronizes detected location to the draft', async ({ page }) => {
-  await reachPinStep(page, { react: true })
 
   const card = page.locator('.host-onboarding__map-card')
   const reactRoot = page.getByTestId('host-pin-react-map')
@@ -92,16 +87,16 @@ test('React host pin switch mounts one visible Movera map engine and synchronize
   await expect(reactRoot).toBeVisible()
   await expect(reactRoot.getByTestId('map-engine')).toBeVisible()
 
-  const directLegacySurface = card.locator(':scope > .host-step5-real-map')
-  if (await directLegacySurface.count()) await expect(directLegacySurface).toBeHidden()
+  // The old Leaflet runtime must not coexist with the React/Google map.
+  await expect(card.locator(':scope > .host-step5-real-map')).toHaveCount(0)
+  await expect(page.locator('script[data-host-leaflet]')).toHaveCount(0)
 
   const searchInput = reactRoot.getByLabel('Rechercher ou modifier l’adresse')
-  await searchInput.fill('12 Rue Movera, La Marsa')
-  await reactRoot.getByRole('button', { name: 'Rechercher cette adresse' }).click()
-
   await expect(searchInput).toHaveValue('12 Rue Movera')
+
+  // No submit/search click here: the handoff itself must move the map.
   const mapSurface = reactRoot.getByTestId('map-surface')
-  await expect(mapSurface).toHaveAttribute('data-lat', '36.878200')
+  await expect(mapSurface).toHaveAttribute('data-lat', '36.878200', { timeout: 8000 })
   await expect(mapSurface).toHaveAttribute('data-lng', '10.324700')
   await expect(mapSurface).toHaveAttribute('data-zoom', '17')
 
@@ -111,8 +106,6 @@ test('React host pin switch mounts one visible Movera map engine and synchronize
   }, HOST_DRAFT_KEY)).toMatchObject({
     address: '12 Rue Movera',
     city: 'La Marsa',
-    latitude: 36.8782,
-    longitude: 10.3247,
     pinConfirmed: false,
   })
 
