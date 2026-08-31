@@ -15,7 +15,6 @@ const TOP_HANDLE_TOUCH_THRESHOLD_PX = 2
 const MAP_PROPERTY_FILTERS = Object.freeze([
   { id: 'all', label: 'Tout' },
   { id: 'apartment', label: 'Appartement' },
-  { id: 'house', label: 'Maison' },
   { id: 'villa', label: 'Villa' },
   { id: 'hotel', label: 'Hôtel' },
   { id: 'guesthouse', label: "Maison d’hôte" },
