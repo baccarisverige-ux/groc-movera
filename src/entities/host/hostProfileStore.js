@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { storageAdapter } from '../../services/storage/storageAdapter.js'
 
 export const HOST_PROFILES_KEY = 'movera:host-profiles:v1'
-const HOST_PROFILE_EVENT = 'movera:host-profile-change'
+export const HOST_PROFILE_EVENT = 'movera:host-profile-change'
 
 function readAllProfiles() {
   const value = storageAdapter.getJson(HOST_PROFILES_KEY, {})
@@ -28,6 +28,29 @@ function normalizeSafety(value) {
 function normalizeCoordinate(value) {
   const coordinate = Number(value)
   return Number.isFinite(coordinate) ? coordinate : null
+}
+
+function foldType(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+}
+
+export function supportsPooledRoomInventory(type) {
+  const normalized = foldType(type)
+  return normalized === 'hotel' || normalized === "maison d'hote"
+}
+
+function normalizeRoomInventory(value, type) {
+  const enabled = supportsPooledRoomInventory(type)
+  const source = value && typeof value === 'object' ? value : {}
+  const totalUnits = enabled ? Math.max(1, Math.min(999, Math.round(Number(source.totalUnits) || 1))) : 1
+  return {
+    mode: enabled ? 'pooled' : 'single',
+    totalUnits,
+  }
 }
 
 function normalizeListing(value, fallbackId = 'primary-listing') {
@@ -60,6 +83,7 @@ function normalizeListing(value, fallbackId = 'primary-listing') {
     bookingMode: value.bookingMode === 'instant' ? 'instant' : 'request-first',
     promotions: stringArray(value.promotions),
     safety: normalizeSafety(value.safety),
+    roomInventory: normalizeRoomInventory(value.roomInventory, type),
     photos: [],
   }
 }
@@ -106,6 +130,30 @@ export function activateHostProfile(userId, listing) {
   storageAdapter.setJson(HOST_PROFILES_KEY, profiles)
   if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent(HOST_PROFILE_EVENT, { detail: profile }))
   return profile
+}
+
+export function updateHostRoomInventoryTotal(userId, totalUnits) {
+  if (!userId) throw new Error('A user is required to update room inventory')
+  const profiles = readAllProfiles()
+  const current = normalizeHostProfile(profiles[userId], userId)
+  if (!current) throw new Error('Host profile not found')
+  if (!supportsPooledRoomInventory(current.listing.type)) return current
+
+  const next = {
+    ...current,
+    listing: {
+      ...current.listing,
+      roomInventory: {
+        mode: 'pooled',
+        totalUnits: Math.max(1, Math.min(999, Math.round(Number(totalUnits) || 1))),
+      },
+    },
+  }
+
+  profiles[userId] = next
+  storageAdapter.setJson(HOST_PROFILES_KEY, profiles)
+  if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent(HOST_PROFILE_EVENT, { detail: next }))
+  return next
 }
 
 export function clearHostProfile(userId) {
