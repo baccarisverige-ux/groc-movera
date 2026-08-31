@@ -5,8 +5,10 @@ export const HOST_PIN_REACT_QUERY_VALUE = 'react'
 export const HOST_MAP_LOCATION_EVENT = 'movera:host-map-address-change'
 const REACT_READY_SELECTOR = '[data-testid="host-pin-react-map"]'
 
-export function shouldUseReactHostPinMap(search = typeof window !== 'undefined' ? window.location.search : '') {
-  return new URLSearchParams(search).get('hostMap') === HOST_PIN_REACT_QUERY_VALUE
+// The React address-driven map is now the normal host pin engine.
+// Keep this helper for compatibility with older tests/imports.
+export function shouldUseReactHostPinMap() {
+  return true
 }
 
 function publishLocation(location) {
@@ -14,12 +16,21 @@ function publishLocation(location) {
   window.dispatchEvent(new CustomEvent(HOST_MAP_LOCATION_EVENT, { detail: location }))
 }
 
-function readInitialAddress(card) {
-  return card.querySelector('.host-onboarding__address-chip span')?.textContent?.trim() || ''
+function readInitialLocation(card) {
+  const text = card.querySelector('.host-onboarding__address-chip span')?.textContent?.trim() || ''
+  if (!text) return { address: '', city: '' }
+
+  const parts = text.split(',').map((part) => part.trim()).filter(Boolean)
+  if (parts.length <= 1) return { address: text, city: '' }
+
+  return {
+    address: parts.slice(0, -1).join(', '),
+    city: parts.at(-1) || '',
+  }
 }
 
 export function installHostPinReactEngine() {
-  if (typeof window === 'undefined' || !shouldUseReactHostPinMap()) return () => {}
+  if (typeof window === 'undefined') return () => {}
 
   let mountedCard = null
   let reactRoot = null
@@ -80,12 +91,15 @@ export function installHostPinReactEngine() {
       if (hint && message) hint.textContent = message
     }
 
+    const initial = readInitialLocation(card)
+
     reactNode = node
     mountedCard = card
     reactRoot = createRoot(node)
     reactRoot.render(
       <HostPinMap
-        initialAddress={readInitialAddress(card)}
+        initialAddress={initial.address}
+        initialCity={initial.city}
         onLocationChange={publishLocation}
         onHintChange={setHint}
       />,
