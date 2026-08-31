@@ -77,9 +77,15 @@ export function installHostPinReactEngine() {
     readinessObserver = null
     const confirm = mountedSection?.querySelector('.host-onboarding__secondary')
     if (confirm) {
-      confirm.disabled = false
-      confirm.removeAttribute('aria-disabled')
-      delete confirm.dataset.locationReady
+      if (keepFailure) {
+        confirm.disabled = true
+        confirm.setAttribute('aria-disabled', 'true')
+        confirm.dataset.locationReady = 'false'
+      } else {
+        confirm.disabled = false
+        confirm.removeAttribute('aria-disabled')
+        delete confirm.dataset.locationReady
+      }
     }
     reactRoot?.unmount()
     reactNode?.remove()
@@ -106,8 +112,6 @@ export function installHostPinReactEngine() {
 
         failedCards.add(card)
         setHint('Impossible de charger la carte pour le moment')
-        const confirm = mountedSection?.querySelector('.host-onboarding__secondary')
-        if (confirm) confirm.disabled = true
         unmount({ keepFailure: true })
       })
     })
