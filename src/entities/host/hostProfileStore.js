@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react'
 import { storageAdapter } from '../../services/storage/storageAdapter.js'
-import { clearHostRoomTypeDraft, readHostRoomTypeDraft } from './hostRoomTypeDraftStore.js'
+import { clearHostRoomLotDraft, readHostRoomLotDraft } from './hostRoomTypeDraftStore.js'
+import {
+  makeRoomLot,
+  normalizeRoomLots,
+  roomLotTotalUnits,
+  supportsRoomLots,
+  validateRoomLotPlan,
+} from './roomLotModel.js'
 
 export const HOST_PROFILES_KEY = 'movera:host-profiles:v1'
 export const HOST_PROFILE_EVENT = 'movera:host-profile-change'
@@ -31,81 +38,20 @@ function normalizeCoordinate(value) {
   return Number.isFinite(coordinate) ? coordinate : null
 }
 
-function foldType(value) {
-  return String(value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[’‘`]/g, "'")
-    .toLowerCase()
-    .trim()
-}
-
-function roomTypeId(value, index) {
-  const raw = typeof value === 'string' ? value.trim() : ''
-  if (raw) return raw
-  return `room-type-${index + 1}`
-}
-
 export function supportsPooledRoomInventory(type) {
-  const normalized = foldType(type)
-  return normalized === 'hotel' || normalized === "maison d'hote"
+  return supportsRoomLots(type)
 }
 
-function normalizeRoomTypes(value, type, fallback) {
-  if (!supportsPooledRoomInventory(type)) return []
-  const source = Array.isArray(value) ? value : []
-  const legacyUnits = Math.max(1, Math.min(999, Math.round(Number(fallback?.legacyUnits) || 1)))
-  const fallbackPrice = Math.max(1, Math.round(Number(fallback?.basePrice) || 1))
-  const fallbackGuests = Math.max(1, Math.round(Number(fallback?.guests) || 2))
-  const fallbackBeds = Math.max(1, Math.round(Number(fallback?.beds) || 1))
-  const fallbackBaths = Math.max(0, Math.round(Number(fallback?.bathrooms) || 1))
+function normalizeListingRoomLots(value, type, fallback) {
+  if (!supportsRoomLots(type)) return []
+  const source = Array.isArray(value?.roomLots)
+    ? value.roomLots
+    : Array.isArray(value?.roomTypes)
+      ? value.roomTypes
+      : []
+  if (source.length) return normalizeRoomLots(source, fallback)
 
-  const candidates = source.length ? source : [{
-    id: 'room-standard',
-    name: 'Chambre Standard',
-    view: '',
-    description: '',
-    guests: fallbackGuests,
-    beds: fallbackBeds,
-    bathrooms: fallbackBaths,
-    basePrice: fallbackPrice,
-    totalUnits: legacyUnits,
-    photos: [],
-  }]
-
-  const seen = new Set()
-  return candidates.slice(0, 12).map((item, index) => {
-    const sourceRoom = item && typeof item === 'object' ? item : {}
-    let id = roomTypeId(sourceRoom.id, index)
-    if (seen.has(id)) id = `${id}-${index + 1}`
-    seen.add(id)
-    const price = Number(sourceRoom.basePrice)
-    return {
-      id,
-      name: typeof sourceRoom.name === 'string' && sourceRoom.name.trim() ? sourceRoom.name.trim() : `Type de chambre ${index + 1}`,
-      view: typeof sourceRoom.view === 'string' ? sourceRoom.view.trim() : '',
-      description: typeof sourceRoom.description === 'string' ? sourceRoom.description.trim() : '',
-      guests: Math.max(1, Math.min(20, Math.round(Number(sourceRoom.guests) || fallbackGuests))),
-      beds: Math.max(1, Math.min(20, Math.round(Number(sourceRoom.beds) || fallbackBeds))),
-      bathrooms: Math.max(0, Math.min(10, Math.round(Number(sourceRoom.bathrooms) || fallbackBaths))),
-      basePrice: Number.isFinite(price) && price > 0 ? Math.round(price) : fallbackPrice,
-      totalUnits: Math.max(1, Math.min(999, Math.round(Number(sourceRoom.totalUnits) || legacyUnits))),
-      photos: stringArray(sourceRoom.photos),
-    }
-  })
-}
-
-function normalizeRoomInventory(value, type, roomTypes) {
-  const enabled = supportsPooledRoomInventory(type)
-  const source = value && typeof value === 'object' ? value : {}
-  const roomTotal = roomTypes.reduce((sum, room) => sum + room.totalUnits, 0)
-  const totalUnits = enabled
-    ? Math.max(1, roomTotal || Math.min(999, Math.round(Number(source.totalUnits) || 1)))
-    : 1
-  return {
-    mode: enabled ? 'room-types' : 'single',
-    totalUnits,
-  }
+  return [makeRoomLot(0, fallback, Math.max(1, Number(value?.roomInventory?.totalUnits) || 1))]
 }
 
 function normalizeListing(value, fallbackId = 'primary-listing') {
@@ -115,25 +61,22 @@ function normalizeListing(value, fallbackId = 'primary-listing') {
   const type = typeof value.type === 'string' ? value.type.trim() : ''
   const basePrice = Number(value.basePrice)
   if (!name || !city || !type || !Number.isFinite(basePrice) || basePrice <= 0) return null
+
   const rawId = typeof value.id === 'string' ? value.id.trim() : ''
   const id = !rawId || rawId === 'primary-listing' ? fallbackId : rawId
   const guests = Math.max(1, Number(value.guests) || 1)
   const beds = Math.max(1, Number(value.beds) || 1)
   const bathrooms = Math.max(0, Number(value.bathrooms) || 0)
-  const roomTypes = normalizeRoomTypes(value.roomTypes, type, {
-    basePrice,
-    guests,
-    beds,
-    bathrooms,
-    legacyUnits: value.roomInventory?.totalUnits,
-  })
+  const roomLots = normalizeListingRoomLots(value, type, { basePrice, guests, beds, bathrooms })
+  const totalRooms = roomLots.length ? roomLotTotalUnits(roomLots) : 1
+  const lowestLotPrice = roomLots.length ? Math.min(...roomLots.map((lot) => lot.basePrice)) : Math.round(basePrice)
 
   return {
     id,
     name,
     city,
     type,
-    basePrice: Math.round(basePrice),
+    basePrice: supportsRoomLots(type) ? lowestLotPrice : Math.round(basePrice),
     currency: 'TND',
     address: typeof value.address === 'string' ? value.address.trim() : '',
     latitude: normalizeCoordinate(value.latitude),
@@ -149,8 +92,14 @@ function normalizeListing(value, fallbackId = 'primary-listing') {
     bookingMode: value.bookingMode === 'instant' ? 'instant' : 'request-first',
     promotions: stringArray(value.promotions),
     safety: normalizeSafety(value.safety),
-    roomTypes,
-    roomInventory: normalizeRoomInventory(value.roomInventory, type, roomTypes),
+    totalRooms,
+    roomLots,
+    // Compatibility for inventory/calendar code while it migrates to roomLots.
+    roomTypes: roomLots,
+    roomInventory: {
+      mode: supportsRoomLots(type) ? 'room-lots' : 'single',
+      totalUnits: totalRooms,
+    },
     photos: stringArray(value.photos),
   }
 }
@@ -180,31 +129,44 @@ export function listActiveHostProfiles() {
 
 export function findHostProfileByListingId(listingId) {
   if (!listingId) return null
-  const matches = []
-  for (const profile of listActiveHostProfiles()) {
-    if (profile?.listing?.id === listingId) matches.push(profile)
-  }
+  const matches = listActiveHostProfiles().filter((profile) => profile?.listing?.id === listingId)
   return matches.length === 1 ? matches[0] : null
 }
 
 export function activateHostProfile(userId, listing) {
   if (!userId) throw new Error('A user is required to activate host mode')
-  const roomTypeFallback = {
-    guests: listing?.guests,
-    beds: listing?.beds,
-    bathrooms: listing?.bathrooms,
-    basePrice: listing?.basePrice,
+
+  let listingForActivation = listing
+  if (supportsRoomLots(listing?.type)) {
+    const fallback = {
+      guests: listing?.guests,
+      beds: listing?.beds,
+      bathrooms: listing?.bathrooms,
+      basePrice: listing?.basePrice,
+    }
+    const suppliedLots = Array.isArray(listing?.roomLots)
+      ? listing.roomLots
+      : Array.isArray(listing?.roomTypes)
+        ? listing.roomTypes
+        : null
+    const plan = suppliedLots?.length
+      ? { totalRooms: listing.totalRooms || roomLotTotalUnits(suppliedLots), roomLots: suppliedLots }
+      : readHostRoomLotDraft(userId, fallback)
+    const validation = validateRoomLotPlan(plan)
+    if (!validation.ok) throw new Error(validation.issues[0] || 'Invalid room lot plan')
+
+    listingForActivation = {
+      ...listing,
+      totalRooms: validation.totalRooms,
+      roomLots: validation.roomLots,
+      roomTypes: validation.roomLots,
+      basePrice: Math.min(...validation.roomLots.map((lot) => lot.basePrice)),
+    }
   }
-  const listingForActivation = supportsPooledRoomInventory(listing?.type)
-    ? {
-        ...listing,
-        roomTypes: Array.isArray(listing?.roomTypes) && listing.roomTypes.length
-          ? listing.roomTypes
-          : readHostRoomTypeDraft(userId, roomTypeFallback),
-      }
-    : listing
+
   const normalizedListing = normalizeListing(listingForActivation, `host-${userId}`)
   if (!normalizedListing) throw new Error('Invalid host listing')
+
   const profiles = readAllProfiles()
   const profile = {
     status: 'active',
@@ -214,46 +176,51 @@ export function activateHostProfile(userId, listing) {
   }
   profiles[userId] = profile
   storageAdapter.setJson(HOST_PROFILES_KEY, profiles)
-  clearHostRoomTypeDraft(userId)
+  clearHostRoomLotDraft(userId)
   if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent(HOST_PROFILE_EVENT, { detail: profile }))
   return profile
 }
 
-export function updateHostRoomTypeTotal(userId, roomTypeIdValue, totalUnits) {
+export function updateHostRoomLotTotal(userId, roomLotId, totalUnits) {
   if (!userId) throw new Error('A user is required to update room inventory')
   const profiles = readAllProfiles()
   const current = normalizeHostProfile(profiles[userId], userId)
   if (!current) throw new Error('Host profile not found')
-  if (!supportsPooledRoomInventory(current.listing.type)) return current
+  if (!supportsRoomLots(current.listing.type)) return current
 
-  const roomTypes = current.listing.roomTypes.map((room) => room.id === roomTypeIdValue
-    ? { ...room, totalUnits: Math.max(1, Math.min(999, Math.round(Number(totalUnits) || 1))) }
-    : room)
-  if (!roomTypes.some((room) => room.id === roomTypeIdValue)) return current
+  const roomLots = current.listing.roomLots.map((lot) => lot.id === roomLotId
+    ? { ...lot, totalUnits: Math.max(1, Math.min(999, Math.round(Number(totalUnits) || 1))) }
+    : lot)
+  if (!roomLots.some((lot) => lot.id === roomLotId)) return current
 
-  const next = {
-    ...current,
+  const totalRooms = roomLotTotalUnits(roomLots)
+  const nextRaw = {
+    ...profiles[userId],
     listing: {
-      ...current.listing,
-      roomTypes,
-      roomInventory: {
-        mode: 'room-types',
-        totalUnits: roomTypes.reduce((sum, room) => sum + room.totalUnits, 0),
-      },
+      ...profiles[userId].listing,
+      totalRooms,
+      roomLots,
+      roomTypes: roomLots,
+      roomInventory: { mode: 'room-lots', totalUnits: totalRooms },
+      basePrice: Math.min(...roomLots.map((lot) => lot.basePrice)),
     },
   }
-
-  profiles[userId] = next
+  profiles[userId] = nextRaw
   storageAdapter.setJson(HOST_PROFILES_KEY, profiles)
+  const next = normalizeHostProfile(nextRaw, userId)
   if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent(HOST_PROFILE_EVENT, { detail: next }))
   return next
 }
 
+export function updateHostRoomTypeTotal(userId, roomTypeIdValue, totalUnits) {
+  return updateHostRoomLotTotal(userId, roomTypeIdValue, totalUnits)
+}
+
 export function updateHostRoomInventoryTotal(userId, totalUnits) {
   const profile = readHostProfile(userId)
-  const firstRoom = profile?.listing?.roomTypes?.[0]
-  if (!firstRoom) return profile
-  return updateHostRoomTypeTotal(userId, firstRoom.id, totalUnits)
+  const firstLot = profile?.listing?.roomLots?.[0]
+  if (!firstLot) return profile
+  return updateHostRoomLotTotal(userId, firstLot.id, totalUnits)
 }
 
 export function clearHostProfile(userId) {
