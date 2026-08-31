@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowLeftIcon } from '../../shared/icons/AppIcons.jsx'
 import { getListingMapPosition } from '../../entities/listing/listingMapPositions.js'
+import { readHostPublicIdentity } from '../../entities/host/hostPublicIdentityStore.js'
 import { useFavorites } from '../favorites/favoritesStore.js'
 import { getGuestListingById } from './guestListings.js'
 import { ListingAvailability } from './ListingAvailability.jsx'
@@ -19,10 +20,10 @@ const CITY_COORDS = Object.freeze({
   djerba: { lat: 33.8075, lng: 10.8451 },
 })
 
-const KNOW_ITEMS = Object.freeze([
-  { id: 'cancellation', title: 'Annulation flexible', summary: 'Remboursement selon les conditions Movera du séjour.', detail: 'Les conditions exactes applicables à vos dates sont toujours présentées avant toute validation.', icon: 'cancel' },
-  { id: 'rules', title: 'Règles de la maison', summary: 'Arrivée 15:00 · Départ 11:00', detail: 'Respect du logement, du voisinage et des horaires indiqués par l’hôte. Les règles finales sont confirmées avant le séjour.', icon: 'rules' },
-  { id: 'safety', title: 'Sécurité', summary: 'Conseils de séjour et contacts utiles partagés après réservation.', detail: 'Les informations d’accès et de sécurité propres au logement sont communiquées au voyageur au bon moment.', icon: 'safety' },
+const SEED_KNOW_ITEMS = Object.freeze([
+  { id: 'cancellation', title: 'Conditions d’annulation', summary: 'Les conditions exactes sont présentées avant validation.', detail: 'Movera affiche les conditions applicables au séjour avant toute confirmation.', icon: 'cancel' },
+  { id: 'rules', title: 'Règles de la maison', summary: 'Les règles finales sont confirmées avant le séjour.', detail: 'Les horaires et règles applicables sont communiqués avant la validation de la réservation.', icon: 'rules' },
+  { id: 'safety', title: 'Sécurité', summary: 'Informations utiles communiquées au bon moment.', detail: 'Les informations d’accès et de sécurité propres au lieu sont communiquées au voyageur lorsqu’elles sont disponibles.', icon: 'safety' },
 ])
 
 function goBack(onNavigate) {
@@ -52,11 +53,8 @@ function amenityIcon(name) {
   if (key.includes('climat') || key.includes('air')) return <Glyph><path d="M12 3v18"/><path d="m7 7 5 5 5-5"/><path d="m7 17 5-5 5 5"/></Glyph>
   if (key.includes('cuisine') || key.includes('petitdejeuner')) return <Glyph><path d="M4 11h16"/><path d="M6 11V7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4"/><path d="M8 11v8M16 11v8M5 19h14"/></Glyph>
   if (key.includes('piscine') || key.includes('eau')) return <Glyph><path d="M4 16c1.5 0 1.5 1 3 1s1.5-1 3-1 1.5 1 3 1 1.5-1 3-1 1.5 1 3 1"/><path d="M4 12c1.5 0 1.5 1 3 1s1.5-1 3-1 1.5 1 3 1 1.5-1 3-1 1.5 1 3 1"/><path d="M8 6h8"/></Glyph>
-  if (key.includes('jardin')) return <Glyph><path d="M12 21V10"/><path d="M12 10c-3-5-8-4-8-4 2 5 5 6 8 6"/><path d="M12 10c3-5 8-4 8-4-2 5-5 6-8 6"/></Glyph>
   if (key.includes('tv') || key.includes('tele')) return <Glyph><rect x="3" y="7" width="18" height="12" rx="2"/><path d="m8 7 4-3 4 3"/></Glyph>
   if (key.includes('balcon') || key.includes('terrasse') || key.includes('patio')) return <Glyph><path d="M4 20V9l8-5 8 5v11"/><path d="M10 20v-6h4v6"/></Glyph>
-  if (key.includes('vue')) return <Glyph><circle cx="12" cy="12" r="3"/><path d="M3 12s3.5-7 9-7 9 7 9 7-3.5 7-9 7-9-7-9-7Z"/></Glyph>
-  if (key.includes('lave')) return <Glyph><rect x="4" y="3" width="16" height="18" rx="2"/><circle cx="12" cy="13" r="4"/><path d="M7 6h.01M9.5 6h.01"/></Glyph>
   return <Glyph><path d="M5 12.5 9.2 17 19 7"/></Glyph>
 }
 
@@ -67,14 +65,14 @@ function listingMapCenter(listing) { const known = getListingMapPosition(listing
 function osmStaticUrl({ lat, lng }) { return `https://staticmap.openstreetmap.de/staticmap.php?center=${lat},${lng}&zoom=13&size=600x360&maptype=mapnik` }
 function uniqueSpaceCards(photos) { const cards = []; const seen = new Set(); for (const photo of photos) { if (!photo?.src || seen.has(photo.src)) continue; seen.add(photo.src); cards.push(photo); if (cards.length === 4) break } return cards }
 function spaceDetail(photo, listing, index) {
+  if (listing.origin === 'host') {
+    const capacity = listing.capacity || {}
+    return [capacity.guests ? `${capacity.guests} voyageur${capacity.guests > 1 ? 's' : ''}` : '', capacity.beds ? `${capacity.beds} lit${capacity.beds > 1 ? 's' : ''}` : ''].filter(Boolean).join(' · ') || 'Photo fournie par l’hôte'
+  }
   const label = foldKey(photo?.label); const capacity = listing.capacity || {}; const amenities = Array.isArray(listing.amenities) ? listing.amenities : []
   if (label.includes('chambre') || index === 0) { const bedrooms = capacity.bedrooms ? `${capacity.bedrooms} chambre${capacity.bedrooms > 1 ? 's' : ''}` : 'Espace nuit'; const beds = capacity.beds ? `${capacity.beds} lit${capacity.beds > 1 ? 's' : ''}` : ''; return [bedrooms, beds].filter(Boolean).join(' · ') }
-  if (label.includes('sejour')) return `${capacity.guests || 2} voyageurs · espace de vie`
-  if (label.includes('cuisine')) return amenities.find((name) => foldKey(name).includes('cuisine')) || 'Cuisine avec les essentiels'
-  if (label.includes('exterieur')) return amenities.find((name) => /(balcon|terrasse|jardin|piscine|patio|vue)/.test(foldKey(name))) || `Extérieur à ${listing.location}`
-  return amenities[index] || 'Espace du logement'
+  return amenities[index] || 'Photo du lieu'
 }
-
 function categoryMeta(room) {
   const parts = []
   if (room.surface) parts.push(`${room.surface} m²`)
@@ -83,13 +81,34 @@ function categoryMeta(room) {
   if (room.bathrooms) parts.push(`${room.bathrooms} sdb ${room.bathroomType === 'shared' ? 'partagée' : 'privée'}`)
   return parts.join(' · ')
 }
+function hostKnowItems(listing) {
+  if (listing.origin !== 'host') return SEED_KNOW_ITEMS
+  const rules = listing.stayRules || {}
+  const safety = listing.safety || {}
+  const rulesDetail = [
+    `Séjour : ${rules.minNights || 1} nuit${(rules.minNights || 1) > 1 ? 's' : ''} minimum${rules.maxNights ? `, ${rules.maxNights} maximum` : ''}.`,
+    `Animaux ${rules.petsAllowed ? 'autorisés' : 'non autorisés'}.`,
+    `Fumeurs ${rules.smokingAllowed ? 'autorisés' : 'non autorisés'}.`,
+    `Événements ${rules.eventsAllowed ? 'autorisés' : 'non autorisés'}.`,
+  ].join(' ')
+  const safetyItems = []
+  if (safety.smokeAlarm) safetyItems.push('détecteur de fumée déclaré')
+  if (safety.carbonMonoxideAlarm) safetyItems.push('détecteur de monoxyde de carbone déclaré')
+  if (safety.exteriorCamera) safetyItems.push('caméra extérieure déclarée')
+  if (safety.noiseMonitor) safetyItems.push('détecteur de niveau sonore déclaré')
+  if (safety.weapons) safetyItems.push('présence d’armes déclarée')
+  return [
+    { id: 'cancellation', title: 'Conditions d’annulation', summary: 'Les conditions applicables sont présentées avant confirmation.', detail: 'Aucune condition d’annulation spécifique n’est inventée à partir de l’annonce. Les conditions de la réservation sont présentées avant validation.', icon: 'cancel' },
+    { id: 'rules', title: 'Règles de la maison', summary: `Arrivée dès ${rules.checkInFrom || '15:00'} · Départ avant ${rules.checkOutUntil || '11:00'}`, detail: rulesDetail, icon: 'rules' },
+    { id: 'safety', title: 'Sécurité', summary: safetyItems.length ? `${safetyItems.length} information${safetyItems.length > 1 ? 's' : ''} déclarée${safetyItems.length > 1 ? 's' : ''}` : 'Aucun dispositif spécifique déclaré dans cette annonce.', detail: safetyItems.length ? safetyItems.join(' · ') : 'L’hôte n’a activé aucun des dispositifs de sécurité proposés dans le formulaire de publication.', icon: 'safety' },
+  ]
+}
 
 async function shareListing(title) {
   const url = window.location.href
   try { if (typeof navigator.share === 'function') { await navigator.share({ title, url }); return 'shared' } } catch (error) { if (error?.name === 'AbortError') return 'aborted' }
   try { await navigator.clipboard.writeText(url); return 'copied' } catch { return 'failed' }
 }
-
 function OverlayButton({ label, onClick, children, pressed, className = '' }) {
   return <button type="button" className={`listing-detail-orb ${className}`.trim()} aria-label={label} aria-pressed={typeof pressed === 'boolean' ? pressed : undefined} onClick={onClick}>{children}</button>
 }
@@ -122,7 +141,7 @@ export function ListingDetailPage({ params, onNavigate }) {
 
   const categorized = roomTypes.length > 1
   const selectedRoom = roomTypes.find((room) => room.id === selectedRoomTypeId) || roomTypes[0] || null
-  const activePhotos = selectedRoom?.photos?.length ? selectedRoom.photos : listing.photos?.length ? listing.photos : listing.image ? [{ src: listing.image, label: 'Chambre' }] : []
+  const activePhotos = selectedRoom?.photos?.length ? selectedRoom.photos : listing.photos?.length ? listing.photos : listing.image ? [{ src: listing.image, label: listing.imageIsPlaceholder ? 'Visuel de catégorie' : 'Photo principale' }] : []
   const activeCapacity = selectedRoom?.capacity || listing.capacity
   const activeCapacityLine = selectedRoom?.capacityLine || listing.capacityLine
   const activeDescription = categorized && selectedRoom?.description ? selectedRoom.description : listing.description
@@ -134,12 +153,15 @@ export function ListingDetailPage({ params, onNavigate }) {
   const heroPhotoLabel = activePhotos[safePhotoIndex]?.label || listing.title
   const photoTotal = Math.max(activePhotos.length, 1)
   const visibleAmenities = amenitiesOpen ? listing.amenities : listing.amenities.slice(0, 5)
-  const years = hostYears(listing.host?.since)
-  const hostName = listing.host?.name || 'Movera'
+  const publicIdentity = listing.ownerUserId ? readHostPublicIdentity(listing.ownerUserId) : null
+  const hostName = publicIdentity?.displayName || listing.host?.name || 'Hôte Movera'
+  const years = hostYears(publicIdentity?.since || listing.host?.since)
   const hostInitial = hostName.trim().charAt(0).toUpperCase() || 'M'
-  const spaceCards = uniqueSpaceCards(activePhotos)
+  const spaceCards = listing.imageIsPlaceholder ? [] : uniqueSpaceCards(activePhotos)
   const mapCenter = listingMapCenter(listing)
   const mapUrl = osmStaticUrl(mapCenter)
+  const knowItems = hostKnowItems(listing)
+  const hasRating = Number.isFinite(Number(listing.rating)) && Number(listing.rating) > 0 && Number(listing.reviews) > 0
 
   const selectRoom = (roomId) => {
     setSelectedRoomTypeId(roomId)
@@ -159,7 +181,7 @@ export function ListingDetailPage({ params, onNavigate }) {
   const showAvailability = () => { setReserveOpen(false); window.setTimeout(() => scrollTo('listing-availability'), 80) }
 
   return (
-    <div className="listing-detail-page" data-testid="page-listing" data-listing-id={listing.id} data-room-category={categorized ? selectedRoom?.id || '' : ''}>
+    <div className="listing-detail-page" data-testid="page-listing" data-listing-id={listing.id} data-origin={listing.origin} data-room-category={categorized ? selectedRoom?.id || '' : ''}>
       <div className="listing-detail-hero" onTouchStart={onGalleryTouchStart} onTouchEnd={onGalleryTouchEnd}>
         {heroPhoto ? <img key={heroPhoto} src={heroPhoto} alt={`${listing.title} — ${heroPhotoLabel}`} /> : <div className="listing-detail-hero-fallback" aria-hidden="true"/>}
         <div className="listing-detail-hero-shade" aria-hidden="true"/>
@@ -170,43 +192,35 @@ export function ListingDetailPage({ params, onNavigate }) {
       <div className="listing-detail-sheet">
         <section className="listing-detail-intro">
           <div className="listing-detail-kicker"><span>Movera Host</span>{listing.badge ? <b>{listing.badge}</b> : null}</div>
-          <h1>{listing.title}</h1><p className="listing-detail-place">{listing.location}, Tunisie</p><p className="listing-detail-capacity">{activeCapacityLine}</p>
-          <p className="listing-detail-rating-row"><span>★ {listing.rating}</span><span className="listing-detail-dot">·</span><button type="button" className="listing-detail-reviews-link" onClick={() => scrollTo('listing-reviews')}>{listing.reviews} avis</button></p>
+          <h1>{listing.title}</h1><p className="listing-detail-place">{listing.location}, Tunisie</p>{activeCapacityLine ? <p className="listing-detail-capacity">{activeCapacityLine}</p> : null}
+          <p className="listing-detail-rating-row">{hasRating ? <><span>★ {listing.rating}</span><span className="listing-detail-dot">·</span><button type="button" className="listing-detail-reviews-link" onClick={() => scrollTo('listing-reviews')}>{listing.reviews} avis</button></> : <button type="button" className="listing-detail-reviews-link" onClick={() => scrollTo('listing-reviews')}>Nouvelle annonce · aucun avis</button>}</p>
         </section>
 
-        {categorized ? (
-          <section className="listing-detail-room-category" aria-labelledby="listing-room-category-title">
-            <div className="listing-detail-room-category__head"><span id="listing-room-category-title">Catégories de chambres</span><small>Comparez les caractéristiques, photos et tarifs avant de réserver.</small></div>
-            <div className="listing-detail-room-category__rail" role="radiogroup" aria-label="Catégorie de chambre">
-              {roomTypes.map((room) => <button type="button" role="radio" aria-checked={room.id === selectedRoom?.id} data-active={room.id === selectedRoom?.id ? 'true' : 'false'} key={room.id} onClick={() => selectRoom(room.id)}><strong>{room.name}</strong>{room.view ? <span>{room.view}</span> : null}<small>{categoryMeta(room)}</small><b>{room.basePrice} {listing.currency}<em>/ nuit</em></b></button>)}
-            </div>
-            {selectedRoom ? <div className="listing-detail-room-category__selected"><div><strong>{selectedRoom.name}</strong>{selectedRoom.view ? <span>{selectedRoom.view}</span> : null}</div><p>{categoryMeta(selectedRoom)}</p>{selectedRoom.features?.length ? <div className="listing-detail-room-category__features">{selectedRoom.features.map((feature) => <span key={feature}>{feature}</span>)}</div> : null}</div> : null}
-          </section>
-        ) : null}
+        {categorized ? <section className="listing-detail-room-category" aria-labelledby="listing-room-category-title"><div className="listing-detail-room-category__head"><span id="listing-room-category-title">Catégories de chambres</span><small>Comparez les caractéristiques, photos et tarifs fournis pour chaque catégorie.</small></div><div className="listing-detail-room-category__rail" role="radiogroup" aria-label="Catégorie de chambre">{roomTypes.map((room) => <button type="button" role="radio" aria-checked={room.id === selectedRoom?.id} data-active={room.id === selectedRoom?.id ? 'true' : 'false'} key={room.id} onClick={() => selectRoom(room.id)}><strong>{room.name}</strong>{room.view ? <span>{room.view}</span> : null}<small>{categoryMeta(room)}</small><b>{room.basePrice} {listing.currency}<em>/ nuit</em></b></button>)}</div>{selectedRoom ? <div className="listing-detail-room-category__selected"><div><strong>{selectedRoom.name}</strong>{selectedRoom.view ? <span>{selectedRoom.view}</span> : null}</div><p>{categoryMeta(selectedRoom)}</p>{selectedRoom.features?.length ? <div className="listing-detail-room-category__features">{selectedRoom.features.map((feature) => <span key={feature}>{feature}</span>)}</div> : null}</div> : null}</section> : null}
 
-        <div className="listing-detail-host-row"><div><strong>{activeCapacity?.type || 'Logement'}</strong><span>Hôte : {hostName}</span></div><span className="listing-detail-avatar" aria-hidden="true">{hostInitial}</span></div>
-        <ul className="listing-detail-highlights"><li><span className="listing-detail-ico"><LockGlyph/></span><div><strong>Arrivée autonome</strong><span>Boîte à clés sur place — entrez à votre rythme, sans rendez-vous.</span></div></li><li><span className="listing-detail-ico"><HostQualityGlyph/></span><div><strong>Hôte attentif</strong><span>{listing.host?.response || 'Un accueil soigné, suivi de près par l’équipe Movera.'}</span></div></li></ul>
+        <div className="listing-detail-host-row"><div><strong>{activeCapacity?.type || listing.subtitle || 'Logement'}</strong><span>Hôte : {hostName}</span></div><span className="listing-detail-avatar" aria-hidden="true">{hostInitial}</span></div>
+        <ul className="listing-detail-highlights"><li><span className="listing-detail-ico"><LockGlyph/></span><div><strong>Informations d’arrivée</strong><span>{listing.origin === 'host' ? `Arrivée dès ${listing.stayRules?.checkInFrom || '15:00'} · départ avant ${listing.stayRules?.checkOutUntil || '11:00'}.` : 'Les instructions d’accès sont confirmées avant le séjour.'}</span></div></li><li><span className="listing-detail-ico"><HostQualityGlyph/></span><div><strong>{listing.origin === 'host' ? 'Annonce publiée par l’hôte' : 'Annonce Movera'}</strong><span>{listing.origin === 'host' ? 'Les caractéristiques affichées proviennent des informations enregistrées par cet hôte.' : (listing.host?.response || 'Les informations disponibles dans le catalogue sont affichées sans ajout de faits non fournis.')}</span></div></li></ul>
 
-        <section className="listing-detail-block listing-detail-description"><p className={descOpen ? 'listing-detail-copy' : 'listing-detail-copy is-clamped'}>{activeDescription}</p><button type="button" className="listing-detail-more" aria-expanded={descOpen} onClick={() => setDescOpen((open) => !open)}>{descOpen ? 'Réduire' : 'Lire la suite'}</button></section>
+        <section className="listing-detail-block listing-detail-description"><p className={descOpen ? 'listing-detail-copy' : 'listing-detail-copy is-clamped'}>{activeDescription || 'Description non renseignée.'}</p>{activeDescription?.length > 180 ? <button type="button" className="listing-detail-more" aria-expanded={descOpen} onClick={() => setDescOpen((open) => !open)}>{descOpen ? 'Réduire' : 'Lire la suite'}</button> : null}</section>
 
-        {spaceCards.length ? <section className="listing-detail-block"><h2>{categorized && selectedRoom ? `Photos · ${selectedRoom.name}` : 'Le logement en détail'}</h2><div className={spaceCards.length === 1 ? 'listing-detail-sleep is-single' : 'listing-detail-sleep'}>{spaceCards.map((photo, index) => <article className="listing-detail-sleep-card" key={photo.label || photo.src}><img src={photo.src} alt={`${listing.title} — ${photo.label || `Espace ${index + 1}`}`} loading="lazy" decoding="async"/><strong>{photo.label || `Espace ${index + 1}`}</strong><span>{spaceDetail(photo, activeListing, index)}</span></article>)}</div></section> : null}
+        {spaceCards.length ? <section className="listing-detail-block"><h2>{categorized && selectedRoom ? `Photos · ${selectedRoom.name}` : 'Photos du logement'}</h2><div className={spaceCards.length === 1 ? 'listing-detail-sleep is-single' : 'listing-detail-sleep'}>{spaceCards.map((photo, index) => <article className="listing-detail-sleep-card" key={photo.label || photo.src}><img src={photo.src} alt={`${listing.title} — ${photo.label || `Photo ${index + 1}`}`} loading="lazy" decoding="async"/><strong>{photo.label || `Photo ${index + 1}`}</strong><span>{spaceDetail(photo, activeListing, index)}</span></article>)}</div></section> : listing.imageIsPlaceholder ? <section className="listing-detail-block"><h2>Photos du logement</h2><p className="listing-detail-copy">L’hôte n’a pas encore fourni de photo exploitable pour cette annonce. Le visuel supérieur sert uniquement à représenter la catégorie.</p></section> : null}
 
-        <section className="listing-detail-block"><h2>Ce que propose ce lieu</h2><ul className="listing-detail-amenities">{visibleAmenities.map((name) => <li key={name}><span className="listing-detail-ico">{amenityIcon(name)}</span><span>{name}</span></li>)}</ul>{listing.amenities.length > 5 ? <button type="button" className="listing-detail-more" aria-expanded={amenitiesOpen} onClick={() => setAmenitiesOpen((open) => !open)}>{amenitiesOpen ? 'Réduire' : `Voir les ${listing.amenities.length} équipements`}</button> : null}</section>
+        <section className="listing-detail-block"><h2>Ce que propose ce lieu</h2>{visibleAmenities.length ? <ul className="listing-detail-amenities">{visibleAmenities.map((name) => <li key={name}><span className="listing-detail-ico">{amenityIcon(name)}</span><span>{name}</span></li>)}</ul> : <p className="listing-detail-copy">Aucun équipement supplémentaire n’a été renseigné pour cette annonce.</p>}{listing.amenities.length > 5 ? <button type="button" className="listing-detail-more" aria-expanded={amenitiesOpen} onClick={() => setAmenitiesOpen((open) => !open)}>{amenitiesOpen ? 'Réduire' : `Voir les ${listing.amenities.length} équipements`}</button> : null}</section>
 
         <section className="listing-detail-block"><h2>Où vous serez</h2><p className="listing-detail-copy listing-detail-location-copy"><PinGlyph/>{listing.location}, Tunisie</p><button type="button" className="listing-detail-map" onClick={() => onNavigate(`/map?listing=${encodeURIComponent(listing.id)}`)} aria-label={`Voir ${listing.title} sur la carte`}><span className="listing-detail-map-frame"><img src={mapUrl} alt="" width="600" height="360" loading="lazy" decoding="async"/><span className="listing-detail-map-pin" aria-hidden="true"><PinGlyph/></span><span className="listing-detail-map-cta">Voir sur la carte</span></span></button></section>
 
-        <section className="listing-detail-block" id="listing-reviews"><h2>Avis des voyageurs</h2><div className="listing-detail-review-score"><strong>★ {listing.rating}</strong><span>{listing.reviews} avis</span></div><p className="listing-detail-copy">Un aperçu clair de la note et du volume d’avis disponibles pour ce logement.</p>{reviewsOpen ? <div className="listing-detail-review-panel"><div><span>Note globale</span><strong>{listing.rating}/5</strong></div><div><span>Avis disponibles</span><strong>{listing.reviews}</strong></div><p>Les détails affichés ici restent un résumé. Aucun commentaire individuel n’est inventé lorsque le catalogue n’en fournit pas.</p></div> : null}<button type="button" className="listing-detail-more" aria-expanded={reviewsOpen} onClick={() => setReviewsOpen((open) => !open)}>{reviewsOpen ? 'Masquer le résumé' : 'Voir le résumé des avis'}</button></section>
+        <section className="listing-detail-block" id="listing-reviews"><h2>Avis des voyageurs</h2>{hasRating ? <><div className="listing-detail-review-score"><strong>★ {listing.rating}</strong><span>{listing.reviews} avis</span></div><p className="listing-detail-copy">Note et volume d’avis enregistrés pour cette annonce.</p>{reviewsOpen ? <div className="listing-detail-review-panel"><div><span>Note globale</span><strong>{listing.rating}/5</strong></div><div><span>Avis disponibles</span><strong>{listing.reviews}</strong></div><p>Aucun commentaire individuel n’est inventé lorsque la source n’en fournit pas.</p></div> : null}<button type="button" className="listing-detail-more" aria-expanded={reviewsOpen} onClick={() => setReviewsOpen((open) => !open)}>{reviewsOpen ? 'Masquer le résumé' : 'Voir le résumé des avis'}</button></> : <><div className="listing-detail-review-score"><strong>Nouveau</strong><span>0 avis</span></div><p className="listing-detail-copy">Cette annonce n’a pas encore reçu d’avis voyageur. Aucune note n’est générée par défaut.</p></>}</section>
 
-        <section className="listing-detail-host-wrap"><h2>Votre hôte</h2><article className="listing-detail-host-card"><div className="listing-detail-host-identity"><span className="listing-detail-avatar listing-detail-avatar--lg" aria-hidden="true">{hostInitial}<span className="listing-detail-host-check"><CheckGlyph/></span></span><strong>{hostName}</strong><span>Hôte Movera</span></div><dl><div><dd>{listing.reviews}</dd><dt>Avis</dt></div><div><dd>{listing.rating}</dd><dt>Note</dt></div>{years ? <div><dd>{years}</dd><dt>Années</dt></div> : null}</dl></article></section>
+        <section className="listing-detail-host-wrap"><h2>Votre hôte</h2><article className="listing-detail-host-card"><div className="listing-detail-host-identity"><span className="listing-detail-avatar listing-detail-avatar--lg" aria-hidden="true">{hostInitial}<span className="listing-detail-host-check"><CheckGlyph/></span></span><strong>{hostName}</strong><span>Hôte Movera</span></div>{hasRating || years ? <dl>{hasRating ? <><div><dd>{listing.reviews}</dd><dt>Avis</dt></div><div><dd>{listing.rating}</dd><dt>Note</dt></div></> : null}{years ? <div><dd>{years}</dd><dt>Années</dt></div> : null}</dl> : null}</article></section>
 
         <ListingAvailability listingId={listing.id} basePrice={activeNightlyRate} currency={listing.currency} selectedRoomTypeId={selectedRoom?.id || ''} onRoomTypeChange={categorized ? selectRoom : undefined} />
 
-        <section className="listing-detail-block listing-detail-know-block"><h2>À savoir</h2><ul className="listing-detail-know">{KNOW_ITEMS.map((item) => { const open = knowOpen === item.id; return <li key={item.id}><button type="button" className="listing-detail-know-row" aria-expanded={open} onClick={() => setKnowOpen((current) => current === item.id ? '' : item.id)}><span className="listing-detail-ico">{knowIcon(item.icon)}</span><span className="listing-detail-know-copy"><strong>{item.title}</strong><span>{item.summary}</span></span><span className={open ? 'listing-detail-row-chevron is-open' : 'listing-detail-row-chevron'}><ChevronGlyph direction="down"/></span></button>{open ? <div className="listing-detail-know-detail">{item.detail}</div> : null}</li> })}</ul></section>
+        <section className="listing-detail-block listing-detail-know-block"><h2>À savoir</h2><ul className="listing-detail-know">{knowItems.map((item) => { const open = knowOpen === item.id; return <li key={item.id}><button type="button" className="listing-detail-know-row" aria-expanded={open} onClick={() => setKnowOpen((current) => current === item.id ? '' : item.id)}><span className="listing-detail-ico">{knowIcon(item.icon)}</span><span className="listing-detail-know-copy"><strong>{item.title}</strong><span>{item.summary}</span></span><span className={open ? 'listing-detail-row-chevron is-open' : 'listing-detail-row-chevron'}><ChevronGlyph direction="down"/></span></button>{open ? <div className="listing-detail-know-detail">{item.detail}</div> : null}</li> })}</ul></section>
       </div>
 
       <footer className="listing-detail-footer"><div className="listing-detail-footer-price"><strong>{activePriceLabel || 'Tarif à confirmer'}</strong><span>{categorized && selectedRoom ? selectedRoom.name : 'Selon le calendrier de l’hôte'}</span></div><button type="button" className="listing-detail-reserve" onClick={() => setReserveOpen(true)}>Réserver</button></footer>
 
-      {reserveOpen ? <div className="listing-detail-modal" role="presentation" onClick={(event) => { if (event.target === event.currentTarget) setReserveOpen(false) }}><section className="listing-detail-reserve-sheet" role="dialog" aria-modal="true" aria-labelledby="listing-reserve-title"><div className="listing-detail-reserve-head"><div><span className="listing-detail-eyebrow">Movera Host</span><h2 id="listing-reserve-title">Préparer votre réservation</h2></div><OverlayButton label="Fermer" onClick={() => setReserveOpen(false)}><CloseGlyph/></OverlayButton></div><div className="listing-detail-reserve-summary"><div><span>Logement</span><strong>{listing.title}</strong></div>{categorized && selectedRoom ? <div><span>Catégorie</span><strong>{selectedRoom.name}</strong></div> : null}<div><span>Dates</span><strong>À choisir selon le calendrier de l’hôte</strong></div><div><span>Voyageurs</span><strong>{activeCapacity?.guests ? `${activeCapacity.guests} max.` : 'À confirmer'}</strong></div><div><span>Tarif affiché</span><strong>{activePriceLabel || 'À confirmer'}</strong></div></div><p className="listing-detail-reserve-note">Aucun paiement n’est lancé à cette étape. Les jours indisponibles et les tarifs viennent du calendrier correspondant à votre choix.</p><button type="button" className="listing-detail-reserve-primary" onClick={showAvailability}>Voir les disponibilités de l’hôte</button><button type="button" className="listing-detail-reserve-secondary" onClick={() => setReserveOpen(false)}>Continuer à explorer</button></section></div> : null}
+      {reserveOpen ? <div className="listing-detail-modal" role="presentation" onClick={(event) => { if (event.target === event.currentTarget) setReserveOpen(false) }}><section className="listing-detail-reserve-sheet" role="dialog" aria-modal="true" aria-labelledby="listing-reserve-title"><div className="listing-detail-reserve-head"><div><span className="listing-detail-eyebrow">Movera Host</span><h2 id="listing-reserve-title">Préparer votre réservation</h2></div><OverlayButton label="Fermer" onClick={() => setReserveOpen(false)}><CloseGlyph/></OverlayButton></div><div className="listing-detail-reserve-summary"><div><span>Logement</span><strong>{listing.title}</strong></div>{categorized && selectedRoom ? <div><span>Catégorie</span><strong>{selectedRoom.name}</strong></div> : null}<div><span>Dates</span><strong>À choisir selon le calendrier de l’hôte</strong></div><div><span>Voyageurs</span><strong>{activeCapacity?.guests ? `${activeCapacity.guests} max.` : 'À confirmer'}</strong></div><div><span>Tarif affiché</span><strong>{activePriceLabel || 'À confirmer'}</strong></div></div><p className="listing-detail-reserve-note">Aucun paiement n’est lancé à cette étape. Disponibilités, tarif et règles viennent des données reliées à cette annonce.</p><button type="button" className="listing-detail-reserve-primary" onClick={showAvailability}>Voir les disponibilités de l’hôte</button><button type="button" className="listing-detail-reserve-secondary" onClick={() => setReserveOpen(false)}>Continuer à explorer</button></section></div> : null}
       {shareHint ? <p className="listing-detail-toast" role="status">{shareHint}</p> : null}
     </div>
   )
