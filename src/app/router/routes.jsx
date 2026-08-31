@@ -56,6 +56,8 @@ const labRoutes = import.meta.env.DEV
     ]
   : []
 
+const hostRoute = (path, authFeature) => ({ path, area: 'host', component: HostEntryPage, requiresAuth: true, authFeature })
+
 export const routeDefinitions = [
   { path: '/', area: 'guest', component: HomePage },
   { path: '/plage', area: 'guest', component: BeachPage },
@@ -70,7 +72,12 @@ export const routeDefinitions = [
   { path: '/messages', area: 'guest', component: MessagesPage, requiresAuth: true, authFeature: 'vos messages' },
   { path: '/messages/:threadId', area: 'guest', component: MessageThreadPage, requiresAuth: true, authFeature: 'vos messages' },
   { path: '/profile', area: 'guest', component: ProfileGatewayPage },
-  { path: '/host', area: 'host', component: HostEntryPage, requiresAuth: true, authFeature: 'votre espace Hôte' },
-  { path: '/host/calendar', area: 'host', component: HostEntryPage, requiresAuth: true, authFeature: 'votre calendrier Hôte' },
+  hostRoute('/host', 'votre espace Hôte'),
+  hostRoute('/host/listings', 'vos annonces Hôte'),
+  hostRoute('/host/reservations', 'vos réservations Hôte'),
+  hostRoute('/host/calendar', 'votre calendrier Hôte'),
+  hostRoute('/host/earnings', 'vos revenus Hôte'),
+  hostRoute('/host/messages', 'vos messages Hôte'),
+  hostRoute('/host/settings', 'vos réglages Hôte'),
   ...labRoutes,
 ]
