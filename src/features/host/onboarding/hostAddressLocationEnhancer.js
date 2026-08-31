@@ -6,6 +6,7 @@ const CURRENT_CLASS = 'host-address-location-action'
 const STATUS_CLASS = 'host-address-location-status'
 const LIST_CLASS = 'host-address-suggestion-list'
 const SEARCH_DELAY_MS = 320
+const HOST_MAP_LOCATION_EVENT = 'movera:host-map-address-change'
 
 function svgIcon(path) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
@@ -54,12 +55,22 @@ function suggestionCity(result, fallback = '') {
   return String(location.city || location.district || fallback || '').trim()
 }
 
+function publishDetectedLocation(result, address, city) {
+  const lat = Number(result?.viewport?.lat)
+  const lng = Number(result?.viewport?.lng)
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return
+  window.dispatchEvent(new CustomEvent(HOST_MAP_LOCATION_EVENT, {
+    detail: { lat, lng, address, city },
+  }))
+}
+
 function selectDetectedAddress(result, addressInput, cityInput, status) {
   const address = String(result?.label || '').trim()
   const city = suggestionCity(result, cityInput?.value)
   if (!address) return false
   setControlledInput(addressInput, address)
   if (city) setControlledInput(cityInput, city)
+  publishDetectedLocation(result, address, city)
   setStatus(status, 'Adresse détectée · la carte se positionnera automatiquement à l’étape suivante.', 'success')
   return true
 }
