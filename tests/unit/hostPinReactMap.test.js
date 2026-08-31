@@ -2,14 +2,13 @@ import { describe, expect, it } from 'vitest'
 import { hostLocationFromResult, hostPinViewportFromDraft } from '../../src/features/host/onboarding/HostPinMap.jsx'
 import { shouldUseReactHostPinMap } from '../../src/features/host/onboarding/hostPinReactEngineEnhancer.jsx'
 
-describe('React host pin map migration boundary', () => {
-  it('keeps the React engine opt-in only during the safe migration phase', () => {
-    expect(shouldUseReactHostPinMap('')).toBe(false)
-    expect(shouldUseReactHostPinMap('?hostMap=legacy')).toBe(false)
+describe('React host pin map boundary', () => {
+  it('uses the React address-driven pin engine in the normal host flow', () => {
+    expect(shouldUseReactHostPinMap('')).toBe(true)
     expect(shouldUseReactHostPinMap('?hostMap=react')).toBe(true)
   })
 
-  it('restores a saved host coordinate as the initial viewport', () => {
+  it('restores an internal saved map coordinate as the initial viewport when one exists', () => {
     expect(hostPinViewportFromDraft({ latitude: 36.8782, longitude: 10.3247 })).toEqual({
       lat: 36.8782,
       lng: 10.3247,
