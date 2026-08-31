@@ -1,7 +1,8 @@
+import { findHostProfileByListingId } from './hostProfileStore.js'
 import { storageAdapter } from '../../services/storage/storageAdapter.js'
 
 export const HOST_CALENDAR_KEY = 'movera:host-calendar:v1'
-const HOST_CALENDAR_EVENT = 'movera:host-calendar-change'
+export const HOST_CALENDAR_EVENT = 'movera:host-calendar-change'
 
 function readAllCalendars() {
   const value = storageAdapter.getJson(HOST_CALENDAR_KEY, {})
@@ -13,6 +14,18 @@ export function readHostCalendar(userId) {
   const value = readAllCalendars()[userId]
   const days = value?.days && typeof value.days === 'object' && !Array.isArray(value.days) ? value.days : {}
   return { days }
+}
+
+export function readHostCalendarForListing(listingId) {
+  const profile = findHostProfileByListingId(listingId)
+  if (!profile) return { linked: false, userId: null, listingId: listingId || '', days: {} }
+  const calendar = readHostCalendar(profile.userId)
+  return {
+    linked: true,
+    userId: profile.userId,
+    listingId: profile.listing.id,
+    days: calendar.days,
+  }
 }
 
 export function writeHostCalendarDays(userId, keys, settings) {
