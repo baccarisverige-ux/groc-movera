@@ -63,8 +63,8 @@
   padding-bottom:10px!important;
 }
 
-/* Persistent swipe hint: preserve the original rail geometry and movement.
-   Only make the hint visually quieter so it does not crowd the category pill. */
+/* Persistent swipe hint: always visible in Catégories, slightly above the
+   right-most visible category rather than attached to an off-screen item. */
 .b225-home .b225-categories-shell>.b225-category-swipe-hint--overlay{
   position:absolute!important;
   z-index:24!important;
@@ -75,22 +75,22 @@
   align-items:center!important;
   justify-content:center!important;
   gap:0!important;
-  width:16px!important;
+  width:24px!important;
   height:15px!important;
   margin:0!important;
   transform:none!important;
-  color:rgba(58,59,56,.66)!important;
-  font-size:12px!important;
+  color:rgba(58,59,56,.90)!important;
+  font-size:17px!important;
   line-height:1!important;
-  letter-spacing:-2.5px!important;
+  letter-spacing:-4px!important;
   font-weight:350!important;
   pointer-events:none!important;
-  filter:none!important;
+  filter:drop-shadow(0 1px 1.5px rgba(48,48,44,.10))!important;
 }
 
 .b225-home .b225-categories-shell>.b225-category-swipe-hint--overlay>span{
   display:block!important;
-  width:7px!important;
+  width:10px!important;
 }
 
 /* Neutralize the old masked pseudo-element implementation from home-b225.
@@ -127,8 +127,8 @@
   .b225-home .b225-categories-shell>.b225-category-swipe-hint--overlay{
     top:3px!important;
     right:16px!important;
-    width:15px!important;
+    width:22px!important;
     height:14px!important;
-    font-size:11px!important;
+    font-size:16px!important;
   }
 }
