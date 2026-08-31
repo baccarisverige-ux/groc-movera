@@ -55,6 +55,10 @@ function suggestionCity(result, fallback = '') {
   return String(location.city || location.district || fallback || '').trim()
 }
 
+function invalidateDetectedLocation() {
+  window.dispatchEvent(new CustomEvent(HOST_MAP_LOCATION_EVENT, { detail: { clear: true } }))
+}
+
 function publishDetectedLocation(result, address, city) {
   const lat = Number(result?.viewport?.lat)
   const lng = Number(result?.viewport?.lng)
@@ -247,8 +251,13 @@ function mountSmartAddress(page) {
   addressLabel.after(panel)
 
   const handleInput = () => {
+    invalidateDetectedLocation()
     setStatus(status, '', '')
     search()
+  }
+  const handleCityInput = () => {
+    invalidateDetectedLocation()
+    setStatus(status, '', '')
   }
   const handleFocus = () => {
     if (addressInput.value.trim().length >= 3) search()
@@ -259,12 +268,14 @@ function mountSmartAddress(page) {
   addressInput.setAttribute('enterkeyhint', 'search')
   addressInput.addEventListener('input', handleInput)
   addressInput.addEventListener('focus', handleFocus)
+  cityInput.addEventListener('input', handleCityInput)
 
   return () => {
     window.clearTimeout(searchTimer)
     searchController?.abort()
     addressInput.removeEventListener('input', handleInput)
     addressInput.removeEventListener('focus', handleFocus)
+    cityInput.removeEventListener('input', handleCityInput)
     panel.remove()
   }
 }
