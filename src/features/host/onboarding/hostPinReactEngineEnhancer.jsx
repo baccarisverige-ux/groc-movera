@@ -1,11 +1,12 @@
 import { createRoot } from 'react-dom/client'
 import { HostPinMap } from './HostPinMap.jsx'
+import { readHostMapLocationCache } from './hostLocationSync.js'
 
 export const HOST_PIN_REACT_QUERY_VALUE = 'react'
 export const HOST_MAP_LOCATION_EVENT = 'movera:host-map-address-change'
 const REACT_READY_SELECTOR = '[data-testid="host-pin-react-map"]'
 
-// The React address-driven map is now the normal host pin engine.
+// The React address-driven map is the normal host pin engine.
 // Keep this helper for compatibility with older tests/imports.
 export function shouldUseReactHostPinMap() {
   return true
@@ -18,14 +19,18 @@ function publishLocation(location) {
 
 function readInitialLocation(card) {
   const text = card.querySelector('.host-onboarding__address-chip span')?.textContent?.trim() || ''
-  if (!text) return { address: '', city: '' }
+  if (!text) return { address: '', city: '', latitude: null, longitude: null }
 
   const parts = text.split(',').map((part) => part.trim()).filter(Boolean)
-  if (parts.length <= 1) return { address: text, city: '' }
+  const base = parts.length <= 1
+    ? { address: text, city: '' }
+    : { address: parts.slice(0, -1).join(', '), city: parts.at(-1) || '' }
+  const cached = readHostMapLocationCache(base.address, base.city)
 
   return {
-    address: parts.slice(0, -1).join(', '),
-    city: parts.at(-1) || '',
+    ...base,
+    latitude: cached?.lat ?? null,
+    longitude: cached?.lng ?? null,
   }
 }
 
@@ -33,14 +38,49 @@ export function installHostPinReactEngine() {
   if (typeof window === 'undefined') return () => {}
 
   let mountedCard = null
+  let mountedSection = null
   let reactRoot = null
   let reactNode = null
   let readyFrame = 0
+  let readinessObserver = null
   const failedCards = new WeakSet()
+
+  const syncConfirmState = () => {
+    const map = reactNode?.querySelector(REACT_READY_SELECTOR)
+    const confirm = mountedSection?.querySelector('.host-onboarding__secondary')
+    if (!confirm) return
+    const ready = map?.dataset.locationReady === 'true'
+    confirm.disabled = !ready
+    confirm.setAttribute('aria-disabled', ready ? 'false' : 'true')
+    confirm.dataset.locationReady = ready ? 'true' : 'false'
+  }
+
+  const watchLocationReadiness = () => {
+    readinessObserver?.disconnect()
+    readinessObserver = new MutationObserver(syncConfirmState)
+    if (reactNode) {
+      readinessObserver.observe(reactNode, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['data-location-ready'],
+      })
+    }
+    if (mountedSection) readinessObserver.observe(mountedSection, { childList: true, subtree: true })
+    syncConfirmState()
+  }
 
   const unmount = ({ keepFailure = false } = {}) => {
     if (readyFrame) cancelAnimationFrame(readyFrame)
     readyFrame = 0
+    readinessObserver?.disconnect()
+    readinessObserver = null
+    const confirm = mountedSection?.querySelector('.host-onboarding__secondary')
+    if (confirm) {
+      confirm.disabled = false
+      confirm.removeAttribute('aria-disabled')
+      delete confirm.dataset.locationReady
+    }
     reactRoot?.unmount()
     reactNode?.remove()
     if (mountedCard) {
@@ -50,6 +90,7 @@ export function installHostPinReactEngine() {
     reactRoot = null
     reactNode = null
     mountedCard = null
+    mountedSection = null
   }
 
   const verifyReactSurface = (card, node, setHint) => {
@@ -59,11 +100,14 @@ export function installHostPinReactEngine() {
         if (mountedCard !== card || reactNode !== node || !card.isConnected) return
         if (node.querySelector(REACT_READY_SELECTOR)) {
           card.dataset.reactMapEngine = 'true'
+          watchLocationReadiness()
           return
         }
 
         failedCards.add(card)
-        setHint('Moteur de secours activé')
+        setHint('Impossible de charger la carte pour le moment')
+        const confirm = mountedSection?.querySelector('.host-onboarding__secondary')
+        if (confirm) confirm.disabled = true
         unmount({ keepFailure: true })
       })
     })
@@ -78,7 +122,10 @@ export function installHostPinReactEngine() {
       return
     }
     if (failedCards.has(card)) return
-    if (card === mountedCard) return
+    if (card === mountedCard) {
+      syncConfirmState()
+      return
+    }
     if (mountedCard) unmount()
 
     card.dataset.reactMapEngine = 'pending'
@@ -95,11 +142,14 @@ export function installHostPinReactEngine() {
 
     reactNode = node
     mountedCard = card
+    mountedSection = section
     reactRoot = createRoot(node)
     reactRoot.render(
       <HostPinMap
         initialAddress={initial.address}
         initialCity={initial.city}
+        latitude={initial.latitude}
+        longitude={initial.longitude}
         onLocationChange={publishLocation}
         onHintChange={setHint}
       />,
