@@ -13,8 +13,8 @@ const CLUSTER_HIT_RADIUS_PX = 28
 
 function loadGoogleMaps() {
   if (typeof window === 'undefined') return Promise.reject(new Error('Google Maps requires a browser'))
-  if (!GOOGLE_MAPS_BROWSER_KEY) return Promise.reject(new Error('Missing VITE_GOOGLE_MAPS_API_KEY'))
   if (window.google?.maps?.Map) return Promise.resolve(window.google.maps)
+  if (!GOOGLE_MAPS_BROWSER_KEY) return Promise.reject(new Error('Missing VITE_GOOGLE_MAPS_API_KEY'))
   if (window.__moveraGoogleMapsPromise) return window.__moveraGoogleMapsPromise
 
   window.__moveraGoogleMapsPromise = new Promise((resolve, reject) => {
@@ -146,6 +146,7 @@ export function GoogleMapLayer({
   const interactionActiveRef = useRef(false)
   const cameraMovingRef = useRef(false)
   const interactiveRef = useRef(interactive)
+  const viewportRef = useRef(viewport)
   const viewportSourceRef = useRef(viewportSource)
   const markersRef = useRef(markers)
   const onViewportChangeRef = useRef(onViewportChange)
@@ -155,6 +156,7 @@ export function GoogleMapLayer({
   const [ready, setReady] = useState(false)
 
   interactiveRef.current = interactive
+  viewportRef.current = viewport
   viewportSourceRef.current = viewportSource
   markersRef.current = markers
   onViewportChangeRef.current = onViewportChange
@@ -192,9 +194,14 @@ export function GoogleMapLayer({
       .then((maps) => {
         if (cancelled || !hostRef.current) return
         mapsRef.current = maps
+
+        // Google Maps can finish loading after the app has already resolved an
+        // address and moved Movera's viewport. Always construct Google from the
+        // latest viewport, never from the first render's fallback camera.
+        const latestViewport = viewportRef.current
         const map = new maps.Map(hostRef.current, {
-          center: { lat: viewport.lat, lng: viewport.lng },
-          zoom: viewport.zoom,
+          center: { lat: latestViewport.lat, lng: latestViewport.lng },
+          zoom: latestViewport.zoom,
           minZoom: 3,
           maxZoom: 18,
           backgroundColor: '#f5f7f8',
