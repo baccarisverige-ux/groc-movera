@@ -27,6 +27,14 @@ function cloneRooms(rooms) {
   }))
 }
 
+function needsInitialSetup(listing) {
+  if (!supportsPooledRoomInventory(listing?.type)) return false
+  const rooms = Array.isArray(listing?.roomTypes) ? listing.roomTypes : []
+  if (rooms.length !== 1) return false
+  const room = rooms[0]
+  return room?.id === 'room-standard' && !String(room.view || '').trim() && !String(room.description || '').trim()
+}
+
 function NumberField({ label, value, min = 0, max = 999, onChange }) {
   return (
     <label className="host-room-type-manager__number">
@@ -46,7 +54,7 @@ function NumberField({ label, value, min = 0, max = 999, onChange }) {
 export function HostRoomTypeManager({ profile, userId }) {
   const listing = profile?.listing
   const enabled = supportsPooledRoomInventory(listing?.type)
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(() => needsInitialSetup(listing))
   const [rooms, setRooms] = useState(() => cloneRooms(listing?.roomTypes))
   const [feedback, setFeedback] = useState('')
 
