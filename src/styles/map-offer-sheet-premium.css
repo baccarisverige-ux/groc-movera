@@ -176,29 +176,28 @@
   height:12px!important;
 }
 
-/* Property category rail — approximately 40% smaller than the previous
-   48px / 29px geometry while keeping labels readable on iPhone. */
+/* Property category rail — 8% larger than the compact map category geometry. */
 .map-offer-sheet__property-dock{
-  flex:0 0 31px!important;
-  min-height:31px!important;
-  margin:0 7px!important;
-  border-radius:11px!important;
+  flex:0 0 33.5px!important;
+  min-height:33.5px!important;
+  margin:0 7.5px!important;
+  border-radius:12px!important;
   border-color:rgba(45,52,48,.065)!important;
   background:linear-gradient(180deg,#fdfdfc 0%,#f7f7f5 100%)!important;
   box-shadow:inset 0 1px 0 #fff,0 2px 7px rgba(28,34,30,.03)!important;
 }
 
 .map-offer-sheet__property-rail{
-  gap:4px!important;
-  padding:4px 5px!important;
+  gap:4.3px!important;
+  padding:4.3px 5.5px!important;
 }
 
 .map-offer-sheet__property-chip{
-  height:19px!important;
-  min-height:19px!important;
-  padding:0 7px!important;
+  height:20.5px!important;
+  min-height:20.5px!important;
+  padding:0 7.5px!important;
   border-radius:999px!important;
-  font-size:7.5px!important;
+  font-size:8.1px!important;
   line-height:1!important;
   box-shadow:0 1px 3px rgba(27,33,29,.03),inset 0 1px 0 rgba(255,255,255,.98)!important;
 }
@@ -217,8 +216,8 @@
   .map-offer-sheet__heading{gap:4px!important}
   .map-offer-sheet__brand-badge{height:17px!important;padding:0 6px!important;font-size:7.6px!important}
   .map-offer-sheet__chevron{margin-left:5px!important}
-  .map-offer-sheet__property-dock{margin-left:6px!important;margin-right:6px!important}
-  .map-offer-sheet__property-chip{height:18px!important;min-height:18px!important;padding:0 6px!important;font-size:7.2px!important}
+  .map-offer-sheet__property-dock{margin-left:6.5px!important;margin-right:6.5px!important}
+  .map-offer-sheet__property-chip{height:19.5px!important;min-height:19.5px!important;padding:0 6.5px!important;font-size:7.8px!important}
 }
 
 @media(prefers-reduced-motion:reduce){
