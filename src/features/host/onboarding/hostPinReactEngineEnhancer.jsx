@@ -1,4 +1,5 @@
 import { createRoot } from 'react-dom/client'
+import { storageAdapter } from '../../../services/storage/storageAdapter.js'
 import { HostPinMap } from './HostPinMap.jsx'
 
 export const HOST_PIN_REACT_QUERY_VALUE = 'react'
@@ -29,27 +30,23 @@ function readInitialDraft(card) {
     longitude: null,
   }
 
-  try {
-    const drafts = JSON.parse(window.localStorage.getItem(HOST_DRAFT_KEY) || '{}')
-    const candidates = Object.values(drafts || {}).filter((draft) => draft && typeof draft === 'object')
-    const normalize = (value) => String(value || '').trim().replace(/\s+/g, ' ').toLowerCase()
-    const visible = normalize(visibleAddress)
-    const match = candidates.find((draft) => {
-      const label = [draft.address, draft.city].filter(Boolean).join(', ')
-      return visible && normalize(label) === visible
-    }) || (candidates.length === 1 ? candidates[0] : null)
+  const drafts = storageAdapter.getJson(HOST_DRAFT_KEY, {})
+  const candidates = Object.values(drafts || {}).filter((draft) => draft && typeof draft === 'object')
+  const normalize = (value) => String(value || '').trim().replace(/\s+/g, ' ').toLowerCase()
+  const visible = normalize(visibleAddress)
+  const match = candidates.find((draft) => {
+    const label = [draft.address, draft.city].filter(Boolean).join(', ')
+    return visible && normalize(label) === visible
+  }) || (candidates.length === 1 ? candidates[0] : null)
 
-    if (!match) return fallback
-    const latitude = Number(match.latitude)
-    const longitude = Number(match.longitude)
-    return {
-      initialAddress: String(match.address || visibleAddress || '').trim(),
-      initialCity: String(match.city || '').trim(),
-      latitude: Number.isFinite(latitude) ? latitude : null,
-      longitude: Number.isFinite(longitude) ? longitude : null,
-    }
-  } catch {
-    return fallback
+  if (!match) return fallback
+  const latitude = Number(match.latitude)
+  const longitude = Number(match.longitude)
+  return {
+    initialAddress: String(match.address || visibleAddress || '').trim(),
+    initialCity: String(match.city || '').trim(),
+    latitude: Number.isFinite(latitude) ? latitude : null,
+    longitude: Number.isFinite(longitude) ? longitude : null,
   }
 }
 
