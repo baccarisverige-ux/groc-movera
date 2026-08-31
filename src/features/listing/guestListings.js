@@ -65,7 +65,7 @@ function buildDescription(title, location, subtitle) {
   return `${lead} ${title} se trouve à ${place}, en Tunisie. L’espace est pensé pour un séjour simple et confortable : lumière, calme, et les essentiels du quotidien. Vous êtes proche des lieux de vie, dans une atmosphère Movera, sans chichi.`
 }
 
-const PHOTO_LABELS = Object.freeze(['Chambre', 'Séjour', 'Extérieur'])
+const PHOTO_LABELS = Object.freeze(['Chambre', 'Séjour', 'Cuisine', 'Extérieur'])
 
 const GALLERY_EXTRA_POOL = (() => {
   const urls = []
@@ -94,12 +94,20 @@ function hashString(value) {
 
 function extraGallerySources(image, listingId) {
   const pool = GALLERY_EXTRA_POOL.filter((src) => src !== image)
-  if (pool.length < 2) return pool.slice()
+  if (!pool.length) return []
   const hash = hashString(String(listingId || image))
-  const first = pool[hash % pool.length]
-  let second = pool[(hash + 5 + (hash % 7)) % pool.length]
-  if (second === first) second = pool[(hash + 1) % pool.length]
-  return [first, second]
+  const picked = []
+  const seen = new Set()
+
+  for (let offset = 0; offset < pool.length && picked.length < 3; offset += 1) {
+    const index = (hash + offset * 7 + offset * offset) % pool.length
+    const src = pool[index]
+    if (seen.has(src)) continue
+    seen.add(src)
+    picked.push(src)
+  }
+
+  return picked
 }
 
 function photosFrom(image, listingId) {
