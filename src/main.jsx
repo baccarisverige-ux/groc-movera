@@ -34,13 +34,11 @@ import App from './app/App.jsx'
 installPropertyArtworkRuntime()
 installGeocodingBrowserBridge(window)
 
-// Phase 6B safety switch: the normal app keeps the proven Leaflet host-pin map.
-// The React map engine is code-split and only loaded explicitly with ?hostMap=react.
-if (new URLSearchParams(window.location.search).get('hostMap') === 'react') {
-  import('./features/host/onboarding/hostPinReactEngineEnhancer.jsx')
-    .then(({ installHostPinReactEngine }) => installHostPinReactEngine())
-    .catch(() => {})
-}
+// The address-driven React pin map is the normal host onboarding map.
+// It is still code-split so the guest app does not pay for it until needed.
+import('./features/host/onboarding/hostPinReactEngineEnhancer.jsx')
+  .then(({ installHostPinReactEngine }) => installHostPinReactEngine())
+  .catch(() => {})
 
 for (const src of [BEACH_HERO_IMAGE, GUESTHOUSE_HERO_IMAGE, HOTEL_HERO_IMAGE]) {
   const link = document.createElement('link')
