@@ -1,53 +1,70 @@
 import { storageAdapter } from '../../services/storage/storageAdapter.js'
+import {
+  buildInitialRoomLotPlan,
+  normalizeRoomLots,
+  roomLotTotalUnits,
+} from './roomLotModel.js'
 
 export const HOST_ROOM_TYPE_DRAFT_KEY = 'movera:host-room-type-drafts:v1'
+export const HOST_ROOM_LOT_DRAFT_KEY = HOST_ROOM_TYPE_DRAFT_KEY
 
 function readAllDrafts() {
   const value = storageAdapter.getJson(HOST_ROOM_TYPE_DRAFT_KEY, {})
   return value && typeof value === 'object' && !Array.isArray(value) ? value : {}
 }
 
-function normalizePhotos(value) {
-  return Array.isArray(value) ? value.filter((item) => typeof item === 'string' && item.trim()).map((item) => item.trim()) : []
-}
+function normalizePlan(value, fallback = {}) {
+  const source = value && typeof value === 'object' ? value : {}
+  const legacyLots = Array.isArray(source.roomLots)
+    ? source.roomLots
+    : Array.isArray(source.roomTypes)
+      ? source.roomTypes
+      : []
 
-function normalizeRoom(room, index, fallback = {}) {
-  const source = room && typeof room === 'object' ? room : {}
-  const id = typeof source.id === 'string' && source.id.trim() ? source.id.trim() : `room-type-${index + 1}`
+  if (!legacyLots.length) return buildInitialRoomLotPlan(fallback)
+
+  const roomLots = normalizeRoomLots(legacyLots, fallback)
+  const distributed = roomLotTotalUnits(roomLots)
+  const requestedTotal = Math.round(Number(source.totalRooms))
+  const totalRooms = Number.isFinite(requestedTotal) && requestedTotal > 0 ? requestedTotal : distributed
+
   return {
-    id,
-    name: typeof source.name === 'string' && source.name.trim() ? source.name.trim() : index === 0 ? 'Chambre Standard' : `Type de chambre ${index + 1}`,
-    view: typeof source.view === 'string' ? source.view.trim() : '',
-    description: typeof source.description === 'string' ? source.description.trim() : '',
-    guests: Math.max(1, Math.min(20, Math.round(Number(source.guests) || Number(fallback.guests) || 2))),
-    beds: Math.max(1, Math.min(20, Math.round(Number(source.beds) || Number(fallback.beds) || 1))),
-    bathrooms: Math.max(0, Math.min(10, Math.round(Number(source.bathrooms) || Number(fallback.bathrooms) || 1))),
-    basePrice: Math.max(1, Math.min(99999, Math.round(Number(source.basePrice) || Number(fallback.basePrice) || 180))),
-    totalUnits: Math.max(1, Math.min(999, Math.round(Number(source.totalUnits) || 1))),
-    photos: normalizePhotos(source.photos),
+    totalRooms: Math.max(roomLots.length, totalRooms),
+    roomLots,
   }
 }
 
-function defaultRoom(fallback = {}) {
-  return normalizeRoom({ id: 'room-standard', name: 'Chambre Standard' }, 0, fallback)
+export function readHostRoomLotDraft(userId, fallback = {}) {
+  if (!userId) return buildInitialRoomLotPlan(fallback)
+  return normalizePlan(readAllDrafts()[userId], fallback)
 }
 
+export function writeHostRoomLotDraft(userId, plan, fallback = {}) {
+  if (!userId) return buildInitialRoomLotPlan(fallback)
+  const normalized = normalizePlan(plan, fallback)
+  const drafts = readAllDrafts()
+  drafts[userId] = {
+    totalRooms: normalized.totalRooms,
+    roomLots: normalized.roomLots,
+    roomTypes: normalized.roomLots,
+    updatedAt: new Date().toISOString(),
+  }
+  storageAdapter.setJson(HOST_ROOM_TYPE_DRAFT_KEY, drafts)
+  return normalized
+}
+
+// Legacy compatibility while the rest of the prototype migrates from roomTypes to roomLots.
 export function readHostRoomTypeDraft(userId, fallback = {}) {
-  if (!userId) return [defaultRoom(fallback)]
-  const value = readAllDrafts()[userId]
-  const rooms = Array.isArray(value?.roomTypes) ? value.roomTypes : []
-  return rooms.length ? rooms.slice(0, 12).map((room, index) => normalizeRoom(room, index, fallback)) : [defaultRoom(fallback)]
+  return readHostRoomLotDraft(userId, fallback).roomLots
 }
 
 export function writeHostRoomTypeDraft(userId, roomTypes, fallback = {}) {
-  if (!userId) return []
-  const normalized = (Array.isArray(roomTypes) && roomTypes.length ? roomTypes : [defaultRoom(fallback)])
-    .slice(0, 12)
-    .map((room, index) => normalizeRoom(room, index, fallback))
-  const drafts = readAllDrafts()
-  drafts[userId] = { roomTypes: normalized, updatedAt: new Date().toISOString() }
-  storageAdapter.setJson(HOST_ROOM_TYPE_DRAFT_KEY, drafts)
-  return normalized
+  const roomLots = normalizeRoomLots(roomTypes, fallback)
+  const plan = writeHostRoomLotDraft(userId, {
+    totalRooms: roomLotTotalUnits(roomLots),
+    roomLots,
+  }, fallback)
+  return plan.roomLots
 }
 
 export function clearHostRoomTypeDraft(userId) {
@@ -56,3 +73,5 @@ export function clearHostRoomTypeDraft(userId) {
   delete drafts[userId]
   storageAdapter.setJson(HOST_ROOM_TYPE_DRAFT_KEY, drafts)
 }
+
+export const clearHostRoomLotDraft = clearHostRoomTypeDraft
