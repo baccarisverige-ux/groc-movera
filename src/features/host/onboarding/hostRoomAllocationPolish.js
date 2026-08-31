@@ -8,6 +8,7 @@ const PAGE_SELECTOR = '.host-onboarding[data-screen="basics"]'
 const SETUP_SELECTOR = '.host-room-setup'
 const SUMMARY_CLASS = 'host-room-allocation-overview'
 const HELPER_CLASS = 'host-room-allocation-helper'
+const OBSERVER_OPTIONS = { childList: true, subtree: true, attributes: true, attributeFilter: ['data-screen'] }
 
 function currentContext() {
   const session = readAuthSession()
@@ -125,9 +126,18 @@ function renderCategoryHelpers(setup, configuration) {
 
     const current = Math.max(1, Number(room.totalUnits) || 1)
     const left = document.createElement('span')
-    left.innerHTML = `<strong>${current}</strong><small>chambre${current > 1 ? 's' : ''} dans cette catégorie</small>`
+    const leftStrong = document.createElement('strong')
+    leftStrong.textContent = String(current)
+    const leftSmall = document.createElement('small')
+    leftSmall.textContent = `chambre${current > 1 ? 's' : ''} dans cette catégorie`
+    left.append(leftStrong, leftSmall)
+
     const right = document.createElement('span')
-    right.innerHTML = `<strong>${absoluteMaxPerCategory}</strong><small>maximum possible ici</small>`
+    const rightStrong = document.createElement('strong')
+    rightStrong.textContent = String(absoluteMaxPerCategory)
+    const rightSmall = document.createElement('small')
+    rightSmall.textContent = 'maximum possible ici'
+    right.append(rightStrong, rightSmall)
     helper.append(left, right)
 
     const plusButton = quantity.querySelector('button:last-child')
@@ -139,6 +149,13 @@ function renderCategoryHelpers(setup, configuration) {
   })
 }
 
+let observer = null
+
+function observe() {
+  if (!observer) return
+  observer.observe(document.documentElement, OBSERVER_OPTIONS)
+}
+
 function polishRoomAllocation() {
   const page = document.querySelector(PAGE_SELECTOR)
   const setup = page?.querySelector(SETUP_SELECTOR)
@@ -147,9 +164,14 @@ function polishRoomAllocation() {
   const context = currentContext()
   if (!context) return
 
-  setup.dataset.polished = 'true'
-  renderOverview(setup, context.configuration)
-  renderCategoryHelpers(setup, context.configuration)
+  observer?.disconnect()
+  try {
+    setup.dataset.polished = 'true'
+    renderOverview(setup, context.configuration)
+    renderCategoryHelpers(setup, context.configuration)
+  } finally {
+    observe()
+  }
 }
 
 let frame = 0
@@ -158,8 +180,8 @@ function schedulePolish() {
   frame = window.requestAnimationFrame(polishRoomAllocation)
 }
 
-const observer = new MutationObserver(schedulePolish)
-observer.observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-screen'] })
+observer = new MutationObserver(schedulePolish)
+observe()
 window.addEventListener('storage', schedulePolish)
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', schedulePolish, { once: true })
