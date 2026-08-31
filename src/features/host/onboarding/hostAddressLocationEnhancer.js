@@ -7,6 +7,7 @@ const STATUS_CLASS = 'host-address-location-status'
 const LIST_CLASS = 'host-address-suggestion-list'
 const SEARCH_DELAY_MS = 320
 const HOST_MAP_LOCATION_EVENT = 'movera:host-map-address-change'
+const DETECTED_WRITE_FLAG = 'hostDetectedWrite'
 
 function svgIcon(path) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
@@ -72,8 +73,20 @@ function selectDetectedAddress(result, addressInput, cityInput, status) {
   const address = String(result?.label || '').trim()
   const city = suggestionCity(result, cityInput?.value)
   if (!address) return false
-  setControlledInput(addressInput, address)
-  if (city) setControlledInput(cityInput, city)
+
+  // React must still receive the controlled input updates, but our own enhancer
+  // must not interpret them as a fresh manual edit and invalidate the coordinate
+  // we are about to publish.
+  addressInput.dataset[DETECTED_WRITE_FLAG] = 'true'
+  cityInput.dataset[DETECTED_WRITE_FLAG] = 'true'
+  try {
+    setControlledInput(addressInput, address)
+    if (city) setControlledInput(cityInput, city)
+  } finally {
+    delete addressInput.dataset[DETECTED_WRITE_FLAG]
+    delete cityInput.dataset[DETECTED_WRITE_FLAG]
+  }
+
   publishDetectedLocation(result, address, city)
   setStatus(status, 'Adresse détectée · la carte se positionnera automatiquement à l’étape suivante.', 'success')
   return true
@@ -157,6 +170,8 @@ function mountSmartAddress(page) {
     suggestions.forEach((result) => {
       list.append(createSuggestionButton(result, (selected) => {
         if (!selectDetectedAddress(selected, addressInput, cityInput, status)) return
+        window.clearTimeout(searchTimer)
+        searchController?.abort()
         clearSuggestions()
         addressInput.blur()
       }))
@@ -251,11 +266,13 @@ function mountSmartAddress(page) {
   addressLabel.after(panel)
 
   const handleInput = () => {
+    if (addressInput.dataset[DETECTED_WRITE_FLAG] === 'true') return
     invalidateDetectedLocation()
     setStatus(status, '', '')
     search()
   }
   const handleCityInput = () => {
+    if (cityInput.dataset[DETECTED_WRITE_FLAG] === 'true') return
     invalidateDetectedLocation()
     setStatus(status, '', '')
   }
