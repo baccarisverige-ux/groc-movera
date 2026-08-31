@@ -161,7 +161,7 @@ export function CollectionPage({
             />
           </label>
           {cityQuery ? (
-            <button className="beach-city-search__clear" type="button" aria-label="Effacer la ville" onClick={() => selectCity('Toutes')}>\u00d7</button>
+            <button className="beach-city-search__clear" type="button" aria-label="Effacer la ville" onClick={() => selectCity('Toutes')}>×</button>
           ) : <SearchIcon />}
           {focused && suggestions.length > 0 ? (
             <div className="beach-city-suggestions" role="listbox" aria-label="Villes suggérées">
@@ -204,6 +204,7 @@ export function CollectionPage({
         <MotionList className="beach-offer-list" data-motion-list="collection-offers">
           {visibleOffers.map((item, index) => {
             const favorite = favoriteIdSet.has(item.id)
+            const ratingLabel = item.rating ? `★ ${item.rating}` : 'Nouveau'
             return (
               <MotionListItem
                 as="article"
@@ -212,6 +213,7 @@ export function CollectionPage({
                 index={index}
                 config={COLLECTION_OFFER_MOTION}
                 data-offer-id={item.id}
+                data-origin={item.origin || 'seed'}
                 role="link"
                 tabIndex={0}
                 style={{ cursor: 'pointer' }}
@@ -225,20 +227,20 @@ export function CollectionPage({
                 }}
               >
                 <div className="beach-offer__media">
-                  <img src={item.image} alt="" loading="lazy" decoding="async" />
+                  {item.image ? <img src={item.image} alt="" loading="lazy" decoding="async" /> : <span aria-hidden="true">MH</span>}
                   <span className="beach-offer__badge">{item.badge || badgeLabel}</span>
                   <button type="button" className="beach-offer__heart" data-active={favorite ? 'true' : 'false'} aria-pressed={favorite} aria-label={`${favorite ? 'Retirer' : 'Ajouter'} ${item.title} ${favorite ? 'des' : 'aux'} favoris`} onClick={(event) => { event.stopPropagation(); toggleFavorite(item.id) }}>
                     <HeartIcon />
                   </button>
-                  <span className="beach-offer__rating">★ {item.rating || '4.90'}</span>
+                  <span className="beach-offer__rating">{ratingLabel}</span>
                 </div>
                 <div className="beach-offer__body">
                   <div>
-                    <span className="beach-offer__location"><PinIcon />{item.location}, Tunisie</span>
+                    <span className="beach-offer__location"><PinIcon />{item.location}{item.location ? ', Tunisie' : ''}</span>
                     <h3>{item.title}</h3>
                   </div>
                   <div className="beach-offer__price">
-                    <strong>{item.priceLabel || item.priceTotal || `${item.price ?? ''} ${item.currency ?? ''}`.trim()}</strong>
+                    <strong>{item.priceLabel || item.priceTotal || `${item.price ?? ''} ${item.currency ?? ''}`.trim() || 'Tarif à confirmer'}</strong>
                     {item.priceLabel || item.priceTotal ? null : <span>/ nuit</span>}
                   </div>
                 </div>
