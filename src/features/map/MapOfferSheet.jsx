@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { MotionList, MotionListItem } from '../../shared/motion/MotionList.jsx'
 import { MapOfferSheetMotionSurface } from './motion/MapOfferSheetMotionSurface.jsx'
 import { MAP_OFFER_ITEM_MOTION } from './motion/mapOfferSheetMotion.config.js'
@@ -10,6 +10,7 @@ const COLLAPSED_PANEL_VISIBLE_PX = 60
 const TOP_BAR_SEAM_OVERLAP_PX = 2
 const ATTACHED_ENTER_PROGRESS = 0.995
 const ATTACHED_EXIT_PROGRESS = 0.92
+const TOP_HANDLE_TOUCH_THRESHOLD_PX = 2
 
 const MAP_PROPERTY_FILTERS = Object.freeze([
   { id: 'all', label: 'Tout' },
@@ -78,8 +79,71 @@ function MapOfferSheetContent({
 }) {
   const attached = useStableAttached(progress)
   const listRef = useMapOfferScrollSheetHandoff({ expanded: attached, externalDrag })
+  const dragZoneRef = useRef(null)
+  const externalDragRef = useRef(externalDrag)
   const safeHeaderHeight = Math.max(0, headerHeight || 0)
   const displayedListings = listings.filter((listing) => listingMatchesSheetPropertyFilter(listing, propertyFilter))
+
+  useEffect(() => {
+    externalDragRef.current = externalDrag
+  }, [externalDrag])
+
+  useEffect(() => {
+    const node = dragZoneRef.current
+    if (!node) return undefined
+
+    let gesture = null
+
+    const onTouchStart = (event) => {
+      if (event.touches.length !== 1) return
+      const clientY = event.touches[0]?.clientY
+      gesture = Number.isFinite(clientY)
+        ? { startClientY: clientY, active: false }
+        : null
+    }
+
+    const onTouchMove = (event) => {
+      const clientY = event.touches?.[0]?.clientY
+      if (!gesture || !Number.isFinite(clientY)) return
+
+      if (!gesture.active) {
+        if (Math.abs(clientY - gesture.startClientY) < TOP_HANDLE_TOUCH_THRESHOLD_PX) return
+        const started = externalDragRef.current?.start(gesture.startClientY)
+        if (!started) {
+          gesture = null
+          return
+        }
+        gesture.active = true
+      }
+
+      if (event.cancelable) event.preventDefault()
+      event.stopPropagation()
+      externalDragRef.current?.move(clientY)
+    }
+
+    const finishTouch = (cancel = false) => {
+      if (gesture?.active) {
+        if (cancel) externalDragRef.current?.cancel()
+        else externalDragRef.current?.end()
+      }
+      gesture = null
+    }
+
+    const onTouchEnd = () => finishTouch(false)
+    const onTouchCancel = () => finishTouch(true)
+
+    node.addEventListener('touchstart', onTouchStart, { passive: true })
+    node.addEventListener('touchmove', onTouchMove, { passive: false })
+    node.addEventListener('touchend', onTouchEnd, { passive: true })
+    node.addEventListener('touchcancel', onTouchCancel, { passive: true })
+
+    return () => {
+      node.removeEventListener('touchstart', onTouchStart)
+      node.removeEventListener('touchmove', onTouchMove)
+      node.removeEventListener('touchend', onTouchEnd)
+      node.removeEventListener('touchcancel', onTouchCancel)
+    }
+  }, [])
 
   const openListing = (listingId) => {
     onSelectedListingChange?.(listingId)
@@ -97,11 +161,14 @@ function MapOfferSheetContent({
 
       <div className="map-offer-sheet__panel" data-attachment-state={attached ? 'attached' : 'moving'}>
         <div
+          ref={dragZoneRef}
           className="map-offer-sheet__drag-zone"
           data-testid="map-offer-sheet-handle"
           data-attachment-state={attached ? 'attached' : 'moving'}
           data-header-offset={Math.round(safeHeaderHeight)}
-          onPointerDown={startDrag}
+          onPointerDown={(event) => {
+            if (event.pointerType !== 'touch') startDrag(event)
+          }}
         >
           <button type="button" className="map-offer-sheet__handle-button" onClick={toggleExpanded} aria-label={progress > 0.72 ? 'Réduire la liste des offres' : 'Afficher la liste des offres'}>
             <span className="map-offer-sheet__grabber" />
