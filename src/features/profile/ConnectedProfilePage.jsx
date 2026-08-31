@@ -5,7 +5,6 @@ import { authProviderLabel } from '../auth/authClient.js'
 import { clearAuthSession, useAuthSession } from '../auth/authSession.js'
 import tripsArt from './assets/profile-trips.webp'
 import favoritesArt from './assets/profile-favorites.webp'
-import hostArt from './assets/profile-host.webp'
 import './connected-profile-page.css'
 
 function BellIcon() {
@@ -66,7 +65,6 @@ const LEGAL_ROWS = [
 const PROFILE_SLOT_ART = {
   'profile-trips': tripsArt,
   'profile-favorites': favoritesArt,
-  'profile-host': hostArt,
 }
 
 function IllustrationSlot({ name, className = '' }) {
@@ -74,6 +72,27 @@ function IllustrationSlot({ name, className = '' }) {
   return (
     <div className={`connected-profile__slot${className ? ` ${className}` : ''}${src ? ' connected-profile__slot--photo' : ''}`} data-slot={name} aria-hidden="true">
       {src ? <img src={src} alt="" /> : null}
+    </div>
+  )
+}
+
+function HostCardVideo() {
+  return (
+    <div className="connected-profile__slot connected-profile__slot--host connected-profile__slot--video" data-slot="profile-host" aria-hidden="true">
+      <video
+        className="connected-profile__host-video"
+        src={`${import.meta.env.BASE_URL}assets/profile-host.mp4?v=hostcard1`}
+        muted
+        loop
+        playsInline
+        autoPlay
+        preload="metadata"
+        tabIndex={-1}
+        onCanPlay={(event) => {
+          const playPromise = event.currentTarget.play()
+          if (playPromise?.catch) playPromise.catch(() => {})
+        }}
+      />
     </div>
   )
 }
@@ -159,7 +178,7 @@ export function ConnectedProfilePage({ onNavigate }) {
             <strong>{isHost ? 'Espace Hôte' : 'Devenir hôte'}</strong>
             <p>{isHost ? 'Votre calendrier vous attend.' : 'Publiez un logement et gagnez à votre rythme.'}</p>
           </div>
-          <IllustrationSlot name="profile-host" className="connected-profile__slot--host" />
+          <HostCardVideo />
           <button
             type="button"
             className="connected-profile__host-cta"

@@ -238,19 +238,30 @@
 }
 
 .connected-profile__slot--host{
-  width:92px;
-  height:92px;
-  flex:0 0 92px;
-  border-radius:20px;
-  background:#fff;
+  width:100%;
+  height:auto;
+  aspect-ratio:16/9;
+  flex:none;
+  border-radius:18px;
+  background:#1c1612;
+  overflow:hidden;
+}
+
+.connected-profile__host-video{
+  width:100%;
+  height:100%;
+  display:block;
+  object-fit:cover;
+  object-position:center;
+  pointer-events:none;
 }
 
 .connected-profile__host-card{
   display:grid;
-  grid-template-columns:minmax(0,1fr) 92px;
+  grid-template-columns:minmax(0,1fr);
   align-items:center;
-  gap:12px 14px;
-  padding:16px 14px 14px 18px;
+  gap:12px;
+  padding:10px 10px 14px;
   border:1px solid rgba(29,31,30,.055);
   border-radius:24px;
   background:#fbfbfa;
@@ -263,6 +274,7 @@
   min-width:0;
   display:grid;
   gap:6px;
+  padding:0 8px;
 }
 
 .connected-profile__host-copy strong{
@@ -438,8 +450,8 @@
   .connected-profile__quick-card{min-height:136px;padding:12px}
   .connected-profile__slot{height:68px}
   .connected-profile__slot--photo{height:80px}
-  .connected-profile__host-card{grid-template-columns:minmax(0,1fr) 80px}
-  .connected-profile__slot--host{width:80px;height:80px;flex-basis:80px}
+  .connected-profile__host-card{grid-template-columns:minmax(0,1fr)}
+  .connected-profile__slot--host{width:100%;height:auto;flex-basis:auto}
   .connected-profile__host-copy strong{font-size:16px}
 }
 
