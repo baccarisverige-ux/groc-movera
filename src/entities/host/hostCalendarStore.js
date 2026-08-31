@@ -28,8 +28,8 @@ export function readHostCalendar(userId) {
   return { days: normalizeDays(readAllCalendars()[userId]) }
 }
 
-export function readHostCalendarForListing(listingId) {
-  if (!listingId) return { linked: false, userId: null, listingId: '', days: {} }
+export function readHostCalendarForListing(listingId, roomTypeId = '') {
+  if (!listingId) return { linked: false, userId: null, listingId: '', roomTypeId: '', days: {} }
 
   const direct = readAllListingCalendars()[listingId]
   if (direct) {
@@ -37,19 +37,21 @@ export function readHostCalendarForListing(listingId) {
       linked: true,
       userId: typeof direct.userId === 'string' ? direct.userId : null,
       listingId,
-      days: applyRoomInventoryAvailability(listingId, normalizeDays(direct)),
+      roomTypeId,
+      days: applyRoomInventoryAvailability(listingId, normalizeDays(direct), roomTypeId),
     }
   }
 
   const profile = findHostProfileByListingId(listingId)
-  if (!profile) return { linked: false, userId: null, listingId, days: {} }
+  if (!profile) return { linked: false, userId: null, listingId, roomTypeId, days: {} }
 
   const legacy = readHostCalendar(profile.userId)
   return {
     linked: true,
     userId: profile.userId,
     listingId: profile.listing.id,
-    days: applyRoomInventoryAvailability(profile.listing.id, legacy.days),
+    roomTypeId,
+    days: applyRoomInventoryAvailability(profile.listing.id, legacy.days, roomTypeId),
   }
 }
 
