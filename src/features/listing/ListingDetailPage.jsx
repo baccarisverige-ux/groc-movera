@@ -3,6 +3,7 @@ import { ArrowLeftIcon } from '../../shared/icons/AppIcons.jsx'
 import { getListingMapPosition } from '../../entities/listing/listingMapPositions.js'
 import { useFavorites } from '../favorites/favoritesStore.js'
 import { getGuestListingById } from './guestListings.js'
+import { ListingAvailability } from './ListingAvailability.jsx'
 import './listing-detail-page.css'
 
 const TUNIS_CENTER = Object.freeze({ lat: 36.8065, lng: 10.1815 })
@@ -84,10 +85,6 @@ function PinGlyph() {
 function ChevronGlyph({ direction = 'right' }) {
   const path = direction === 'left' ? 'm15 6-6 6 6 6' : direction === 'down' ? 'm6 9 6 6 6-6' : 'm9 6 6 6-6 6'
   return <Glyph size={18}><path d={path}/></Glyph>
-}
-
-function CalendarGlyph() {
-  return <Glyph><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/></Glyph>
 }
 
 function CancelGlyph() {
@@ -199,7 +196,6 @@ export function ListingDetailPage({ params, onNavigate }) {
   const [descOpen, setDescOpen] = useState(false)
   const [amenitiesOpen, setAmenitiesOpen] = useState(false)
   const [reviewsOpen, setReviewsOpen] = useState(false)
-  const [availabilityOpen, setAvailabilityOpen] = useState(false)
   const [knowOpen, setKnowOpen] = useState('')
   const [reserveOpen, setReserveOpen] = useState(false)
   const [shareHint, setShareHint] = useState('')
@@ -274,7 +270,6 @@ export function ListingDetailPage({ params, onNavigate }) {
 
   const showAvailability = () => {
     setReserveOpen(false)
-    setAvailabilityOpen(true)
     window.setTimeout(() => scrollTo('listing-availability'), 80)
   }
 
@@ -397,12 +392,7 @@ export function ListingDetailPage({ params, onNavigate }) {
           </article>
         </section>
 
-        <section className="listing-detail-disclosure-section" id="listing-availability">
-          <button type="button" className="listing-detail-row" aria-expanded={availabilityOpen} onClick={() => setAvailabilityOpen((open) => !open)}>
-            <span className="listing-detail-ico"><CalendarGlyph/></span><div><strong>Disponibilité</strong><span>{listing.availability || listing.dates || 'À confirmer'}</span></div><span className={availabilityOpen ? 'listing-detail-row-chevron is-open' : 'listing-detail-row-chevron'}><ChevronGlyph direction="down"/></span>
-          </button>
-          {availabilityOpen ? <div className="listing-detail-inline-panel"><strong>Dates actuellement affichées</strong><span>{listing.availability || listing.dates || 'À confirmer'}</span><p>Les disponibilités exactes sont confirmées avant validation de la réservation.</p></div> : null}
-        </section>
+        <ListingAvailability listingId={listing.id} basePrice={listing.nightlyRate} currency={listing.currency} />
 
         <section className="listing-detail-block listing-detail-know-block">
           <h2>À savoir</h2>
@@ -423,7 +413,7 @@ export function ListingDetailPage({ params, onNavigate }) {
       </div>
 
       <footer className="listing-detail-footer">
-        <div className="listing-detail-footer-price"><strong>{listing.priceLabel || 'Tarif à confirmer'}</strong><span>{listing.dates || 'Dates à confirmer'}</span></div>
+        <div className="listing-detail-footer-price"><strong>{listing.priceLabel || 'Tarif à confirmer'}</strong><span>Selon le calendrier de l’hôte</span></div>
         <button type="button" className="listing-detail-reserve" onClick={() => setReserveOpen(true)}>Réserver</button>
       </footer>
 
@@ -433,12 +423,12 @@ export function ListingDetailPage({ params, onNavigate }) {
             <div className="listing-detail-reserve-head"><div><span className="listing-detail-eyebrow">Movera Host</span><h2 id="listing-reserve-title">Préparer votre réservation</h2></div><OverlayButton label="Fermer" onClick={() => setReserveOpen(false)}><CloseGlyph/></OverlayButton></div>
             <div className="listing-detail-reserve-summary">
               <div><span>Logement</span><strong>{listing.title}</strong></div>
-              <div><span>Dates</span><strong>{listing.availability || listing.dates || 'À confirmer'}</strong></div>
+              <div><span>Dates</span><strong>À choisir selon le calendrier de l’hôte</strong></div>
               <div><span>Voyageurs</span><strong>{listing.capacity?.guests ? `${listing.capacity.guests} max.` : 'À confirmer'}</strong></div>
               <div><span>Tarif affiché</span><strong>{listing.priceLabel || 'À confirmer'}</strong></div>
             </div>
-            <p className="listing-detail-reserve-note">Aucun paiement n’est lancé à cette étape. Vérifiez d’abord les disponibilités affichées.</p>
-            <button type="button" className="listing-detail-reserve-primary" onClick={showAvailability}>Vérifier les disponibilités</button>
+            <p className="listing-detail-reserve-note">Aucun paiement n’est lancé à cette étape. Les jours indisponibles et les tarifs viennent du calendrier du logement.</p>
+            <button type="button" className="listing-detail-reserve-primary" onClick={showAvailability}>Voir les disponibilités de l’hôte</button>
             <button type="button" className="listing-detail-reserve-secondary" onClick={() => setReserveOpen(false)}>Continuer à explorer</button>
           </section>
         </div>
