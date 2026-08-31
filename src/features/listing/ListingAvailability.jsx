@@ -43,8 +43,11 @@ function availabilitySummary(calendar, now) {
 }
 
 function roomMeta(room) {
-  const parts = [`${room.guests} voyageur${room.guests > 1 ? 's' : ''}`, `${room.beds} lit${room.beds > 1 ? 's' : ''}`]
-  if (room.bathrooms) parts.push(`${room.bathrooms} sdb`)
+  const parts = []
+  if (room.surface) parts.push(`${room.surface} m²`)
+  parts.push(`${room.guests} voyageur${room.guests > 1 ? 's' : ''}`)
+  parts.push(`${room.beds} lit${room.beds > 1 ? 's' : ''}${room.bedType ? ` · ${room.bedType}` : ''}`)
+  if (room.bathrooms) parts.push(`${room.bathrooms} sdb ${room.bathroomType === 'shared' ? 'partagée' : 'privée'}`)
   return parts.join(' · ')
 }
 
@@ -54,25 +57,47 @@ function roomPhoto(room) {
   return typeof first?.src === 'string' ? first.src : ''
 }
 
-export function ListingAvailability({ listingId, basePrice = 0, currency = 'TND' }) {
+export function ListingAvailability({
+  listingId,
+  basePrice = 0,
+  currency = 'TND',
+  selectedRoomTypeId: controlledRoomTypeId = '',
+  onRoomTypeChange,
+}) {
   const now = useMemo(() => new Date(), [])
   const initialListing = useMemo(() => getGuestListingById(listingId), [listingId])
-  const initialRoomTypeId = initialListing?.roomTypes?.[0]?.id || ''
+  const initialRoomTypeId = controlledRoomTypeId || initialListing?.roomTypes?.[0]?.id || ''
   const [open, setOpen] = useState(false)
   const [publicListing, setPublicListing] = useState(initialListing)
-  const [selectedRoomTypeId, setSelectedRoomTypeId] = useState(initialRoomTypeId)
+  const [localRoomTypeId, setLocalRoomTypeId] = useState(initialRoomTypeId)
+  const selectedRoomTypeId = controlledRoomTypeId || localRoomTypeId
   const [calendar, setCalendar] = useState(() => readHostCalendarForListing(listingId, initialRoomTypeId))
 
   const roomTypes = Array.isArray(publicListing?.roomTypes) ? publicListing.roomTypes : []
+  const categorized = roomTypes.length > 1
   const selectedRoom = roomTypes.find((room) => room.id === selectedRoomTypeId) || roomTypes[0] || null
   const selectedPrice = selectedRoom?.basePrice || basePrice
+
+  const selectRoom = (roomId) => {
+    setLocalRoomTypeId(roomId)
+    onRoomTypeChange?.(roomId)
+    setOpen(false)
+  }
+
+  useEffect(() => {
+    if (!controlledRoomTypeId) return
+    setLocalRoomTypeId(controlledRoomTypeId)
+  }, [controlledRoomTypeId])
 
   useEffect(() => {
     const syncListing = () => {
       const next = getGuestListingById(listingId)
       setPublicListing(next)
       const nextRooms = next?.roomTypes || []
-      setSelectedRoomTypeId((current) => nextRooms.some((room) => room.id === current) ? current : nextRooms[0]?.id || '')
+      setLocalRoomTypeId((current) => {
+        const preferred = controlledRoomTypeId || current
+        return nextRooms.some((room) => room.id === preferred) ? preferred : nextRooms[0]?.id || ''
+      })
     }
     syncListing()
     window.addEventListener(HOST_PROFILE_EVENT, syncListing)
@@ -81,10 +106,11 @@ export function ListingAvailability({ listingId, basePrice = 0, currency = 'TND'
       window.removeEventListener(HOST_PROFILE_EVENT, syncListing)
       window.removeEventListener('storage', syncListing)
     }
-  }, [listingId])
+  }, [listingId, controlledRoomTypeId])
 
   useEffect(() => {
-    const sync = () => setCalendar(readHostCalendarForListing(listingId, selectedRoomTypeId))
+    const roomId = selectedRoom?.id || ''
+    const sync = () => setCalendar(readHostCalendarForListing(listingId, roomId))
     sync()
     window.addEventListener(HOST_CALENDAR_EVENT, sync)
     window.addEventListener('storage', sync)
@@ -92,20 +118,20 @@ export function ListingAvailability({ listingId, basePrice = 0, currency = 'TND'
       window.removeEventListener(HOST_CALENDAR_EVENT, sync)
       window.removeEventListener('storage', sync)
     }
-  }, [listingId, selectedRoomTypeId])
+  }, [listingId, selectedRoom?.id])
 
   const summary = availabilitySummary(calendar, now)
 
   return (
     <>
       <section className="listing-availability" id="listing-availability" data-calendar-linked={calendar.linked ? 'true' : 'false'}>
-        {roomTypes.length > 1 ? (
+        {categorized ? (
           <div className="listing-room-types" aria-labelledby="listing-room-types-title">
             <div className="listing-room-types__head">
-              <span id="listing-room-types-title">Choisissez votre type de chambre</span>
-              <small>{roomTypes.length} catégories dans cette même publication · chaque type a ses propres caractéristiques et tarifs.</small>
+              <span id="listing-room-types-title">Choisissez votre catégorie de chambre</span>
+              <small>Chaque catégorie possède ses propres photos, caractéristiques, tarif et disponibilité.</small>
             </div>
-            <div className="listing-room-types__rail" role="radiogroup" aria-label="Type de chambre">
+            <div className="listing-room-types__rail" role="radiogroup" aria-label="Catégorie de chambre">
               {roomTypes.map((room) => {
                 const active = room.id === selectedRoom?.id
                 const photo = roomPhoto(room)
@@ -116,7 +142,7 @@ export function ListingAvailability({ listingId, basePrice = 0, currency = 'TND'
                     aria-checked={active}
                     data-active={active ? 'true' : 'false'}
                     key={room.id}
-                    onClick={() => { setSelectedRoomTypeId(room.id); setOpen(false) }}
+                    onClick={() => selectRoom(room.id)}
                   >
                     {photo ? <img className="listing-room-types__photo" src={photo} alt={`${room.name}${room.view ? ` — ${room.view}` : ''}`} loading="lazy" decoding="async" /> : null}
                     <span className="listing-room-types__check">{active ? <CheckGlyph /> : null}</span>
@@ -124,6 +150,7 @@ export function ListingAvailability({ listingId, basePrice = 0, currency = 'TND'
                     {room.view ? <em>{room.view}</em> : null}
                     <small>{roomMeta(room)}</small>
                     {room.description ? <p>{room.description}</p> : null}
+                    {room.features?.length ? <span className="listing-room-types__features">{room.features.slice(0, 3).join(' · ')}</span> : null}
                     <b>{room.basePrice} {currency} <span>/ nuit</span></b>
                   </button>
                 )
@@ -135,7 +162,7 @@ export function ListingAvailability({ listingId, basePrice = 0, currency = 'TND'
         <button type="button" className="listing-availability__row" aria-expanded={open} onClick={() => setOpen(true)}>
           <span className="listing-availability__icon"><CalendarGlyph /></span>
           <span className="listing-availability__copy">
-            <strong>{selectedRoom ? `Disponibilité · ${selectedRoom.name}` : 'Disponibilité'}</strong>
+            <strong>{categorized && selectedRoom ? `Disponibilité · ${selectedRoom.name}` : 'Disponibilité'}</strong>
             <span>{summary}</span>
           </span>
           <span className="listing-availability__chevron"><ChevronGlyph /></span>
@@ -144,7 +171,14 @@ export function ListingAvailability({ listingId, basePrice = 0, currency = 'TND'
 
       {open ? (
         <ListingAvailabilityModal
-          listing={{ id: listingId, title: selectedRoom?.name || 'Calendrier de l’hôte', nightlyRate: selectedPrice, currency, roomTypeId: selectedRoom?.id || '', roomTypeName: selectedRoom?.name || '' }}
+          listing={{
+            id: listingId,
+            title: categorized && selectedRoom ? selectedRoom.name : publicListing?.title || 'Calendrier de l’hôte',
+            nightlyRate: selectedPrice,
+            currency,
+            roomTypeId: selectedRoom?.id || '',
+            roomTypeName: categorized ? selectedRoom?.name || '' : '',
+          }}
           onClose={() => setOpen(false)}
         />
       ) : null}
