@@ -1,4 +1,5 @@
 import { findHostProfileByListingId } from './hostProfileStore.js'
+import { applyRoomInventoryAvailability } from './hostRoomInventoryStore.js'
 import { storageAdapter } from '../../services/storage/storageAdapter.js'
 
 export const HOST_CALENDAR_KEY = 'movera:host-calendar:v1'
@@ -36,7 +37,7 @@ export function readHostCalendarForListing(listingId) {
       linked: true,
       userId: typeof direct.userId === 'string' ? direct.userId : null,
       listingId,
-      days: normalizeDays(direct),
+      days: applyRoomInventoryAvailability(listingId, normalizeDays(direct)),
     }
   }
 
@@ -48,7 +49,7 @@ export function readHostCalendarForListing(listingId) {
     linked: true,
     userId: profile.userId,
     listingId: profile.listing.id,
-    days: legacy.days,
+    days: applyRoomInventoryAvailability(profile.listing.id, legacy.days),
   }
 }
 
