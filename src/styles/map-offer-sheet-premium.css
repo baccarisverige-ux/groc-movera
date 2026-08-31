@@ -41,6 +41,17 @@
     inset 0 1px 0 #fff!important;
 }
 
+@keyframes map-offer-sheet-idle-nudge{
+  0%,100%{transform:translateY(0)}
+  46%{transform:translateY(-5px)}
+  72%{transform:translateY(1px)}
+}
+
+.map-offer-sheet__panel[data-idle-hint=true][data-attachment-state=moving]{
+  animation:map-offer-sheet-idle-nudge .72s cubic-bezier(.34,.78,.32,1)!important;
+  will-change:transform;
+}
+
 .map-offer-sheet__panel::before{
   content:"";
   position:absolute;
@@ -228,4 +239,5 @@
 @media(prefers-reduced-motion:reduce){
   .map-offer-sheet__panel,
   .map-offer-sheet__chevron{transition:none!important}
+  .map-offer-sheet__panel[data-idle-hint=true]{animation:none!important}
 }
