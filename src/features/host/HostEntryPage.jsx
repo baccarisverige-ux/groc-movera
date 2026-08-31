@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useHostProfile } from '../../entities/host/hostProfileStore.js'
+import { writeHostPublicIdentity } from '../../entities/host/hostPublicIdentityStore.js'
 import { useAuthSession } from '../auth/authSession.js'
 import { HostCalendarPage } from './calendar/HostCalendarPage.jsx'
 import { HostOnboardingPage } from './onboarding/HostOnboardingPage.jsx'
@@ -15,6 +16,14 @@ export function HostEntryPage({ onNavigate }) {
   const [activatedProfile, setActivatedProfile] = useState(null)
   const activeProfile = profile || activatedProfile
   const view = hostWorkspaceViewFromPath(window.location.pathname)
+
+  useEffect(() => {
+    if (!activeProfile || !session?.userId) return
+    writeHostPublicIdentity(session.userId, {
+      displayName: session.displayName || '',
+      since: activeProfile.createdAt || '',
+    })
+  }, [activeProfile, session?.userId, session?.displayName])
 
   if (!activeProfile) {
     return <HostOnboardingPage onNavigate={onNavigate} onActivated={setActivatedProfile} />
