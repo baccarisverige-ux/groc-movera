@@ -5,7 +5,15 @@
 @import './styles/utilities.css';
 @import './styles/accessibility.css';
 
-/* Host onboarding uses a pure white canvas; cards and borders provide depth. */
-body .host-onboarding{background:#fff}
+/* One neutral Movera canvas across every screen. Component surfaces keep
+   their own colors; only the page-level background is unified. */
+html,
+body,
+#root,
+.app-shell {
+  background: var(--color-screen-bg);
+}
+
+body .host-onboarding{background:var(--color-screen-bg)}
 body .host-onboarding .host-onboarding__topbar{background:rgba(255,255,255,.96)}
 body .host-onboarding .host-onboarding__footer{background:rgba(255,255,255,.97)}
