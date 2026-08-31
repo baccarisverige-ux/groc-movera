@@ -22,30 +22,30 @@ describe('map offer popup model', () => {
     expect(nextListingId([{ id: 'solo' }], 'solo')).toBe('solo')
   })
 
-  it('formats French location and rating copy', () => {
+  it('formats copy from the canonical seed listing without changing its property type', () => {
     const listing = listUniqueHomeOffers().find((item) => item.id === 'dar-sidi-bleu')
-    expect(listingLocationLine(listing)).toBe('Maison entière · Sidi Bou Saïd')
+    expect(listingLocationLine(listing)).toBe('Maison d’hôte · Sidi Bou Saïd')
     expect(listingRatingCopy(listing)).toBe('★ 4.91 (41)')
     expect(listing.priceLabel).toBe('380 TND total')
+    expect(listing.origin).toBe('seed')
   })
 })
 
 describe('guest listing photo galleries', () => {
-  it('keeps the Home card as photo 0 and adds two Unsplash extras per listing', () => {
+  it('never manufactures unrelated property photos to fill a gallery', () => {
     const offers = listUniqueHomeOffers()
-    const secondPhotos = new Set()
     for (const offer of offers) {
-      expect(offer.photos.length).toBeGreaterThanOrEqual(3)
-      expect(offer.photos[0].src).toBe(offer.image)
-      expect(offer.photos[1].src).toContain('images.unsplash.com')
-      expect(offer.photos[2].src).toContain('images.unsplash.com')
-      expect(offer.photos[1].src).not.toBe(offer.photos[0].src)
-      expect(offer.photos[2].src).not.toBe(offer.photos[0].src)
-      expect(offer.photos[1].src).not.toBe(offer.photos[2].src)
-      secondPhotos.add(offer.photos[1].src)
-      const json = JSON.stringify(offer.photos)
-      expect(json).not.toMatch(/data:image\//)
+      expect(Array.isArray(offer.photos)).toBe(true)
+      if (offer.image) {
+        expect(offer.photos[0]?.src).toBe(offer.image)
+      }
+      const sources = offer.photos.map((photo) => photo.src)
+      expect(new Set(sources).size).toBe(sources.length)
+      expect(JSON.stringify(offer.photos)).not.toMatch(/data:image\//)
+      expect(offer.dataQuality).toMatch(/^seed-/)
     }
-    expect(secondPhotos.size).toBeGreaterThan(1)
+
+    const seedCardWithoutDetailGallery = offers.find((offer) => offer.id === 'dar-sidi-bleu')
+    expect(seedCardWithoutDetailGallery.photos).toHaveLength(1)
   })
 })
