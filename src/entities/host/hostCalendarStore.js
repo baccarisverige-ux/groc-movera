@@ -23,6 +23,22 @@ function readAllListingCalendars() {
   return readObject(LISTING_CALENDAR_KEY)
 }
 
+function resolveDaysForRoomType(days, roomTypeId) {
+  if (!roomTypeId) return days
+  const resolved = {}
+  Object.entries(days).forEach(([key, raw]) => {
+    const day = raw && typeof raw === 'object' ? raw : {}
+    const roomTypes = day.roomTypes && typeof day.roomTypes === 'object' && !Array.isArray(day.roomTypes) ? day.roomTypes : {}
+    const room = roomTypes[roomTypeId] && typeof roomTypes[roomTypeId] === 'object' ? roomTypes[roomTypeId] : {}
+    resolved[key] = {
+      ...day,
+      ...room,
+      blocked: Boolean(day.blocked) || Boolean(room.blocked),
+    }
+  })
+  return resolved
+}
+
 export function readHostCalendar(userId) {
   if (!userId) return { days: {} }
   return { days: normalizeDays(readAllCalendars()[userId]) }
@@ -33,12 +49,13 @@ export function readHostCalendarForListing(listingId, roomTypeId = '') {
 
   const direct = readAllListingCalendars()[listingId]
   if (direct) {
+    const days = resolveDaysForRoomType(normalizeDays(direct), roomTypeId)
     return {
       linked: true,
       userId: typeof direct.userId === 'string' ? direct.userId : null,
       listingId,
       roomTypeId,
-      days: applyRoomInventoryAvailability(listingId, normalizeDays(direct), roomTypeId),
+      days: applyRoomInventoryAvailability(listingId, days, roomTypeId),
     }
   }
 
@@ -46,16 +63,17 @@ export function readHostCalendarForListing(listingId, roomTypeId = '') {
   if (!profile) return { linked: false, userId: null, listingId, roomTypeId, days: {} }
 
   const legacy = readHostCalendar(profile.userId)
+  const days = resolveDaysForRoomType(legacy.days, roomTypeId)
   return {
     linked: true,
     userId: profile.userId,
     listingId: profile.listing.id,
     roomTypeId,
-    days: applyRoomInventoryAvailability(profile.listing.id, legacy.days, roomTypeId),
+    days: applyRoomInventoryAvailability(profile.listing.id, days, roomTypeId),
   }
 }
 
-export function writeHostCalendarDays(userId, keys, settings, listingId = '') {
+export function writeHostCalendarDays(userId, keys, settings, listingId = '', roomTypeId = '') {
   if (!userId || !Array.isArray(keys) || !keys.length) return readHostCalendar(userId)
   const price = Math.max(0, Math.round(Number(settings?.price) || 0))
   const blocked = Boolean(settings?.blocked)
@@ -64,7 +82,19 @@ export function writeHostCalendarDays(userId, keys, settings, listingId = '') {
   const days = { ...current.days }
 
   keys.forEach((key) => {
-    days[key] = { price, blocked }
+    const existing = days[key] && typeof days[key] === 'object' ? days[key] : {}
+    if (roomTypeId) {
+      const roomTypes = existing.roomTypes && typeof existing.roomTypes === 'object' && !Array.isArray(existing.roomTypes) ? existing.roomTypes : {}
+      days[key] = {
+        ...existing,
+        roomTypes: {
+          ...roomTypes,
+          [roomTypeId]: { price, blocked },
+        },
+      }
+    } else {
+      days[key] = { ...existing, price, blocked }
+    }
   })
 
   const next = { days }
@@ -78,7 +108,7 @@ export function writeHostCalendarDays(userId, keys, settings, listingId = '') {
   }
 
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent(HOST_CALENDAR_EVENT, { detail: { userId, listingId, ...next } }))
+    window.dispatchEvent(new CustomEvent(HOST_CALENDAR_EVENT, { detail: { userId, listingId, roomTypeId, ...next } }))
   }
   return next
 }
