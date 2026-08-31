@@ -62,15 +62,21 @@ export function HostCalendarPage({ onNavigate, hostProfile = null }) {
 
   const roomTypes = Array.isArray(listing?.roomTypes) ? listing.roomTypes : []
   const pooledRooms = supportsPooledRoomInventory(listing?.type) && roomTypes.length > 0
+  const categorizedRooms = roomTypes.length > 1
   const selectedRoomType = roomTypes.find((room) => room.id === selectedRoomTypeId) || roomTypes[0] || null
   const selectedBasePrice = selectedRoomType?.basePrice || listing?.basePrice || 180
+  const selectedRoomTotal = Math.max(1, Number(roomInventory.totalUnits) || Number(selectedRoomType?.totalUnits) || 1)
+  const identicalRooms = pooledRooms && !categorizedRooms && selectedRoomTotal > 1
+  const showInventoryControls = categorizedRooms || identicalRooms
   const cells = useMemo(() => buildMonthCells(year, month), [year, month])
   const bookings = useMemo(() => pooledRooms ? [] : makeDemoBookings(year, month), [pooledRooms, year, month])
   const selectedArray = useMemo(() => Array.from(selectedKeys), [selectedKeys])
   const selectedRoomStock = selectedArray.length === 1 && roomInventory.enabled
     ? remainingRoomUnitsForDay(roomInventory, selectedArray[0])
     : null
-  const startingPrice = pooledRooms ? Math.min(...roomTypes.map((room) => Number(room.basePrice) || listing.basePrice)) : listing?.basePrice
+  const startingPrice = pooledRooms && roomTypes.length
+    ? Math.min(...roomTypes.map((room) => Number(room.basePrice) || listing.basePrice))
+    : listing?.basePrice
 
   useEffect(() => {
     if (!roomTypes.length) {
@@ -153,7 +159,7 @@ export function HostCalendarPage({ onNavigate, hostProfile = null }) {
       blocked: editBlocked,
     }, listing?.id, pooledRooms ? selectedRoomTypeId : '')
     setCalendar(readHostCalendarForListing(listing.id, pooledRooms ? selectedRoomTypeId : ''))
-    setNotice(`Réglages appliqués à ${selectedArray.length} jour${selectedArray.length > 1 ? 's' : ''}${selectedRoomType ? ` · ${selectedRoomType.name}` : ''}`)
+    setNotice(`Réglages appliqués à ${selectedArray.length} jour${selectedArray.length > 1 ? 's' : ''}${categorizedRooms && selectedRoomType ? ` · ${selectedRoomType.name}` : ''}`)
   }
 
   const changeRoomTotal = (delta) => {
@@ -163,7 +169,9 @@ export function HostCalendarPage({ onNavigate, hostProfile = null }) {
     if (nextTotal === current) return
     updateHostRoomTypeTotal(session.userId, selectedRoomType.id, nextTotal)
     setRoomInventory(readHostRoomInventoryForListing(listing.id, selectedRoomType.id))
-    setNotice(`${selectedRoomType.name} · ${nextTotal} chambre${nextTotal > 1 ? 's' : ''} identique${nextTotal > 1 ? 's' : ''}`)
+    setNotice(categorizedRooms
+      ? `${selectedRoomType.name} · ${nextTotal} chambre${nextTotal > 1 ? 's' : ''}`
+      : `${nextTotal} chambre${nextTotal > 1 ? 's' : ''} identique${nextTotal > 1 ? 's' : ''}`)
   }
 
   if (!profile || !listing) return null
@@ -186,23 +194,25 @@ export function HostCalendarPage({ onNavigate, hostProfile = null }) {
         <section className="host-calendar-page__listing" aria-label="Logement actif">
           <span className="host-calendar-page__listing-icon"><CalendarIcon /></span>
           <span><small>Logement actif</small><strong>{listing.name}</strong><em>{listing.type} · {listing.city}</em></span>
-          <b>{pooledRooms ? `Dès ${startingPrice}` : startingPrice} TND</b>
+          <b>{categorizedRooms ? `Dès ${startingPrice}` : startingPrice} TND</b>
         </section>
 
-        {roomInventory.enabled ? (
-          <section className="host-room-inventory" data-testid="host-room-inventory" aria-label="Stock des chambres identiques">
+        {showInventoryControls ? (
+          <section className="host-room-inventory" data-testid="host-room-inventory" aria-label="Inventaire des chambres">
             <div className="host-room-inventory__copy">
-              <small>Stock privé · type sélectionné</small>
-              <strong>{selectedRoomType?.name || 'Chambre'}</strong>
-              <span>{selectedRoomType?.view || 'Même configuration'} · jamais affiché en quantité aux voyageurs</span>
+              <small>{categorizedRooms ? 'Stock privé · catégorie sélectionnée' : 'Stock privé'}</small>
+              <strong>{categorizedRooms ? selectedRoomType?.name || 'Catégorie' : `${selectedRoomTotal} chambres identiques`}</strong>
+              <span>{categorizedRooms
+                ? `${selectedRoomTotal} chambre${selectedRoomTotal > 1 ? 's' : ''} dans cette catégorie · stock calculé par nuit`
+                : 'Une seule annonce · le stock restant est calculé séparément pour chaque nuit'}</span>
             </div>
-            <div className="host-room-inventory__counter" aria-label={`${roomInventory.totalUnits} chambres identiques`}>
-              <button type="button" aria-label="Réduire le nombre de chambres" disabled={roomInventory.totalUnits <= 1} onClick={() => changeRoomTotal(-1)}>−</button>
-              <b>{roomInventory.totalUnits}</b>
+            <div className="host-room-inventory__counter" aria-label={`${selectedRoomTotal} chambres`}>
+              <button type="button" aria-label="Réduire le nombre de chambres" disabled={selectedRoomTotal <= 1} onClick={() => changeRoomTotal(-1)}>−</button>
+              <b>{selectedRoomTotal}</b>
               <button type="button" aria-label="Augmenter le nombre de chambres" onClick={() => changeRoomTotal(1)}>+</button>
             </div>
-            {roomTypes.length > 1 ? (
-              <div className="host-room-calendar-types" aria-label="Choisir un type de chambre">
+            {categorizedRooms ? (
+              <div className="host-room-calendar-types" aria-label="Choisir une catégorie de chambre">
                 {roomTypes.map((room) => (
                   <button
                     type="button"
@@ -239,7 +249,7 @@ export function HostCalendarPage({ onNavigate, hostProfile = null }) {
               const blocked = (Boolean(data.blocked) || soldOut) && !booking
               const price = data.price ?? defaultNightlyPrice(selectedBasePrice, day)
               const guestInitial = booking?.guest?.charAt(0) || ''
-              const stockLabel = roomInventory.enabled ? `${remainingRooms} chambre${remainingRooms > 1 ? 's' : ''} restante${remainingRooms > 1 ? 's' : ''}` : ''
+              const stockLabel = showInventoryControls && remainingRooms != null ? `${remainingRooms} chambre${remainingRooms > 1 ? 's' : ''} restante${remainingRooms > 1 ? 's' : ''}` : ''
               const classes = ['host-calendar__day', selected ? 'is-selected' : '', blocked ? 'is-blocked' : '', soldOut ? 'is-sold-out' : '', booking ? 'has-booking' : '', booking ? `book-${role}` : '', isToday(year, month, day) ? 'is-today' : ''].filter(Boolean).join(' ')
               return (
                 <button
@@ -250,13 +260,13 @@ export function HostCalendarPage({ onNavigate, hostProfile = null }) {
                   data-day-key={key}
                   data-booking-id={booking?.id || ''}
                   data-room-type-id={selectedRoomType?.id || ''}
-                  data-room-stock={roomInventory.enabled ? remainingRooms : ''}
+                  data-room-stock={showInventoryControls ? remainingRooms : ''}
                   aria-label={booking ? `${dayLabel(day, month, year)}, réservation ${booking.guest}` : `${dayLabel(day, month, year)}, ${blocked ? 'indisponible' : `${price} TND`}${stockLabel ? `, ${stockLabel}` : ''}`}
                   onClick={() => selectDay(day)}
                 >
                   <span className="host-calendar__number">{day}</span>
                   <span className="host-calendar__price">{blocked ? '—' : `${price}`}</span>
-                  {roomInventory.enabled && !booking ? <span className="host-calendar__room-stock" data-sold-out={soldOut ? 'true' : 'false'}>{remainingRooms}/{roomInventory.totalUnits}</span> : null}
+                  {showInventoryControls && !booking ? <span className="host-calendar__room-stock" data-sold-out={soldOut ? 'true' : 'false'}>{remainingRooms}/{selectedRoomTotal}</span> : null}
                   {booking ? <i className="host-calendar__booking-bar" aria-hidden="true" /> : null}
                   {booking && (role === 'start' || role === 'both') ? <span className="host-calendar__guest" aria-hidden="true">{guestInitial}</span> : null}
                 </button>
@@ -265,7 +275,7 @@ export function HostCalendarPage({ onNavigate, hostProfile = null }) {
           </div>
 
           <div className="host-calendar__legend"><span><i className="free" />Libre</span><span><i className="booked" />Réservé</span><span><i className="blocked" />Bloqué</span></div>
-          <p className="host-calendar__hint">Touchez des dates libres pour modifier prix et disponibilité.{roomInventory.enabled ? ` Le compteur est privé et concerne ${selectedRoomType?.name || 'le type sélectionné'}.` : ''}</p>
+          <p className="host-calendar__hint">Touchez des dates libres pour modifier prix et disponibilité.{showInventoryControls ? ` Le compteur de stock reste privé${categorizedRooms && selectedRoomType ? ` pour ${selectedRoomType.name}` : ''}.` : ''}</p>
         </section>
 
         {notice ? <div className="host-calendar-page__notice" role="status">{notice}</div> : null}
@@ -274,7 +284,7 @@ export function HostCalendarPage({ onNavigate, hostProfile = null }) {
       {selectedArray.length ? (
         <aside className="host-day-editor" data-testid="host-day-editor" aria-label="Réglages des dates sélectionnées">
           <div className="host-day-editor__handle" />
-          <div className="host-day-editor__head"><div><strong>{selectedArray.length === 1 ? 'Réglages du jour' : `${selectedArray.length} dates sélectionnées`}</strong><span>{selectedRoomType ? `${selectedRoomType.name} · ` : ''}{selectedRoomStock != null ? `Stock ${selectedRoomStock}/${roomInventory.totalUnits} · ` : ''}Prix et disponibilité</span></div><button type="button" aria-label="Fermer les réglages" onClick={() => setSelectedKeys(new Set())}>×</button></div>
+          <div className="host-day-editor__head"><div><strong>{selectedArray.length === 1 ? 'Réglages du jour' : `${selectedArray.length} dates sélectionnées`}</strong><span>{categorizedRooms && selectedRoomType ? `${selectedRoomType.name} · ` : ''}{showInventoryControls && selectedRoomStock != null ? `Stock ${selectedRoomStock}/${selectedRoomTotal} · ` : ''}Prix et disponibilité</span></div><button type="button" aria-label="Fermer les réglages" onClick={() => setSelectedKeys(new Set())}>×</button></div>
           <div className="host-day-editor__price"><span>Prix par nuit</span><label><input value={editPrice} inputMode="numeric" aria-label="Prix des dates sélectionnées" onChange={(event) => setEditPrice(event.target.value.replace(/\D/g, '').slice(0, 5))} /><b>TND</b></label></div>
           <div className="host-day-editor__availability"><button type="button" data-active={!editBlocked ? 'true' : 'false'} onClick={() => setEditBlocked(false)}>Disponible</button><button type="button" data-active={editBlocked ? 'true' : 'false'} onClick={() => setEditBlocked(true)}>Bloqué</button></div>
           <button type="button" className="host-day-editor__save" onClick={applySettings}>Appliquer</button>
