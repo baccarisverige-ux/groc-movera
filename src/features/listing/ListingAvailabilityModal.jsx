@@ -124,7 +124,7 @@ export function ListingAvailabilityModal({ listing, onClose }) {
   const now = useMemo(() => new Date(), [])
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth())
-  const [calendar, setCalendar] = useState(() => readHostCalendarForListing(listing.id))
+  const [calendar, setCalendar] = useState(() => readHostCalendarForListing(listing.id, listing.roomTypeId || ''))
   const [checkIn, setCheckIn] = useState('')
   const [checkOut, setCheckOut] = useState('')
   const [selectionError, setSelectionError] = useState('')
@@ -141,7 +141,7 @@ export function ListingAvailabilityModal({ listing, onClose }) {
   const saving = Math.max(0, originalTotal - finalTotal)
 
   useEffect(() => {
-    const sync = () => setCalendar(readHostCalendarForListing(listing.id))
+    const sync = () => setCalendar(readHostCalendarForListing(listing.id, listing.roomTypeId || ''))
     sync()
     window.addEventListener(HOST_CALENDAR_EVENT, sync)
     window.addEventListener('storage', sync)
@@ -149,7 +149,7 @@ export function ListingAvailabilityModal({ listing, onClose }) {
       window.removeEventListener(HOST_CALENDAR_EVENT, sync)
       window.removeEventListener('storage', sync)
     }
-  }, [listing.id])
+  }, [listing.id, listing.roomTypeId])
 
   const changeMonth = (delta) => {
     const next = new Date(year, month + delta, 1, 12)
@@ -191,13 +191,13 @@ export function ListingAvailabilityModal({ listing, onClose }) {
 
   return (
     <div className="listing-availability-modal" role="presentation" onClick={(event) => { if (event.target === event.currentTarget) onClose() }}>
-      <section className="listing-availability-modal__sheet" role="dialog" aria-modal="true" aria-labelledby="listing-availability-title" data-calendar-linked={calendar.linked ? 'true' : 'false'}>
+      <section className="listing-availability-modal__sheet" role="dialog" aria-modal="true" aria-labelledby="listing-availability-title" data-calendar-linked={calendar.linked ? 'true' : 'false'} data-room-type-id={listing.roomTypeId || ''}>
         <div className="listing-availability-modal__handle" aria-hidden="true" />
         <header className="listing-availability-modal__head">
           <div>
             <span className="listing-availability-modal__eyebrow">Movera Host</span>
             <h2 id="listing-availability-title">Choisissez vos dates</h2>
-            <p>Arrivée puis départ · aucune nuit indisponible entre les deux</p>
+            <p>{listing.roomTypeName ? `${listing.roomTypeName} · ` : ''}Arrivée puis départ · aucune nuit indisponible entre les deux</p>
           </div>
           <button type="button" className="listing-availability-modal__close" aria-label="Fermer le calendrier" onClick={onClose}><CloseIcon /></button>
         </header>
