@@ -18,13 +18,14 @@ const COLLECTION_HEADER_LABELS = Object.freeze({
   '/villa': 'Collection Villa',
 })
 
-const mapShellStyle = { maxWidth: 430, margin: '0 auto', background: '#eff1ef' }
-const mapContentStyle = { padding: 0, overflow: 'hidden' }
-const hostShellStyle = { maxWidth: 430, margin: '0 auto', background: '#f4f7f5', gridTemplateColumns: 'minmax(0, 1fr)' }
-const hostContentStyle = { padding: 0, overflow: 'visible', background: '#f4f7f5' }
-const collectionContentStyle = { paddingTop: 0, paddingLeft: 0, paddingRight: 0, overflow: 'auto', background: '#f7f7f5' }
-const stackedContentStyle = { padding: 0, overflow: 'auto', background: '#f7f7f5' }
-const profileContentStyle = { padding: 0, overflow: 'auto', background: '#fefefd' }
+const screenBackground = 'var(--color-screen-bg)'
+const mapShellStyle = { maxWidth: 430, margin: '0 auto', background: screenBackground }
+const mapContentStyle = { padding: 0, overflow: 'hidden', background: screenBackground }
+const hostShellStyle = { maxWidth: 430, margin: '0 auto', background: screenBackground, gridTemplateColumns: 'minmax(0, 1fr)' }
+const hostContentStyle = { padding: 0, overflow: 'visible', background: screenBackground }
+const collectionContentStyle = { paddingTop: 0, paddingLeft: 0, paddingRight: 0, overflow: 'auto', background: screenBackground }
+const stackedContentStyle = { padding: 0, overflow: 'auto', background: screenBackground }
+const profileContentStyle = { padding: 0, overflow: 'auto', background: screenBackground }
 
 function AppLink({ children, className, href, onNavigate, active, disabled = false }) {
   return (
