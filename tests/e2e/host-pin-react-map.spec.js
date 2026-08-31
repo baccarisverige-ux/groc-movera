@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test'
 const HOST_PROFILES_KEY = 'movera:host-profiles:v1'
 const HOST_CALENDAR_KEY = 'movera:host-calendar:v1'
 const HOST_DRAFT_KEY = 'movera:host-onboarding-drafts:v1'
+const HOST_MAP_CACHE_KEY = 'movera:host-map-last-location:v1'
 
 const SEARCH_RESULT = {
   place_id: 6101,
@@ -35,30 +36,53 @@ const REVERSE_RESULT = {
   },
 }
 
-async function mockTunisiaGeocoding(page) {
+async function installTunisiaGeocoding(page, { failSearch = false, failAfterFirstSearch = false } = {}) {
+  let searchRequests = 0
+  let reverseRequests = 0
+
   await page.route('https://nominatim.openstreetmap.org/**', async (route) => {
     const url = new URL(route.request().url())
-    const payload = url.pathname.endsWith('/reverse') ? REVERSE_RESULT : [SEARCH_RESULT]
+    if (url.pathname.endsWith('/reverse')) {
+      reverseRequests += 1
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(REVERSE_RESULT),
+      })
+      return
+    }
+
+    searchRequests += 1
+    if (failSearch || (failAfterFirstSearch && searchRequests > 1)) {
+      await route.fulfill({ status: 503, contentType: 'application/json', body: '{}' })
+      return
+    }
+
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify(payload),
+      body: JSON.stringify([SEARCH_RESULT]),
     })
   })
+
+  return {
+    searchRequests: () => searchRequests,
+    reverseRequests: () => reverseRequests,
+  }
 }
 
 async function clearHostState(page) {
-  await page.evaluate(([profilesKey, calendarKey, draftKey]) => {
+  await page.evaluate(([profilesKey, calendarKey, draftKey, mapCacheKey]) => {
     window.localStorage.removeItem(profilesKey)
     window.localStorage.removeItem(calendarKey)
     window.localStorage.removeItem(draftKey)
+    window.localStorage.removeItem(mapCacheKey)
     window.localStorage.removeItem('movera:host-pin-location:v1')
-  }, [HOST_PROFILES_KEY, HOST_CALENDAR_KEY, HOST_DRAFT_KEY])
+  }, [HOST_PROFILES_KEY, HOST_CALENDAR_KEY, HOST_DRAFT_KEY, HOST_MAP_CACHE_KEY])
 }
 
-async function reachPinStep(page) {
+async function reachAddressStep(page) {
   await page.setViewportSize({ width: 390, height: 844 })
-  await mockTunisiaGeocoding(page)
   await page.goto('/groc-movera/profile')
   await page.getByTestId('profile-test-login').click()
   await clearHostState(page)
@@ -71,47 +95,95 @@ async function reachPinStep(page) {
   await page.getByRole('button', { name: 'Continuer' }).click()
   await page.getByRole('radio', { name: /Logement entier/ }).click()
   await page.getByRole('button', { name: 'Continuer' }).click()
-  await page.getByLabel('Adresse du logement').fill('12 Rue Movera')
-  await page.getByLabel('Ville du logement').fill('La Marsa')
-  await page.getByRole('button', { name: 'Continuer' }).click()
-  await expect(onboarding).toHaveAttribute('data-screen', 'pin')
+  await expect(onboarding).toHaveAttribute('data-screen', 'address')
   return onboarding
 }
 
-test('address entered on the previous step automatically positions the single host map without a second search', async ({ page }) => {
-  await reachPinStep(page)
+function readDraft(page) {
+  return page.evaluate((draftKey) => {
+    const drafts = JSON.parse(window.localStorage.getItem(draftKey) || '{}')
+    return drafts['movera-demo-user'] || null
+  }, HOST_DRAFT_KEY)
+}
+
+test('selected address carries exact coordinates into the pin step without a second forward geocode', async ({ page }) => {
+  const geocoding = await installTunisiaGeocoding(page, { failAfterFirstSearch: true })
+  const onboarding = await reachAddressStep(page)
+
+  await page.getByLabel('Adresse du logement').fill('12 Rue Movera')
+  await page.getByLabel('Ville du logement').fill('La Marsa')
+  const suggestion = page.locator('.host-address-suggestion').first()
+  await expect(suggestion).toBeVisible({ timeout: 7000 })
+  await suggestion.click()
+
+  await expect.poll(() => readDraft(page)).toMatchObject({
+    address: '12 Rue Movera',
+    city: 'La Marsa',
+    latitude: 36.8782,
+    longitude: 10.3247,
+    pinConfirmed: false,
+  })
+  expect(geocoding.searchRequests()).toBe(1)
+
+  await page.getByRole('button', { name: 'Continuer' }).click()
+  await expect(onboarding).toHaveAttribute('data-screen', 'pin')
 
   const card = page.locator('.host-onboarding__map-card')
   const reactRoot = page.getByTestId('host-pin-react-map')
   await expect(card).toHaveAttribute('data-react-map-engine', 'true')
   await expect(reactRoot).toBeVisible()
-  await expect(reactRoot.getByTestId('map-engine')).toBeVisible()
-
-  // The old Leaflet runtime must not coexist with the React/Google map.
+  await expect(reactRoot).toHaveAttribute('data-location-ready', 'true')
   await expect(card.locator(':scope > .host-step5-real-map')).toHaveCount(0)
   await expect(page.locator('script[data-host-leaflet]')).toHaveCount(0)
 
-  const searchInput = reactRoot.getByLabel('Rechercher ou modifier l’adresse')
-  await expect(searchInput).toHaveValue('12 Rue Movera')
-
-  // No submit/search click here: the handoff itself must move the map.
   const mapSurface = reactRoot.getByTestId('map-surface')
-  await expect(mapSurface).toHaveAttribute('data-lat', '36.878200', { timeout: 8000 })
+  await expect(mapSurface).toHaveAttribute('data-lat', '36.878200')
   await expect(mapSurface).toHaveAttribute('data-lng', '10.324700')
   await expect(mapSurface).toHaveAttribute('data-zoom', '17')
+  await expect(reactRoot.getByLabel('Rechercher ou modifier l’adresse')).toHaveValue('12 Rue Movera')
 
-  await expect.poll(async () => page.evaluate((draftKey) => {
-    const drafts = JSON.parse(window.localStorage.getItem(draftKey) || '{}')
-    return drafts['movera-demo-user'] || null
-  }, HOST_DRAFT_KEY)).toMatchObject({
-    address: '12 Rue Movera',
+  // Entering the map step must reuse the already selected coordinate instead of
+  // asking Nominatim to resolve the same address again.
+  await page.waitForTimeout(500)
+  expect(geocoding.searchRequests()).toBe(1)
+  expect(geocoding.reverseRequests()).toBe(0)
+
+  const confirm = page.getByRole('button', { name: 'Confirmer cet emplacement' })
+  await expect(confirm).toBeEnabled()
+  await confirm.click()
+  await expect.poll(async () => Boolean((await readDraft(page))?.pinConfirmed)).toBe(true)
+})
+
+test('failed automatic geocoding never turns the fallback map into a confirmed property location', async ({ page }) => {
+  await installTunisiaGeocoding(page, { failSearch: true })
+  const onboarding = await reachAddressStep(page)
+
+  await page.getByLabel('Adresse du logement').fill('99 Rue Introuvable')
+  await page.getByLabel('Ville du logement').fill('La Marsa')
+  await page.getByRole('button', { name: 'Continuer' }).click()
+  await expect(onboarding).toHaveAttribute('data-screen', 'pin')
+
+  const reactRoot = page.getByTestId('host-pin-react-map')
+  await expect(reactRoot).toBeVisible()
+  await expect(reactRoot).toHaveAttribute('data-location-ready', 'false', { timeout: 7000 })
+  await expect(reactRoot.getByLabel('Rechercher ou modifier l’adresse')).toHaveValue('99 Rue Introuvable')
+
+  // Missing coordinates must use the visual Tunis fallback, never JavaScript's
+  // Number(null) => 0 conversion and never publish that fallback into the draft.
+  const mapSurface = reactRoot.getByTestId('map-surface')
+  await expect(mapSurface).toHaveAttribute('data-lat', '36.806500')
+  await expect(mapSurface).toHaveAttribute('data-lng', '10.181500')
+  await expect(mapSurface).toHaveAttribute('data-zoom', '13')
+
+  await expect.poll(() => readDraft(page)).toMatchObject({
+    address: '99 Rue Introuvable',
     city: 'La Marsa',
+    latitude: null,
+    longitude: null,
     pinConfirmed: false,
   })
 
-  await page.getByRole('button', { name: 'Confirmer cet emplacement' }).click()
-  await expect.poll(async () => page.evaluate((draftKey) => {
-    const drafts = JSON.parse(window.localStorage.getItem(draftKey) || '{}')
-    return Boolean(drafts['movera-demo-user']?.pinConfirmed)
-  }, HOST_DRAFT_KEY)).toBe(true)
+  const confirm = page.getByRole('button', { name: 'Confirmer cet emplacement' })
+  await expect(confirm).toBeDisabled()
+  await expect(page.locator('.host-onboarding__map-hint')).toContainText('Adresse non localisée automatiquement')
 })
