@@ -1,4 +1,4 @@
-import { findHostProfileByListingId } from '../../entities/host/hostProfileStore.js'
+import { findHostProfileByListingId, listActiveHostProfiles } from '../../entities/host/hostProfileStore.js'
 import { getListingDetail, listingCatalog } from '../../entities/listing/listingCatalog.js'
 import { homeCategoryOffers, homeDestinations } from '../home/data/homeData.js'
 
@@ -115,9 +115,13 @@ function guestRoomTypes(roomTypes, currency = 'TND') {
       name: room.name,
       view: room.view || '',
       description: room.description || '',
+      surface: Math.max(0, Number(room.surface) || 0),
       guests: capacity.guests,
       beds: capacity.beds,
+      bedType: room.bedType || '',
       bathrooms: capacity.baths,
+      bathroomType: room.bathroomType === 'shared' ? 'shared' : 'private',
+      features: Array.isArray(room.features) ? [...room.features] : [],
       basePrice: Math.max(1, Number(room.basePrice) || 1),
       currency,
       photos: Array.isArray(room.photos) ? room.photos.map((src, index) => ({ src, label: index === 0 ? room.name : `${room.name} · ${index + 1}` })) : [],
@@ -174,6 +178,7 @@ function fromHostProfile(profile, baseListing = null) {
   const category = source.type === 'Hôtel' ? 'hotel' : source.type === "Maison d’hôte" ? 'guesthouse' : baseListing?.category || ''
   const capacity = primaryRoom?.capacity || { type: source.type, guests: source.guests, bedrooms: source.bedrooms, beds: source.beds, baths: source.bathrooms }
   const amenities = (source.amenities || []).map((id) => HOST_AMENITY_LABELS[id] || id).filter(Boolean)
+  const categorized = roomTypes.length > 1
 
   return {
     ...(baseListing || {}),
@@ -185,7 +190,7 @@ function fromHostProfile(profile, baseListing = null) {
     rating: baseListing?.rating || '4.90',
     reviews: baseListing?.reviews || 0,
     badge: baseListing?.badge || '',
-    priceLabel: roomTypes.length > 1 ? `À partir de ${cheapest} ${currency} / nuit` : `${cheapest} ${currency} / nuit`,
+    priceLabel: categorized ? `À partir de ${cheapest} ${currency} / nuit` : `${cheapest} ${currency} / nuit`,
     dates: baseListing?.dates || DEFAULT_DATES,
     amenities: amenities.length ? amenities : baseListing?.amenities || DEFAULT_AMENITIES,
     host: baseListing?.host || { name: 'Hôte Movera', since: 'Hôte Movera' },
@@ -228,6 +233,19 @@ export function listUniqueHomeOffers() {
       const listing = getGuestListingById(item.id)
       if (listing) offers.push(listing)
     }
+  }
+  return offers
+}
+
+export function listMapGuestListings() {
+  const offers = listUniqueHomeOffers()
+  const seen = new Set(offers.map((listing) => listing.id))
+  for (const profile of listActiveHostProfiles()) {
+    if (!profile?.listing?.id || seen.has(profile.listing.id)) continue
+    const listing = fromHostProfile(profile)
+    if (!listing) continue
+    seen.add(listing.id)
+    offers.push(listing)
   }
   return offers
 }
