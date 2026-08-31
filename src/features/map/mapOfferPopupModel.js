@@ -20,7 +20,9 @@ export function listingLocationLine(listing) {
 }
 
 export function listingRatingCopy(listing) {
-  const rating = listing?.rating || '4.90'
-  const reviews = listing?.reviews ?? 0
-  return `★ ${rating} (${reviews})`
+  const rating = Number.parseFloat(listing?.rating)
+  if (!Number.isFinite(rating) || rating <= 0) return 'Nouveau'
+  const reviews = Number(listing?.reviews)
+  if (!Number.isFinite(reviews) || reviews <= 0) return `★ ${rating.toFixed(2)}`
+  return `★ ${rating.toFixed(2)} (${Math.round(reviews)})`
 }
