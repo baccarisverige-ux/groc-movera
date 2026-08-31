@@ -11,6 +11,8 @@ const TOP_BAR_SEAM_OVERLAP_PX = 2
 const ATTACHED_ENTER_PROGRESS = 0.995
 const ATTACHED_EXIT_PROGRESS = 0.92
 const TOP_HANDLE_TOUCH_THRESHOLD_PX = 2
+const IDLE_HINT_INTERVAL_MS = 12000
+const IDLE_HINT_DURATION_MS = 720
 
 const MAP_PROPERTY_FILTERS = Object.freeze([
   { id: 'all', label: 'Tout' },
@@ -80,12 +82,34 @@ function MapOfferSheetContent({
   const listRef = useMapOfferScrollSheetHandoff({ expanded: attached, externalDrag })
   const dragZoneRef = useRef(null)
   const externalDragRef = useRef(externalDrag)
+  const progressRef = useRef(progress)
+  const idleHintResetRef = useRef(null)
+  const [idleHintActive, setIdleHintActive] = useState(false)
   const safeHeaderHeight = Math.max(0, headerHeight || 0)
   const displayedListings = listings.filter((listing) => listingMatchesSheetPropertyFilter(listing, propertyFilter))
 
   useEffect(() => {
     externalDragRef.current = externalDrag
   }, [externalDrag])
+
+  useEffect(() => {
+    progressRef.current = progress
+    if (progress > 0.03) setIdleHintActive(false)
+  }, [progress])
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      if (document.hidden || progressRef.current > 0.03) return
+      window.clearTimeout(idleHintResetRef.current)
+      setIdleHintActive(true)
+      idleHintResetRef.current = window.setTimeout(() => setIdleHintActive(false), IDLE_HINT_DURATION_MS)
+    }, IDLE_HINT_INTERVAL_MS)
+
+    return () => {
+      window.clearInterval(intervalId)
+      window.clearTimeout(idleHintResetRef.current)
+    }
+  }, [])
 
   useEffect(() => {
     const node = dragZoneRef.current
@@ -158,7 +182,11 @@ function MapOfferSheetContent({
         style={{ height: `${safeHeaderHeight}px` }}
       />
 
-      <div className="map-offer-sheet__panel" data-attachment-state={attached ? 'attached' : 'moving'}>
+      <div
+        className="map-offer-sheet__panel"
+        data-attachment-state={attached ? 'attached' : 'moving'}
+        data-idle-hint={idleHintActive ? 'true' : 'false'}
+      >
         <div
           ref={dragZoneRef}
           className="map-offer-sheet__drag-zone"
