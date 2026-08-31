@@ -3,6 +3,7 @@ import { storageAdapter } from '../../services/storage/storageAdapter.js'
 export const RESERVATIONS_KEY = 'movera:reservations:v1'
 export const RESERVATIONS_EVENT = 'movera:reservations-change'
 const HOST_CALENDAR_EVENT = 'movera:host-calendar-change'
+const HOST_ROOM_INVENTORY_EVENT = 'movera:host-room-inventory-change'
 
 const STATUSES = new Set(['pending', 'confirmed', 'cancelled'])
 
@@ -64,8 +65,10 @@ function normalize(value, fallbackId = '') {
 
 function dispatchChange(reservation) {
   if (typeof window === 'undefined') return
+  const detail = { listingId: reservation?.listingId || '', reservationId: reservation?.id || '' }
   window.dispatchEvent(new CustomEvent(RESERVATIONS_EVENT, { detail: reservation }))
-  window.dispatchEvent(new CustomEvent(HOST_CALENDAR_EVENT, { detail: { listingId: reservation?.listingId || '' } }))
+  window.dispatchEvent(new CustomEvent(HOST_CALENDAR_EVENT, { detail }))
+  window.dispatchEvent(new CustomEvent(HOST_ROOM_INVENTORY_EVENT, { detail }))
 }
 
 function save(reservation) {
