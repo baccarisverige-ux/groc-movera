@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { readHostCalendar, writeHostCalendarDays } from '../../../entities/host/hostCalendarStore.js'
-import { useHostProfile } from '../../../entities/host/hostProfileStore.js'
+import { HOST_PROFILE_EVENT, supportsPooledRoomInventory, updateHostRoomInventoryTotal, useHostProfile } from '../../../entities/host/hostProfileStore.js'
+import { HOST_ROOM_INVENTORY_EVENT, readHostRoomInventoryForListing, remainingRoomUnitsForDay } from '../../../entities/host/hostRoomInventoryStore.js'
 import { useAuthSession } from '../../auth/authSession.js'
 import {
   HOST_WEEKDAYS,
@@ -14,6 +15,7 @@ import {
   monthLabel,
 } from './hostCalendarModel.js'
 import './host-calendar-page.css'
+import './host-room-inventory.css'
 
 function BackIcon() {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6" /></svg>
@@ -43,24 +45,42 @@ export function HostCalendarPage({ onNavigate, hostProfile = null }) {
   const { session } = useAuthSession()
   const { profile: storedProfile } = useHostProfile(session?.userId)
   const profile = hostProfile || storedProfile
+  const listing = profile?.listing
   const now = useMemo(() => new Date(), [])
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth())
   const [calendar, setCalendar] = useState(() => readHostCalendar(session?.userId))
+  const [roomInventory, setRoomInventory] = useState(() => readHostRoomInventoryForListing(listing?.id))
   const [selectedKeys, setSelectedKeys] = useState(() => new Set())
   const [editPrice, setEditPrice] = useState('')
   const [editBlocked, setEditBlocked] = useState(false)
   const [selectedBooking, setSelectedBooking] = useState(null)
   const [notice, setNotice] = useState('')
 
-  const listing = profile?.listing
   const cells = useMemo(() => buildMonthCells(year, month), [year, month])
   const bookings = useMemo(() => makeDemoBookings(year, month), [year, month])
   const selectedArray = useMemo(() => Array.from(selectedKeys), [selectedKeys])
+  const pooledRooms = supportsPooledRoomInventory(listing?.type)
+  const selectedRoomStock = selectedArray.length === 1 && roomInventory.enabled
+    ? remainingRoomUnitsForDay(roomInventory, selectedArray[0])
+    : null
 
   useEffect(() => {
     setCalendar(readHostCalendar(session?.userId))
   }, [session?.userId])
+
+  useEffect(() => {
+    const sync = () => setRoomInventory(readHostRoomInventoryForListing(listing?.id))
+    sync()
+    window.addEventListener(HOST_ROOM_INVENTORY_EVENT, sync)
+    window.addEventListener(HOST_PROFILE_EVENT, sync)
+    window.addEventListener('storage', sync)
+    return () => {
+      window.removeEventListener(HOST_ROOM_INVENTORY_EVENT, sync)
+      window.removeEventListener(HOST_PROFILE_EVENT, sync)
+      window.removeEventListener('storage', sync)
+    }
+  }, [listing?.id])
 
   useEffect(() => {
     const first = selectedArray[0]
@@ -117,6 +137,16 @@ export function HostCalendarPage({ onNavigate, hostProfile = null }) {
     setNotice(`Réglages appliqués à ${selectedArray.length} jour${selectedArray.length > 1 ? 's' : ''}`)
   }
 
+  const changeRoomTotal = (delta) => {
+    if (!session?.userId || !listing?.id || !pooledRooms) return
+    const current = Math.max(1, Number(roomInventory.totalUnits) || 1)
+    const nextTotal = Math.max(1, Math.min(999, current + delta))
+    if (nextTotal === current) return
+    updateHostRoomInventoryTotal(session.userId, nextTotal)
+    setRoomInventory(readHostRoomInventoryForListing(listing.id))
+    setNotice(`${nextTotal} chambre${nextTotal > 1 ? 's' : ''} identique${nextTotal > 1 ? 's' : ''} dans le stock`)
+  }
+
   if (!profile || !listing) return null
 
   return (
@@ -140,6 +170,21 @@ export function HostCalendarPage({ onNavigate, hostProfile = null }) {
           <b>{listing.basePrice} TND</b>
         </section>
 
+        {roomInventory.enabled ? (
+          <section className="host-room-inventory" data-testid="host-room-inventory" aria-label="Stock des chambres identiques">
+            <div className="host-room-inventory__copy">
+              <small>Stock privé</small>
+              <strong>Chambres identiques</strong>
+              <span>Même chambre, même vue · jamais affiché aux voyageurs</span>
+            </div>
+            <div className="host-room-inventory__counter" aria-label={`${roomInventory.totalUnits} chambres identiques`}>
+              <button type="button" aria-label="Réduire le nombre de chambres" disabled={roomInventory.totalUnits <= 1} onClick={() => changeRoomTotal(-1)}>−</button>
+              <b>{roomInventory.totalUnits}</b>
+              <button type="button" aria-label="Augmenter le nombre de chambres" onClick={() => changeRoomTotal(1)}>+</button>
+            </div>
+          </section>
+        ) : null}
+
         <section className="host-calendar" aria-label={`Calendrier ${monthLabel(year, month)}`}>
           <div className="host-calendar__monthbar">
             <button type="button" aria-label="Mois précédent" onClick={() => changeMonth(-1)}><ChevronIcon direction="left" /></button>
@@ -156,10 +201,13 @@ export function HostCalendarPage({ onNavigate, hostProfile = null }) {
               const booking = findBookingForDay(bookings, year, month, day)
               const role = booking ? bookingRole(booking, year, month, day) : ''
               const selected = selectedKeys.has(key)
-              const blocked = Boolean(data.blocked) && !booking
+              const remainingRooms = roomInventory.enabled ? remainingRoomUnitsForDay(roomInventory, key) : null
+              const soldOut = roomInventory.enabled && remainingRooms <= 0
+              const blocked = (Boolean(data.blocked) || soldOut) && !booking
               const price = data.price ?? defaultNightlyPrice(listing.basePrice, day)
               const guestInitial = booking?.guest?.charAt(0) || ''
-              const classes = ['host-calendar__day', selected ? 'is-selected' : '', blocked ? 'is-blocked' : '', booking ? 'has-booking' : '', booking ? `book-${role}` : '', isToday(year, month, day) ? 'is-today' : ''].filter(Boolean).join(' ')
+              const stockLabel = roomInventory.enabled ? `${remainingRooms} chambre${remainingRooms > 1 ? 's' : ''} restante${remainingRooms > 1 ? 's' : ''}` : ''
+              const classes = ['host-calendar__day', selected ? 'is-selected' : '', blocked ? 'is-blocked' : '', soldOut ? 'is-sold-out' : '', booking ? 'has-booking' : '', booking ? `book-${role}` : '', isToday(year, month, day) ? 'is-today' : ''].filter(Boolean).join(' ')
               return (
                 <button
                   key={key}
@@ -168,11 +216,13 @@ export function HostCalendarPage({ onNavigate, hostProfile = null }) {
                   data-calendar-day={day}
                   data-day-key={key}
                   data-booking-id={booking?.id || ''}
-                  aria-label={booking ? `${dayLabel(day, month, year)}, réservation ${booking.guest}` : `${dayLabel(day, month, year)}, ${blocked ? 'indisponible' : `${price} TND`}`}
+                  data-room-stock={roomInventory.enabled ? remainingRooms : ''}
+                  aria-label={booking ? `${dayLabel(day, month, year)}, réservation ${booking.guest}` : `${dayLabel(day, month, year)}, ${blocked ? 'indisponible' : `${price} TND`}${stockLabel ? `, ${stockLabel}` : ''}`}
                   onClick={() => selectDay(day)}
                 >
                   <span className="host-calendar__number">{day}</span>
                   <span className="host-calendar__price">{blocked ? '—' : `${price}`}</span>
+                  {roomInventory.enabled && !booking ? <span className="host-calendar__room-stock" data-sold-out={soldOut ? 'true' : 'false'}>{remainingRooms}/{roomInventory.totalUnits}</span> : null}
                   {booking ? <i className="host-calendar__booking-bar" aria-hidden="true" /> : null}
                   {booking && (role === 'start' || role === 'both') ? <span className="host-calendar__guest" aria-hidden="true">{guestInitial}</span> : null}
                 </button>
@@ -181,7 +231,7 @@ export function HostCalendarPage({ onNavigate, hostProfile = null }) {
           </div>
 
           <div className="host-calendar__legend"><span><i className="free" />Libre</span><span><i className="booked" />Réservé</span><span><i className="blocked" />Bloqué</span></div>
-          <p className="host-calendar__hint">Touchez des dates libres pour modifier prix et disponibilité. Touchez une réservation pour voir son détail.</p>
+          <p className="host-calendar__hint">Touchez des dates libres pour modifier prix et disponibilité.{roomInventory.enabled ? ' Le petit compteur indique uniquement à l’hôte le stock de chambres restant.' : ''}</p>
         </section>
 
         {notice ? <div className="host-calendar-page__notice" role="status">{notice}</div> : null}
@@ -190,7 +240,7 @@ export function HostCalendarPage({ onNavigate, hostProfile = null }) {
       {selectedArray.length ? (
         <aside className="host-day-editor" data-testid="host-day-editor" aria-label="Réglages des dates sélectionnées">
           <div className="host-day-editor__handle" />
-          <div className="host-day-editor__head"><div><strong>{selectedArray.length === 1 ? 'Réglages du jour' : `${selectedArray.length} dates sélectionnées`}</strong><span>Prix et disponibilité</span></div><button type="button" aria-label="Fermer les réglages" onClick={() => setSelectedKeys(new Set())}>×</button></div>
+          <div className="host-day-editor__head"><div><strong>{selectedArray.length === 1 ? 'Réglages du jour' : `${selectedArray.length} dates sélectionnées`}</strong><span>{selectedRoomStock != null ? `Stock ${selectedRoomStock}/${roomInventory.totalUnits} · ` : ''}Prix et disponibilité</span></div><button type="button" aria-label="Fermer les réglages" onClick={() => setSelectedKeys(new Set())}>×</button></div>
           <div className="host-day-editor__price"><span>Prix par nuit</span><label><input value={editPrice} inputMode="numeric" aria-label="Prix des dates sélectionnées" onChange={(event) => setEditPrice(event.target.value.replace(/\D/g, '').slice(0, 5))} /><b>TND</b></label></div>
           <div className="host-day-editor__availability"><button type="button" data-active={!editBlocked ? 'true' : 'false'} onClick={() => setEditBlocked(false)}>Disponible</button><button type="button" data-active={editBlocked ? 'true' : 'false'} onClick={() => setEditBlocked(true)}>Bloqué</button></div>
           <button type="button" className="host-day-editor__save" onClick={applySettings}>Appliquer</button>
