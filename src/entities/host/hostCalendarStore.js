@@ -1,3 +1,4 @@
+import { confirmedReservationBlocksForListing } from '../reservation/reservationStore.js'
 import { findHostProfileByListingId } from './hostProfileStore.js'
 import { applyRoomInventoryAvailability } from './hostRoomInventoryStore.js'
 import { storageAdapter } from '../../services/storage/storageAdapter.js'
@@ -39,6 +40,20 @@ function resolveDaysForRoomType(days, roomTypeId) {
   return resolved
 }
 
+function applyConfirmedReservations(listingId, days, roomTypeId = '') {
+  const profile = findHostProfileByListingId(listingId)
+  const pooled = Boolean(Array.isArray(profile?.listing?.roomTypes) && profile.listing.roomTypes.length)
+  if (pooled) return applyRoomInventoryAvailability(listingId, days, roomTypeId)
+
+  const blockedKeys = confirmedReservationBlocksForListing(listingId)
+  if (!blockedKeys.size) return days
+  const next = { ...days }
+  blockedKeys.forEach((key) => {
+    next[key] = { ...(next[key] || {}), blocked: true, reservationBlocked: true }
+  })
+  return next
+}
+
 export function readHostCalendar(userId) {
   if (!userId) return { days: {} }
   return { days: normalizeDays(readAllCalendars()[userId]) }
@@ -63,7 +78,7 @@ export function readHostCalendarForListing(listingId, roomTypeId = '') {
       userId: typeof direct.userId === 'string' ? direct.userId : null,
       listingId,
       roomTypeId,
-      days: applyRoomInventoryAvailability(listingId, days, roomTypeId),
+      days: applyConfirmedReservations(listingId, days, roomTypeId),
     }
   }
 
@@ -77,7 +92,7 @@ export function readHostCalendarForListing(listingId, roomTypeId = '') {
     userId: profile.userId,
     listingId: profile.listing.id,
     roomTypeId,
-    days: applyRoomInventoryAvailability(profile.listing.id, days, roomTypeId),
+    days: applyConfirmedReservations(profile.listing.id, days, roomTypeId),
   }
 }
 
