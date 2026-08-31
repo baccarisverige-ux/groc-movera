@@ -1,16 +1,9 @@
-import { findHostProfileByListingId } from '../../entities/host/hostProfileStore.js'
+import { findHostProfileByListingId, listActiveHostProfiles } from '../../entities/host/hostProfileStore.js'
 import { getListingDetail, listingCatalog } from '../../entities/listing/listingCatalog.js'
 import { homeCategoryOffers, homeDestinations } from '../home/data/homeData.js'
 
 const DEFAULT_DATES = '3–4 sept.'
-const DEFAULT_AMENITIES = Object.freeze([
-  'Wi-Fi',
-  'Parking',
-  'Climatisation',
-  'Cuisine',
-  'TV',
-  'Jardin',
-])
+const DEFAULT_AMENITIES = Object.freeze(['Wi-Fi', 'Parking', 'Climatisation', 'Cuisine', 'TV', 'Jardin'])
 const HOST_AMENITY_LABELS = Object.freeze({
   wifi: 'Wi-Fi haut débit', parking: 'Parking privé', ac: 'Climatisation', kitchen: 'Cuisine équipée', tv: 'Télévision', pool: 'Piscine', waterfront: 'Bord de mer', 'beach-access': 'Accès plage', outdoor: 'Mobilier de terrasse', gym: 'Espace fitness', workspace: 'Coin bureau', heating: 'Chauffage', 'hot-water': 'Eau chaude', refrigerator: 'Réfrigérateur', washer: 'Lave-linge', dryer: 'Sèche-linge', 'coffee-maker': 'Machine à café', essentials: 'Linge & essentiels',
 })
@@ -30,13 +23,11 @@ function formatRating(rating) {
 
 function inferCapacity(title = '', category = '') {
   const hay = `${title} ${category}`.toLowerCase()
-  if (hay.includes('éxpérience') || hay.includes('sunset') || hay.includes('table') || hay.includes('escapade') || hay.includes('sahara') || category === 'experience') {
-    return { type: 'Expérience', guests: 2, bedrooms: 0, beds: 0, baths: 0 }
-  }
+  if (hay.includes('éxpérience') || hay.includes('sunset') || hay.includes('table') || hay.includes('escapade') || hay.includes('sahara') || category === 'experience') return { type: 'Expérience', guests: 2, bedrooms: 0, beds: 0, baths: 0 }
   if (hay.includes('villa') || category === 'prestige') return { type: 'Villa entière', guests: 6, bedrooms: 3, beds: 4, baths: 2 }
   if (hay.includes('hôtel') || hay.includes('hotel') || hay.includes('palace') || category === 'hotel') return { type: 'Chambre d’hôtel', guests: 2, bedrooms: 1, beds: 1, baths: 1 }
   if (hay.includes('appartement') || hay.includes('loft') || category === 'family') return { type: 'Logement entier', guests: 3, bedrooms: 1, beds: 2, baths: 1 }
-  if (hay.includes('maison') || hay.includes('dar') || hay.includes('riad') || category === 'guesthouse') return { type: 'Maison entière', guests: 4, bedrooms: 2, beds: 3, baths: 1 }
+  if (hay.includes('maison') || hay.includes('dar') || hay.includes('riad') || category === 'guesthouse') return { type: 'Maison d’hôte', guests: 2, bedrooms: 1, beds: 1, baths: 1 }
   return { type: 'Logement entier', guests: 2, bedrooms: 1, beds: 1, baths: 1 }
 }
 
@@ -51,7 +42,7 @@ function capacityLine(capacity) {
 function buildDescription(title, location, subtitle) {
   const place = location || 'Tunisie'
   const lead = subtitle || `Un logement chaleureux à ${place}.`
-  return `${lead} ${title} se trouve à ${place}, en Tunisie. L’espace est pensé pour un séjour simple et confortable : lumière, calme, et les essentiels du quotidien. Vous êtes proche des lieux de vie, dans une atmosphère Movera, sans chichi.`
+  return `${lead} ${title} se trouve à ${place}, en Tunisie. L’espace est pensé pour un séjour simple et confortable : lumière, calme, et les essentiels du quotidien.`
 }
 
 const PHOTO_LABELS = Object.freeze(['Chambre', 'Séjour', 'Cuisine', 'Extérieur'])
@@ -61,8 +52,7 @@ const GALLERY_EXTRA_POOL = (() => {
   const seen = new Set()
   const add = (src) => {
     if (typeof src !== 'string' || !src.includes('images.unsplash.com') || seen.has(src)) return
-    seen.add(src)
-    urls.push(src)
+    seen.add(src); urls.push(src)
   }
   for (const items of Object.values(homeCategoryOffers)) for (const item of items) add(item.image)
   for (const item of listingCatalog) add(item.image)
@@ -72,10 +62,7 @@ const GALLERY_EXTRA_POOL = (() => {
 
 function hashString(value) {
   let hash = 2166136261
-  for (let i = 0; i < value.length; i += 1) {
-    hash ^= value.charCodeAt(i)
-    hash = Math.imul(hash, 16777619)
-  }
+  for (let i = 0; i < value.length; i += 1) { hash ^= value.charCodeAt(i); hash = Math.imul(hash, 16777619) }
   return hash >>> 0
 }
 
@@ -89,38 +76,37 @@ function extraGallerySources(image, listingId) {
     const index = (hash + offset * 7 + offset * offset) % pool.length
     const src = pool[index]
     if (seen.has(src)) continue
-    seen.add(src)
-    picked.push(src)
+    seen.add(src); picked.push(src)
   }
   return picked
 }
 
 function photosFrom(image, listingId) {
   if (!image) return []
-  const extras = extraGallerySources(image, listingId)
-  return [image, ...extras].map((src, index) => ({ src, label: PHOTO_LABELS[index] || 'Galerie' }))
+  return [image, ...extraGallerySources(image, listingId)].map((src, index) => ({ src, label: PHOTO_LABELS[index] || 'Galerie' }))
 }
 
-function guestRoomTypes(roomTypes, currency = 'TND') {
-  return (Array.isArray(roomTypes) ? roomTypes : []).map((room) => {
-    const capacity = {
-      type: 'Chambre',
-      guests: Math.max(1, Number(room.guests) || 2),
-      bedrooms: 1,
-      beds: Math.max(1, Number(room.beds) || 1),
-      baths: Math.max(0, Number(room.bathrooms) || 0),
-    }
+function publicRoomLots(roomLots, currency = 'TND') {
+  return (Array.isArray(roomLots) ? roomLots : []).map((lot) => {
+    const guests = Math.max(1, Number(lot.guests) || 2)
+    const beds = Math.max(1, Number(lot.beds) || 1)
+    const bathrooms = Math.max(0, Number(lot.bathrooms) || 0)
+    const capacity = { type: 'Chambre', guests, bedrooms: 1, beds, baths: bathrooms }
     return {
-      id: room.id,
-      name: room.name,
-      view: room.view || '',
-      description: room.description || '',
-      guests: capacity.guests,
-      beds: capacity.beds,
-      bathrooms: capacity.baths,
-      basePrice: Math.max(1, Number(room.basePrice) || 1),
+      id: lot.id,
+      name: lot.name,
+      view: lot.view || '',
+      description: lot.description || '',
+      sizeM2: Math.max(0, Number(lot.sizeM2) || 0),
+      guests,
+      beds,
+      bathrooms,
+      bedType: lot.bedType || '',
+      bathroomType: lot.bathroomType === 'shared' ? 'shared' : 'private',
+      features: Array.isArray(lot.features) ? [...lot.features] : [],
+      basePrice: Math.max(1, Number(lot.basePrice) || 1),
       currency,
-      photos: Array.isArray(room.photos) ? room.photos.map((src, index) => ({ src, label: index === 0 ? room.name : `${room.name} · ${index + 1}` })) : [],
+      photos: Array.isArray(lot.photos) ? lot.photos.map((src, index) => ({ src, label: index === 0 ? lot.name : `${lot.name} · ${index + 1}` })) : [],
       capacity,
       capacityLine: capacityLine(capacity),
     }
@@ -143,12 +129,17 @@ function toGuestListing(item, extras = {}) {
   const currency = detail?.currency || extras.currency || item.currency || 'TND'
   const priceLabel = extras.priceLabel || (nightlyRate != null ? `${nightlyRate} ${currency} / nuit` : '')
   const dates = extras.dates || item.dateLabel || DEFAULT_DATES
+  const roomLots = extras.roomLots || []
 
   return {
     id: item.id, title, location, image, photos: photosFrom(image, item.id), rating, reviews,
     badge: item.badge || extras.badge || '', priceLabel, dates, amenities, host, subtitle,
     description: buildDescription(title, location, subtitle), availability: detail?.availability || dates,
-    nightlyRate, currency, capacity, capacityLine: capacityLine(capacity), category, roomTypes: extras.roomTypes || [],
+    nightlyRate, currency, capacity, capacityLine: capacityLine(capacity), category,
+    roomLots,
+    roomTypes: roomLots,
+    latitude: extras.latitude ?? null,
+    longitude: extras.longitude ?? null,
   }
 }
 
@@ -164,15 +155,15 @@ function fromHostProfile(profile, baseListing = null) {
   const source = profile?.listing
   if (!source) return baseListing
   const currency = source.currency || 'TND'
-  const roomTypes = guestRoomTypes(source.roomTypes, currency)
-  const cheapest = roomTypes.length ? Math.min(...roomTypes.map((room) => room.basePrice)) : source.basePrice
-  const primaryRoom = roomTypes[0]
-  const imageSources = [...(source.photos || []), ...roomTypes.flatMap((room) => room.photos.map((photo) => photo.src))]
+  const roomLots = publicRoomLots(source.roomLots || source.roomTypes, currency)
+  const cheapest = roomLots.length ? Math.min(...roomLots.map((lot) => lot.basePrice)) : source.basePrice
+  const primaryLot = roomLots[0]
+  const imageSources = [...(source.photos || []), ...roomLots.flatMap((lot) => lot.photos.map((photo) => photo.src))]
   const uniqueImages = Array.from(new Set(imageSources.filter(Boolean)))
   const photos = uniqueImages.map((src, index) => ({ src, label: PHOTO_LABELS[index] || 'Chambre' }))
   const image = photos[0]?.src || baseListing?.image || ''
   const category = source.type === 'Hôtel' ? 'hotel' : source.type === "Maison d’hôte" ? 'guesthouse' : baseListing?.category || ''
-  const capacity = primaryRoom?.capacity || { type: source.type, guests: source.guests, bedrooms: source.bedrooms, beds: source.beds, baths: source.bathrooms }
+  const capacity = primaryLot?.capacity || { type: source.type, guests: source.guests, bedrooms: source.bedrooms, beds: source.beds, baths: source.bathrooms }
   const amenities = (source.amenities || []).map((id) => HOST_AMENITY_LABELS[id] || id).filter(Boolean)
 
   return {
@@ -185,7 +176,7 @@ function fromHostProfile(profile, baseListing = null) {
     rating: baseListing?.rating || '4.90',
     reviews: baseListing?.reviews || 0,
     badge: baseListing?.badge || '',
-    priceLabel: roomTypes.length > 1 ? `À partir de ${cheapest} ${currency} / nuit` : `${cheapest} ${currency} / nuit`,
+    priceLabel: roomLots.length > 1 ? `À partir de ${cheapest} ${currency} / nuit` : `${cheapest} ${currency} / nuit`,
     dates: baseListing?.dates || DEFAULT_DATES,
     amenities: amenities.length ? amenities : baseListing?.amenities || DEFAULT_AMENITIES,
     host: baseListing?.host || { name: 'Hôte Movera', since: 'Hôte Movera' },
@@ -197,7 +188,11 @@ function fromHostProfile(profile, baseListing = null) {
     capacity,
     capacityLine: capacityLine(capacity),
     category,
-    roomTypes,
+    roomLots,
+    roomTypes: roomLots,
+    latitude: Number.isFinite(Number(source.latitude)) ? Number(source.latitude) : null,
+    longitude: Number.isFinite(Number(source.longitude)) ? Number(source.longitude) : null,
+    isMultiRoomPublication: roomLots.length >= 2,
   }
 }
 
@@ -229,9 +224,20 @@ export function listUniqueHomeOffers() {
       if (listing) offers.push(listing)
     }
   }
+  for (const profile of listActiveHostProfiles()) {
+    const listing = fromHostProfile(profile, guestListingById.get(profile.listing.id) || null)
+    if (!listing || seen.has(listing.id)) continue
+    seen.add(listing.id)
+    offers.push(listing)
+  }
   return offers
 }
 
 export function listHomeOffersByCategory(category) {
-  return (homeCategoryOffers[category] || []).map((item) => getGuestListingById(item.id)).filter(Boolean)
+  const staticListings = (homeCategoryOffers[category] || []).map((item) => getGuestListingById(item.id)).filter(Boolean)
+  const dynamic = listActiveHostProfiles()
+    .map((profile) => fromHostProfile(profile, null))
+    .filter((listing) => listing?.category === category)
+  const seen = new Set(staticListings.map((listing) => listing.id))
+  return [...staticListings, ...dynamic.filter((listing) => !seen.has(listing.id))]
 }
