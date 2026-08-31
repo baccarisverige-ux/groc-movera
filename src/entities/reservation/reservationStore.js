@@ -1,5 +1,4 @@
 import { storageAdapter } from '../../services/storage/storageAdapter.js'
-import { registerConfirmedRoomReservation, releaseConfirmedRoomReservation } from '../host/hostRoomInventoryStore.js'
 
 export const RESERVATIONS_KEY = 'movera:reservations:v1'
 export const RESERVATIONS_EVENT = 'movera:reservations-change'
@@ -111,7 +110,6 @@ export function createReservation({
   discountValue = 0,
   currency = 'TND',
 }) {
-  const normalizedStatus = STATUSES.has(status) ? status : 'pending'
   const reservation = normalize({
     id: `res-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
     listingId,
@@ -121,7 +119,7 @@ export function createReservation({
     checkIn,
     checkOut,
     units,
-    status: normalizedStatus,
+    status: STATUSES.has(status) ? status : 'pending',
     originalTotal,
     total,
     discountValue,
@@ -130,17 +128,6 @@ export function createReservation({
     updatedAt: new Date().toISOString(),
   })
   if (!reservation) throw new Error('Invalid reservation')
-
-  if (reservation.status === 'confirmed' && reservation.roomTypeId) {
-    registerConfirmedRoomReservation({
-      reservationId: reservation.id,
-      listingId: reservation.listingId,
-      roomTypeId: reservation.roomTypeId,
-      checkIn: reservation.checkIn,
-      checkOut: reservation.checkOut,
-      units: reservation.units,
-    })
-  }
   return save(reservation)
 }
 
@@ -149,28 +136,13 @@ export function updateReservationStatus(id, status) {
   const current = readReservation(id)
   if (!current) throw new Error('Reservation not found')
   if (current.status === status) return current
-
-  if (current.roomTypeId && current.status === 'confirmed' && status !== 'confirmed') {
-    releaseConfirmedRoomReservation({ reservationId: current.id, listingId: current.listingId })
-  }
-  if (current.roomTypeId && current.status !== 'confirmed' && status === 'confirmed') {
-    registerConfirmedRoomReservation({
-      reservationId: current.id,
-      listingId: current.listingId,
-      roomTypeId: current.roomTypeId,
-      checkIn: current.checkIn,
-      checkOut: current.checkOut,
-      units: current.units,
-    })
-  }
   return save({ ...current, status, updatedAt: new Date().toISOString() })
 }
 
-export function confirmedReservationBlocksForListing(listingId, roomTypeId = '') {
+export function confirmedReservationBlocksForListing(listingId) {
   const blocked = new Set()
   listReservationsForListing(listingId).forEach((reservation) => {
     if (reservation.status !== 'confirmed') return
-    if (roomTypeId && reservation.roomTypeId && reservation.roomTypeId !== roomTypeId) return
     reservationNightKeys(reservation.checkIn, reservation.checkOut).forEach((key) => blocked.add(key))
   })
   return blocked
