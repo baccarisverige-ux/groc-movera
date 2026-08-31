@@ -1,0 +1,80 @@
+.host-room-setup[data-professional=true]{padding:18px 15px 16px;border-radius:26px;border:1px solid rgba(26,45,34,.08);background:linear-gradient(180deg,#fff,#f8faf9);box-shadow:0 16px 44px rgba(22,39,28,.065);gap:12px}
+.host-room-setup[data-professional=true] .host-room-allocation-overview{display:none!important}
+.host-room-setup[data-professional=true] .host-room-setup__status{display:none!important}
+.host-room-setup[data-professional=true] .host-room-setup__header h2{font-size:23px;letter-spacing:-.045em;color:#17231b}
+.host-room-setup[data-professional=true] .host-room-setup__header p{font-size:9px;line-height:1.55;color:#78827b}
+.host-room-setup[data-professional=true] .host-room-setup__question{border:1px solid #e7ebe8;border-radius:20px;background:#f7f9f8}
+.host-room-setup[data-professional=true] .host-room-setup__choices>button{min-height:78px;border-radius:17px;box-shadow:0 5px 18px rgba(22,39,28,.04)}
+.host-room-pro-allocation{padding:11px 12px;border:1px solid #e5e9e6;border-radius:16px;background:#fbfcfb;display:grid;gap:8px}
+.host-room-pro-allocation[data-valid=true]{background:#f1f6f2;border-color:#dfe9e2}
+.host-room-pro-allocation>div:first-child{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.host-room-pro-allocation strong{font-size:9px;color:#273c2f}
+.host-room-pro-allocation span{padding:5px 7px;border-radius:999px;background:#eff1f0;color:#737b76;font-size:6.8px;font-weight:800;white-space:nowrap}
+.host-room-pro-allocation[data-valid=true] span{background:#e4eee7;color:#315d43}
+.host-room-pro-allocation__track{height:4px;border-radius:99px;background:#e5e9e6;overflow:hidden}
+.host-room-pro-allocation__track i{display:block;height:100%;border-radius:inherit;background:#b49a69}
+.host-room-pro-allocation[data-valid=true] .host-room-pro-allocation__track i{background:#3c664d}
+.host-room-setup[data-professional=true] .host-onboarding-room-types__list{gap:9px}
+.host-room-setup[data-professional=true] .host-onboarding-room-types__card{padding:12px;border-radius:19px;border-color:#e3e8e5;box-shadow:0 7px 22px rgba(20,39,27,.045);gap:10px}
+.host-room-setup[data-professional=true] .host-onboarding-room-types__card[data-pro-collapsed=true] .host-room-setup__lot-quantity,
+.host-room-setup[data-professional=true] .host-onboarding-room-types__card[data-pro-collapsed=true] .host-onboarding-room-types__grid,
+.host-room-setup[data-professional=true] .host-onboarding-room-types__card[data-pro-collapsed=true] .host-onboarding-room-types__photo-note,
+.host-room-setup[data-professional=true] .host-onboarding-room-types__card[data-pro-collapsed=true] .host-room-allocation-helper{display:none!important}
+.host-room-setup[data-professional=true] .host-onboarding-room-types__card-head{align-items:flex-start}
+.host-room-setup[data-professional=true] .host-onboarding-room-types__card-head>div{min-width:0;flex:1}
+.host-room-setup[data-professional=true] .host-onboarding-room-types__card-head strong{font-size:11.5px;color:#1b2d22;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.host-room-pro-summary{display:block!important;margin-top:2px;font-size:7.3px!important;font-weight:600!important;line-height:1.4!important;letter-spacing:0!important;text-transform:none!important;color:#7a857e!important;white-space:normal!important}
+.host-room-pro-edit{height:29px!important;padding:0 9px!important;border:1px solid #dce4df!important;border-radius:10px!important;background:#f5f8f6!important;color:#315440!important;font:800 7px/1 Inter,sans-serif!important}
+.host-room-setup[data-professional=true] .host-onboarding-room-types__card-head>button:not(.host-room-pro-edit){height:29px!important;border-radius:10px!important;background:#fbf9f9!important;color:#8c6561!important}
+.host-room-setup[data-professional=true] .host-room-setup__lot-quantity{margin-top:2px;min-height:52px;border:1px solid #e8ece9;border-radius:15px;background:#f8faf9}
+.host-room-setup[data-professional=true] .host-onboarding-room-types__grid{padding-top:2px;border-top:1px solid #f0f2f1;gap:8px}
+.host-room-setup[data-professional=true] .host-onboarding-room-types__field input,
+.host-room-setup[data-professional=true] .host-onboarding-room-types__field textarea{border-radius:12px;border-color:#e2e7e4;background:#fafcfb;padding:9px 10px;font-size:9px}
+.host-room-setup[data-professional=true] .host-onboarding-room-types__add{height:43px;border-radius:14px;background:#fff;color:#2b513a}
+.host-room-setup[data-professional=true] .host-onboarding-room-types__note{font-size:7.3px;line-height:1.5;color:#838c86}
+.host-onboarding__step--photos[data-room-professional-photos=true]>.host-onboarding__eyebrow,
+.host-onboarding__step--photos[data-room-professional-photos=true]>h1,
+.host-onboarding__step--photos[data-room-professional-photos=true]>p,
+.host-onboarding__step--photos[data-room-professional-photos=true]>.host-onboarding__photo-uploader,
+.host-onboarding__step--photos[data-room-professional-photos=true]>.host-onboarding__photo-slots,
+.host-onboarding__step--photos[data-room-professional-photos=true]>.host-onboarding__skip-note,
+.host-onboarding__step--photos[data-room-professional-photos=true]>.host-room-photo-setup{display:none!important}
+.host-room-pro-photos{width:100%;display:grid;gap:12px}
+.host-room-pro-photos__header{display:grid;gap:5px;padding:2px 1px 3px}
+.host-room-pro-photos__header>span{font:800 8px/1 Inter,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#7c8680}
+.host-room-pro-photos__header h1{margin:0;font-size:24px;line-height:1.03;letter-spacing:-.047em;color:#15221a}
+.host-room-pro-photos__header p{margin:0;max-width:350px;font-size:9px;line-height:1.55;color:#737e77}
+.host-room-pro-photos__tabs{display:flex;gap:7px;overflow-x:auto;padding:2px 1px 5px;scrollbar-width:none;overscroll-behavior-x:contain;scroll-snap-type:x proximity}
+.host-room-pro-photos__tabs::-webkit-scrollbar{display:none}
+.host-room-pro-photos__tabs button{flex:0 0 auto;min-width:112px;max-width:165px;padding:9px 11px;border:1px solid #e2e7e4;border-radius:15px;background:#fff;color:#26372d;text-align:left;display:grid;gap:2px;scroll-snap-align:start;box-shadow:0 4px 15px rgba(24,42,30,.035)}
+.host-room-pro-photos__tabs button[data-active=true]{border-color:#a7b8ae;background:#edf3ef;box-shadow:0 0 0 2px rgba(48,78,60,.045)}
+.host-room-pro-photos__tabs strong{font-size:8.8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.host-room-pro-photos__tabs small{font-size:6.8px;color:#7d8780}
+.host-room-pro-photos__mode{padding:11px 12px;border:1px solid #e5e9e6;border-radius:15px;background:#f7f9f8;display:grid;gap:2px}
+.host-room-pro-photos__mode strong{font-size:9.5px;color:#294032}
+.host-room-pro-photos__mode span{font-size:7.5px;line-height:1.45;color:#78847c}
+.host-room-pro-gallery{padding:12px;border:1px solid #e1e7e3;border-radius:21px;background:#fff;box-shadow:0 10px 30px rgba(20,39,27,.055);display:grid;gap:10px}
+.host-room-pro-gallery>header{display:grid;gap:2px}
+.host-room-pro-gallery>header strong{font-size:12px;letter-spacing:-.02em;color:#1b2f23}
+.host-room-pro-gallery>header span{font-size:7.4px;line-height:1.45;color:#7b877f}
+.host-room-pro-gallery__hero{position:relative;aspect-ratio:4/3;border-radius:17px;overflow:hidden;background:#eef1ef}
+.host-room-pro-gallery__hero img{width:100%;height:100%;object-fit:cover;display:block}
+.host-room-pro-gallery__hero span{position:absolute;left:9px;bottom:9px;padding:5px 7px;border-radius:999px;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);font-size:6.7px;font-weight:800;color:#2d4536;box-shadow:0 3px 12px rgba(0,0,0,.07)}
+.host-room-pro-gallery__thumbs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.host-room-pro-gallery__thumbs figure{position:relative;margin:0;aspect-ratio:1;border-radius:12px;overflow:hidden;background:#eef1ef}
+.host-room-pro-gallery__thumbs img{width:100%;height:100%;object-fit:cover;display:block}
+.host-room-pro-gallery__thumbs button{position:absolute;top:5px;right:5px;width:23px;height:23px;padding:0;border:0;border-radius:50%;background:rgba(255,255,255,.94);color:#24372c;font:600 14px/1 Inter,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.13)}
+.host-room-pro-gallery__empty{min-height:150px;border:1px dashed #b9c4bd;border-radius:17px;background:linear-gradient(180deg,#fafbfa,#f5f7f6);display:grid;place-content:center;text-align:center;gap:4px;padding:16px}
+.host-room-pro-gallery__empty strong{font-size:10px;color:#2a4233}
+.host-room-pro-gallery__empty span{font-size:7.5px;line-height:1.5;color:#7c8780}
+.host-room-pro-gallery__upload{position:relative;min-height:49px;padding:9px 11px;border:1px dashed #a9b9af;border-radius:14px;background:#f8faf9;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer}
+.host-room-pro-gallery__upload strong{font-size:8.5px;color:#2d543d}
+.host-room-pro-gallery__upload span{font-size:7px;color:#89928c}
+.host-room-pro-gallery__upload input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+@media(max-width:350px){
+  .host-room-setup[data-professional=true]{padding:15px 11px;border-radius:23px}
+  .host-room-setup[data-professional=true] .host-onboarding-room-types__grid{grid-template-columns:1fr}
+  .host-room-pro-photos__header h1{font-size:21px}
+  .host-room-pro-gallery__thumbs{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(prefers-reduced-motion:reduce){.host-room-setup[data-professional=true] *,.host-room-pro-photos *{transition:none!important;animation:none!important}}
