@@ -128,6 +128,7 @@
   font-weight:800!important;
   letter-spacing:-.018em!important;
   white-space:nowrap!important;
+  transform:translateY(-1px)!important;
 }
 
 .map-offer-sheet__city-label{
@@ -139,6 +140,7 @@
   overflow:hidden!important;
   text-overflow:ellipsis!important;
   white-space:nowrap!important;
+  transform:translateY(-1px)!important;
 }
 
 .map-offer-sheet__brand-badge{
