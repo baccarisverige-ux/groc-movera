@@ -19,7 +19,7 @@ export function HostEntryPage({ onNavigate }) {
   return (
     <>
       <HostCalendarPage onNavigate={onNavigate} hostProfile={activeProfile} />
-      <HostRoomTypeManager profile={activeProfile} userId={session?.userId} />
+      <HostRoomTypeManager profile={activeProfile} userId={session?.userId} onNavigate={onNavigate} />
     </>
   )
 }
