@@ -1,25 +1,37 @@
 import { useEffect, useMemo, useState } from 'react'
 import { HOST_CALENDAR_EVENT, readHostCalendarForListing } from '../../entities/host/hostCalendarStore.js'
-import {
-  HOST_WEEKDAYS,
-  bookingRole,
-  buildMonthCells,
-  dayKey,
-  defaultNightlyPrice,
-  findBookingForDay,
-  isToday,
-  makeDemoBookings,
-  monthLabel,
-} from '../host/calendar/hostCalendarModel.js'
-import '../host/calendar/host-calendar-page.css'
+import './listing-availability.css'
 import './listing-availability-modal.css'
 
+const WEEKDAYS = Object.freeze(['L', 'M', 'M', 'J', 'V', 'S', 'D'])
+const MONTHS = Object.freeze(['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'])
+
 function ChevronIcon({ direction = 'right' }) {
-  return <svg viewBox="0 0 24 24" aria-hidden="true" data-direction={direction}><path d="m9 6 6 6-6 6"/></svg>
+  const path = direction === 'left' ? 'm15 6-6 6 6 6' : 'm9 6 6 6-6 6'
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d={path}/></svg>
 }
 
 function CloseIcon() {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+}
+
+function dayKey(year, month, day) {
+  return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+}
+
+function buildMonthCells(year, month) {
+  const padding = (new Date(year, month, 1, 12).getDay() + 6) % 7
+  const total = new Date(year, month + 1, 0, 12).getDate()
+  return [...Array(padding).fill(null), ...Array.from({ length: total }, (_, index) => index + 1)]
+}
+
+function defaultNightlyPrice(basePrice, day) {
+  const offsets = [-20, -10, 0, 10, 20, 30, 40]
+  return Math.max(0, Math.round(basePrice + offsets[day % offsets.length]))
+}
+
+function monthLabel(year, month) {
+  return `${MONTHS[month]} ${year}`
 }
 
 function atMidday(year, month, day) {
@@ -31,6 +43,10 @@ function isPastDay(year, month, day, now) {
   return atMidday(year, month, day).getTime() < today
 }
 
+function isToday(year, month, day, now) {
+  return year === now.getFullYear() && month === now.getMonth() && day === now.getDate()
+}
+
 export function ListingAvailabilityModal({ listing, onClose }) {
   const now = useMemo(() => new Date(), [])
   const [year, setYear] = useState(now.getFullYear())
@@ -38,11 +54,12 @@ export function ListingAvailabilityModal({ listing, onClose }) {
   const [calendar, setCalendar] = useState(() => readHostCalendarForListing(listing.id))
 
   const cells = useMemo(() => buildMonthCells(year, month), [year, month])
-  const bookings = useMemo(() => makeDemoBookings(year, month), [year, month])
   const basePrice = Number(listing.nightlyRate) > 0 ? Number(listing.nightlyRate) : 180
+  const currency = listing.currency || 'TND'
 
   useEffect(() => {
     const sync = () => setCalendar(readHostCalendarForListing(listing.id))
+    sync()
     window.addEventListener(HOST_CALENDAR_EVENT, sync)
     window.addEventListener('storage', sync)
     return () => {
@@ -74,52 +91,57 @@ export function ListingAvailabilityModal({ listing, onClose }) {
           <button type="button" className="listing-availability-modal__close" aria-label="Fermer le calendrier" onClick={onClose}><CloseIcon /></button>
         </header>
 
-        <section className="host-calendar listing-availability-modal__calendar" aria-label={`Calendrier ${monthLabel(year, month)}`}>
-          <div className="host-calendar__monthbar">
-            <button type="button" aria-label="Mois précédent" disabled={previousDisabled} onClick={() => changeMonth(-1)}><ChevronIcon direction="left" /></button>
-            <strong>{monthLabel(year, month)}</strong>
-            <button type="button" aria-label="Mois suivant" onClick={() => changeMonth(1)}><ChevronIcon /></button>
-          </div>
+        {calendar.linked ? (
+          <section className="listing-availability-modal__calendar" aria-label={`Calendrier ${monthLabel(year, month)}`}>
+            <div className="listing-availability__head">
+              <button type="button" aria-label="Mois précédent" disabled={previousDisabled} onClick={() => changeMonth(-1)}><ChevronIcon direction="left" /></button>
+              <strong>{monthLabel(year, month)}</strong>
+              <button type="button" aria-label="Mois suivant" onClick={() => changeMonth(1)}><ChevronIcon /></button>
+            </div>
 
-          <div className="host-calendar__grid" data-testid="listing-availability-grid">
-            {HOST_WEEKDAYS.map((label, index) => <div key={`${label}-${index}`} className="host-calendar__dow">{label}</div>)}
-            {cells.map((day, index) => {
-              if (!day) return <span key={`blank-${index}`} className="host-calendar__blank" aria-hidden="true" />
-              const key = dayKey(year, month, day)
-              const data = calendar.days[key] || {}
-              const booking = findBookingForDay(bookings, year, month, day)
-              const role = booking ? bookingRole(booking, year, month, day) : ''
-              const past = isPastDay(year, month, day, now)
-              const blocked = (Boolean(data.blocked) || past) && !booking
-              const price = data.price ?? defaultNightlyPrice(basePrice, day)
-              const classes = [
-                'host-calendar__day',
-                blocked ? 'is-blocked' : '',
-                booking ? 'has-booking' : '',
-                booking ? `book-${role}` : '',
-                isToday(year, month, day, now) ? 'is-today' : '',
-                past ? 'is-past' : '',
-              ].filter(Boolean).join(' ')
-              const status = booking ? 'réservé' : blocked ? 'indisponible' : 'libre'
+            <div className="listing-availability__weekdays" aria-hidden="true">
+              {WEEKDAYS.map((label, index) => <span key={`${label}-${index}`}>{label}</span>)}
+            </div>
 
-              return (
-                <div key={key} className={classes} data-day-key={key} data-status={status} aria-label={`${day} ${monthLabel(year, month)}, ${status}${!blocked && !booking ? `, ${price} TND` : ''}`}>
-                  <span className="host-calendar__number">{day}</span>
-                  <span className="host-calendar__price">{blocked || booking ? '—' : `${price}`}</span>
-                  {booking ? <i className="host-calendar__booking-bar" aria-hidden="true" /> : null}
-                  {booking && (role === 'start' || role === 'both') ? <span className="host-calendar__guest" aria-hidden="true">R</span> : null}
-                </div>
-              )
-            })}
-          </div>
+            <div className="listing-availability__grid" data-testid="listing-availability-grid" aria-label={`Disponibilités ${monthLabel(year, month)}`}>
+              {cells.map((day, index) => {
+                if (!day) return <span key={`blank-${index}`} className="listing-availability__empty" aria-hidden="true" />
+                const key = dayKey(year, month, day)
+                const settings = calendar.days[key] || {}
+                const past = isPastDay(year, month, day, now)
+                const blocked = !past && Boolean(settings.blocked)
+                const price = settings.price ?? defaultNightlyPrice(basePrice, day)
+                const status = past ? 'past' : blocked ? 'blocked' : 'free'
+                const priceText = !past && !blocked ? `${price} ${currency}` : ''
 
-          <div className="host-calendar__legend">
-            <span><i className="free" />Libre</span>
-            <span><i className="booked" />Réservé</span>
-            <span><i className="blocked" />Bloqué</span>
+                return (
+                  <span
+                    key={key}
+                    className="listing-availability__day"
+                    data-day-key={key}
+                    data-status={status}
+                    data-today={isToday(year, month, day, now) ? 'true' : 'false'}
+                    aria-label={`${day} ${monthLabel(year, month)}, ${past ? 'passé' : blocked ? 'indisponible' : `disponible, ${priceText}`}`}
+                  >
+                    <b>{day}</b>
+                    <small>{past ? '' : blocked ? '—' : price}</small>
+                  </span>
+                )
+              })}
+            </div>
+
+            <div className="listing-availability__legend">
+              <span><i data-kind="free" />Libre</span>
+              <span><i data-kind="blocked" />Indisponible</span>
+            </div>
+            <p className="listing-availability-modal__hint">Disponibilités et tarifs définis par l’hôte pour ce logement.</p>
+          </section>
+        ) : (
+          <div className="listing-availability-modal__unlinked">
+            <strong>Calendrier hôte non synchronisé</strong>
+            <p>La disponibilité doit être confirmée avec l’hôte. Movera n’affiche pas de dates statiques comme si elles provenaient du calendrier.</p>
           </div>
-          <p className="host-calendar__hint">Les disponibilités sont pilotées depuis le calendrier de l’hôte.</p>
-        </section>
+        )}
 
         <button type="button" className="listing-availability-modal__done" onClick={onClose}>Terminé</button>
       </section>
