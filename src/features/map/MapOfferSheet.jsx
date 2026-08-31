@@ -6,7 +6,7 @@ import { useMapOfferScrollSheetHandoff } from './motion/useMapOfferScrollSheetHa
 import './map-offer-sheet.css'
 import '../../styles/map-offer-sheet-premium.css'
 
-const COLLAPSED_PANEL_VISIBLE_PX = 60
+const COLLAPSED_PANEL_VISIBLE_PX = 74
 const TOP_BAR_SEAM_OVERLAP_PX = 2
 const ATTACHED_ENTER_PROGRESS = 0.995
 const ATTACHED_EXIT_PROGRESS = 0.92

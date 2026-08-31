@@ -97,8 +97,8 @@
   width:100%!important;
   height:26.5px!important;
   grid-template-columns:minmax(0,1fr) auto!important;
-  grid-template-rows:4.5px 1fr!important;
-  padding:1.5px 8px 2px 10px!important;
+  grid-template-rows:2px 1fr!important;
+  padding:0 8px 3px 10px!important;
   background:transparent!important;
   border-bottom:0!important;
 }
@@ -128,7 +128,7 @@
   font-weight:800!important;
   letter-spacing:-.018em!important;
   white-space:nowrap!important;
-  transform:translateY(-1px)!important;
+  transform:translateY(-4px)!important;
 }
 
 .map-offer-sheet__city-label{
@@ -140,7 +140,7 @@
   overflow:hidden!important;
   text-overflow:ellipsis!important;
   white-space:nowrap!important;
-  transform:translateY(-1px)!important;
+  transform:translateY(-4px)!important;
 }
 
 .map-offer-sheet__brand-badge{

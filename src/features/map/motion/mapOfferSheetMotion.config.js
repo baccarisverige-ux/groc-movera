@@ -1,5 +1,5 @@
 export const MAP_OFFER_SHEET_MOTION = Object.freeze({
-  collapsedVisiblePx: 62,
+  collapsedVisiblePx: 74,
   expandedThreshold: 0.985,
   fastSwipeVelocity: 680,
   snapRatios: Object.freeze([0, 0.5, 1]),
