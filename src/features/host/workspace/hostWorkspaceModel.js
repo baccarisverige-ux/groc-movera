@@ -38,6 +38,8 @@ export function roomForReservation(listing, reservation) {
 }
 
 export function estimateReservationGross(listing, reservation, calendar = { days: {} }) {
+  const bookedTotal = Number(reservation?.total)
+  if (Number.isFinite(bookedTotal) && bookedTotal > 0) return Math.round(bookedTotal)
   const room = roomForReservation(listing, reservation)
   const fallbackPrice = Math.max(0, Number(room?.basePrice ?? listing?.basePrice) || 0)
   const units = Math.max(1, Number(reservation?.units) || 1)
