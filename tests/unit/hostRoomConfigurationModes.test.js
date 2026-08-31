@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { listingCategoryFromType, supportsPooledRoomInventory } from '../../src/entities/host/hostProfileStore.js'
 import { HOST_ROOM_SETUP_MODES, roomConfigurationIsValid } from '../../src/entities/host/hostRoomTypeDraftStore.js'
 
 function room(overrides = {}) {
@@ -54,5 +55,23 @@ describe('host hotel and guesthouse room configuration', () => {
         room({ id: 'deluxe', name: 'Deluxe', totalUnits: 1 }),
       ],
     })).toBe(false)
+  })
+})
+
+describe('hotel and guesthouse listing categories', () => {
+  it('treats hotel and maison d’hôte as pooled inventory types', () => {
+    expect(supportsPooledRoomInventory('Hôtel')).toBe(true)
+    expect(supportsPooledRoomInventory("Maison d’hôte")).toBe(true)
+    expect(supportsPooledRoomInventory("Maison d'hôte")).toBe(true)
+    expect(supportsPooledRoomInventory('Villa')).toBe(false)
+    expect(supportsPooledRoomInventory('Appartement')).toBe(false)
+  })
+
+  it('maps published types onto guest offer categories', () => {
+    expect(listingCategoryFromType('Hôtel')).toBe('hotel')
+    expect(listingCategoryFromType("Maison d’hôte")).toBe('guesthouse')
+    expect(listingCategoryFromType("Maison d'hôte")).toBe('guesthouse')
+    expect(listingCategoryFromType('Appartement')).toBe('family')
+    expect(listingCategoryFromType('Villa')).toBe('prestige')
   })
 })

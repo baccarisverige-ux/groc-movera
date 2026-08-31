@@ -44,6 +44,14 @@ export function readHostCalendar(userId) {
   return { days: normalizeDays(readAllCalendars()[userId]) }
 }
 
+export function ensureHostListingCalendar(userId, listingId) {
+  if (!userId || !listingId) return
+  const listingCalendars = readAllListingCalendars()
+  if (listingCalendars[listingId]) return
+  listingCalendars[listingId] = { userId, days: {} }
+  storageAdapter.setJson(LISTING_CALENDAR_KEY, listingCalendars)
+}
+
 export function readHostCalendarForListing(listingId, roomTypeId = '') {
   if (!listingId) return { linked: false, userId: null, listingId: '', roomTypeId: '', days: {} }
 

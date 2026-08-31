@@ -3,12 +3,11 @@ import { CollectionPage } from '../../shared/collection/CollectionPage.jsx'
 import '../../shared/collection/portrait-collection.css'
 import HERO_IMAGE from './assets/hero.webp'
 
-const OFFERS = listHomeOffersByCategory('guesthouse')
-
 export function GuestHousePage({ onNavigate }) {
+  const offers = listHomeOffersByCategory('guesthouse')
   return (
     <CollectionPage
-      offers={OFFERS}
+      offers={offers}
       onNavigate={onNavigate}
       pageClassName="portrait-collection-page"
       hero={{

@@ -1,5 +1,16 @@
 import { findHostProfileByListingId } from '../host/hostProfileStore.js'
 
+const CITY_FALLBACK_POSITIONS = Object.freeze({
+  'la marsa': Object.freeze({ lat: 36.8789, lng: 10.3247 }),
+  'sidi bou said': Object.freeze({ lat: 36.8685, lng: 10.3417 }),
+  gammarth: Object.freeze({ lat: 36.9206, lng: 10.2894 }),
+  carthage: Object.freeze({ lat: 36.8528, lng: 10.3236 }),
+  tunis: Object.freeze({ lat: 36.8065, lng: 10.1815 }),
+  hammamet: Object.freeze({ lat: 36.4, lng: 10.6167 }),
+  sousse: Object.freeze({ lat: 35.8256, lng: 10.6411 }),
+  djerba: Object.freeze({ lat: 33.8075, lng: 10.8451 }),
+})
+
 export const LISTING_MAP_POSITIONS = Object.freeze({
   'villa-perle': Object.freeze({ lat: 36.9251, lng: 10.3016 }),
   'maison-bleue': Object.freeze({ lat: 36.8704, lng: 10.3439 }),
@@ -45,5 +56,12 @@ export function getListingMapPosition(id) {
   const listing = findHostProfileByListingId(id)?.listing
   const lat = Number(listing?.latitude)
   const lng = Number(listing?.longitude)
-  return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null
+  if (Number.isFinite(lat) && Number.isFinite(lng)) return { lat, lng }
+  const city = String(listing?.city || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[’‘`]/g, "'")
+    .toLowerCase()
+    .trim()
+  return CITY_FALLBACK_POSITIONS[city] || null
 }

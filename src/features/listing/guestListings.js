@@ -1,4 +1,4 @@
-import { findHostProfileByListingId, listActiveHostProfiles } from '../../entities/host/hostProfileStore.js'
+import { findHostProfileByListingId, listActiveHostProfiles, listingCategoryFromType } from '../../entities/host/hostProfileStore.js'
 import { getListingDetail, listingCatalog } from '../../entities/listing/listingCatalog.js'
 import { homeCategoryOffers, homeDestinations } from '../home/data/homeData.js'
 
@@ -101,6 +101,13 @@ function photosFrom(image, listingId) {
   return [image, ...extras].map((src, index) => ({ src, label: PHOTO_LABELS[index] || 'Galerie' }))
 }
 
+const HOST_FALLBACK_IMAGES = Object.freeze({
+  hotel: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=90&fm=webp',
+  guesthouse: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=90&fm=webp',
+  family: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=900&q=90&fm=webp',
+  prestige: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=900&q=90&fm=webp',
+})
+
 function guestRoomTypes(roomTypes, currency = 'TND') {
   return (Array.isArray(roomTypes) ? roomTypes : []).map((room) => {
     const capacity = {
@@ -174,8 +181,9 @@ function fromHostProfile(profile, baseListing = null) {
   const imageSources = [...(source.photos || []), ...roomTypes.flatMap((room) => room.photos.map((photo) => photo.src))]
   const uniqueImages = Array.from(new Set(imageSources.filter(Boolean)))
   const photos = uniqueImages.map((src, index) => ({ src, label: PHOTO_LABELS[index] || 'Chambre' }))
-  const image = photos[0]?.src || baseListing?.image || ''
-  const category = source.type === 'Hôtel' ? 'hotel' : source.type === "Maison d’hôte" ? 'guesthouse' : baseListing?.category || ''
+  const category = listingCategoryFromType(source.type) || baseListing?.category || ''
+  const image = photos[0]?.src || baseListing?.image || HOST_FALLBACK_IMAGES[category] || ''
+  const gallery = photos.length ? photos : (image ? [{ src: image, label: 'Chambre' }] : baseListing?.photos || [])
   const capacity = primaryRoom?.capacity || { type: source.type, guests: source.guests, bedrooms: source.bedrooms, beds: source.beds, baths: source.bathrooms }
   const amenities = (source.amenities || []).map((id) => HOST_AMENITY_LABELS[id] || id).filter(Boolean)
   const categorized = roomTypes.length > 1
@@ -186,10 +194,10 @@ function fromHostProfile(profile, baseListing = null) {
     title: source.name,
     location: source.city,
     image,
-    photos: photos.length ? photos : baseListing?.photos || [],
+    photos: gallery.length ? gallery : baseListing?.photos || [],
     rating: baseListing?.rating || '4.90',
     reviews: baseListing?.reviews || 0,
-    badge: baseListing?.badge || '',
+    badge: baseListing?.badge || 'Nouveau',
     priceLabel: categorized ? `À partir de ${cheapest} ${currency} / nuit` : `${cheapest} ${currency} / nuit`,
     dates: baseListing?.dates || DEFAULT_DATES,
     amenities: amenities.length ? amenities : baseListing?.amenities || DEFAULT_AMENITIES,
@@ -250,6 +258,17 @@ export function listMapGuestListings() {
   return offers
 }
 
+export function listPublishedHostGuestListings() {
+  return listActiveHostProfiles().map((profile) => fromHostProfile(profile)).filter(Boolean)
+}
+
 export function listHomeOffersByCategory(category) {
-  return (homeCategoryOffers[category] || []).map((item) => getGuestListingById(item.id)).filter(Boolean)
+  const catalog = (homeCategoryOffers[category] || []).map((item) => getGuestListingById(item.id)).filter(Boolean)
+  const seen = new Set(catalog.map((listing) => listing.id))
+  const hosted = listPublishedHostGuestListings().filter((listing) => {
+    if (seen.has(listing.id)) return false
+    if (!category || category === 'all') return true
+    return String(listing.category || '').split(/\s+/).includes(category)
+  })
+  return [...hosted, ...catalog]
 }

@@ -32,11 +32,6 @@ function useStableAttached(progress) {
 function ChevronIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg> }
 function StarIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7L6.8 19l1-5.8-4.2-4.1 5.8-.8L12 3Z" /></svg> }
 function listingPriceCopy(listing) { if (listing.priceLabel) return listing.priceLabel; if (listing.priceTotal) return listing.priceTotal; if (listing.nightlyRate != null) return `${listing.nightlyRate} ${listing.currency || 'TND'}`; if (listing.price != null) return `${listing.price} ${listing.currency || 'TND'}`; return '' }
-function listingMatchesSheetPropertyFilter(listing, filterId) {
-  if (filterId !== 'hotel') return true
-  const category = String(listing?.category || '').toLowerCase(); const title = String(listing?.title || '').toLowerCase(); const type = String(listing?.capacity?.type || '').toLowerCase(); const haystack = `${category} ${title} ${type}`
-  return category.includes('hotel') || haystack.includes('hôtel') || haystack.includes('hotel') || haystack.includes('palace')
-}
 function roomPhoto(room, fallback) { return room?.photos?.[0]?.src || fallback }
 
 function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListingId, propertyFilter, onPropertyFilterChange, onSelectedListingChange, onNavigate, progress, startDrag, toggleExpanded, externalDrag }) {
@@ -49,7 +44,7 @@ function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListi
   const [idleHintActive, setIdleHintActive] = useState(false)
   const [roomSelection, setRoomSelection] = useState({})
   const safeHeaderHeight = Math.max(0, headerHeight || 0)
-  const displayedListings = listings.filter((listing) => listingMatchesSheetPropertyFilter(listing, propertyFilter))
+  const displayedListings = listings
 
   useEffect(() => { externalDragRef.current = externalDrag }, [externalDrag])
   useEffect(() => { progressRef.current = progress; if (progress > 0.03) setIdleHintActive(false) }, [progress])

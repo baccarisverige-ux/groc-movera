@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { storageAdapter } from '../../services/storage/storageAdapter.js'
+import { ensureHostListingCalendar } from './hostCalendarStore.js'
 import {
   clearHostRoomTypeDraft,
   HOST_ROOM_SETUP_MODES,
@@ -58,6 +59,15 @@ function clampInt(value, min, max, fallback) {
 export function supportsPooledRoomInventory(type) {
   const normalized = foldType(type)
   return normalized === 'hotel' || normalized === "maison d'hote"
+}
+
+export function listingCategoryFromType(type) {
+  const normalized = foldType(type)
+  if (normalized === 'hotel') return 'hotel'
+  if (normalized === "maison d'hote") return 'guesthouse'
+  if (normalized === 'appartement') return 'family'
+  if (normalized === 'villa') return 'prestige'
+  return ''
 }
 
 function normalizeRoomTypes(value, type, fallback) {
@@ -239,6 +249,7 @@ export function activateHostProfile(userId, listing) {
   profiles[userId] = profile
   storageAdapter.setJson(HOST_PROFILES_KEY, profiles)
   clearHostRoomTypeDraft(userId)
+  ensureHostListingCalendar(userId, normalizedListing.id)
   if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent(HOST_PROFILE_EVENT, { detail: profile }))
   return profile
 }

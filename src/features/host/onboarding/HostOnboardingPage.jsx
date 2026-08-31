@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { activateHostProfile } from '../../../entities/host/hostProfileStore.js'
+import { activateHostProfile, supportsPooledRoomInventory } from '../../../entities/host/hostProfileStore.js'
 import { ParkingIcon, SnowflakeIcon, WavesIcon, WifiIcon } from '../../../shared/icons/AppIcons.jsx'
 import { useAuthSession } from '../../auth/authSession.js'
 import { clearHostOnboardingDraft, readHostOnboardingDraft, writeHostOnboardingDraft } from './hostOnboardingDraftStore.js'
+import { readHostRoomConfigurationDraft } from '../../../entities/host/hostRoomTypeDraftStore.js'
 import { useHostMapLocationSync } from './hostLocationSync.js'
 import {
   HOST_AMENITIES,
@@ -290,6 +291,16 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
 
   const finish = () => {
     if (!session?.userId || !canContinue) return
+    const roomFallback = {
+      guests: draft.guests,
+      beds: draft.beds,
+      bathrooms: draft.bathrooms,
+      basePrice: Number(draft.basePrice),
+    }
+    const roomConfig = supportsPooledRoomInventory(draft.propertyType)
+      ? readHostRoomConfigurationDraft(session.userId, roomFallback)
+      : null
+    const roomPhotos = roomConfig?.roomTypes?.flatMap((room) => Array.isArray(room.photos) ? room.photos : []) || []
     const profile = activateHostProfile(session.userId, {
       id: 'primary-listing',
       name: draft.title.trim(),
@@ -310,7 +321,9 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
       bookingMode: draft.bookingMode,
       promotions: draft.promotions,
       safety: draft.safety,
-      photos: [],
+      roomTypes: roomConfig?.roomTypes,
+      roomInventory: roomConfig ? { mode: roomConfig.mode, totalUnits: roomConfig.totalRooms } : undefined,
+      photos: roomPhotos,
     })
     clearHostOnboardingDraft(session.userId)
     onActivated?.(profile)

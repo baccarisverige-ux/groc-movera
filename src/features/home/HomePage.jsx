@@ -1,7 +1,9 @@
-import { Fragment, useMemo, useRef, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
+import { HOST_PROFILE_EVENT } from '../../entities/host/hostProfileStore.js'
 import { getCollectionRouteForCategory } from '../../shared/navigation/guestCollectionRoutes.js'
 import { MotionList, MotionListItem } from '../../shared/motion/MotionList.jsx'
 import { useFavorites } from '../favorites/favoritesStore.js'
+import { listPublishedHostGuestListings } from '../listing/guestListings.js'
 import { homeCategories, homeCategoryOffers } from './data/homeData.js'
 import { getSelectedHomeCategory, setSelectedHomeCategory } from './homeCategorySelection.js'
 import { MiniServicesSection } from './MiniServicesSection.jsx'
@@ -190,9 +192,20 @@ function CategorySelection({ id, title, items, favoriteIdSet, toggleFavorite, on
 
 export function HomePage({ onNavigate }) {
   const [category, setCategory] = useState(getSelectedHomeCategory)
+  const [hostTick, setHostTick] = useState(0)
   const { favoriteIds, toggleFavorite } = useFavorites()
   const favoriteIdSet = useMemo(() => new Set(favoriteIds), [favoriteIds])
   const categoryRailRef = useImmediateCategorySwipe()
+
+  useEffect(() => {
+    const sync = () => setHostTick((value) => value + 1)
+    window.addEventListener(HOST_PROFILE_EVENT, sync)
+    window.addEventListener('storage', sync)
+    return () => {
+      window.removeEventListener(HOST_PROFILE_EVENT, sync)
+      window.removeEventListener('storage', sync)
+    }
+  }, [])
 
   const selectCategory = (item) => {
     setCategory(item.id)
@@ -201,11 +214,33 @@ export function HomePage({ onNavigate }) {
     if (route) onNavigate(route)
   }
 
-  const categorySelections = useMemo(() => homeCategories.map((item) => ({
-    id: item.id,
-    title: item.label,
-    items: homeCategoryOffers[item.id] || [],
-  })), [])
+  const categorySelections = useMemo(() => {
+    const hosted = (hostTick >= 0 ? listPublishedHostGuestListings() : []).map((listing) => ({
+      id: listing.id,
+      title: listing.title,
+      location: listing.location,
+      priceTotal: listing.priceLabel,
+      rating: listing.rating,
+      badge: listing.badge || 'Nouveau',
+      image: listing.image,
+      dateLabel: listing.dates,
+      category: listing.category,
+    }))
+    return homeCategories.map((item) => {
+      const catalog = homeCategoryOffers[item.id] || []
+      const seen = new Set(catalog.map((offer) => offer.id))
+      const extra = hosted.filter((listing) => {
+        if (seen.has(listing.id)) return false
+        if (item.id === 'all') return true
+        return String(listing.category || '').split(/\s+/).includes(item.id)
+      })
+      return {
+        id: item.id,
+        title: item.label,
+        items: [...extra, ...catalog],
+      }
+    })
+  }, [hostTick])
 
   const allSelection = categorySelections.find((selection) => selection.id === 'all')
   const remainingSelections = categorySelections.filter((selection) => selection.id !== 'all')

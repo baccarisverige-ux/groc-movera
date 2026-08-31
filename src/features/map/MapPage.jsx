@@ -36,7 +36,7 @@ function listingMatchesPropertyFilter(listing, filterId) {
   if (filterId === 'apartment') return category.includes('family') || haystack.includes('appartement') || haystack.includes('loft')
   if (filterId === 'villa') return category.includes('prestige') || haystack.includes('villa')
   if (filterId === 'hotel') return category.includes('hotel') || haystack.includes('hôtel') || haystack.includes('hotel') || haystack.includes('palace')
-  if (filterId === 'guesthouse') return category.includes('guesthouse')
+  if (filterId === 'guesthouse') return category.includes('guesthouse') || haystack.includes('maison d') || haystack.includes('dar ') || haystack.includes('riad')
   if (filterId === 'beach') return category.includes('beach') || haystack.includes('plage')
   if (filterId === 'house') return !category.includes('guesthouse') && (haystack.includes('maison') || haystack.includes('dar') || haystack.includes('riad'))
   return true
