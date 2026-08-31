@@ -23,26 +23,16 @@ export function buildMonthCells(year, month) {
   return cells
 }
 
-export function defaultNightlyPrice(basePrice, day) {
-  const offsets = [-20, -10, 0, 10, 20, 30, 40]
-  return Math.max(0, Math.round(basePrice + offsets[day % offsets.length]))
+export function defaultNightlyPrice(basePrice) {
+  return Math.max(0, Math.round(Number(basePrice) || 0))
 }
 
 function localDate(year, month, day) {
   return new Date(year, month, day, 12, 0, 0, 0)
 }
 
-export function makeDemoBookings(year, month) {
-  const last = daysInMonth(year, month)
-  const range = (start, end) => ({
-    checkIn: localDate(year, month, Math.min(start, last)),
-    checkOut: localDate(year, month, Math.min(end, last) + 1),
-  })
-  return Object.freeze([
-    { id: 'bk1', guest: 'Bilel Ben Ali', guests: 3, total: '1 260 TND', status: 'Confirmée', ...range(4, 7) },
-    { id: 'bk2', guest: 'Amira Khelifi', guests: 2, total: '940 TND', status: 'Confirmée', ...range(13, 15) },
-    { id: 'bk3', guest: 'Karim Trabelsi', guests: 4, total: '1 680 TND', status: 'Confirmée', ...range(24, 27) },
-  ])
+export function makeDemoBookings() {
+  return Object.freeze([])
 }
 
 export function bookingCoversDay(booking, year, month, day) {
