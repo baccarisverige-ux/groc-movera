@@ -148,25 +148,26 @@ export function registerConfirmedRoomReservation({ reservationId, listingId, che
   const id = typeof reservationId === 'string' ? reservationId.trim() : ''
   if (!id || !listingId) throw new Error('Reservation and listing are required')
 
-  const availability = canReserveRoomUnits({ listingId, checkIn, checkOut, units })
-  if (!availability.ok) throw new Error(availability.reason === 'not-enough-rooms' ? 'No room inventory remains for the selected stay' : 'Invalid reservation dates')
-  if (!availability.inventory.enabled) return availability.inventory
-
-  const all = readObject()
+  const requested = Math.max(1, Math.round(Number(units) || 1))
   const reservations = readReservations(listingId)
   const existing = reservations[id]
   if (existing) {
-    const same = existing.checkIn === checkIn && existing.checkOut === checkOut && existing.units === availability.requested
+    const same = existing.checkIn === checkIn && existing.checkOut === checkOut && existing.units === requested
     if (same) return readHostRoomInventoryForListing(listingId)
     throw new Error('Reservation inventory is already registered with different dates or units')
   }
 
+  const availability = canReserveRoomUnits({ listingId, checkIn, checkOut, units: requested })
+  if (!availability.ok) throw new Error(availability.reason === 'not-enough-rooms' ? 'No room inventory remains for the selected stay' : 'Invalid reservation dates')
+  if (!availability.inventory.enabled) return availability.inventory
+
+  const all = readObject()
   reservations[id] = {
     id,
     listingId,
     checkIn,
     checkOut,
-    units: availability.requested,
+    units: requested,
     createdAt: new Date().toISOString(),
   }
   all[listingId] = { reservations }
