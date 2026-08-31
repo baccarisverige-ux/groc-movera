@@ -3,6 +3,7 @@ import { storageAdapter } from '../../services/storage/storageAdapter.js'
 
 export const HOST_ROOM_INVENTORY_KEY = 'movera:host-room-inventory:v1'
 export const HOST_ROOM_INVENTORY_EVENT = 'movera:host-room-inventory-change'
+const RESERVATIONS_KEY = 'movera:reservations:v1'
 const HOST_CALENDAR_EVENT = 'movera:host-calendar-change'
 
 function readObject() {
@@ -83,10 +84,39 @@ function readReservations(listingId, fallbackRoomTypeId = '') {
   return reservations
 }
 
+function readCanonicalConfirmedReservations(listingId) {
+  const value = storageAdapter.getJson(RESERVATIONS_KEY, {})
+  const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {}
+  return Object.entries(source).map(([id, raw]) => {
+    if (!raw || typeof raw !== 'object' || raw.status !== 'confirmed' || raw.listingId !== listingId) return null
+    const checkIn = typeof raw.checkIn === 'string' ? raw.checkIn : ''
+    const checkOut = typeof raw.checkOut === 'string' ? raw.checkOut : ''
+    if (!stayNightKeys(checkIn, checkOut).length) return null
+    return {
+      id: typeof raw.id === 'string' && raw.id.trim() ? raw.id.trim() : id,
+      listingId,
+      roomTypeId: typeof raw.roomTypeId === 'string' ? raw.roomTypeId.trim() : '',
+      checkIn,
+      checkOut,
+      units: Math.max(1, Math.round(Number(raw.units) || 1)),
+      guestUserId: typeof raw.guestUserId === 'string' ? raw.guestUserId : '',
+      guestLabel: typeof raw.guestLabel === 'string' && raw.guestLabel.trim() ? raw.guestLabel.trim() : 'Voyageur Movera',
+      total: Math.max(0, Math.round(Number(raw.total) || 0)),
+      originalTotal: Math.max(0, Math.round(Number(raw.originalTotal) || Number(raw.total) || 0)),
+      currency: typeof raw.currency === 'string' && raw.currency.trim() ? raw.currency.trim() : 'TND',
+      status: 'confirmed',
+      createdAt: typeof raw.createdAt === 'string' ? raw.createdAt : new Date().toISOString(),
+    }
+  }).filter(Boolean)
+}
+
 export function listConfirmedRoomReservationsForListing(listingId) {
   if (!listingId) return []
+  const canonical = readCanonicalConfirmedReservations(listingId)
+  const seen = new Set(canonical.map((reservation) => reservation.id))
   const config = roomConfig(listingId)
-  return Object.values(readReservations(listingId, config.roomTypeId))
+  const legacy = Object.values(readReservations(listingId, config.roomTypeId)).filter((reservation) => !seen.has(reservation.id))
+  return [...canonical, ...legacy]
     .sort((left, right) => left.checkIn.localeCompare(right.checkIn) || left.createdAt.localeCompare(right.createdAt))
 }
 
