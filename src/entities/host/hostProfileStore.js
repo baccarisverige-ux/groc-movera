@@ -30,15 +30,17 @@ function normalizeCoordinate(value) {
   return Number.isFinite(coordinate) ? coordinate : null
 }
 
-function normalizeListing(value) {
+function normalizeListing(value, fallbackId = 'primary-listing') {
   if (!value || typeof value !== 'object') return null
   const name = typeof value.name === 'string' ? value.name.trim() : ''
   const city = typeof value.city === 'string' ? value.city.trim() : ''
   const type = typeof value.type === 'string' ? value.type.trim() : ''
   const basePrice = Number(value.basePrice)
   if (!name || !city || !type || !Number.isFinite(basePrice) || basePrice <= 0) return null
+  const rawId = typeof value.id === 'string' ? value.id.trim() : ''
+  const id = !rawId || rawId === 'primary-listing' ? fallbackId : rawId
   return {
-    id: typeof value.id === 'string' && value.id.trim() ? value.id.trim() : 'primary-listing',
+    id,
     name,
     city,
     type,
@@ -64,7 +66,7 @@ function normalizeListing(value) {
 
 function normalizeHostProfile(value, userId) {
   if (!value || typeof value !== 'object' || value.status !== 'active') return null
-  const listing = normalizeListing(value.listing)
+  const listing = normalizeListing(value.listing, `host-${userId}`)
   if (!listing) return null
   return {
     status: 'active',
@@ -79,9 +81,19 @@ export function readHostProfile(userId) {
   return normalizeHostProfile(readAllProfiles()[userId], userId)
 }
 
+export function findHostProfileByListingId(listingId) {
+  if (!listingId) return null
+  const matches = []
+  for (const [userId, value] of Object.entries(readAllProfiles())) {
+    const profile = normalizeHostProfile(value, userId)
+    if (profile?.listing?.id === listingId) matches.push(profile)
+  }
+  return matches.length === 1 ? matches[0] : null
+}
+
 export function activateHostProfile(userId, listing) {
   if (!userId) throw new Error('A user is required to activate host mode')
-  const normalizedListing = normalizeListing(listing)
+  const normalizedListing = normalizeListing(listing, `host-${userId}`)
   if (!normalizedListing) throw new Error('Invalid host listing')
   const profiles = readAllProfiles()
   const profile = {
