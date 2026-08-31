@@ -5,6 +5,7 @@ import { HostCalendarPage } from './calendar/HostCalendarPage.jsx'
 import { HostOnboardingPage } from './onboarding/HostOnboardingPage.jsx'
 import { HostRoomTypeManager } from './rooms/HostRoomTypeManager.jsx'
 import './onboarding/hostIntroVideoEnhancer.js'
+import './onboarding/hostRoomTypesOnboardingEnhancer.js'
 
 export function HostEntryPage({ onNavigate }) {
   const { session } = useAuthSession()
