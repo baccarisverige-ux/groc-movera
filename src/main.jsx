@@ -31,9 +31,10 @@ import App from './app/App.jsx'
 installPropertyArtworkRuntime()
 installGeocodingBrowserBridge(window)
 
-// Phase 6B safety switch: the normal app keeps the proven Leaflet host-pin map.
-// The React map engine is code-split and only loaded explicitly with ?hostMap=react.
-if (new URLSearchParams(window.location.search).get('hostMap') === 'react') {
+// Phase 6C safe handoff: React/Google is now the normal host-pin path.
+// Keep ?hostMap=legacy as an explicit rollback while the proven Leaflet surface
+// remains underneath and is hidden only after the React surface is ready.
+if (new URLSearchParams(window.location.search).get('hostMap') !== 'legacy') {
   import('./features/host/onboarding/hostPinReactEngineEnhancer.jsx')
     .then(({ installHostPinReactEngine }) => installHostPinReactEngine())
     .catch(() => {})

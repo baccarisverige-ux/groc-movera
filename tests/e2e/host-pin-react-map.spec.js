@@ -55,10 +55,11 @@ async function clearHostState(page) {
   }, [HOST_PROFILES_KEY, HOST_CALENDAR_KEY, HOST_DRAFT_KEY])
 }
 
-async function reachPinStep(page, { react = false } = {}) {
+async function reachPinStep(page, { mode = '' } = {}) {
   await page.setViewportSize({ width: 390, height: 844 })
   await mockTunisiaGeocoding(page)
-  await page.goto(`/groc-movera/profile${react ? '?hostMap=react' : ''}`)
+  const query = mode ? `?hostMap=${encodeURIComponent(mode)}` : ''
+  await page.goto(`/groc-movera/profile${query}`)
   await page.getByTestId('profile-test-login').click()
   await clearHostState(page)
   await page.reload()
@@ -77,14 +78,8 @@ async function reachPinStep(page, { react = false } = {}) {
   return onboarding
 }
 
-test('normal host onboarding keeps the proven Leaflet path and does not mount the React switch', async ({ page }) => {
+test('normal host onboarding mounts the React map path and keeps Leaflet hidden underneath', async ({ page }) => {
   await reachPinStep(page)
-  await expect(page.getByTestId('host-pin-react-map')).toHaveCount(0)
-  await expect(page.locator('.host-onboarding__map-card')).not.toHaveAttribute('data-react-map-engine', 'true')
-})
-
-test('React host pin switch mounts one visible Movera map engine and synchronizes detected location to the draft', async ({ page }) => {
-  await reachPinStep(page, { react: true })
 
   const card = page.locator('.host-onboarding__map-card')
   const reactRoot = page.getByTestId('host-pin-react-map')
@@ -94,7 +89,18 @@ test('React host pin switch mounts one visible Movera map engine and synchronize
 
   const directLegacySurface = card.locator(':scope > .host-step5-real-map')
   if (await directLegacySurface.count()) await expect(directLegacySurface).toBeHidden()
+})
 
+test('explicit legacy rollback keeps the proven Leaflet path available', async ({ page }) => {
+  await reachPinStep(page, { mode: 'legacy' })
+  await expect(page.getByTestId('host-pin-react-map')).toHaveCount(0)
+  await expect(page.locator('.host-onboarding__map-card')).not.toHaveAttribute('data-react-map-engine', 'true')
+})
+
+test('default React host pin synchronizes detected location to the draft', async ({ page }) => {
+  await reachPinStep(page)
+
+  const reactRoot = page.getByTestId('host-pin-react-map')
   const searchInput = reactRoot.getByLabel('Rechercher ou modifier l’adresse')
   await searchInput.fill('12 Rue Movera, La Marsa')
   await reactRoot.getByRole('button', { name: 'Rechercher cette adresse' }).click()
@@ -104,6 +110,7 @@ test('React host pin switch mounts one visible Movera map engine and synchronize
   await expect(mapSurface).toHaveAttribute('data-lat', '36.878200')
   await expect(mapSurface).toHaveAttribute('data-lng', '10.324700')
   await expect(mapSurface).toHaveAttribute('data-zoom', '17')
+  await expect(mapSurface.locator('xpath=..')).toHaveAttribute('data-map-provider', /^(google|fallback|google-loading)$/)
 
   await expect.poll(async () => page.evaluate((draftKey) => {
     const drafts = JSON.parse(window.localStorage.getItem(draftKey) || '{}')
