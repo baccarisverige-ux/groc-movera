@@ -4,6 +4,7 @@ export const HOST_ROOM_TYPE_DRAFT_KEY = 'movera:host-room-type-drafts:v1'
 
 export const HOST_ROOM_SETUP_MODES = Object.freeze({
   SINGLE: 'single',
+  MULTIPLE_UNSET: 'multiple-unset',
   IDENTICAL: 'identical',
   CATEGORIES: 'categories',
 })
@@ -72,7 +73,8 @@ function inferLegacyConfiguration(value, fallback = {}) {
   const totalRooms = clampInt(value?.totalRooms, 1, 999, summedUnits || fallbackTotal)
 
   let mode = value?.mode
-  if (mode !== HOST_ROOM_SETUP_MODES.SINGLE && mode !== HOST_ROOM_SETUP_MODES.IDENTICAL && mode !== HOST_ROOM_SETUP_MODES.CATEGORIES) {
+  const validModes = Object.values(HOST_ROOM_SETUP_MODES)
+  if (!validModes.includes(mode)) {
     if (normalizedRooms.length > 1) mode = HOST_ROOM_SETUP_MODES.CATEGORIES
     else if ((normalizedRooms[0]?.totalUnits || totalRooms) > 1) mode = HOST_ROOM_SETUP_MODES.IDENTICAL
     else mode = HOST_ROOM_SETUP_MODES.SINGLE
@@ -84,6 +86,14 @@ function inferLegacyConfiguration(value, fallback = {}) {
       mode,
       totalRooms: 1,
       roomTypes: [{ ...(normalizedRooms[0] || defaultRoom(fallback)), totalUnits: 1 }],
+    }
+  }
+
+  if (mode === HOST_ROOM_SETUP_MODES.MULTIPLE_UNSET) {
+    return {
+      mode,
+      totalRooms,
+      roomTypes: [{ ...(normalizedRooms[0] || defaultRoom(fallback, totalRooms)), totalUnits: totalRooms }],
     }
   }
 
@@ -137,6 +147,7 @@ export function roomConfigurationIsValid(configuration) {
   const rooms = Array.isArray(setup.roomTypes) ? setup.roomTypes : []
 
   if (setup.mode === HOST_ROOM_SETUP_MODES.SINGLE) return totalRooms === 1 && rooms.length === 1
+  if (setup.mode === HOST_ROOM_SETUP_MODES.MULTIPLE_UNSET) return false
   if (setup.mode === HOST_ROOM_SETUP_MODES.IDENTICAL) {
     return totalRooms > 1 && rooms.length === 1 && Number(rooms[0]?.totalUnits) === totalRooms
   }
