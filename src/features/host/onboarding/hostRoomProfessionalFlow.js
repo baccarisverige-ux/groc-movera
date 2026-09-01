@@ -1,4 +1,4 @@
-import { supportsPooledRoomInventory } from '../../../entities/host/hostProfileStore.js'
+import { usesPooledRoomInventory } from '../../../entities/host/hostProfileStore.js'
 import {
   HOST_ROOM_SETUP_MODES,
   readHostRoomConfigurationDraft,
@@ -21,7 +21,7 @@ function context() {
   const session = readAuthSession()
   if (!session?.userId) return null
   const draft = readHostOnboardingDraft(session.userId)
-  if (!supportsPooledRoomInventory(draft.propertyType)) return null
+  if (!usesPooledRoomInventory(draft.propertyType, draft.guestAccess)) return null
   return {
     userId: session.userId,
     draft,
