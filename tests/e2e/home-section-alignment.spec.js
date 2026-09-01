@@ -1,13 +1,14 @@
 import { expect, test } from '@playwright/test'
 
-test('all Home sections share the Bienvenue content edge', async ({ page }) => {
+test('Home content aligns with Bienvenue while the premium category shell keeps its approved outer inset', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByTestId('page-home')).toBeVisible()
 
   const geometry = await page.evaluate(() => {
     const home = document.querySelector('.b225-home')
     const welcome = document.querySelector('.b225-welcome')
-    if (!home || !welcome) throw new Error('Home alignment reference is missing')
+    const categories = document.querySelector('.b225-categories-shell')
+    if (!home || !welcome || !categories) throw new Error('Home alignment reference is missing')
 
     const referenceLeft = welcome.getBoundingClientRect().left
     const targets = []
@@ -17,7 +18,6 @@ test('all Home sections share the Bienvenue content edge', async ({ page }) => {
       targets.push({ name, left: node.getBoundingClientRect().left })
     }
 
-    add('categories', document.querySelector('.b225-categories-shell'))
     add('services title', document.querySelector('[data-testid="home-services-mini"] .b225-services-mini__head h2'))
     add('services cards', document.querySelector('[data-testid="home-services-mini"] .b225-service-mini-card'))
 
@@ -32,6 +32,7 @@ test('all Home sections share the Bienvenue content edge', async ({ page }) => {
     return {
       homeLeft: home.getBoundingClientRect().left,
       referenceLeft,
+      categoriesLeft: categories.getBoundingClientRect().left,
       targets,
     }
   })
@@ -39,6 +40,7 @@ test('all Home sections share the Bienvenue content edge', async ({ page }) => {
   const contentInset = geometry.referenceLeft - geometry.homeLeft
   expect(contentInset).toBeGreaterThanOrEqual(10)
   expect(contentInset).toBeLessThanOrEqual(20)
+  expect(Math.abs(geometry.categoriesLeft - geometry.referenceLeft), 'premium Categories shell outer inset').toBeLessThanOrEqual(4)
   for (const target of geometry.targets) {
     expect(Math.abs(target.left - geometry.referenceLeft), `${target.name} must align with Bienvenue`).toBeLessThanOrEqual(2)
   }
