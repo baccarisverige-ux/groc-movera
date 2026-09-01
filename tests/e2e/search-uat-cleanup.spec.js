@@ -14,6 +14,28 @@ async function openSearch(page) {
   return openSearchOnCurrentPage(page)
 }
 
+async function waitForCategoryTravelToSettle(page) {
+  await page.evaluate(() => new Promise((resolve) => {
+    const readTravel = () => Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--movera-category-upward-travel')) || 0
+    const startedAt = performance.now()
+    let previous = readTravel()
+    let stableFrames = 0
+
+    const frame = () => {
+      const current = readTravel()
+      stableFrames = Math.abs(current - previous) <= 0.08 ? stableFrames + 1 : 0
+      previous = current
+      if (stableFrames >= 4 || performance.now() - startedAt > 1_500) {
+        resolve()
+        return
+      }
+      requestAnimationFrame(frame)
+    }
+
+    requestAnimationFrame(frame)
+  }))
+}
+
 async function chooseTwoAvailableDates(page) {
   const available = page.locator('.movera-st__calendar-grid button.movera-st__day:not(:disabled)')
   const count = await available.count()
@@ -95,6 +117,7 @@ test.describe('Search live E2E / UAT / cleanup safety', () => {
 
     await page.evaluate(() => window.scrollTo(0, Math.min(900, Math.max(500, document.documentElement.scrollHeight * 0.35))))
     await expect.poll(async () => page.evaluate(() => window.scrollY)).toBeGreaterThan(300)
+    await waitForCategoryTravelToSettle(page)
     const beforeOpen = await page.evaluate(() => ({
       scrollY: Math.round(window.scrollY),
       headerHeight: document.querySelector('.b225-home-header')?.getBoundingClientRect().height || 0,
@@ -111,7 +134,7 @@ test.describe('Search live E2E / UAT / cleanup safety', () => {
     await expect.poll(async () => page.evaluate(() => document.activeElement?.matches('.movera-st__persistent-search input') || false)).toBe(false)
     await expectSearchClosedCleanly(page)
     await expect.poll(async () => page.evaluate(() => Math.round(window.scrollY))).toBe(beforeOpen.scrollY)
-    await page.waitForTimeout(300)
+    await waitForCategoryTravelToSettle(page)
 
     const afterClose = await page.evaluate(() => ({
       headerHeight: document.querySelector('.b225-home-header')?.getBoundingClientRect().height || 0,
