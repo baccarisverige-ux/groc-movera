@@ -136,9 +136,9 @@ test('Grand Tunis fully expanded keeps 16 offers summary and first offer visible
   await expect(sheet.locator('[data-listing-id]')).toHaveCount(16)
   await expect(dragZone).toContainText('16 offres')
   await expect(dragZone).toContainText('Grand Tunis')
-  await expect(panel).toHaveCSS('box-shadow', 'none')
-  await expect(panel).toHaveCSS('border-top-left-radius', '0px')
-  await expect(panel).toHaveCSS('border-top-right-radius', '0px')
+  await expect.poll(() => panel.evaluate((node) => getComputedStyle(node).boxShadow)).not.toBe('none')
+  await expect(panel).toHaveCSS('border-top-left-radius', '22px')
+  await expect(panel).toHaveCSS('border-top-right-radius', '22px')
 
   const list = sheet.locator('.map-offer-sheet__list')
   await expect(list).toHaveCSS('scroll-snap-type', 'none')
