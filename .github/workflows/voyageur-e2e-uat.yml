@@ -26,17 +26,22 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install Playwright test runner
+        run: npm install --no-save --package-lock=false @playwright/test@1.55.0
+
       - name: Install Chromium
-        run: npx --yes playwright@1.55.0 install --with-deps chromium
+        run: npx playwright install chromium
 
       - name: Run Voyageur E2E + UAT
-        run: npx --yes @playwright/test@1.55.0 test tests/e2e/voyageur-global-uat.spec.js --project=desktop-chromium --project=mobile-chromium
+        run: npx playwright test tests/e2e/voyageur-global-uat.spec.js --project=desktop-chromium --project=mobile-chromium
 
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: voyageur-e2e-uat-report
-          path: playwright-report
+          path: |
+            playwright-report
+            test-results
           if-no-files-found: ignore
           retention-days: 7
