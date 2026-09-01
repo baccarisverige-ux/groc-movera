@@ -33,7 +33,9 @@ async function completeHostOnboarding(page, { type, title, city }) {
 
   await page.getByLabel('Adresse du logement').fill('10 avenue de la Mer')
   await page.getByLabel('Ville du logement').fill(city)
+  await page.evaluate(({ address, city }) => window.localStorage.setItem('movera:host-map-last-location:v1', JSON.stringify({ address, city, lat: 36.8782, lng: 10.3247, updatedAt: Date.now() })), { address: '10 avenue de la Mer', city })
   await next(page)
+  await expect(page.getByTestId('host-pin-react-map')).toHaveAttribute('data-location-ready', 'true')
   await page.getByRole('button', { name: 'Confirmer cet emplacement' }).click()
   await next(page)
 
