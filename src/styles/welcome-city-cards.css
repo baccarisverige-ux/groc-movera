@@ -115,13 +115,13 @@
   outline-offset:3px;
 }
 
-.b225-welcome-city:nth-child(1){--city-rotate:-1.4deg;--city-surface:#c6bfb8;--city-mid:#f3e6da;--city-deep:#ead8c6;--city-edge:#d9c2aa;left:0;top:22px;width:36%}
-.b225-welcome-city:nth-child(2){--city-rotate:1.3deg;--city-surface:#bec3c7;--city-mid:#e4eef6;--city-deep:#d6e4f0;--city-edge:#bed0df;left:6%;top:69px;width:28%}
-.b225-welcome-city:nth-child(3){--city-rotate:-.8deg;--city-surface:#bfc2ba;--city-mid:#e6ecdc;--city-deep:#d8e2cc;--city-edge:#c1cdb4;left:27%;top:54px;width:34%}
-.b225-welcome-city:nth-child(4){--city-rotate:.8deg;--city-surface:#c7bbbe;--city-mid:#f4e0e6;--city-deep:#ecd1da;--city-edge:#d7bac4;left:55%;top:0;width:24%}
-.b225-welcome-city:nth-child(5){--city-rotate:1.1deg;--city-surface:#c8c2b0;--city-mid:#f6ebcc;--city-deep:#eddfb5;--city-edge:#d3c496;right:0;top:13px;width:23%}
-.b225-welcome-city:nth-child(6){--city-rotate:-.6deg;--city-surface:#bbc4c1;--city-mid:#e0efe9;--city-deep:#cee5dc;--city-edge:#b7cec3;right:0;top:63px;width:25%}
-.b225-welcome-city:nth-child(7){--city-rotate:.7deg;--city-surface:#c2bdc6;--city-mid:#e9e0f0;--city-deep:#dacfe5;--city-edge:#c5b7d0;left:43%;top:91px;width:29%}
+.b225-welcome-city:nth-child(1){--city-rotate:-1.4deg;--city-surface:#f3dcc5;--city-mid:#f3e6da;--city-deep:#ead8c6;--city-edge:#d9c2aa;left:0;top:22px;width:36%}
+.b225-welcome-city:nth-child(2){--city-rotate:1.3deg;--city-surface:#dcecf8;--city-mid:#e4eef6;--city-deep:#d6e4f0;--city-edge:#bed0df;left:6%;top:69px;width:28%}
+.b225-welcome-city:nth-child(3){--city-rotate:-.8deg;--city-surface:#e2edcf;--city-mid:#e6ecdc;--city-deep:#d8e2cc;--city-edge:#c1cdb4;left:27%;top:54px;width:34%}
+.b225-welcome-city:nth-child(4){--city-rotate:.8deg;--city-surface:#f4d4dc;--city-mid:#f4e0e6;--city-deep:#ecd1da;--city-edge:#d7bac4;left:55%;top:0;width:24%}
+.b225-welcome-city:nth-child(5){--city-rotate:1.1deg;--city-surface:#f5e7b9;--city-mid:#f6ebcc;--city-deep:#eddfb5;--city-edge:#d3c496;right:0;top:13px;width:23%}
+.b225-welcome-city:nth-child(6){--city-rotate:-.6deg;--city-surface:#d5eee5;--city-mid:#e0efe9;--city-deep:#cee5dc;--city-edge:#b7cec3;right:0;top:63px;width:25%}
+.b225-welcome-city:nth-child(7){--city-rotate:.7deg;--city-surface:#e6d7f2;--city-mid:#e9e0f0;--city-deep:#dacfe5;--city-edge:#c5b7d0;left:43%;top:91px;width:29%}
 
 @media(max-width:350px){
   .b225-welcome{min-height:155px!important;padding-inline:12px!important}
