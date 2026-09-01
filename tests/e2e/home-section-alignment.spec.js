@@ -17,18 +17,15 @@ test('all Home sections share the Bienvenue content edge', async ({ page }) => {
       targets.push({ name, left: node.getBoundingClientRect().left })
     }
 
-    add('categories', document.querySelector('.b225-categories > button'))
-    add('featured title', document.querySelector('[data-testid="home-featured"] .b225-section__title h2'))
-    add('featured cards', document.querySelector('[data-testid="home-featured"] .b225-featured-card'))
-    add('destinations title', document.querySelector('[data-testid="home-destinations"] .b225-section__title h2'))
-    add('destinations cards', document.querySelector('[data-testid="home-destinations"] .b225-city'))
-    add('services', document.querySelector('[data-testid="home-services"] .b225-service-card'))
+    add('categories', document.querySelector('.b225-categories button[data-category-id]'))
+    add('services title', document.querySelector('[data-testid="home-services-mini"] .b225-services-mini__head h2'))
+    add('services cards', document.querySelector('[data-testid="home-services-mini"] .b225-service-mini-card'))
 
     document.querySelectorAll('.b225-home > .b225-section').forEach((section, index) => {
       const title = section.querySelector('.b225-section__title h2')
       if (title) add(`section ${index + 1} title`, title)
 
-      const content = section.querySelector('.b225-scroll > *, .b225-experience-grid > *')
+      const content = section.querySelector('.b225-offer-scroll > *, .b225-scroll > *, .b225-experience-grid > *')
       if (content) add(`section ${index + 1} content`, content)
     })
 
