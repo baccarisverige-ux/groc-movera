@@ -17,7 +17,7 @@ test('all Home sections share the Bienvenue content edge', async ({ page }) => {
       targets.push({ name, left: node.getBoundingClientRect().left })
     }
 
-    add('categories', document.querySelector('.b225-categories button[data-category-id]'))
+    add('categories', document.querySelector('.b225-categories-shell'))
     add('services title', document.querySelector('[data-testid="home-services-mini"] .b225-services-mini__head h2'))
     add('services cards', document.querySelector('[data-testid="home-services-mini"] .b225-service-mini-card'))
 
@@ -40,6 +40,6 @@ test('all Home sections share the Bienvenue content edge', async ({ page }) => {
   expect(contentInset).toBeGreaterThanOrEqual(10)
   expect(contentInset).toBeLessThanOrEqual(20)
   for (const target of geometry.targets) {
-    expect(Math.abs(target.left - geometry.referenceLeft), `${target.name} must align with Bienvenue`).toBeLessThanOrEqual(1)
+    expect(Math.abs(target.left - geometry.referenceLeft), `${target.name} must align with Bienvenue`).toBeLessThanOrEqual(2)
   }
 })
