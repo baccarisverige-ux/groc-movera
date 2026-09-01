@@ -36,6 +36,7 @@ let currentPage = null
 let cleanupCurrent = () => {}
 let frame = 0
 let hospitalityDefaultPending = false
+let pendingPropertyType = ''
 
 function iconSvg(kind) {
   if (kind === 'door') {
@@ -55,8 +56,9 @@ function currentContext() {
   const session = readAuthSession()
   if (!session?.userId) return null
   const draft = readHostOnboardingDraft(session.userId)
-  if (!supportsPooledRoomInventory(draft.propertyType)) return null
-  return { propertyType: draft.propertyType, guestAccess: draft.guestAccess }
+  const propertyType = pendingPropertyType || draft.propertyType
+  if (!supportsPooledRoomInventory(propertyType)) return null
+  return { propertyType, guestAccess: draft.guestAccess }
 }
 
 function originalButtonFor(list, sourceLabel) {
@@ -72,6 +74,7 @@ function attachPropertyTypeDefaults() {
     button.dataset.hospitalityDefaultListener = 'true'
     button.addEventListener('click', () => {
       const type = button.textContent.trim()
+      pendingPropertyType = type
       hospitalityDefaultPending = supportsPooledRoomInventory(type)
     })
   })
