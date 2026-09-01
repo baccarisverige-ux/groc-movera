@@ -13,7 +13,7 @@ async function next(page) {
   await page.getByRole('button', { name: 'Continuer' }).click()
 }
 
-test('hotel with different room categories uses one clear category photo screen', async ({ page }) => {
+test('hotel uses hospitality-specific guest access before room categories', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/groc-movera/profile')
   await page.getByTestId('profile-test-login').click()
@@ -28,7 +28,11 @@ test('hotel with different room categories uses one clear category photo screen'
   await next(page)
 
   await expect(onboarding).toHaveAttribute('data-screen', 'guest-access')
-  await page.getByRole('radio').first().click()
+  await expect(page.getByRole('heading', { name: 'Que réservent vos voyageurs ?' })).toBeVisible()
+  await expect(page.getByTestId('host-hospitality-access')).toContainText('Hôtel')
+  await expect(page.getByTestId('host-hospitality-access')).toContainText('Configuration professionnelle')
+  await expect(page.getByRole('radio', { name: /Une chambre privée/ })).toHaveAttribute('aria-checked', 'true')
+  await expect(page.getByRole('radio', { name: /L’établissement entier/ })).toBeVisible()
   await next(page)
 
   await page.getByLabel('Adresse du logement').fill('10 avenue de la Mer')
@@ -62,4 +66,25 @@ test('hotel with different room categories uses one clear category photo screen'
   await expect(page.locator('.host-room-pro-gallery')).toHaveCount(1)
   await expect(page.locator('.host-onboarding__photo-uploader')).toBeHidden()
   await expect(page.locator('.host-room-photo-setup')).toBeHidden()
+})
+
+test('guest house receives the same hospitality-specific reservation model', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/groc-movera/profile')
+  await page.getByTestId('profile-test-login').click()
+  await resetHost(page)
+  await page.reload()
+  await page.getByTestId('switch-to-hosting').click()
+
+  const onboarding = page.getByTestId('host-onboarding')
+  await page.getByRole('button', { name: 'Commencer' }).click()
+  await page.getByRole('radio', { name: 'Maison d’hôte' }).click()
+  await next(page)
+
+  await expect(onboarding).toHaveAttribute('data-screen', 'guest-access')
+  const hospitality = page.getByTestId('host-hospitality-access')
+  await expect(hospitality).toContainText('Maison d’hôte')
+  await expect(page.getByRole('radio', { name: /Une chambre privée/ })).toHaveAttribute('aria-checked', 'true')
+  await expect(page.getByRole('radio', { name: /Une chambre partagée/ })).toBeVisible()
+  await expect(page.getByRole('radio', { name: /L’établissement entier/ })).toBeVisible()
 })
