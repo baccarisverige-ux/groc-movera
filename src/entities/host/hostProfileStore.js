@@ -78,6 +78,21 @@ export function supportsPooledRoomInventory(type) {
   return normalized === 'hotel' || normalized === "maison d'hote"
 }
 
+export function normalizeHostGuestAccess(type, value) {
+  const normalizedType = foldType(type)
+  const requested = ['entire', 'private', 'shared'].includes(value) ? value : ''
+
+  if (normalizedType === 'hotel') {
+    return requested === 'shared' ? 'shared' : 'private'
+  }
+
+  if (normalizedType === "maison d'hote") {
+    return requested || 'private'
+  }
+
+  return requested || 'entire'
+}
+
 export function listingCategoryFromType(type) {
   const normalized = foldType(type)
   if (normalized === 'hotel') return 'hotel'
@@ -184,7 +199,7 @@ function normalizeListing(value, fallbackId = 'primary-listing') {
     address: typeof value.address === 'string' ? value.address.trim() : '',
     latitude: normalizeCoordinate(value.latitude),
     longitude: normalizeCoordinate(value.longitude),
-    guestAccess: typeof value.guestAccess === 'string' ? value.guestAccess : 'entire',
+    guestAccess: normalizeHostGuestAccess(type, value.guestAccess),
     guests,
     bedrooms: Math.max(0, Number(value.bedrooms) || 0),
     beds,
