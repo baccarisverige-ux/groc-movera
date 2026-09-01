@@ -18,10 +18,10 @@ const IDLE_HINT_DURATION_MS = 720
 const MAP_PROPERTY_FILTERS = Object.freeze([
   { id: 'all', label: 'Tout' },
   { id: 'apartment', label: 'Appartement' },
-  { id: 'villa', label: 'Villa' },
+  { id: 'beach', label: 'Plage' },
   { id: 'hotel', label: 'Hôtel' },
   { id: 'guesthouse', label: "Maison d’hôte" },
-  { id: 'beach', label: 'Plage' },
+  { id: 'villa', label: 'Villa' },
 ])
 
 function useStableAttached(progress) {
