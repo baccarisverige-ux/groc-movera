@@ -1,4 +1,4 @@
-/* Listing detail embedded map — reuse the real Movera map engine inside the compact location card. */
+/* Listing detail embedded map — exact offer location preview. */
 .listing-detail-map-frame > .map-engine{
   width:100%;
   height:100%;
@@ -13,14 +13,16 @@
   border:0;
   border-radius:0;
   background:#e4e7e4;
-  cursor:grab;
+  cursor:default;
+  pointer-events:none;
 }
 
-.listing-detail-map-frame > .map-engine > .map-surface:active{cursor:grabbing}
 .listing-detail-map-frame > .map-engine > .map-engine__status{display:none}
 
-/* Keep the compact Airbnb-like surface clean; touch/pinch/double-tap still control the map. */
+/* The detail card is a location preview, not the full interactive map. The full map opens from the CTA. */
 .listing-detail-map-frame .map-controls{display:none}
+.listing-detail-map-frame .map-marker-layer,
+.listing-detail-map-frame .map-cluster-layer{display:none!important}
 .listing-detail-map-frame .map-attribution{
   right:7px;
   bottom:7px;
@@ -32,7 +34,40 @@
   line-height:1.2;
 }
 
-/* Re-skin the normal Movera marker as the location pin used by the listing card. */
+/* Always-visible property pin. The map viewport is initialized from the same
+   getListingMapPosition() coordinates used by the full map, so the center pin
+   represents the selected offer even when Google/fallback marker layers change. */
+.listing-detail-map-frame::before{
+  content:'';
+  position:absolute;
+  z-index:7;
+  left:50%;
+  top:47%;
+  width:42px;
+  height:42px;
+  border:5px solid rgba(255,255,255,.92);
+  border-radius:50%;
+  background:var(--listing-green,#315f4c);
+  transform:translate(-50%,-50%);
+  box-shadow:0 8px 20px rgba(36,69,53,.29),0 0 0 1px rgba(255,255,255,.45);
+  pointer-events:none;
+}
+.listing-detail-map-frame::after{
+  content:'';
+  position:absolute;
+  z-index:8;
+  left:50%;
+  top:47%;
+  width:10px;
+  height:13px;
+  border:1.6px solid #fff;
+  border-radius:50% 50% 50% 0;
+  transform:translate(-50%,-61%) rotate(-45deg);
+  pointer-events:none;
+}
+
+/* Keep the normal marker styling available if this preview is later switched
+   back to an interactive marker layer. */
 .listing-detail-map-frame .map-marker{
   width:42px;
   min-width:42px;
@@ -79,9 +114,9 @@
   transform:translate(-50%,-82%);
 }
 
-/* The full-map CTA stays above the interactive map without blocking map gestures elsewhere. */
+/* Full-map CTA stays above the map and location pin. */
 .listing-detail-map-frame .listing-detail-map-cta{
-  z-index:8;
+  z-index:10;
   border:0;
   white-space:nowrap;
   cursor:pointer;
