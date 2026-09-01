@@ -46,9 +46,11 @@ test('first-time traveler completes the full Movera host procedure before reachi
   await expect(onboarding).toHaveAttribute('data-screen', 'address')
   await page.getByLabel('Adresse du logement').fill('12 rue du Littoral')
   await page.getByLabel('Ville du logement').fill('La Marsa')
+  await page.evaluate(() => window.localStorage.setItem('movera:host-map-last-location:v1', JSON.stringify({ address: '12 rue du Littoral', city: 'La Marsa', lat: 36.8782, lng: 10.3247, updatedAt: Date.now() })))
   await continueOnboarding(page)
 
   await expect(onboarding).toHaveAttribute('data-screen', 'pin')
+  await expect(page.getByTestId('host-pin-react-map')).toHaveAttribute('data-location-ready', 'true')
   await page.getByRole('button', { name: 'Confirmer cet emplacement' }).click()
   await continueOnboarding(page)
 
