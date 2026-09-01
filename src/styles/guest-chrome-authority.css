@@ -96,6 +96,10 @@
   font-weight:760!important;
 }
 
+.movera-st .movera-st__recent-empty{
+  color:#626b66!important;
+}
+
 @media(max-width:350px){
   .b225-home.b225-home .b225-categories-shell{
     margin:7px 8px 9px!important;

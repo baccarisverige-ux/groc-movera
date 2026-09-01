@@ -16,8 +16,10 @@ async function next(page) {
 async function reachBasicsAfterLocation(page, onboarding) {
   await page.getByLabel('Adresse du logement').fill('10 avenue de la Mer')
   await page.getByLabel('Ville du logement').fill('La Marsa')
+  await page.evaluate(() => window.localStorage.setItem('movera:host-map-last-location:v1', JSON.stringify({ address: '10 avenue de la Mer', city: 'La Marsa', lat: 36.8782, lng: 10.3247, updatedAt: Date.now() })))
   await next(page)
   await expect(onboarding).toHaveAttribute('data-screen', 'pin')
+  await expect(page.getByTestId('host-pin-react-map')).toHaveAttribute('data-location-ready', 'true')
   await page.getByRole('button', { name: 'Confirmer cet emplacement' }).click()
   await next(page)
   await expect(onboarding).toHaveAttribute('data-screen', 'basics')
@@ -51,7 +53,7 @@ test('hotel offers room-level reservation choices only before room categories', 
   await reachBasicsAfterLocation(page, onboarding)
   await expect(page.getByRole('heading', { name: 'Configurez vos chambres' })).toBeVisible()
   await expect(page.getByText('Capacité d’une chambre', { exact: true })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Augmenter Chambres' })).toBeHidden()
+  await expect(page.getByRole('button', { name: 'Augmenter Chambres' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Augmenter Nombre total de chambres' })).toBeVisible()
 
   await page.getByRole('button', { name: 'Augmenter Nombre total de chambres' }).click()

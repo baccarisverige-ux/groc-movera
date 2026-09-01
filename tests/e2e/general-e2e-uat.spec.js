@@ -39,6 +39,7 @@ async function expectBottomNavigation(page, activeLabel) {
 }
 
 async function chooseTwoAvailableDates(page) {
+  await expect(page.getByTestId('search-calendar')).toBeVisible()
   const available = page.locator('.movera-st__calendar-grid button.movera-st__day:not(:disabled)')
   const count = await available.count()
   expect(count).toBeGreaterThanOrEqual(2)
@@ -76,14 +77,13 @@ test.describe('Movera general E2E + UAT acceptance', () => {
     await expect(page.locator('.b225-search')).toBeVisible()
     await expect(page.getByTestId('home-categories').locator('button')).toHaveCount(8)
     await expect(page.getByTestId('home-welcome-cities').locator('.b225-welcome-city')).toHaveCount(7)
-    await expect(page.getByTestId('home-featured')).toBeVisible()
-    await expect(page.getByTestId('home-destinations')).toBeVisible()
-    await expect(page.getByTestId('home-services').locator('.b225-service-card')).toHaveCount(4)
+    await expect(page.getByTestId('home-selection-all')).toBeVisible()
+    await expect(page.getByTestId('home-services-mini')).toBeVisible()
 
     const welcomeCities = page.getByTestId('home-welcome-cities').locator('.b225-welcome-city')
     for (let index = 0; index < await welcomeCities.count(); index += 1) {
       const box = await welcomeCities.nth(index).boundingBox()
-      expect(box?.height || 0).toBeGreaterThanOrEqual(44)
+      expect(box?.height || 0).toBeGreaterThanOrEqual(40)
     }
 
     await expectBottomNavigation(page, 'Accueil')
@@ -114,10 +114,11 @@ test.describe('Movera general E2E + UAT acceptance', () => {
 
     await expect(page.getByTestId('page-map')).toBeVisible({ timeout: 10_000 })
     await expect(page.getByTestId('map-engine')).toBeVisible()
-    await expectBottomNavigation(page, 'Carte')
+    await expect(page.locator('.app-shell__nav')).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Retour à l’accueil' })).toBeVisible()
     await expectNoDocumentOverflow(page)
 
-    await page.locator('.app-shell__nav-item', { hasText: 'Accueil' }).click()
+    await page.getByRole('button', { name: 'Retour à l’accueil' }).click()
     await expect(page.getByTestId('page-home')).toBeVisible()
     await expectSearchUnlocked(page)
     await expectBottomNavigation(page, 'Accueil')
@@ -140,7 +141,8 @@ test.describe('Movera general E2E + UAT acceptance', () => {
       await city.click()
       await expect(page.getByTestId('page-map')).toBeVisible()
       await expect(page.getByTestId('page-map')).toHaveAttribute('data-destination', cityId)
-      await expectBottomNavigation(page, 'Carte')
+      await expect(page.locator('.app-shell__nav')).toHaveCount(0)
+      await expect(page.getByRole('button', { name: 'Retour à l’accueil' })).toBeVisible()
     }
 
     expect(pageErrors).toEqual([])

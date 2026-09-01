@@ -33,7 +33,9 @@ async function completeHostOnboarding(page, { type, title, city }) {
 
   await page.getByLabel('Adresse du logement').fill('10 avenue de la Mer')
   await page.getByLabel('Ville du logement').fill(city)
+  await page.evaluate(({ address, city }) => window.localStorage.setItem('movera:host-map-last-location:v1', JSON.stringify({ address, city, lat: 36.8782, lng: 10.3247, updatedAt: Date.now() })), { address: '10 avenue de la Mer', city })
   await next(page)
+  await expect(page.getByTestId('host-pin-react-map')).toHaveAttribute('data-location-ready', 'true')
   await page.getByRole('button', { name: 'Confirmer cet emplacement' }).click()
   await next(page)
 
@@ -94,6 +96,7 @@ test('published hotel offer appears on calendar, hotel collection and map', asyn
   await completeHostOnboarding(page, { type: 'Hôtel', title: 'Hôtel Palmier Marsa', city: 'La Marsa' })
 
   const calendar = page.getByTestId('host-calendar-page')
+  await page.getByRole('navigation', { name: 'Navigation Hôte' }).getByRole('button', { name: 'Calendrier' }).click()
   await expect(calendar).toBeVisible()
   await expect(calendar).toContainText('Hôtel Palmier Marsa')
   await expect(calendar).toContainText('Hôtel')
@@ -115,6 +118,7 @@ test('published maison d’hôte offer appears on calendar and collection', asyn
   await completeHostOnboarding(page, { type: "Maison d’hôte", title: 'Dar Yasminbleue', city: 'La Marsa' })
 
   const calendar = page.getByTestId('host-calendar-page')
+  await page.getByRole('navigation', { name: 'Navigation Hôte' }).getByRole('button', { name: 'Calendrier' }).click()
   await expect(calendar).toBeVisible()
   await expect(calendar).toContainText('Dar Yasminbleue')
   await expect(calendar).toContainText("Maison d’hôte")

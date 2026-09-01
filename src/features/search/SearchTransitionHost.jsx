@@ -379,6 +379,7 @@ export function SearchTransitionHost({ onNavigate }) {
             }}
             placeholder="Explorez autrement"
             aria-label="Destination ou adresse"
+            role="combobox"
             aria-expanded={addressMode}
             aria-controls="movera-address-suggestions"
             autoComplete="off"
