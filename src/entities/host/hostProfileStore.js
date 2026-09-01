@@ -93,6 +93,10 @@ export function normalizeHostGuestAccess(type, value) {
   return requested || 'entire'
 }
 
+export function usesPooledRoomInventory(type, guestAccess) {
+  return supportsPooledRoomInventory(type) && normalizeHostGuestAccess(type, guestAccess) !== 'entire'
+}
+
 export function listingCategoryFromType(type) {
   const normalized = foldType(type)
   if (normalized === 'hotel') return 'hotel'
@@ -102,8 +106,8 @@ export function listingCategoryFromType(type) {
   return ''
 }
 
-function normalizeRoomTypes(value, type, fallback) {
-  if (!supportsPooledRoomInventory(type)) return []
+function normalizeRoomTypes(value, type, guestAccess, fallback) {
+  if (!usesPooledRoomInventory(type, guestAccess)) return []
   const source = Array.isArray(value) ? value : []
   const legacyUnits = clampInt(fallback?.legacyUnits, 1, 999, 1)
   const fallbackPrice = clampInt(fallback?.basePrice, 1, 99999, 180)
@@ -150,21 +154,21 @@ function normalizeRoomTypes(value, type, fallback) {
   })
 }
 
-function deriveRoomInventoryMode(type, roomTypes) {
-  if (!supportsPooledRoomInventory(type)) return HOST_ROOM_SETUP_MODES.SINGLE
+function deriveRoomInventoryMode(type, guestAccess, roomTypes) {
+  if (!usesPooledRoomInventory(type, guestAccess)) return HOST_ROOM_SETUP_MODES.SINGLE
   const totalUnits = roomTypes.reduce((sum, room) => sum + Math.max(1, Number(room.totalUnits) || 1), 0)
   if (roomTypes.length > 1) return HOST_ROOM_SETUP_MODES.CATEGORIES
   if (totalUnits > 1) return HOST_ROOM_SETUP_MODES.IDENTICAL
   return HOST_ROOM_SETUP_MODES.SINGLE
 }
 
-function normalizeRoomInventory(value, type, roomTypes) {
-  if (!supportsPooledRoomInventory(type)) return { mode: HOST_ROOM_SETUP_MODES.SINGLE, totalUnits: 1 }
+function normalizeRoomInventory(value, type, guestAccess, roomTypes) {
+  if (!usesPooledRoomInventory(type, guestAccess)) return { mode: HOST_ROOM_SETUP_MODES.SINGLE, totalUnits: 1 }
   const source = value && typeof value === 'object' ? value : {}
   const roomTotal = roomTypes.reduce((sum, room) => sum + room.totalUnits, 0)
   const totalUnits = Math.max(1, roomTotal || clampInt(source.totalUnits, 1, 999, 1))
   return {
-    mode: deriveRoomInventoryMode(type, roomTypes),
+    mode: deriveRoomInventoryMode(type, guestAccess, roomTypes),
     totalUnits,
   }
 }
@@ -181,7 +185,8 @@ function normalizeListing(value, fallbackId = 'primary-listing') {
   const guests = Math.max(1, Number(value.guests) || 1)
   const beds = Math.max(1, Number(value.beds) || 1)
   const bathrooms = Math.max(0, Number(value.bathrooms) || 0)
-  const roomTypes = normalizeRoomTypes(value.roomTypes, type, {
+  const guestAccess = normalizeHostGuestAccess(type, value.guestAccess)
+  const roomTypes = normalizeRoomTypes(value.roomTypes, type, guestAccess, {
     basePrice,
     guests,
     beds,
@@ -199,7 +204,7 @@ function normalizeListing(value, fallbackId = 'primary-listing') {
     address: typeof value.address === 'string' ? value.address.trim() : '',
     latitude: normalizeCoordinate(value.latitude),
     longitude: normalizeCoordinate(value.longitude),
-    guestAccess: normalizeHostGuestAccess(type, value.guestAccess),
+    guestAccess,
     guests,
     bedrooms: Math.max(0, Number(value.bedrooms) || 0),
     beds,
@@ -212,7 +217,7 @@ function normalizeListing(value, fallbackId = 'primary-listing') {
     safety: normalizeSafety(value.safety),
     stayRules: normalizeStayRules(value.stayRules),
     roomTypes,
-    roomInventory: normalizeRoomInventory(value.roomInventory, type, roomTypes),
+    roomInventory: normalizeRoomInventory(value.roomInventory, type, guestAccess, roomTypes),
     photos: stringArray(value.photos),
   }
 }
@@ -265,7 +270,8 @@ export function activateHostProfile(userId, listing) {
     bathrooms: listing?.bathrooms,
     basePrice: listing?.basePrice,
   }
-  const configuration = supportsPooledRoomInventory(listing?.type)
+  const roomBased = usesPooledRoomInventory(listing?.type, listing?.guestAccess)
+  const configuration = roomBased
     ? readHostRoomConfigurationDraft(userId, roomFallback)
     : null
   const listingForActivation = configuration
@@ -277,7 +283,9 @@ export function activateHostProfile(userId, listing) {
           totalUnits: configuration.totalRooms,
         },
       }
-    : listing
+    : supportsPooledRoomInventory(listing?.type)
+      ? { ...listing, roomTypes: [], roomInventory: undefined, photos: [] }
+      : listing
   const normalizedListing = normalizeListing(listingForActivation, `host-${userId}`)
   if (!normalizedListing) throw new Error('Invalid host listing')
   const profile = {
@@ -312,7 +320,7 @@ export function updateHostRoomTypeTotal(userId, roomTypeIdValue, totalUnits) {
   const profiles = readAllProfiles()
   const current = normalizeHostProfile(profiles[userId], userId)
   if (!current) throw new Error('Host profile not found')
-  if (!supportsPooledRoomInventory(current.listing.type)) return current
+  if (!usesPooledRoomInventory(current.listing.type, current.listing.guestAccess)) return current
 
   const roomTypes = current.listing.roomTypes.map((room) => room.id === roomTypeIdValue
     ? { ...room, totalUnits: clampInt(totalUnits, 1, 999, 1) }
@@ -325,7 +333,7 @@ export function updateHostRoomTypeTotal(userId, roomTypeIdValue, totalUnits) {
       ...current.listing,
       roomTypes,
       roomInventory: {
-        mode: deriveRoomInventoryMode(current.listing.type, roomTypes),
+        mode: deriveRoomInventoryMode(current.listing.type, current.listing.guestAccess, roomTypes),
         totalUnits: roomTypes.reduce((sum, room) => sum + room.totalUnits, 0),
       },
     },
