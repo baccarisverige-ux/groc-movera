@@ -430,3 +430,7 @@
   .map-offer-sheet__property-chip,
   .map-offer-sheet__card{transition:none}
 }
+
+/* Property filters on the map: +17% touch target and label scale. */
+[data-testid="map-sheet-property-filters"] .map-offer-sheet__property-chip{height:30.303px!important;min-height:30.303px!important;padding:0 11.115px!important;font-size:11.934px!important}
+@media(max-width:350px){[data-testid="map-sheet-property-filters"] .map-offer-sheet__property-chip{height:28.899px!important;min-height:28.899px!important;padding:0 9.594px!important;font-size:11.583px!important}}
