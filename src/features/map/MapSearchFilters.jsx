@@ -84,7 +84,7 @@ export function MapSearchFilters({
             <button
               key={filter.id}
               type="button"
-              className="map-filter-chip map-filter-chip--amenity"
+              className="map-offer-sheet__property-chip map-filter-chip--amenity"
               data-filter-id={filter.id}
               data-active={active ? 'true' : 'false'}
               aria-pressed={active}
