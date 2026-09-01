@@ -96,6 +96,7 @@ test('published hotel offer appears on calendar, hotel collection and map', asyn
   await completeHostOnboarding(page, { type: 'Hôtel', title: 'Hôtel Palmier Marsa', city: 'La Marsa' })
 
   const calendar = page.getByTestId('host-calendar-page')
+  await page.getByRole('navigation', { name: 'Navigation Hôte' }).getByRole('button', { name: 'Calendrier' }).click()
   await expect(calendar).toBeVisible()
   await expect(calendar).toContainText('Hôtel Palmier Marsa')
   await expect(calendar).toContainText('Hôtel')
@@ -117,6 +118,7 @@ test('published maison d’hôte offer appears on calendar and collection', asyn
   await completeHostOnboarding(page, { type: "Maison d’hôte", title: 'Dar Yasminbleue', city: 'La Marsa' })
 
   const calendar = page.getByTestId('host-calendar-page')
+  await page.getByRole('navigation', { name: 'Navigation Hôte' }).getByRole('button', { name: 'Calendrier' }).click()
   await expect(calendar).toBeVisible()
   await expect(calendar).toContainText('Dar Yasminbleue')
   await expect(calendar).toContainText("Maison d’hôte")
