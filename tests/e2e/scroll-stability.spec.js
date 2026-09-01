@@ -130,11 +130,13 @@ test('closing Search restores Home scroll and releases the document lock', async
   expect(before).toBeGreaterThan(400)
 
   await page.locator('.b225-search').click()
-  await expect(page.getByTestId('search-transition')).toBeVisible()
+  const transition = page.getByTestId('search-transition')
+  await expect(transition).toBeVisible()
+  await expect(transition).toHaveAttribute('data-ready', 'true')
   await expect.poll(() => page.evaluate(() => document.body.dataset.moveraSearchLock)).toBe('true')
 
-  await page.locator('.movera-st__close').click()
-  await expect(page.getByTestId('search-transition')).toHaveCount(0, { timeout: 2500 })
+  await page.getByRole('button', { name: 'Fermer' }).click()
+  await expect(transition).toHaveCount(0, { timeout: 2500 })
   await expect.poll(() => page.evaluate(() => document.body.dataset.moveraSearchLock || '')).toBe('')
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(before - 80)
 })
