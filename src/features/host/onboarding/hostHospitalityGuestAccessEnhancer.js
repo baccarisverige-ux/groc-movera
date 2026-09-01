@@ -11,23 +11,23 @@ const HOSPITALITY_OPTIONS = Object.freeze([
   {
     id: 'private',
     sourceLabel: 'Chambre privée',
-    label: 'Une chambre privée',
-    description: 'Le voyageur réserve sa propre chambre. Les espaces communs peuvent être partagés.',
+    label: 'Chambre entière',
+    description: 'Le voyageur réserve une chambre complète qui lui est réservée. Les espaces communs peuvent rester partagés.',
     badge: 'Recommandé',
     icon: 'door',
   },
   {
     id: 'shared',
     sourceLabel: 'Chambre partagée',
-    label: 'Une chambre partagée',
+    label: 'Chambre partagée',
     description: 'Le voyageur réserve un lit ou une place dans une chambre partagée.',
     icon: 'bunk',
   },
   {
     id: 'entire',
     sourceLabel: 'Logement entier',
-    label: 'L’établissement entier',
-    description: 'Un seul groupe réserve tout l’hôtel ou toute la maison d’hôte.',
+    label: 'Tout l’établissement',
+    description: 'La maison d’hôte est proposée en réservation exclusive, avec ses chambres et ses espaces communs.',
     icon: 'building',
   },
 ])
@@ -37,6 +37,23 @@ let cleanupCurrent = () => {}
 let frame = 0
 let hospitalityDefaultPending = false
 let pendingPropertyType = ''
+
+function foldPropertyType(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[’‘`]/g, "'")
+    .toLowerCase()
+    .trim()
+}
+
+function isGuestHouse(propertyType) {
+  return foldPropertyType(propertyType) === "maison d'hote"
+}
+
+function hospitalityOptionsFor(propertyType) {
+  return HOSPITALITY_OPTIONS.filter((option) => option.id !== 'entire' || isGuestHouse(propertyType))
+}
 
 function iconSvg(kind) {
   if (kind === 'door') {
@@ -66,6 +83,16 @@ function originalButtonFor(list, sourceLabel) {
     .find((button) => button.textContent.trim().startsWith(sourceLabel)) || null
 }
 
+function selectedSourceId(original) {
+  const selected = Array.from(original.querySelectorAll('button[role="radio"]'))
+    .find((button) => button.getAttribute('aria-checked') === 'true')
+  const label = selected?.textContent?.trim() || ''
+  if (label.startsWith('Chambre privée')) return 'private'
+  if (label.startsWith('Chambre partagée')) return 'shared'
+  if (label.startsWith('Logement entier')) return 'entire'
+  return ''
+}
+
 function attachPropertyTypeDefaults() {
   const page = document.querySelector(PROPERTY_SCREEN)
   if (!page) return
@@ -88,20 +115,27 @@ function mountHospitalityAccess(page) {
   const intro = title?.nextElementSibling
   if (!context || !step || !original || !title) return () => {}
 
+  const visibleOptions = hospitalityOptionsFor(context.propertyType)
+  const allowedIds = new Set(visibleOptions.map((option) => option.id))
   const originalTitle = title.textContent
   const originalIntro = intro?.textContent || ''
+
   step.dataset.hospitalityAccess = 'true'
   original.dataset.hospitalitySource = 'true'
   title.textContent = 'Que réservent vos voyageurs ?'
+
   if (intro) {
-    intro.textContent = `Pour votre ${context.propertyType.toLowerCase()}, choisissez l’unité proposée au voyageur. Vous configurerez ensuite vos chambres et catégories.`
+    intro.textContent = isGuestHouse(context.propertyType)
+      ? 'Pour votre maison d’hôte, proposez une chambre entière, une chambre partagée ou toute la maison d’hôte. Vous configurerez ensuite les catégories, quantités et tarifs.'
+      : 'Pour votre hôtel, choisissez si vous proposez une chambre entière ou une chambre partagée. Vous configurerez ensuite les catégories, quantités et tarifs.'
   }
 
-  if (hospitalityDefaultPending) {
+  const currentSelection = selectedSourceId(original)
+  if (hospitalityDefaultPending || !allowedIds.has(currentSelection)) {
     const privateButton = originalButtonFor(original, 'Chambre privée')
     if (privateButton && privateButton.getAttribute('aria-checked') !== 'true') privateButton.click()
-    hospitalityDefaultPending = false
   }
+  hospitalityDefaultPending = false
 
   const panel = document.createElement('section')
   panel.className = 'host-hospitality-access'
@@ -126,7 +160,7 @@ function mountHospitalityAccess(page) {
   const customButtons = new Map()
 
   const syncSelection = () => {
-    HOSPITALITY_OPTIONS.forEach((option) => {
+    visibleOptions.forEach((option) => {
       const source = originalButtonFor(original, option.sourceLabel)
       const custom = customButtons.get(option.id)
       if (!source || !custom) return
@@ -138,7 +172,7 @@ function mountHospitalityAccess(page) {
     })
   }
 
-  HOSPITALITY_OPTIONS.forEach((option) => {
+  visibleOptions.forEach((option) => {
     const button = document.createElement('button')
     button.type = 'button'
     button.className = 'host-hospitality-access__option'
@@ -168,7 +202,7 @@ function mountHospitalityAccess(page) {
 
   const note = document.createElement('div')
   note.className = 'host-hospitality-access__note'
-  note.innerHTML = '<span>i</span><p><strong>La capacité vient ensuite.</strong><small>Nombre de chambres, chambres identiques ou catégories, photos et tarifs seront configurés séparément.</small></p>'
+  note.innerHTML = '<span>i</span><p><strong>Les chambres se configurent ensuite.</strong><small>Nombre de chambres, chambres identiques ou catégories, photos, capacité, disponibilités et tarifs restent gérés séparément.</small></p>'
 
   panel.append(contextCard, list, note)
   original.insertAdjacentElement('afterend', panel)
