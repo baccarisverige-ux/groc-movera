@@ -11,7 +11,7 @@ test('messages stays locked for guests including direct route access', async ({ 
   await expect(messagesNav).toHaveAttribute('aria-disabled', 'true')
 
   const beforeClick = page.url()
-  await messagesNav.click()
+  await messagesNav.evaluate((node) => node.click())
   await expect(page).toHaveURL(beforeClick)
 
   await page.goto('/Movera-host1/messages')
