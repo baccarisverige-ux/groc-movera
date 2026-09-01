@@ -5,7 +5,7 @@ import { useAuthSession } from '../../features/auth/authSession.js'
 import { routeDefinitions, NotFoundPage } from './routes.jsx'
 
 const BASE_PATH = import.meta.env.BASE_URL === '/' ? '' : import.meta.env.BASE_URL.replace(/\/$/, '')
-const LEGACY_BASE_PATHS = ['/Movera-host1']
+const COMPAT_BASE_PATHS = ['/groc-movera', '/Movera-host1']
 const SCROLL_STATE_KEY = '__moveraScrollY'
 
 function stripBasePath(pathname, basePath) {
@@ -20,18 +20,25 @@ function toInternalPath(pathname) {
   const activeBasePath = stripBasePath(value, BASE_PATH)
   if (activeBasePath) return activeBasePath
 
-  for (const legacyBasePath of LEGACY_BASE_PATHS) {
-    const legacyPath = stripBasePath(value, legacyBasePath)
-    if (legacyPath) return legacyPath
+  for (const compatibleBasePath of COMPAT_BASE_PATHS) {
+    const compatiblePath = stripBasePath(value, compatibleBasePath)
+    if (compatiblePath) return compatiblePath
   }
 
   return value
 }
 
+function runtimeBasePath() {
+  if (BASE_PATH) return BASE_PATH
+  const pathname = window.location.pathname || '/'
+  return COMPAT_BASE_PATHS.find((basePath) => stripBasePath(pathname, basePath)) || ''
+}
+
 function toBrowserPath(to) {
-  if (!BASE_PATH) return to
-  if (to === '/') return `${BASE_PATH}/`
-  return `${BASE_PATH}${to.startsWith('/') ? to : `/${to}`}`
+  const basePath = runtimeBasePath()
+  if (!basePath) return to
+  if (to === '/') return `${basePath}/`
+  return `${basePath}${to.startsWith('/') ? to : `/${to}`}`
 }
 
 function readDocumentScrollY() {
