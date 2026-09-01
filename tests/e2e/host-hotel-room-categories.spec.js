@@ -13,6 +13,16 @@ async function next(page) {
   await page.getByRole('button', { name: 'Continuer' }).click()
 }
 
+async function reachBasicsAfterLocation(page, onboarding) {
+  await page.getByLabel('Adresse du logement').fill('10 avenue de la Mer')
+  await page.getByLabel('Ville du logement').fill('La Marsa')
+  await next(page)
+  await expect(onboarding).toHaveAttribute('data-screen', 'pin')
+  await page.getByRole('button', { name: 'Confirmer cet emplacement' }).click()
+  await next(page)
+  await expect(onboarding).toHaveAttribute('data-screen', 'basics')
+}
+
 test('hotel offers room-level reservation choices only before room categories', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/groc-movera/profile')
@@ -38,16 +48,17 @@ test('hotel offers room-level reservation choices only before room categories', 
   await expect(hospitality).not.toContainText('Un seul groupe')
   await next(page)
 
-  await page.getByLabel('Adresse du logement').fill('10 avenue de la Mer')
-  await page.getByLabel('Ville du logement').fill('La Marsa')
-  await next(page)
-  await page.getByRole('button', { name: 'Confirmer cet emplacement' }).click()
-  await next(page)
+  await reachBasicsAfterLocation(page, onboarding)
+  await expect(page.getByRole('heading', { name: 'Configurez vos chambres' })).toBeVisible()
+  await expect(page.getByText('Capacité d’une chambre', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Augmenter Chambres' })).toBeHidden()
+  await expect(page.getByRole('button', { name: 'Augmenter Nombre total de chambres' })).toBeVisible()
 
-  await expect(onboarding).toHaveAttribute('data-screen', 'basics')
   await page.getByRole('button', { name: 'Augmenter Nombre total de chambres' }).click()
   await page.getByRole('button', { name: 'Augmenter Nombre total de chambres' }).click()
   await page.getByRole('button', { name: /Non, il existe plusieurs catégories/ }).click()
+  await expect(page.locator('.host-onboarding__counter-card')).toBeHidden()
+  await expect(page.getByRole('heading', { name: 'Configurez vos catégories de chambres' })).toBeVisible()
 
   const categoryCards = page.locator('.host-onboarding-room-types__card')
   await expect(categoryCards).toHaveCount(2)
@@ -71,7 +82,7 @@ test('hotel offers room-level reservation choices only before room categories', 
   await expect(page.locator('.host-room-photo-setup')).toBeHidden()
 })
 
-test('guest house can offer rooms or the complete establishment', async ({ page }) => {
+test('guest house whole-establishment mode keeps a normal whole-property basics page', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/groc-movera/profile')
   await page.getByTestId('profile-test-login').click()
@@ -89,6 +100,15 @@ test('guest house can offer rooms or the complete establishment', async ({ page 
   await expect(hospitality).toContainText('Maison d’hôte')
   await expect(page.getByRole('radio', { name: /Chambre entière/ })).toHaveAttribute('aria-checked', 'true')
   await expect(page.getByRole('radio', { name: /Chambre partagée/ })).toBeVisible()
-  await expect(page.getByRole('radio', { name: /Tout l’établissement/ })).toBeVisible()
-  await expect(hospitality).not.toContainText('Un seul groupe')
+  const entire = page.getByRole('radio', { name: /Tout l’établissement/ })
+  await expect(entire).toBeVisible()
+  await entire.click()
+  await expect(entire).toHaveAttribute('aria-checked', 'true')
+  await next(page)
+
+  await reachBasicsAfterLocation(page, onboarding)
+  await expect(page.getByRole('heading', { name: 'Informations de base' })).toBeVisible()
+  await expect(page.locator('.host-room-setup')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Augmenter Chambres' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Augmenter Nombre total de chambres' })).toHaveCount(0)
 })
