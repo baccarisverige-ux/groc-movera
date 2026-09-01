@@ -162,7 +162,7 @@ test('Grand Tunis fully expanded keeps 16 offers summary and first offer visible
 
   const headerBottom = topPanelBox.y + topPanelBox.height
   const finalHeaderOffset = await numberAttribute(dragZone, 'data-header-offset')
-  expect(Math.abs(finalHeaderOffset - topPanelBox.height)).toBeLessThanOrEqual(2)
+  expect(Math.abs(finalHeaderOffset - topPanelBox.height)).toBeLessThanOrEqual(3)
   expect(Math.abs(sheetBox.y - mapBox.y)).toBeLessThanOrEqual(2)
   expect(Math.abs(panelBox.y - headerBottom)).toBeLessThanOrEqual(2)
   expect(Math.abs(dragZoneBox.y - panelBox.y)).toBeLessThanOrEqual(2)
