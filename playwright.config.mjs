@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test'
 
-const baseURL = 'http://127.0.0.1:4173/groc-movera'
+const baseURL = 'http://127.0.0.1:4173'
 
 export default defineConfig({
   testDir: './tests',
@@ -31,7 +31,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run build && npm run preview -- --host 127.0.0.1',
+    command: 'MOVERA_TEST_BASE=root npm run build && MOVERA_TEST_BASE=root npm run preview -- --host 127.0.0.1',
     url: `${baseURL}/`,
     timeout: 120_000,
     reuseExistingServer: !process.env.CI,
