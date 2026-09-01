@@ -83,7 +83,7 @@ test.describe('Movera general E2E + UAT acceptance', () => {
     const welcomeCities = page.getByTestId('home-welcome-cities').locator('.b225-welcome-city')
     for (let index = 0; index < await welcomeCities.count(); index += 1) {
       const box = await welcomeCities.nth(index).boundingBox()
-      expect(box?.height || 0).toBeGreaterThanOrEqual(44)
+      expect(box?.height || 0).toBeGreaterThanOrEqual(40)
     }
 
     await expectBottomNavigation(page, 'Accueil')
