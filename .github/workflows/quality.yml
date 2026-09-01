@@ -72,44 +72,6 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
-  browser-diagnostic-extra:
-    name: Diagnose · ${{ matrix.label }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - label: General acceptance
-            spec: tests/e2e/general-e2e-uat.spec.js
-          - label: Host hotel + guesthouse offers
-            spec: tests/e2e/host-hotel-guesthouse-offers.spec.js
-          - label: Host hotel room categories
-            spec: tests/e2e/host-hotel-room-categories.spec.js
-          - label: Host onboarding calendar
-            spec: tests/e2e/host-onboarding-calendar.spec.js
-          - label: Host pin map
-            spec: tests/e2e/host-pin-react-map.spec.js
-          - label: Host workspace
-            spec: tests/e2e/host-workspace.spec.js
-          - label: Reservation data flow
-            spec: tests/e2e/reservation-data-flow.spec.js
-          - label: Accessibility
-            spec: tests/accessibility/core-a11y.spec.js
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - name: Install browser quality tools
-        run: npm install --no-save --package-lock=false @playwright/test@1.55.0 @axe-core/playwright@4.10.2
-      - name: Install Chromium
-        run: npx playwright install chromium
-      - name: Run isolated browser check
-        run: npx playwright test ${{ matrix.spec }} --project=mobile-chromium --project=desktop-chromium --reporter=line
-
   lighthouse:
     name: Lighthouse budgets
     runs-on: ubuntu-latest
