@@ -53,7 +53,7 @@ test('hotel offers room-level reservation choices only before room categories', 
   await reachBasicsAfterLocation(page, onboarding)
   await expect(page.getByRole('heading', { name: 'Configurez vos chambres' })).toBeVisible()
   await expect(page.getByText('Capacité d’une chambre', { exact: true })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Augmenter Chambres' })).toBeHidden()
+  await expect(page.getByRole('button', { name: 'Augmenter Chambres' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Augmenter Nombre total de chambres' })).toBeVisible()
 
   await page.getByRole('button', { name: 'Augmenter Nombre total de chambres' }).click()
