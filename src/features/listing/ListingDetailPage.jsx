@@ -3,10 +3,12 @@ import { ArrowLeftIcon } from '../../shared/icons/AppIcons.jsx'
 import { getListingMapPosition } from '../../entities/listing/listingMapPositions.js'
 import { readHostPublicIdentity } from '../../entities/host/hostPublicIdentityStore.js'
 import { useFavorites } from '../favorites/favoritesStore.js'
+import { MapContainer } from '../map-engine/MapContainer.jsx'
 import { getGuestListingById } from './guestListings.js'
 import { ListingAvailability } from './ListingAvailability.jsx'
 import './listing-detail-page.css'
 import './listing-room-category-detail.css'
+import './listing-detail-map-embed.css'
 
 const TUNIS_CENTER = Object.freeze({ lat: 36.8065, lng: 10.1815 })
 const CITY_COORDS = Object.freeze({
@@ -62,7 +64,6 @@ function knowIcon(kind) { if (kind === 'cancel') return <CancelGlyph/>; if (kind
 function hostYears(since) { const match = String(since || '').match(/(20\d{2})/); if (!match) return null; return Math.max(1, new Date().getFullYear() - Number(match[1])) }
 function foldKey(value) { return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase() }
 function listingMapCenter(listing) { const known = getListingMapPosition(listing.id); if (known) return known; const hay = foldKey(listing.location); for (const [city, coords] of Object.entries(CITY_COORDS)) if (hay.includes(city)) return coords; return TUNIS_CENTER }
-function osmStaticUrl({ lat, lng }) { return `https://staticmap.openstreetmap.de/staticmap.php?center=${lat},${lng}&zoom=13&size=600x360&maptype=mapnik` }
 function uniqueSpaceCards(photos) { const cards = []; const seen = new Set(); for (const photo of photos) { if (!photo?.src || seen.has(photo.src)) continue; seen.add(photo.src); cards.push(photo); if (cards.length === 4) break } return cards }
 function spaceDetail(photo, listing, index) {
   if (listing.origin === 'host') {
@@ -159,7 +160,7 @@ export function ListingDetailPage({ params, onNavigate }) {
   const hostInitial = hostName.trim().charAt(0).toUpperCase() || 'M'
   const spaceCards = listing.imageIsPlaceholder ? [] : uniqueSpaceCards(activePhotos)
   const mapCenter = listingMapCenter(listing)
-  const mapUrl = osmStaticUrl(mapCenter)
+  const mapMarker = { id: listing.id, label: listing.location, lat: mapCenter.lat, lng: mapCenter.lng }
   const knowItems = hostKnowItems(listing)
   const hasRating = Number.isFinite(Number(listing.rating)) && Number(listing.rating) > 0 && Number(listing.reviews) > 0
 
@@ -179,6 +180,7 @@ export function ListingDetailPage({ params, onNavigate }) {
   const onShare = async () => { const result = await shareListing(listing.title); if (result === 'aborted') return; setShareHint(result === 'copied' ? 'Lien copié' : result === 'shared' ? 'Partagé' : 'Partage indisponible'); window.setTimeout(() => setShareHint(''), 1800) }
   const scrollTo = (id) => { document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }
   const showAvailability = () => { setReserveOpen(false); window.setTimeout(() => scrollTo('listing-availability'), 80) }
+  const openFullMap = () => onNavigate(`/map?listing=${encodeURIComponent(listing.id)}`)
 
   return (
     <div className="listing-detail-page" data-testid="page-listing" data-listing-id={listing.id} data-origin={listing.origin} data-room-category={categorized ? selectedRoom?.id || '' : ''}>
@@ -197,7 +199,6 @@ export function ListingDetailPage({ params, onNavigate }) {
         </section>
 
         {categorized ? <section className="listing-detail-room-category" aria-labelledby="listing-room-category-title"><div className="listing-detail-room-category__head"><span id="listing-room-category-title">Catégories de chambres</span><small>Comparez les caractéristiques, photos et tarifs fournis pour chaque catégorie.</small></div><div className="listing-detail-room-category__rail" role="radiogroup" aria-label="Catégorie de chambre">{roomTypes.map((room) => <button type="button" role="radio" aria-checked={room.id === selectedRoom?.id} data-active={room.id === selectedRoom?.id ? 'true' : 'false'} key={room.id} onClick={() => selectRoom(room.id)}><strong>{room.name}</strong>{room.view ? <span>{room.view}</span> : null}<small>{categoryMeta(room)}</small><b>{room.basePrice} {listing.currency}<em>/ nuit</em></b></button>)}</div>{selectedRoom ? <div className="listing-detail-room-category__selected"><div><strong>{selectedRoom.name}</strong>{selectedRoom.view ? <span>{selectedRoom.view}</span> : null}</div><p>{categoryMeta(selectedRoom)}</p>{selectedRoom.features?.length ? <div className="listing-detail-room-category__features">{selectedRoom.features.map((feature) => <span key={feature}>{feature}</span>)}</div> : null}</div> : null}</section> : null}
-
         <div className="listing-detail-host-row"><div><strong>{activeCapacity?.type || listing.subtitle || 'Logement'}</strong><span>Hôte : {hostName}</span></div><span className="listing-detail-avatar" aria-hidden="true">{hostInitial}</span></div>
         <ul className="listing-detail-highlights"><li><span className="listing-detail-ico"><LockGlyph/></span><div><strong>Informations d’arrivée</strong><span>{listing.origin === 'host' ? `Arrivée dès ${listing.stayRules?.checkInFrom || '15:00'} · départ avant ${listing.stayRules?.checkOutUntil || '11:00'}.` : 'Les instructions d’accès sont confirmées avant le séjour.'}</span></div></li><li><span className="listing-detail-ico"><HostQualityGlyph/></span><div><strong>{listing.origin === 'host' ? 'Annonce publiée par l’hôte' : 'Annonce Movera'}</strong><span>{listing.origin === 'host' ? 'Les caractéristiques affichées proviennent des informations enregistrées par cet hôte.' : (listing.host?.response || 'Les informations disponibles dans le catalogue sont affichées sans ajout de faits non fournis.')}</span></div></li></ul>
 
@@ -207,7 +208,7 @@ export function ListingDetailPage({ params, onNavigate }) {
 
         <section className="listing-detail-block"><h2>Ce que propose ce lieu</h2>{visibleAmenities.length ? <ul className="listing-detail-amenities">{visibleAmenities.map((name) => <li key={name}><span className="listing-detail-ico">{amenityIcon(name)}</span><span>{name}</span></li>)}</ul> : <p className="listing-detail-copy">Aucun équipement supplémentaire n’a été renseigné pour cette annonce.</p>}{listing.amenities.length > 5 ? <button type="button" className="listing-detail-more" aria-expanded={amenitiesOpen} onClick={() => setAmenitiesOpen((open) => !open)}>{amenitiesOpen ? 'Réduire' : `Voir les ${listing.amenities.length} équipements`}</button> : null}</section>
 
-        <section className="listing-detail-block"><h2>Où vous serez</h2><p className="listing-detail-copy listing-detail-location-copy"><PinGlyph/>{listing.location}, Tunisie</p><button type="button" className="listing-detail-map" onClick={() => onNavigate(`/map?listing=${encodeURIComponent(listing.id)}`)} aria-label={`Voir ${listing.title} sur la carte`}><span className="listing-detail-map-frame"><img src={mapUrl} alt="" width="600" height="360" loading="lazy" decoding="async"/><span className="listing-detail-map-pin" aria-hidden="true"><PinGlyph/></span><span className="listing-detail-map-cta">Voir sur la carte</span></span></button></section>
+        <section className="listing-detail-block"><h2>Où vous serez</h2><p className="listing-detail-copy listing-detail-location-copy"><PinGlyph/>{listing.location}, Tunisie</p><div className="listing-detail-map" aria-label={`Carte de ${listing.title}`}><div className="listing-detail-map-frame"><MapContainer markers={[mapMarker]} initialViewport={{ ...mapCenter, zoom: 13 }} cameraOnSelect="none" onSelectedListingChange={openFullMap}/><button type="button" className="listing-detail-map-cta" onClick={openFullMap}>Voir sur la carte</button></div></div></section>
 
         <section className="listing-detail-block" id="listing-reviews"><h2>Avis des voyageurs</h2>{hasRating ? <><div className="listing-detail-review-score"><strong>★ {listing.rating}</strong><span>{listing.reviews} avis</span></div><p className="listing-detail-copy">Note et volume d’avis enregistrés pour cette annonce.</p>{reviewsOpen ? <div className="listing-detail-review-panel"><div><span>Note globale</span><strong>{listing.rating}/5</strong></div><div><span>Avis disponibles</span><strong>{listing.reviews}</strong></div><p>Aucun commentaire individuel n’est inventé lorsque la source n’en fournit pas.</p></div> : null}<button type="button" className="listing-detail-more" aria-expanded={reviewsOpen} onClick={() => setReviewsOpen((open) => !open)}>{reviewsOpen ? 'Masquer le résumé' : 'Voir le résumé des avis'}</button></> : <><div className="listing-detail-review-score"><strong>Nouveau</strong><span>0 avis</span></div><p className="listing-detail-copy">Cette annonce n’a pas encore reçu d’avis voyageur. Aucune note n’est générée par défaut.</p></>}</section>
 
