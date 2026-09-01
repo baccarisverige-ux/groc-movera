@@ -1,0 +1,319 @@
+.host-onboarding[data-screen="guest-access"] .host-onboarding__step[data-hospitality-access="true"] {
+  max-width: 760px;
+}
+
+.host-onboarding[data-screen="guest-access"] .host-onboarding__step[data-hospitality-access="true"] > p {
+  max-width: 650px;
+}
+
+.host-onboarding[data-screen="guest-access"] [data-hospitality-source="true"] {
+  display: none !important;
+}
+
+.host-hospitality-access {
+  display: grid;
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.host-hospitality-access__context {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 13px;
+  min-height: 76px;
+  padding: 13px 16px;
+  border: 1px solid rgba(25, 56, 43, 0.10);
+  border-radius: 22px;
+  background: linear-gradient(145deg, rgba(244, 248, 245, 0.98), rgba(250, 250, 248, 0.98));
+  box-shadow: 0 12px 32px rgba(25, 40, 34, 0.06);
+}
+
+.host-hospitality-access__property-icon,
+.host-hospitality-access__icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 16px;
+  background: #f2f4f1;
+  color: #17231d;
+}
+
+.host-hospitality-access__property-icon {
+  width: 48px;
+  height: 48px;
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(20, 38, 30, 0.07);
+}
+
+.host-hospitality-access__property-icon svg,
+.host-hospitality-access__icon svg {
+  width: 25px;
+  height: 25px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.host-hospitality-access__property-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.host-hospitality-access__property-copy small {
+  color: #78817c;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.host-hospitality-access__property-copy strong {
+  color: #151816;
+  font-size: 17px;
+  font-weight: 760;
+  letter-spacing: -0.02em;
+}
+
+.host-hospitality-access__property-status {
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: rgba(31, 96, 68, 0.09);
+  color: #276246;
+  font-size: 11px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.host-hospitality-access__options {
+  display: grid;
+  gap: 10px;
+}
+
+.host-hospitality-access__option {
+  width: 100%;
+  min-height: 104px;
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr) 28px;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border: 1px solid #e2e5e2;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.96);
+  color: #171a18;
+  text-align: left;
+  box-shadow: 0 8px 28px rgba(19, 29, 24, 0.045);
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease, background 160ms ease;
+}
+
+.host-hospitality-access__option:active {
+  transform: scale(0.992);
+}
+
+.host-hospitality-access__option[data-active="true"] {
+  border-color: rgba(35, 102, 72, 0.54);
+  background: linear-gradient(145deg, #ffffff, #f8fbf8);
+  box-shadow: 0 12px 34px rgba(32, 82, 59, 0.10), inset 0 0 0 1px rgba(35, 102, 72, 0.08);
+}
+
+.host-hospitality-access__icon {
+  width: 54px;
+  height: 54px;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.host-hospitality-access__option[data-active="true"] .host-hospitality-access__icon {
+  background: #edf5f0;
+  color: #245f43;
+}
+
+.host-hospitality-access__copy {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.host-hospitality-access__title-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.host-hospitality-access__title-row strong {
+  font-size: 17px;
+  font-weight: 760;
+  letter-spacing: -0.025em;
+}
+
+.host-hospitality-access__title-row em {
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: #eef5f0;
+  color: #2e694d;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.host-hospitality-access__copy > small {
+  max-width: 520px;
+  color: #707873;
+  font-size: 13px;
+  font-weight: 520;
+  line-height: 1.4;
+}
+
+.host-hospitality-access__check {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid #cbd0cc;
+  border-radius: 50%;
+  color: white;
+  transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.host-hospitality-access__check svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.host-hospitality-access__option[data-active="true"] .host-hospitality-access__check {
+  border-color: #286748;
+  background: #286748;
+  transform: scale(1.03);
+}
+
+.host-hospitality-access__note {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: #f7f7f5;
+  color: #68716c;
+}
+
+.host-hospitality-access__note > span {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 22px;
+  border: 1px solid #d9dedb;
+  border-radius: 50%;
+  color: #506058;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.host-hospitality-access__note p {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+}
+
+.host-hospitality-access__note strong {
+  color: #343b37;
+  font-size: 12px;
+  font-weight: 760;
+}
+
+.host-hospitality-access__note small {
+  font-size: 11.5px;
+  line-height: 1.38;
+}
+
+@media (max-width: 600px) {
+  .host-hospitality-access {
+    gap: 11px;
+    margin-top: 17px;
+  }
+
+  .host-hospitality-access__context {
+    grid-template-columns: 42px minmax(0, 1fr);
+    min-height: 66px;
+    gap: 11px;
+    padding: 11px 13px;
+    border-radius: 20px;
+  }
+
+  .host-hospitality-access__property-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+  }
+
+  .host-hospitality-access__property-status {
+    display: none;
+  }
+
+  .host-hospitality-access__options {
+    gap: 9px;
+  }
+
+  .host-hospitality-access__option {
+    min-height: 94px;
+    grid-template-columns: 48px minmax(0, 1fr) 25px;
+    gap: 12px;
+    padding: 13px 14px;
+    border-radius: 21px;
+  }
+
+  .host-hospitality-access__icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 15px;
+  }
+
+  .host-hospitality-access__icon svg {
+    width: 23px;
+    height: 23px;
+  }
+
+  .host-hospitality-access__copy {
+    gap: 5px;
+  }
+
+  .host-hospitality-access__title-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .host-hospitality-access__title-row strong {
+    font-size: 15.5px;
+  }
+
+  .host-hospitality-access__title-row em {
+    padding: 3px 6px;
+    font-size: 8.5px;
+  }
+
+  .host-hospitality-access__copy > small {
+    font-size: 11.5px;
+    line-height: 1.34;
+  }
+
+  .host-hospitality-access__check {
+    width: 24px;
+    height: 24px;
+  }
+
+  .host-hospitality-access__note {
+    padding: 10px 12px;
+  }
+}
