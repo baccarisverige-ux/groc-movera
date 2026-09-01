@@ -33,13 +33,24 @@ test('home keeps its current category structure, media and approved navigation s
     expect(await page.getByTestId(`home-selection-${id}`).locator('.b225-offer-card').count()).toBeGreaterThan(0)
   }
 
-  for (const id of ['family', 'prestige', 'experience', 'partner']) {
-    const button = categoryRail.locator(`button[data-category-id="${id}"]`)
+  for (const category of [
+    { id: 'family', pageTestId: 'page-apartment' },
+    { id: 'prestige', pageTestId: 'page-villa' },
+  ]) {
+    await categoryRail.locator(`button[data-category-id="${category.id}"]`).click()
+    await expect(page.getByTestId(category.pageTestId)).toBeVisible()
+    await page.goBack()
+    await expect(page.getByTestId('page-home')).toBeVisible()
+    await expect(page.locator(`.b225-categories button[data-category-id="${category.id}"]`)).toHaveAttribute('data-active', 'true')
+  }
+
+  for (const id of ['experience', 'partner']) {
+    const button = page.locator(`.b225-categories button[data-category-id="${id}"]`)
     await button.click()
     await expect(page.getByTestId('page-home')).toBeVisible()
     await expect(button).toHaveAttribute('data-active', 'true')
   }
-  await categoryRail.locator('button[data-category-id="all"]').click()
+  await page.locator('.b225-categories button[data-category-id="all"]').click()
 
   const overflow = await page.evaluate(() => Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - window.innerWidth)
   expect(overflow).toBeLessThanOrEqual(1)
@@ -69,8 +80,8 @@ test('Bienvenue city cards open their exact map destination', async ({ page }) =
 })
 
 test('critical collection pages contain no broken project images', async ({ page }) => {
-  for (const route of ['/', '/plage', '/maison-d-hote', '/hotel']) {
-    await page.goto(route === '/' ? '/' : `/Movera-host1${route}`)
+  for (const route of ['/', '/plage', '/maison-d-hote', '/hotel', '/appartement', '/villa']) {
+    await page.goto(route)
     await expect(page.locator('img')).not.toHaveCount(0)
     await page.waitForTimeout(1_000)
 
@@ -94,10 +105,10 @@ test('separate collection routes keep their own identity and shared filtering', 
     { route: '/maison-d-hote', testId: 'page-guesthouse', title: /L’accueil tunisien,\s*autrement\./, city: 'La Marsa', expectOffers: true },
     { route: '/hotel', testId: 'page-hotel', title: /L’hôtel,\s*autrement\./, city: 'Tunis', expectOffers: false },
   ]) {
-    await page.goto(`/Movera-host1${collection.route}`)
+    await page.goto(collection.route)
     await expect(page.getByTestId(collection.testId)).toBeVisible()
     await expect(page.locator('.app-shell__header')).toBeVisible()
-    await expect(page.locator('.app-shell__header strong')).toHaveText('Movera')
+    await expect(page.locator('.app-shell__header strong')).toHaveText('Movera Host')
     await expect(page.locator('.beach-hero__top, .beach-glass-button, .beach-hero__counter')).toHaveCount(0)
     const hero = page.locator('.portrait-collection-hero__image')
     await expect(hero).toHaveAttribute('src', /hero-.*\.webp$/)
@@ -114,7 +125,8 @@ test('category shell stays static above Welcome after returning to Home', async 
   await page.goto('/')
   await page.locator('.b225-categories button[data-category-id="beach"]').click()
   await expect(page.getByTestId('page-beach')).toBeVisible()
-  await page.getByRole('button', { name: 'Retour à l’accueil' }).click()
+  const nav = page.locator('.app-shell--guest > .app-shell__nav')
+  await nav.locator('.app-shell__nav-item', { hasText: 'Accueil' }).click()
   await expect(page.getByTestId('page-home')).toBeVisible()
 
   const shell = page.locator('.b225-categories-shell')
