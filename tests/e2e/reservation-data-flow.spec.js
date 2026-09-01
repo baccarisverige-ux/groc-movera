@@ -78,6 +78,7 @@ test('traveler request becomes host reservation, confirmation blocks traveler av
 
   await page.getByRole('button', { name: 'Réserver' }).click()
   await page.getByRole('button', { name: 'Voir les disponibilités de l’hôte' }).click()
+  await page.getByRole('button', { name: /^Disponibilité/ }).click()
 
   const freeDays = page.locator('.listing-availability-modal__calendar .listing-availability__day[data-status="free"]:not([disabled])')
   await expect(freeDays.first()).toBeVisible()
@@ -119,6 +120,7 @@ test('traveler request becomes host reservation, confirmation blocks traveler av
   await page.goto(`/groc-movera/listing/${LISTING_ID}`)
   await page.getByRole('button', { name: 'Réserver' }).click()
   await page.getByRole('button', { name: 'Voir les disponibilités de l’hôte' }).click()
+  await page.getByRole('button', { name: /^Disponibilité/ }).click()
   await expect(page.locator(`button[data-day-key="${checkInKey}"]`)).toHaveAttribute('data-status', 'blocked')
   await page.getByRole('button', { name: 'Fermer le calendrier' }).click()
 
@@ -129,5 +131,6 @@ test('traveler request becomes host reservation, confirmation blocks traveler av
   await page.goto(`/groc-movera/listing/${LISTING_ID}`)
   await page.getByRole('button', { name: 'Réserver' }).click()
   await page.getByRole('button', { name: 'Voir les disponibilités de l’hôte' }).click()
+  await page.getByRole('button', { name: /^Disponibilité/ }).click()
   await expect(page.locator(`button[data-day-key="${checkInKey}"]`)).toHaveAttribute('data-status', 'free')
 })
