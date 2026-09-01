@@ -132,7 +132,7 @@ test('separate collection routes keep their own identity and shared filtering', 
   }
 })
 
-test('category shell stays static above Welcome after returning to Home', async ({ page }) => {
+test('category shell keeps its approved sticky position above Welcome after returning to Home', async ({ page }) => {
   await page.goto('/')
   await page.locator('.b225-categories button[data-category-id="beach"]').click()
   await expect(page.getByTestId('page-beach')).toBeVisible()
@@ -142,7 +142,7 @@ test('category shell stays static above Welcome after returning to Home', async 
 
   const shell = page.locator('.b225-categories-shell')
   const welcome = page.locator('.b225-welcome')
-  await expect.poll(() => shell.evaluate(node => getComputedStyle(node).position)).toBe('relative')
+  await expect.poll(() => shell.evaluate(node => getComputedStyle(node).position)).toBe('sticky')
   await expect.poll(async () => {
     const shellBox = await shell.boundingBox()
     const welcomeBox = await welcome.boundingBox()
