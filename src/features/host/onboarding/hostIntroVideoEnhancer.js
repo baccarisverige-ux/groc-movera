@@ -1,4 +1,5 @@
 import './host-intro-premium.css'
+import './hostHospitalityGuestAccessEnhancer.js'
 import './hostRoomTypesOnboardingEnhancer.js'
 import './hostRoomContinueGuard.js'
 import './hostRoomProfessionalFlow.js'
