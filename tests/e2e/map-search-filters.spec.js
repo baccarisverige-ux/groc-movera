@@ -28,7 +28,7 @@ test('amenity filters update offers and markers without moving the map', async (
 
   await amenityFilters.locator('[data-filter-id="tv"]').click()
   await expect(amenityFilters.locator('[data-filter-id="tv"]')).toHaveAttribute('aria-pressed', 'true')
-  const tvCount = await expect.poll(async () => Number(await pageMap.getAttribute('data-city-offer-count'))).toBeLessThan(16)
+  await expect.poll(async () => Number(await pageMap.getAttribute('data-city-offer-count'))).toBeLessThan(16)
   const filteredCount = Number(await pageMap.getAttribute('data-city-offer-count'))
   expect(filteredCount).toBeGreaterThanOrEqual(0)
   await expect(sheet.locator('[data-listing-id]')).toHaveCount(filteredCount)
