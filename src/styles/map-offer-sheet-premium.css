@@ -9,7 +9,7 @@
   background:transparent!important;
 }
 
-/* Seam plate: fills the area revealed by the rounded sheet corners. */
+/* Keep the seam transparent where the mirror band sits so the map can show through. */
 .map-offer-sheet__header-spacer::after{
   content:"";
   position:absolute;
@@ -18,7 +18,7 @@
   bottom:-34px;
   height:36px;
   pointer-events:none;
-  background:linear-gradient(180deg,#fbfbfa 0%,#fff 72%,#fff 100%);
+  background:transparent!important;
 }
 
 .map-offer-sheet__panel{
@@ -34,11 +34,11 @@
   border:1px solid rgba(45,53,48,.09)!important;
   border-bottom:0!important;
   border-radius:28px 28px 0 0!important;
-  background:#fff!important;
+  background:linear-gradient(180deg,transparent 0,transparent 26.5px,#fff 26.5px,#fff 100%)!important;
   box-shadow:
     0 -11px 28px rgba(25,31,27,.085),
     0 -2px 7px rgba(25,31,27,.028),
-    inset 0 1px 0 #fff!important;
+    inset 0 1px 0 rgba(255,255,255,.54)!important;
 }
 
 @keyframes map-offer-sheet-idle-nudge{
@@ -61,9 +61,10 @@
   right:28px;
   height:1px;
   pointer-events:none;
-  background:linear-gradient(90deg,transparent,rgba(84,105,93,.13) 24%,rgba(84,105,93,.13) 76%,transparent);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.50) 24%,rgba(255,255,255,.50) 76%,transparent);
 }
 
+/* No opaque white glaze above the transparent mirror band. */
 .map-offer-sheet__panel::after{
   content:"";
   position:absolute;
@@ -74,7 +75,7 @@
   height:16px;
   border-radius:24px 24px 10px 10px;
   pointer-events:none;
-  background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(255,255,255,0));
+  background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,0));
 }
 
 .map-offer-sheet__panel[data-attachment-state=attached]{
@@ -84,9 +85,10 @@
   margin-right:0!important;
   border-color:rgba(45,53,48,.08)!important;
   border-radius:22px 22px 0 0!important;
+  background:linear-gradient(180deg,transparent 0,transparent 26.5px,#fff 26.5px,#fff 100%)!important;
   box-shadow:
     0 -7px 18px rgba(25,31,27,.055),
-    inset 0 1px 0 #fff!important;
+    inset 0 1px 0 rgba(255,255,255,.50)!important;
 }
 
 /* Transparent mirror-glass signature band. */
@@ -97,15 +99,15 @@
   height:26.5px!important;
   width:100%!important;
   overflow:hidden!important;
-  background:linear-gradient(180deg,rgba(255,255,255,.30) 0%,rgba(255,255,255,.12) 48%,rgba(255,255,255,.20) 100%)!important;
+  background:linear-gradient(180deg,rgba(255,255,255,.16) 0%,rgba(255,255,255,.045) 48%,rgba(255,255,255,.10) 100%)!important;
   border-radius:inherit!important;
-  border-bottom:1px solid rgba(255,255,255,.32)!important;
+  border-bottom:1px solid rgba(255,255,255,.26)!important;
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.72),
-    inset 0 -1px 0 rgba(60,70,65,.055),
-    0 1px 8px rgba(45,55,50,.035)!important;
-  backdrop-filter:blur(18px) saturate(128%) brightness(1.05)!important;
-  -webkit-backdrop-filter:blur(18px) saturate(128%) brightness(1.05)!important;
+    inset 0 1px 0 rgba(255,255,255,.62),
+    inset 0 -1px 0 rgba(60,70,65,.04),
+    0 1px 8px rgba(45,55,50,.025)!important;
+  backdrop-filter:blur(12px) saturate(120%) brightness(1.02)!important;
+  -webkit-backdrop-filter:blur(12px) saturate(120%) brightness(1.02)!important;
 }
 
 .map-offer-sheet__drag-zone::before{
@@ -114,12 +116,12 @@
   inset:0;
   pointer-events:none;
   background:linear-gradient(108deg,
-    rgba(255,255,255,.42) 0%,
-    rgba(255,255,255,.05) 28%,
-    rgba(255,255,255,.34) 49%,
-    rgba(255,255,255,.04) 69%,
-    rgba(255,255,255,.24) 100%);
-  opacity:.72;
+    rgba(255,255,255,.28) 0%,
+    rgba(255,255,255,.025) 28%,
+    rgba(255,255,255,.22) 49%,
+    rgba(255,255,255,.02) 69%,
+    rgba(255,255,255,.16) 100%);
+  opacity:.68;
   mix-blend-mode:screen;
 }
 
@@ -132,7 +134,7 @@
   height:40%;
   border-radius:999px;
   pointer-events:none;
-  background:linear-gradient(180deg,rgba(255,255,255,.46),rgba(255,255,255,0));
+  background:linear-gradient(180deg,rgba(255,255,255,.32),rgba(255,255,255,0));
 }
 
 .map-offer-sheet__handle-button{
@@ -217,11 +219,11 @@
   height:17px!important;
   margin-left:4px!important;
   border:1px solid rgba(45,52,48,.075)!important;
-  background:rgba(255,255,255,.38)!important;
+  background:rgba(255,255,255,.28)!important;
   color:#525b55!important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.72),0 1px 3px rgba(27,33,29,.04)!important;
-  backdrop-filter:blur(10px)!important;
-  -webkit-backdrop-filter:blur(10px)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.62),0 1px 3px rgba(27,33,29,.035)!important;
+  backdrop-filter:blur(8px)!important;
+  -webkit-backdrop-filter:blur(8px)!important;
 }
 
 .map-offer-sheet__chevron svg{
