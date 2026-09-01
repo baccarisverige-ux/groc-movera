@@ -5,13 +5,27 @@ import { useAuthSession } from '../../features/auth/authSession.js'
 import { routeDefinitions, NotFoundPage } from './routes.jsx'
 
 const BASE_PATH = import.meta.env.BASE_URL === '/' ? '' : import.meta.env.BASE_URL.replace(/\/$/, '')
+const LEGACY_BASE_PATHS = ['/Movera-host1']
 const SCROLL_STATE_KEY = '__moveraScrollY'
 
+function stripBasePath(pathname, basePath) {
+  if (!basePath) return null
+  if (pathname === basePath || pathname === `${basePath}/`) return '/'
+  if (pathname.startsWith(`${basePath}/`)) return pathname.slice(basePath.length) || '/'
+  return null
+}
+
 function toInternalPath(pathname) {
-  if (!BASE_PATH) return pathname || '/'
-  if (pathname === BASE_PATH || pathname === `${BASE_PATH}/`) return '/'
-  if (pathname.startsWith(`${BASE_PATH}/`)) return pathname.slice(BASE_PATH.length) || '/'
-  return pathname || '/'
+  const value = pathname || '/'
+  const activeBasePath = stripBasePath(value, BASE_PATH)
+  if (activeBasePath) return activeBasePath
+
+  for (const legacyBasePath of LEGACY_BASE_PATHS) {
+    const legacyPath = stripBasePath(value, legacyBasePath)
+    if (legacyPath) return legacyPath
+  }
+
+  return value
 }
 
 function toBrowserPath(to) {
