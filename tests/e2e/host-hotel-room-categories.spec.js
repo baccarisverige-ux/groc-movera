@@ -13,7 +13,7 @@ async function next(page) {
   await page.getByRole('button', { name: 'Continuer' }).click()
 }
 
-test('hotel uses hospitality-specific guest access before room categories', async ({ page }) => {
+test('hotel offers room-level reservation choices only before room categories', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/groc-movera/profile')
   await page.getByTestId('profile-test-login').click()
@@ -29,10 +29,13 @@ test('hotel uses hospitality-specific guest access before room categories', asyn
 
   await expect(onboarding).toHaveAttribute('data-screen', 'guest-access')
   await expect(page.getByRole('heading', { name: 'Que réservent vos voyageurs ?' })).toBeVisible()
-  await expect(page.getByTestId('host-hospitality-access')).toContainText('Hôtel')
-  await expect(page.getByTestId('host-hospitality-access')).toContainText('Configuration professionnelle')
-  await expect(page.getByRole('radio', { name: /Une chambre privée/ })).toHaveAttribute('aria-checked', 'true')
-  await expect(page.getByRole('radio', { name: /L’établissement entier/ })).toBeVisible()
+  const hospitality = page.getByTestId('host-hospitality-access')
+  await expect(hospitality).toContainText('Hôtel')
+  await expect(hospitality).toContainText('Configuration professionnelle')
+  await expect(page.getByRole('radio', { name: /Chambre entière/ })).toHaveAttribute('aria-checked', 'true')
+  await expect(page.getByRole('radio', { name: /Chambre partagée/ })).toBeVisible()
+  await expect(page.getByRole('radio', { name: /Tout l’établissement/ })).toHaveCount(0)
+  await expect(hospitality).not.toContainText('Un seul groupe')
   await next(page)
 
   await page.getByLabel('Adresse du logement').fill('10 avenue de la Mer')
@@ -68,7 +71,7 @@ test('hotel uses hospitality-specific guest access before room categories', asyn
   await expect(page.locator('.host-room-photo-setup')).toBeHidden()
 })
 
-test('guest house receives the same hospitality-specific reservation model', async ({ page }) => {
+test('guest house can offer rooms or the complete establishment', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/groc-movera/profile')
   await page.getByTestId('profile-test-login').click()
@@ -84,7 +87,8 @@ test('guest house receives the same hospitality-specific reservation model', asy
   await expect(onboarding).toHaveAttribute('data-screen', 'guest-access')
   const hospitality = page.getByTestId('host-hospitality-access')
   await expect(hospitality).toContainText('Maison d’hôte')
-  await expect(page.getByRole('radio', { name: /Une chambre privée/ })).toHaveAttribute('aria-checked', 'true')
-  await expect(page.getByRole('radio', { name: /Une chambre partagée/ })).toBeVisible()
-  await expect(page.getByRole('radio', { name: /L’établissement entier/ })).toBeVisible()
+  await expect(page.getByRole('radio', { name: /Chambre entière/ })).toHaveAttribute('aria-checked', 'true')
+  await expect(page.getByRole('radio', { name: /Chambre partagée/ })).toBeVisible()
+  await expect(page.getByRole('radio', { name: /Tout l’établissement/ })).toBeVisible()
+  await expect(hospitality).not.toContainText('Un seul groupe')
 })
