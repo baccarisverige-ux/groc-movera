@@ -89,7 +89,7 @@
     inset 0 1px 0 #fff!important;
 }
 
-/* Movera signature band with a subtle coloured mirror finish. */
+/* Transparent mirror-glass signature band. */
 .map-offer-sheet__drag-zone{
   position:relative!important;
   z-index:5!important;
@@ -97,21 +97,15 @@
   height:26.5px!important;
   width:100%!important;
   overflow:hidden!important;
-  background:
-    linear-gradient(115deg,
-      rgba(225,236,255,.96) 0%,
-      rgba(242,232,255,.94) 18%,
-      rgba(226,248,241,.96) 38%,
-      rgba(255,247,225,.96) 57%,
-      rgba(236,229,255,.95) 76%,
-      rgba(224,241,255,.96) 100%)!important;
+  background:linear-gradient(180deg,rgba(255,255,255,.30) 0%,rgba(255,255,255,.12) 48%,rgba(255,255,255,.20) 100%)!important;
   border-radius:inherit!important;
+  border-bottom:1px solid rgba(255,255,255,.32)!important;
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.96),
-    inset 0 -1px 0 rgba(88,99,94,.08),
-    0 1px 7px rgba(72,84,78,.05)!important;
-  backdrop-filter:blur(14px) saturate(145%)!important;
-  -webkit-backdrop-filter:blur(14px) saturate(145%)!important;
+    inset 0 1px 0 rgba(255,255,255,.72),
+    inset 0 -1px 0 rgba(60,70,65,.055),
+    0 1px 8px rgba(45,55,50,.035)!important;
+  backdrop-filter:blur(18px) saturate(128%) brightness(1.05)!important;
+  -webkit-backdrop-filter:blur(18px) saturate(128%) brightness(1.05)!important;
 }
 
 .map-offer-sheet__drag-zone::before{
@@ -119,27 +113,26 @@
   position:absolute;
   inset:0;
   pointer-events:none;
-  background:linear-gradient(104deg,
-    rgba(255,255,255,.72) 0%,
-    rgba(255,255,255,.12) 27%,
-    rgba(255,255,255,.78) 48%,
-    rgba(255,255,255,.10) 67%,
-    rgba(255,255,255,.56) 100%);
-  opacity:.78;
+  background:linear-gradient(108deg,
+    rgba(255,255,255,.42) 0%,
+    rgba(255,255,255,.05) 28%,
+    rgba(255,255,255,.34) 49%,
+    rgba(255,255,255,.04) 69%,
+    rgba(255,255,255,.24) 100%);
+  opacity:.72;
   mix-blend-mode:screen;
 }
 
 .map-offer-sheet__drag-zone::after{
   content:"";
   position:absolute;
-  left:8%;
-  right:8%;
+  left:7%;
+  right:7%;
   top:1px;
-  height:42%;
+  height:40%;
   border-radius:999px;
   pointer-events:none;
-  background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,0));
-  filter:blur(.2px);
+  background:linear-gradient(180deg,rgba(255,255,255,.46),rgba(255,255,255,0));
 }
 
 .map-offer-sheet__handle-button{
@@ -224,9 +217,11 @@
   height:17px!important;
   margin-left:4px!important;
   border:1px solid rgba(45,52,48,.075)!important;
-  background:rgba(255,255,255,.78)!important;
+  background:rgba(255,255,255,.38)!important;
   color:#525b55!important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 1px 3px rgba(27,33,29,.05)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.72),0 1px 3px rgba(27,33,29,.04)!important;
+  backdrop-filter:blur(10px)!important;
+  -webkit-backdrop-filter:blur(10px)!important;
 }
 
 .map-offer-sheet__chevron svg{
