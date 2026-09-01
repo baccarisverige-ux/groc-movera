@@ -114,10 +114,11 @@ test.describe('Movera general E2E + UAT acceptance', () => {
 
     await expect(page.getByTestId('page-map')).toBeVisible({ timeout: 10_000 })
     await expect(page.getByTestId('map-engine')).toBeVisible()
-    await expectBottomNavigation(page, 'Carte')
+    await expect(page.locator('.app-shell__nav')).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Retour à l’accueil' })).toBeVisible()
     await expectNoDocumentOverflow(page)
 
-    await page.locator('.app-shell__nav-item', { hasText: 'Accueil' }).click()
+    await page.getByRole('button', { name: 'Retour à l’accueil' }).click()
     await expect(page.getByTestId('page-home')).toBeVisible()
     await expectSearchUnlocked(page)
     await expectBottomNavigation(page, 'Accueil')
@@ -140,7 +141,8 @@ test.describe('Movera general E2E + UAT acceptance', () => {
       await city.click()
       await expect(page.getByTestId('page-map')).toBeVisible()
       await expect(page.getByTestId('page-map')).toHaveAttribute('data-destination', cityId)
-      await expectBottomNavigation(page, 'Carte')
+      await expect(page.locator('.app-shell__nav')).toHaveCount(0)
+      await expect(page.getByRole('button', { name: 'Retour à l’accueil' })).toBeVisible()
     }
 
     expect(pageErrors).toEqual([])
