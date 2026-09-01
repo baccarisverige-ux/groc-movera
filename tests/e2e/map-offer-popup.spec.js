@@ -14,7 +14,7 @@ test('map popup stays closed on initial /map load', async ({ page }) => {
   await expect(page.getByTestId('map-offer-sheet')).toHaveAttribute('data-snap-state', 'collapsed')
 })
 
-test('pin select shows popup; peek changes selected listing; close hides it', async ({ page }) => {
+test('pin select shows popup; next rail changes selected listing; close hides it', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/groc-movera/map?destination=la-marsa')
 
@@ -61,7 +61,9 @@ test('pin select shows popup; peek changes selected listing; close hides it', as
   }).toBe(true)
   expect(await numberAttribute(surface, 'data-zoom')).toBeCloseTo(zoomBefore, 4)
 
-  await page.getByTestId('map-offer-popup-peek').click({ position: { x: 12, y: 90 }, force: true })
+  const nextOffer = page.getByTestId('map-offer-popup-next')
+  await expect(nextOffer).toBeVisible()
+  await nextOffer.click()
   await expect(popup).not.toHaveAttribute('data-listing-id', 'maison-jasmin')
   const nextId = await popup.getAttribute('data-listing-id')
   expect(nextId).toBeTruthy()
