@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { listingCategoryFromType, supportsPooledRoomInventory } from '../../src/entities/host/hostProfileStore.js'
+import { listingCategoryFromType, supportsPooledRoomInventory, usesPooledRoomInventory } from '../../src/entities/host/hostProfileStore.js'
 import { HOST_ROOM_SETUP_MODES, roomConfigurationIsValid } from '../../src/entities/host/hostRoomTypeDraftStore.js'
 
 function room(overrides = {}) {
@@ -59,12 +59,21 @@ describe('host hotel and guesthouse room configuration', () => {
 })
 
 describe('hotel and guesthouse listing categories', () => {
-  it('treats hotel and maison d’hôte as pooled inventory types', () => {
+  it('treats hotel and maison d’hôte as room-inventory-capable property types', () => {
     expect(supportsPooledRoomInventory('Hôtel')).toBe(true)
     expect(supportsPooledRoomInventory("Maison d’hôte")).toBe(true)
     expect(supportsPooledRoomInventory("Maison d'hôte")).toBe(true)
     expect(supportsPooledRoomInventory('Villa')).toBe(false)
     expect(supportsPooledRoomInventory('Appartement')).toBe(false)
+  })
+
+  it('uses room inventory only when the hospitality offer is sold by room', () => {
+    expect(usesPooledRoomInventory('Hôtel', 'private')).toBe(true)
+    expect(usesPooledRoomInventory('Hôtel', 'shared')).toBe(true)
+    expect(usesPooledRoomInventory("Maison d’hôte", 'private')).toBe(true)
+    expect(usesPooledRoomInventory("Maison d’hôte", 'shared')).toBe(true)
+    expect(usesPooledRoomInventory("Maison d’hôte", 'entire')).toBe(false)
+    expect(usesPooledRoomInventory('Villa', 'entire')).toBe(false)
   })
 
   it('maps published types onto guest offer categories', () => {
