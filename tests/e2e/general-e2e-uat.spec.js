@@ -39,6 +39,7 @@ async function expectBottomNavigation(page, activeLabel) {
 }
 
 async function chooseTwoAvailableDates(page) {
+  await expect(page.getByTestId('search-calendar')).toBeVisible()
   const available = page.locator('.movera-st__calendar-grid button.movera-st__day:not(:disabled)')
   const count = await available.count()
   expect(count).toBeGreaterThanOrEqual(2)
@@ -76,9 +77,8 @@ test.describe('Movera general E2E + UAT acceptance', () => {
     await expect(page.locator('.b225-search')).toBeVisible()
     await expect(page.getByTestId('home-categories').locator('button')).toHaveCount(8)
     await expect(page.getByTestId('home-welcome-cities').locator('.b225-welcome-city')).toHaveCount(7)
-    await expect(page.getByTestId('home-featured')).toBeVisible()
-    await expect(page.getByTestId('home-destinations')).toBeVisible()
-    await expect(page.getByTestId('home-services').locator('.b225-service-card')).toHaveCount(4)
+    await expect(page.getByTestId('home-selection-all')).toBeVisible()
+    await expect(page.getByTestId('home-services-mini')).toBeVisible()
 
     const welcomeCities = page.getByTestId('home-welcome-cities').locator('.b225-welcome-city')
     for (let index = 0; index < await welcomeCities.count(); index += 1) {
