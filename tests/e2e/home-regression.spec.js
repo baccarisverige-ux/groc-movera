@@ -55,14 +55,25 @@ test('home keeps its current category structure, media and approved navigation s
   const overflow = await page.evaluate(() => Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - window.innerWidth)
   expect(overflow).toBeLessThanOrEqual(1)
 
-  const nav = page.locator('.app-shell--guest > .app-shell__nav')
-  await expect(nav).toBeVisible()
-  await expect(nav.locator('.app-shell__nav-item')).toHaveCount(5)
-  for (const label of ['Accueil', 'Carte', 'Favoris', 'Profil']) {
-    if (label !== 'Accueil') await nav.locator('.app-shell__nav-item', { hasText: label }).click()
-    await expect(page.locator('.app-shell--guest > .app-shell__nav .app-shell__nav-item[data-active="true"] span')).toHaveText(label)
-  }
-  await expect(nav.locator('.app-shell__nav-item', { hasText: 'Messages' })).toHaveAttribute('aria-disabled', 'true')
+  const homeNav = page.locator('.app-shell--guest > .app-shell__nav')
+  await expect(homeNav).toBeVisible()
+  await expect(homeNav.locator('.app-shell__nav-item')).toHaveCount(5)
+  await expect(homeNav.locator('.app-shell__nav-item[data-active="true"] span')).toHaveText('Accueil')
+  await expect(homeNav.locator('.app-shell__nav-item', { hasText: 'Messages' })).toHaveAttribute('aria-disabled', 'true')
+
+  await homeNav.locator('.app-shell__nav-item', { hasText: 'Carte' }).click()
+  await expect(page.getByTestId('page-map')).toBeVisible()
+  await expect(page.locator('.app-shell--guest > .app-shell__nav')).toHaveCount(0)
+
+  await page.goto('/')
+  await page.locator('.app-shell--guest > .app-shell__nav .app-shell__nav-item', { hasText: 'Favoris' }).click()
+  await expect(page.getByTestId('page-favorites')).toBeVisible()
+  await expect(page.locator('.app-shell--guest > .app-shell__nav .app-shell__nav-item[data-active="true"] span')).toHaveText('Favoris')
+
+  await page.goto('/')
+  await page.locator('.app-shell--guest > .app-shell__nav .app-shell__nav-item', { hasText: 'Profil' }).click()
+  await expect(page.getByTestId('page-profile')).toBeVisible()
+  await expect(page.locator('.app-shell--guest > .app-shell__nav .app-shell__nav-item[data-active="true"] span')).toHaveText('Profil')
   expect(errors).toEqual([])
 })
 
