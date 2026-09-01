@@ -17,6 +17,25 @@
   pointer-events:none;
 }
 
+/* The offer-page map is a frozen preview, exactly like an image.
+   Block every nested map/provider element from receiving touch, drag, pinch,
+   wheel or double-tap input. The CTA is a sibling of .map-engine, so it stays clickable. */
+.listing-detail-map-frame{
+  touch-action:pan-y;
+  user-select:none;
+  -webkit-user-select:none;
+}
+.listing-detail-map-frame > .map-engine,
+.listing-detail-map-frame > .map-engine *{
+  pointer-events:none!important;
+  touch-action:none!important;
+}
+
+/* Do not animate/scale the map card when the user touches it. */
+.listing-detail-map:active{
+  transform:none!important;
+}
+
 .listing-detail-map-frame > .map-engine > .map-engine__status{display:none}
 
 /* The detail card is a location preview, not the full interactive map. The full map opens from the CTA. */
@@ -120,4 +139,6 @@
   border:0;
   white-space:nowrap;
   cursor:pointer;
+  pointer-events:auto!important;
+  touch-action:manipulation!important;
 }
