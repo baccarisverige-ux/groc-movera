@@ -1,4 +1,4 @@
-import { supportsPooledRoomInventory } from '../../../entities/host/hostProfileStore.js'
+import { usesPooledRoomInventory } from '../../../entities/host/hostProfileStore.js'
 import { readHostRoomConfigurationDraft, roomConfigurationIsValid } from '../../../entities/host/hostRoomTypeDraftStore.js'
 import { readAuthSession } from '../../auth/authSession.js'
 import { readHostOnboardingDraft } from './hostOnboardingDraftStore.js'
@@ -20,7 +20,11 @@ function syncContinueButton() {
   const session = readAuthSession()
   if (!session?.userId) return
   const draft = readHostOnboardingDraft(session.userId)
-  if (!supportsPooledRoomInventory(draft.propertyType)) return
+  if (!usesPooledRoomInventory(draft.propertyType, draft.guestAccess)) {
+    delete button.dataset.roomSetupValid
+    button.disabled = !baseBasicsValid(draft)
+    return
+  }
 
   const configuration = readHostRoomConfigurationDraft(session.userId, {
     guests: draft.guests,
