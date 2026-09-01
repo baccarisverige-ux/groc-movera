@@ -57,7 +57,7 @@ test.describe('Voyageur global E2E + UAT', () => {
     await page.goto(appPath('/'))
     await expect(page.getByTestId('page-home')).toBeVisible()
     await expect(page.getByTestId('home-categories').locator('button')).toHaveCount(8)
-    await expect(page.getByTestId('home-services').getByRole('button')).toHaveCount(3)
+    await expect(page.getByTestId('home-services-mini').getByRole('button')).toHaveCount(3)
 
     await page.locator('.b225-search').click({ position: { x: 80, y: 25 } })
     const search = page.getByTestId('search-transition')
