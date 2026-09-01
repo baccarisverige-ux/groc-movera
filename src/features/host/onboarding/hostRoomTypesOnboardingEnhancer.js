@@ -1,4 +1,4 @@
-import { supportsPooledRoomInventory } from '../../../entities/host/hostProfileStore.js'
+import { usesPooledRoomInventory } from '../../../entities/host/hostProfileStore.js'
 import {
   HOST_ROOM_SETUP_MODES,
   readHostRoomConfigurationDraft,
@@ -8,6 +8,7 @@ import {
 import { readAuthSession } from '../../auth/authSession.js'
 import { readHostOnboardingDraft } from './hostOnboardingDraftStore.js'
 import './host-room-types-onboarding.css'
+import './host-room-basics-logic.css'
 
 const BASICS_SELECTOR = '.host-onboarding[data-screen="basics"] .host-onboarding__step'
 const PHOTOS_SELECTOR = '.host-onboarding[data-screen="photos"] .host-onboarding__step'
@@ -26,7 +27,7 @@ function context() {
   const session = readAuthSession()
   if (!session?.userId) return null
   const draft = readHostOnboardingDraft(session.userId)
-  if (!supportsPooledRoomInventory(draft.propertyType)) return null
+  if (!usesPooledRoomInventory(draft.propertyType, draft.guestAccess)) return null
   return { userId: session.userId, draft }
 }
 
@@ -126,7 +127,7 @@ function newCategory(index, fallback, totalUnits = 1) {
 
 function statusCopy(configuration) {
   if (configuration.mode === HOST_ROOM_SETUP_MODES.SINGLE) {
-    return ['1 chambre', 'Votre annonce suit le parcours classique. Aucun système de lots n’est nécessaire.']
+    return ['1 chambre', 'Une seule chambre publiée. Aucun système de lots n’est nécessaire.']
   }
   if (configuration.mode === HOST_ROOM_SETUP_MODES.MULTIPLE_UNSET) {
     return [`${configuration.totalRooms} chambres`, 'Indiquez maintenant si elles sont identiques ou si elles doivent être séparées en catégories.']
@@ -160,6 +161,42 @@ function persistConfiguration(userId, configuration, fallback) {
   const next = writeHostRoomConfigurationDraft(userId, configuration, fallback)
   syncContinueState(next)
   return next
+}
+
+function syncRoomBasicsPresentation(target, configuration) {
+  if (!target) return
+  const heading = target.querySelector('h1')
+  const intro = heading?.nextElementSibling
+  const counterCard = target.querySelector('.host-onboarding__counter-card')
+  const categoryMode = configuration.mode === HOST_ROOM_SETUP_MODES.CATEGORIES
+
+  target.dataset.roomInventoryBasics = categoryMode ? 'categories' : 'room'
+  if (heading) heading.textContent = categoryMode ? 'Configurez vos catégories de chambres' : 'Configurez vos chambres'
+  if (intro?.tagName === 'P') {
+    intro.textContent = categoryMode
+      ? 'Chaque catégorie définit sa propre capacité, ses lits, sa salle de bain et son tarif. Les informations ne sont jamais mélangées entre catégories.'
+      : 'Commencez par le nombre de chambres à publier, puis indiquez la capacité d’une chambre. Le stock et les caractéristiques restent séparés.'
+  }
+
+  if (counterCard) {
+    const bedroomRow = Array.from(counterCard.querySelectorAll('.host-onboarding__counter-row'))
+      .find((row) => row.querySelector('.host-onboarding__counter-label strong')?.textContent?.trim() === 'Chambres')
+    if (bedroomRow) bedroomRow.hidden = true
+    counterCard.hidden = categoryMode
+  }
+
+  let capacityHeading = target.querySelector('.host-room-setup__capacity-heading')
+  if (!capacityHeading && counterCard) {
+    capacityHeading = document.createElement('div')
+    capacityHeading.className = 'host-room-setup__capacity-heading'
+    capacityHeading.append(
+      textElement('span', 'Capacité'),
+      textElement('h2', 'Capacité d’une chambre'),
+      textElement('p', 'Voyageurs, lits et salle de bain pour la chambre proposée. Le nombre total de chambres est géré séparément.'),
+    )
+    counterCard.insertAdjacentElement('beforebegin', capacityHeading)
+  }
+  if (capacityHeading) capacityHeading.hidden = categoryMode
 }
 
 function renderCategoryCard(room, index, configuration, persist, redraw) {
@@ -240,7 +277,7 @@ function renderSetup(target, userId, draft) {
     header.append(
       textElement('span', 'Inventaire de l’établissement'),
       textElement('h2', 'Combien de chambres souhaitez-vous publier ?'),
-      textElement('p', 'Une chambre peut être publiée normalement. Si vous en avez plusieurs, Movera adapte automatiquement le stock sans compliquer votre annonce.'),
+      textElement('p', 'Déclarez d’abord le nombre réellement réservable. Movera adapte ensuite automatiquement le stock, les chambres identiques ou les catégories.'),
     )
     section.append(header)
 
@@ -305,8 +342,8 @@ function renderSetup(target, userId, draft) {
       const info = document.createElement('div')
       info.className = 'host-room-setup__identical'
       info.append(
-        textElement('strong', 'La suite reste celle d’une annonce classique'),
-        textElement('span', `Vous décrivez une seule fois la chambre. Si un voyageur réserve 1 chambre sur une période, le calendrier conserve automatiquement ${Math.max(0, configuration.totalRooms - 1)} chambre${configuration.totalRooms - 1 > 1 ? 's' : ''} disponible${configuration.totalRooms - 1 > 1 ? 's' : ''} sur les mêmes nuits.`),
+        textElement('strong', 'Une seule fiche, plusieurs unités disponibles'),
+        textElement('span', `Vous décrivez la chambre une seule fois. Si un voyageur en réserve 1, le calendrier conserve automatiquement ${Math.max(0, configuration.totalRooms - 1)} chambre${configuration.totalRooms - 1 > 1 ? 's' : ''} disponible${configuration.totalRooms - 1 > 1 ? 's' : ''} sur les mêmes nuits.`),
       )
       section.append(info)
     }
@@ -336,12 +373,15 @@ function renderSetup(target, userId, draft) {
       section.append(textElement('p', 'Exemple : 3 chambres toutes différentes = 3 catégories de 1 chambre. 6 chambres avec 4 Standard + 2 Deluxe = 2 catégories.', 'host-onboarding-room-types__note'))
     }
 
+    syncRoomBasicsPresentation(target, configuration)
     syncContinueState(configuration)
   }
 
   draw()
+  const capacityHeading = target.querySelector('.host-room-setup__capacity-heading')
   const counterCard = target.querySelector('.host-onboarding__counter-card')
-  if (counterCard) counterCard.insertAdjacentElement('afterend', section)
+  if (capacityHeading) capacityHeading.insertAdjacentElement('beforebegin', section)
+  else if (counterCard) counterCard.insertAdjacentElement('beforebegin', section)
   else target.append(section)
 }
 
@@ -452,7 +492,7 @@ function renderReview(target, userId, draft) {
   section.className = REVIEW_CLASS
 
   let title = '1 chambre'
-  let copy = 'Annonce classique · disponibilité gérée chambre par chambre.'
+  let copy = 'Une chambre publiée avec sa propre disponibilité.'
   if (configuration.mode === HOST_ROOM_SETUP_MODES.IDENTICAL) {
     title = `${configuration.totalRooms} chambres identiques`
     copy = 'Une seule annonce et un stock mutualisé par nuit.'
