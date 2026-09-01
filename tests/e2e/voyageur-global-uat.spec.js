@@ -47,13 +47,17 @@ async function expectImageLoaded(locator) {
   await expect.poll(() => locator.evaluate((image) => image.complete && image.naturalWidth > 0)).toBe(true)
 }
 
+async function waitForCollectionMotion() {
+  await new Promise((resolve) => setTimeout(resolve, 450))
+}
+
 test.describe('Voyageur global E2E + UAT', () => {
   test('Home → Search → dates → voyageurs → Map completes with no runtime/layout failure', async ({ page }) => {
     const runtime = watchRuntime(page)
     await page.goto(appPath('/'))
     await expect(page.getByTestId('page-home')).toBeVisible()
     await expect(page.getByTestId('home-categories').locator('button')).toHaveCount(8)
-    await expect(page.getByTestId('home-services').locator('.b225-service-card')).toHaveCount(4)
+    await expect(page.getByTestId('home-services').getByRole('button')).toHaveCount(3)
 
     await page.locator('.b225-search').click({ position: { x: 80, y: 25 } })
     const search = page.getByTestId('search-transition')
@@ -90,21 +94,36 @@ test.describe('Voyageur global E2E + UAT', () => {
       await cityInput.fill('La Marsa')
       await cityInput.focus()
       const marsaOption = page.getByRole('option', { name: /La Marsa/i }).first()
-      if (await marsaOption.count()) await marsaOption.click()
+      await expect(marsaOption).toBeVisible()
+      await marsaOption.click()
+      await expect(page.locator('.beach-results__head')).toContainText('La Marsa')
+      await waitForCollectionMotion()
 
-      const offers = page.locator('.beach-offer')
-      if (await offers.count()) {
-        const first = offers.first()
-        const offerId = await first.getAttribute('data-offer-id')
-        expect(offerId).toBeTruthy()
-        await first.locator('.beach-offer__map-button').click()
-        await expect(page.getByTestId('page-map')).toBeVisible()
-        await expect(page).toHaveURL(new RegExp(`listing=${offerId}`))
-        await page.goBack()
-        await expect(page.getByTestId(collection.testId)).toBeVisible()
-        await offers.first().click()
-        await expect(page.getByTestId('page-listing')).toHaveAttribute('data-listing-id', offerId)
+      const filteredOffers = page.locator('.beach-offer')
+      const filteredCount = await filteredOffers.count()
+      for (let index = 0; index < filteredCount; index += 1) {
+        await expect(filteredOffers.nth(index).locator('.beach-offer__location')).toContainText('La Marsa')
       }
+
+      await page.getByRole('button', { name: 'Effacer la ville' }).click()
+      const offers = page.locator('.beach-offer')
+      await expect.poll(() => offers.count()).toBeGreaterThan(0)
+      await waitForCollectionMotion()
+
+      const offerId = await offers.first().getAttribute('data-offer-id')
+      expect(offerId).toBeTruthy()
+      const stableOffer = page.locator(`.beach-offer[data-offer-id="${offerId}"]`)
+      await expect(stableOffer).toBeVisible()
+      await stableOffer.locator('.beach-offer__map-button').click()
+      await expect(page.getByTestId('page-map')).toBeVisible()
+      await expect(page).toHaveURL(new RegExp(`listing=${offerId}`))
+
+      await page.goBack()
+      await expect(page.getByTestId(collection.testId)).toBeVisible()
+      const returnedOffer = page.locator(`.beach-offer[data-offer-id="${offerId}"]`)
+      await expect(returnedOffer).toBeVisible()
+      await returnedOffer.click()
+      await expect(page.getByTestId('page-listing')).toHaveAttribute('data-listing-id', offerId)
       await expectHealthyPage(page, runtime)
     }
   })
@@ -166,9 +185,8 @@ test.describe('Voyageur global E2E + UAT', () => {
     await page.waitForTimeout(350)
 
     expect(await mapSnapshot(embeddedSurface)).toEqual(before)
-    const pin = frame.locator('::before')
-    void pin
     const cta = frame.getByRole('button', { name: 'Voir sur la carte' })
+    await cta.scrollIntoViewIfNeeded()
     await expect(cta).toBeVisible()
     await cta.click()
     await expect(page.getByTestId('page-map')).toBeVisible()
