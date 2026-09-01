@@ -79,7 +79,7 @@ test('traveler request becomes host reservation, confirmation blocks traveler av
   await page.getByRole('button', { name: 'Réserver' }).click()
   await page.getByRole('button', { name: 'Voir les disponibilités de l’hôte' }).click()
 
-  const freeDays = page.locator('.listing-availability-modal__calendar button[data-status="free"]:not([disabled])')
+  const freeDays = page.locator('.listing-availability-modal__calendar .listing-availability__day[data-status="free"]:not([disabled])')
   await expect(freeDays.first()).toBeVisible()
   const checkInKey = await freeDays.nth(0).getAttribute('data-day-key')
   const checkOutKey = await freeDays.nth(1).getAttribute('data-day-key')
