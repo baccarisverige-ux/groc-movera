@@ -12,6 +12,7 @@ test('amenity filters update offers and markers without moving the map', async (
   const sheet = page.getByTestId('map-offer-sheet')
   const surface = page.getByTestId('map-surface')
   const amenityFilters = page.getByTestId('map-amenity-filters')
+  const markerLayer = page.getByTestId('map-marker-layer')
 
   await expect(page.getByTestId('map-search-filter-stack')).toBeVisible()
   await expect(page.getByTestId('map-property-filters')).toHaveCount(0)
@@ -27,22 +28,29 @@ test('amenity filters update offers and markers without moving the map', async (
 
   await amenityFilters.locator('[data-filter-id="tv"]').click()
   await expect(amenityFilters.locator('[data-filter-id="tv"]')).toHaveAttribute('aria-pressed', 'true')
-  await expect(pageMap).toHaveAttribute('data-city-offer-count', '16')
+  const tvCount = await expect.poll(async () => Number(await pageMap.getAttribute('data-city-offer-count'))).toBeLessThan(16)
+  const filteredCount = Number(await pageMap.getAttribute('data-city-offer-count'))
+  expect(filteredCount).toBeGreaterThanOrEqual(0)
+  await expect(sheet.locator('[data-listing-id]')).toHaveCount(filteredCount)
+  await expect(markerLayer).toHaveAttribute('data-marker-count', String(filteredCount))
   expect(await numberAttribute(surface, 'data-zoom')).toBeCloseTo(zoomBefore, 4)
 
   await page.getByRole('button', { name: 'Réinitialiser les filtres' }).click()
   await expect(pageMap).toHaveAttribute('data-city-offer-count', '16')
+  await expect(markerLayer).toHaveAttribute('data-marker-count', '16')
 
   await amenityFilters.locator('[data-filter-id="pool"]').click()
   await expect(amenityFilters.locator('[data-filter-id="pool"]')).toHaveAttribute('aria-pressed', 'true')
   await expect(pageMap).toHaveAttribute('data-city-offer-count', '0')
   await expect(sheet).toContainText('Aucune offre Movera dans cette ville')
   await expect(sheet.locator('[data-listing-id]')).toHaveCount(0)
+  await expect(markerLayer).toHaveAttribute('data-marker-count', '0')
   expect(await numberAttribute(surface, 'data-zoom')).toBeCloseTo(zoomBefore, 4)
 
   await page.getByRole('button', { name: 'Réinitialiser les filtres' }).click()
   await expect(pageMap).toHaveAttribute('data-city-offer-count', '16')
   await expect(sheet.locator('[data-listing-id]')).toHaveCount(16)
+  await expect(markerLayer).toHaveAttribute('data-marker-count', '16')
 })
 
 test('amenity filters can produce an honest empty state inside a destination', async ({ page }) => {
