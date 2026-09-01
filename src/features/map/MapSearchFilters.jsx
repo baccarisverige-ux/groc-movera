@@ -77,23 +77,29 @@ export function MapSearchFilters({
         </div>
       </div>
 
-      <div className="map-filter-rail map-filter-rail--amenities" data-testid="map-amenity-filters" aria-label="Équipements">
-        {MAP_AMENITY_FILTERS.map((filter) => {
-          const active = amenityFilters.has(filter.id)
-          return (
-            <button
-              key={filter.id}
-              type="button"
-              className="map-offer-sheet__property-chip map-filter-chip--amenity"
-              data-filter-id={filter.id}
-              data-active={active ? 'true' : 'false'}
-              aria-pressed={active}
-              onClick={() => onAmenityFilterToggle(filter.id)}
-            >
-              <span>{filter.label}</span>
-            </button>
-          )
-        })}
+      <div
+        className="map-offer-sheet__property-dock"
+        data-testid="map-amenity-filters"
+        aria-label="Équipements"
+      >
+        <div className="map-offer-sheet__property-rail">
+          {MAP_AMENITY_FILTERS.map((filter) => {
+            const active = amenityFilters.has(filter.id)
+            return (
+              <button
+                key={filter.id}
+                type="button"
+                className="map-offer-sheet__property-chip"
+                data-filter-id={filter.id}
+                data-active={active ? 'true' : 'false'}
+                aria-pressed={active}
+                onClick={() => onAmenityFilterToggle(filter.id)}
+              >
+                <span>{filter.label}</span>
+              </button>
+            )
+          })}
+        </div>
       </div>
     </div>
   )
