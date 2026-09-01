@@ -58,8 +58,8 @@ test('active host gets a complete workspace instead of being dropped directly in
   await expect(page.getByTestId('host-listings')).toContainText('Hôtel Azur Premium')
 
   await page.getByRole('navigation', { name: 'Navigation Hôte' }).getByRole('button', { name: 'Réservations' }).click()
-  await expect(page.getByTestId('host-reservations')).toBeVisible()
-  await expect(page.getByTestId('host-reservations')).toContainText('Aucune réservation')
+  await expect(page.getByTestId('host-reservations-canonical')).toBeVisible()
+  await expect(page.getByTestId('host-reservations-canonical')).toContainText('Aucune réservation')
 
   await page.getByRole('navigation', { name: 'Navigation Hôte' }).getByRole('button', { name: 'Revenus' }).click()
   await expect(page.getByTestId('host-earnings')).toContainText('0 TND')
