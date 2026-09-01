@@ -12,7 +12,7 @@ jobs:
   voyageur-e2e-uat:
     name: Voyageur · Desktop + Mobile · E2E + UAT
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,7 +35,8 @@ jobs:
       - name: Run global Voyageur E2E + UAT
         run: npx playwright test tests/e2e/voyageur-global-uat.spec.js --project=desktop-chromium --project=mobile-chromium
 
-      - name: Run deep Voyageur regression pack
+      - name: Run deep Voyageur regression pack · Desktop
+        timeout-minutes: 20
         run: >-
           npx playwright test
           tests/e2e/core.spec.js
@@ -62,6 +63,34 @@ jobs:
           tests/e2e/scroll-stability.spec.js
           tests/e2e/search-uat-cleanup.spec.js
           --project=desktop-chromium
+
+      - name: Run deep Voyageur regression pack · Mobile
+        timeout-minutes: 20
+        run: >-
+          npx playwright test
+          tests/e2e/core.spec.js
+          tests/e2e/critical-regressions.spec.js
+          tests/e2e/collection-map-navigation.spec.js
+          tests/e2e/collection-map-return.spec.js
+          tests/e2e/collection-navigation.spec.js
+          tests/e2e/collection-premium-architecture.spec.js
+          tests/e2e/favorites.spec.js
+          tests/e2e/home-bottom-nav.spec.js
+          tests/e2e/home-regression.spec.js
+          tests/e2e/home-section-alignment.spec.js
+          tests/e2e/listing-detail-map.spec.js
+          tests/e2e/map-city-offer-sheet.spec.js
+          tests/e2e/map-home-control.spec.js
+          tests/e2e/map-offer-popup.spec.js
+          tests/e2e/map-search-filters.spec.js
+          tests/e2e/messages.spec.js
+          tests/e2e/profile-auth.spec.js
+          tests/e2e/profile-back-navigation.spec.js
+          tests/e2e/profile-connected-redesign.spec.js
+          tests/e2e/profile-test-login.spec.js
+          tests/e2e/responsive-baseline.spec.js
+          tests/e2e/scroll-stability.spec.js
+          tests/e2e/search-uat-cleanup.spec.js
           --project=mobile-chromium
 
       - name: Upload Playwright report
