@@ -1,0 +1,88 @@
+/* Listing detail embedded map — reuse the real Movera map engine inside the compact location card. */
+.listing-detail-map-frame > .map-engine{
+  width:100%;
+  height:100%;
+  max-width:none;
+  margin:0;
+}
+
+.listing-detail-map-frame > .map-engine > .map-surface{
+  width:100%;
+  height:100%!important;
+  min-height:0;
+  border:0;
+  border-radius:0;
+  background:#e4e7e4;
+  cursor:grab;
+}
+
+.listing-detail-map-frame > .map-engine > .map-surface:active{cursor:grabbing}
+.listing-detail-map-frame > .map-engine > .map-engine__status{display:none}
+
+/* Keep the compact Airbnb-like surface clean; touch/pinch/double-tap still control the map. */
+.listing-detail-map-frame .map-controls{display:none}
+.listing-detail-map-frame .map-attribution{
+  right:7px;
+  bottom:7px;
+  padding:2px 5px;
+  border-radius:5px;
+  background:rgba(255,255,255,.82);
+  color:#6d746f;
+  font-size:7px;
+  line-height:1.2;
+}
+
+/* Re-skin the normal Movera marker as the location pin used by the listing card. */
+.listing-detail-map-frame .map-marker{
+  width:42px;
+  min-width:42px;
+  height:42px;
+}
+.listing-detail-map-frame .map-marker span,
+.listing-detail-map-frame .map-marker .map-marker__pill,
+.listing-detail-map-frame .map-marker--selected span,
+.listing-detail-map-frame .map-marker--selected .map-marker__pill{
+  width:38px;
+  min-width:38px;
+  height:38px;
+  padding:0;
+  border:5px solid rgba(255,255,255,.9);
+  border-radius:50%;
+  background:var(--listing-green,#315f4c);
+  color:transparent;
+  transform:none;
+  box-shadow:0 7px 18px rgba(36,69,53,.27),0 0 0 1px rgba(255,255,255,.4);
+}
+.listing-detail-map-frame .map-marker span::before,
+.listing-detail-map-frame .map-marker .map-marker__pill::before{
+  content:'';
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:9px;
+  height:12px;
+  border:1.5px solid #fff;
+  border-radius:50% 50% 50% 0;
+  transform:translate(-50%,-58%) rotate(-45deg);
+}
+.listing-detail-map-frame .map-marker span::after,
+.listing-detail-map-frame .map-marker .map-marker__pill::after{
+  content:''!important;
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:3px;
+  height:3px;
+  border:0;
+  border-radius:50%;
+  background:#fff;
+  transform:translate(-50%,-82%);
+}
+
+/* The full-map CTA stays above the interactive map without blocking map gestures elsewhere. */
+.listing-detail-map-frame .listing-detail-map-cta{
+  z-index:8;
+  border:0;
+  white-space:nowrap;
+  cursor:pointer;
+}
