@@ -12,14 +12,15 @@ test('home keeps its current category structure, media and approved navigation s
   await expect(categoryTrack).toBeVisible()
   await expect(categoryRail.locator('button[data-category-id]')).toHaveCount(8)
   await expect(page.locator('.b225-category-swipe-hint')).toHaveCount(1)
+  await expect(page.locator('.b225-category-swipe-hint')).toBeHidden()
 
   for (const id of categoryIds) {
     const button = categoryRail.locator(`button[data-category-id="${id}"]`)
     await expect(button).toHaveCount(1)
     await expect(button).toBeVisible()
-    const icon = button.locator('img')
+    const icon = button.locator('.b225-category-signature__icon svg')
     await expect(icon).toHaveCount(1)
-    await expect.poll(() => icon.evaluate((image) => image.naturalWidth)).toBeGreaterThan(0)
+    await expect(icon).toHaveAttribute('viewBox', '0 0 24 24')
   }
 
   await expect.poll(() => categoryRail.evaluate(node => node.scrollWidth > node.clientWidth)).toBe(true)
@@ -105,9 +106,9 @@ test('critical collection pages contain no broken project images', async ({ page
   }
 
   await page.goto('/')
-  const villaCategoryIcon = page.locator('.b225-category-icon[data-category-icon="prestige"]')
+  const villaCategoryIcon = page.locator('.b225-category-signature__icon[data-category-icon="prestige"] svg')
   await expect(villaCategoryIcon).toBeVisible()
-  await expect.poll(() => villaCategoryIcon.evaluate(image => image.naturalWidth)).toBeGreaterThan(0)
+  await expect(villaCategoryIcon).toHaveAttribute('viewBox', '0 0 24 24')
 })
 
 test('separate collection routes keep their own identity and shared filtering', async ({ page }) => {
