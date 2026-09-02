@@ -115,7 +115,8 @@ export function MapPage({ onNavigate }) {
   const handleSheetProgress = useCallback((progress) => {
     const header = headerRef.current
     if (header) {
-      const disappearance = Math.max(0, Math.min(1, progress))
+      const fadeProgress = Math.max(0, Math.min(1, (progress - 0.58) / 0.42))
+      const disappearance = fadeProgress * fadeProgress * (3 - 2 * fadeProgress)
       header.style.setProperty('--map-header-disappearance', disappearance.toFixed(4))
       header.style.pointerEvents = disappearance > 0.97 ? 'none' : ''
     }
