@@ -115,6 +115,8 @@ export function SearchTransitionHost({ onNavigate }) {
   const skipScrollRestoreRef = useRef(false)
   const lockedScrollYRef = useRef(0)
   const closingRef = useRef(false)
+  const openedFromMapRef = useRef(false)
+  const mapDraftRef = useRef({ key: '', value: null })
 
   const selectedViewport = state.destination?.viewport || SEARCH_OVERVIEW_VIEWPORT
   const datesValid = isDateRangeValid(state.checkin, state.checkout)
@@ -210,13 +212,24 @@ export function SearchTransitionHost({ onNavigate }) {
       const viewportHeight = Math.round(window.visualViewport?.height || window.innerHeight || 760)
       const restoredSearch = mapSearchStateFromLocation()
       const openedFromMap = Boolean(trigger.closest('.b225-map-top'))
+      openedFromMapRef.current = openedFromMap
       const originPrimary = openedFromMap ? trigger.querySelector('strong')?.textContent?.trim() || '' : ''
       const originMeta = openedFromMap ? trigger.querySelector('small')?.textContent?.trim() || '' : ''
+      const mapDraftKey = openedFromMap ? `${window.location.pathname}${window.location.search}` : ''
+      const hasMapDraft = openedFromMap && mapDraftRef.current.key === mapDraftKey
+      const initialQuery = hasMapDraft
+        ? mapDraftRef.current.value
+        : restoredSearch?.destinationQuery || originPrimary
+      if (openedFromMap) {
+        mapDraftRef.current = { key: mapDraftKey, value: initialQuery }
+      } else {
+        mapDraftRef.current = { key: '', value: null }
+      }
       setOrigin({ top: rect.top, left: rect.left, width: rect.width, height: rect.height })
       setLockedViewportHeight(viewportHeight)
       setState(restoredSearch?.state || createSearchState())
       setRecentSearches(readRecents())
-      setDestinationQuery(restoredSearch?.destinationQuery || originPrimary)
+      setDestinationQuery(initialQuery)
       setMapOriginSummary(openedFromMap ? { primary: originPrimary, meta: originMeta } : null)
       setAddressMode(false)
       setStep('destination')
@@ -337,7 +350,11 @@ export function SearchTransitionHost({ onNavigate }) {
       ...current,
       destination: { ...destination, label: address.label, subtitle: address.subtitle, viewport: address.viewport },
     }))
-    setDestinationQuery(`${address.label}, ${address.subtitle}`)
+    const nextQuery = `${address.label}, ${address.subtitle}`
+    setDestinationQuery(nextQuery)
+    if (openedFromMapRef.current) {
+      mapDraftRef.current = { ...mapDraftRef.current, value: nextQuery }
+    }
     setAddressMode(false)
     stepTimerRef.current = window.setTimeout(() => setStep('dates'), 180)
   }
@@ -424,7 +441,11 @@ export function SearchTransitionHost({ onNavigate }) {
               setStep('destination')
             }}
             onChange={(event) => {
-              setDestinationQuery(event.target.value)
+              const nextQuery = event.target.value
+              setDestinationQuery(nextQuery)
+              if (openedFromMapRef.current) {
+                mapDraftRef.current = { ...mapDraftRef.current, value: nextQuery }
+              }
               setMapOriginSummary(null)
               setAddressMode(true)
               setStep('destination')
