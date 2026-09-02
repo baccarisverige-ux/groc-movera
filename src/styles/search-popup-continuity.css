@@ -155,7 +155,10 @@ body:has(.movera-st[data-map-origin="true"][data-closing="true"]) .b225-map-top 
 
 
 .movera-st .movera-st__persistent-toggle{
-  position:relative!important;
+  position:fixed!important;
+  z-index:1007!important;
+  top:calc(var(--st-origin-top) + 7px)!important;
+  left:calc(var(--st-origin-left) + var(--st-origin-width) - 48px)!important;
   width:38px!important;
   height:38px!important;
   flex:0 0 38px!important;
@@ -191,8 +194,6 @@ body:has(.movera-st[data-map-origin="true"][data-closing="true"]) .b225-map-top 
   overflow:visible!important;
 }
 .movera-st[data-map-origin="true"] .movera-st__persistent-toggle{
-  position:fixed!important;
-  z-index:1007!important;
   top:calc(var(--st-origin-top) + 4px)!important;
   left:calc(var(--st-origin-left) + var(--st-origin-width) + 6px)!important;
   width:30px!important;
