@@ -6,8 +6,8 @@ const GOOGLE_MAPS_SCRIPT_ID = 'movera-google-maps-js'
 const GOOGLE_MAPS_CALLBACK = '__moveraGoogleMapsReady'
 const GOOGLE_MAPS_TIMEOUT_MS = 15000
 const GOOGLE_MAPS_POLL_MS = 50
-const CAMERA_EPSILON = 0.000005
-const ZOOM_EPSILON = 0.01
+const CAMERA_EPSILON = 0.000001
+const ZOOM_EPSILON = 0.001
 const MARKER_HIT_RADIUS_PX = 40
 const CLUSTER_HIT_RADIUS_PX = 28
 
