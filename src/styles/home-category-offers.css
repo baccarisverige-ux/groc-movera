@@ -19,67 +19,13 @@
   margin-bottom:3px!important;
 }
 
-/* Slim text-button treatment: clear CTA without the heavy bubble effect. */
-.b225-home .b225-section-title-button{
-  appearance:none!important;
-  -webkit-appearance:none!important;
-  width:auto!important;
-  min-width:0!important;
-  max-width:calc(100% - 48px)!important;
-  height:27px!important;
-  padding:0 8px!important;
-  border:1px solid rgba(31,35,32,.065)!important;
-  border-radius:8px!important;
-  background:rgba(255,255,255,.72)!important;
-  color:#1b1d1b!important;
-  display:inline-flex!important;
-  flex:0 0 auto!important;
-  align-items:center!important;
-  gap:5px!important;
-  overflow:hidden!important;
-  white-space:nowrap!important;
-  box-shadow:0 1px 2px rgba(28,32,29,.025),inset 0 1px 0 rgba(255,255,255,.9)!important;
-  font:700 14.6px/1 Inter,-apple-system,BlinkMacSystemFont,sans-serif!important;
-  letter-spacing:-.4px!important;
-  cursor:pointer!important;
-  -webkit-tap-highlight-color:transparent!important;
-  transition:transform .15s cubic-bezier(.2,.75,.25,1),background .15s ease,border-color .15s ease!important;
-}
-.b225-home .b225-section-title-button>span:first-child{
-  min-width:0!important;
-  overflow:hidden!important;
-  text-overflow:ellipsis!important;
-  white-space:nowrap!important;
-}
-.b225-home .b225-section-title-button__chevron{
-  display:inline-block!important;
-  width:auto!important;
-  height:auto!important;
-  flex:0 0 auto!important;
-  border:0!important;
-  border-radius:0!important;
-  background:transparent!important;
-  color:#7b807c!important;
-  font-size:17px!important;
-  line-height:1!important;
-  font-weight:350!important;
-  box-shadow:none!important;
-  transform:translateY(-.4px)!important;
-  transition:transform .15s cubic-bezier(.2,.75,.25,1),color .15s ease!important;
-}
-.b225-home .b225-section-title-button:active{
-  transform:translateY(1px) scale(.985)!important;
-  background:rgba(241,243,241,.92)!important;
-  border-color:rgba(31,35,32,.095)!important;
-  box-shadow:inset 0 1px 2px rgba(25,29,26,.04)!important;
-}
-.b225-home .b225-section-title-button:active .b225-section-title-button__chevron{
-  transform:translate(1px,-.4px)!important;
-  color:#565b57!important;
-}
-.b225-home .b225-section-title-button:focus-visible{
-  outline:2px solid rgba(44,48,45,.16)!important;
-  outline-offset:2px!important;
+.b225-home .b225-category-selection .b225-section__title h2{
+  margin:0!important;
+  font-size:16.8px!important;
+  line-height:1.08!important;
+  font-weight:720!important;
+  letter-spacing:-.55px!important;
+  color:#171816!important;
 }
 
 .b225-home .b225-category-selection__title{
@@ -147,8 +93,7 @@
   .b225-home .b225-category-selection{margin-top:1px!important;padding-top:0!important}
   .b225-home .b225-services-mini + .b225-category-selection{margin-top:1px!important}
   .b225-home .b225-category-selection .b225-section__title{min-height:32px!important;padding-top:3px!important;padding-bottom:3px!important;margin-bottom:2px!important}
-  .b225-home .b225-section-title-button{width:auto!important;max-width:calc(100% - 46px)!important;height:26px!important;padding:0 7px!important;font-size:13.8px!important;border-radius:7px!important;gap:4px!important;white-space:nowrap!important}
-  .b225-home .b225-section-title-button__chevron{font-size:16px!important}
+  .b225-home .b225-category-selection .b225-section__title h2{font-size:15.4px!important}
   .b225-home .b225-category-selection__title>.b225-section-scroll-hint{width:27px!important;min-width:27px!important;height:27px!important;flex-basis:27px!important}
   .b225-home .b225-offer-card{flex-basis:160px!important;min-width:160px!important;max-width:160px!important}
   .b225-home .b225-offer-card__image{height:151px!important;border-radius:18px!important}
@@ -165,66 +110,5 @@
 
 @media(prefers-reduced-motion:reduce){
   .b225-home .b225-category-selection__title>.b225-section-scroll-hint::before,.b225-home .b225-category-selection__title>.b225-section-scroll-hint::after{animation:none!important;opacity:.72!important;transform:none!important}
-  .b225-home .b225-offer-card__heart,.b225-home .b225-section-title-button,.b225-home .b225-section-title-button__chevron{transition:none!important}
-}
-
-/* Final title CTA authority: clickable heading, no bubble, no badge-like chrome. */
-.b225-home .b225-category-selection .b225-section-title-button{
-  width:auto!important;
-  min-width:0!important;
-  max-width:calc(100% - 46px)!important;
-  height:32px!important;
-  padding:0!important;
-  border:0!important;
-  border-radius:0!important;
-  background:transparent!important;
-  box-shadow:none!important;
-  color:#171917!important;
-  display:inline-flex!important;
-  align-items:center!important;
-  gap:6px!important;
-  overflow:visible!important;
-  white-space:nowrap!important;
-  font:760 16px/1 Inter,-apple-system,BlinkMacSystemFont,sans-serif!important;
-  letter-spacing:-.5px!important;
-  transform:none!important;
-}
-.b225-home .b225-category-selection .b225-section-title-button>span:first-child{
-  overflow:visible!important;
-  text-overflow:clip!important;
-  white-space:nowrap!important;
-}
-.b225-home .b225-category-selection .b225-section-title-button__chevron{
-  width:auto!important;
-  height:auto!important;
-  margin-top:-1px!important;
-  border:0!important;
-  background:transparent!important;
-  color:rgba(67,72,68,.58)!important;
-  font-size:12px!important;
-  line-height:1!important;
-  font-weight:650!important;
-  box-shadow:none!important;
-  transform:none!important;
-}
-.b225-home .b225-category-selection .b225-section-title-button:active{
-  background:transparent!important;
-  border:0!important;
-  box-shadow:none!important;
-  opacity:.62!important;
-  transform:scale(.985)!important;
-}
-.b225-home .b225-category-selection .b225-section-title-button:focus-visible{
-  outline:1.5px solid rgba(48,54,50,.2)!important;
-  outline-offset:3px!important;
-  border-radius:4px!important;
-}
-@media(max-width:390px){
-  .b225-home .b225-category-selection .b225-section-title-button{
-    height:30px!important;
-    padding:0!important;
-    font-size:15.2px!important;
-    gap:5px!important;
-  }
-  .b225-home .b225-category-selection .b225-section-title-button__chevron{font-size:11px!important}
+  .b225-home .b225-offer-card__heart{transition:none!important}
 }
