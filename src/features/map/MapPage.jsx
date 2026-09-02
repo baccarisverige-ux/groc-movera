@@ -14,7 +14,6 @@ import { MapOfferPopup } from './MapOfferPopup.jsx'
 import { MapOfferSheet } from './MapOfferSheet.jsx'
 import { MapSearchFilters } from './MapSearchFilters.jsx'
 
-const MAP_MOTION_PROGRESS_LIMIT = 0.72
 const MAP_GESTURE_SETTLE_MS = 500
 const GRAND_TUNIS_LOCATIONS = Object.freeze(['La Marsa', 'Sidi Bou Saïd', 'Gammarth', 'Carthage', 'Tunis'])
 
@@ -72,6 +71,7 @@ export function MapPage({ onNavigate }) {
   const headerRef = useRef(null)
   const mapInteractionRef = useRef(false)
   const mapAutoCameraBlockedUntilRef = useRef(0)
+  const sheetSnapRef = useRef('collapsed')
   const [headerHeight, setHeaderHeight] = useState(0)
   const [selectionState, setSelectionState] = useState(() => ({ contextKey: mapContextKey, id: selectedMarker?.id || null }))
   const [viewportState, setViewportState] = useState(() => ({ contextKey: mapContextKey, command: null }))
@@ -120,16 +120,18 @@ export function MapPage({ onNavigate }) {
       header.style.pointerEvents = disappearance > 0.97 ? 'none' : ''
     }
     const autoCameraBlocked = mapInteractionRef.current || performance.now() < mapAutoCameraBlockedUntilRef.current
-    if (autoCameraBlocked || progress > MAP_MOTION_PROGRESS_LIMIT) return
     if (progress > 0.14 && !selectedListingId && cityListings[0]) setSelectedListingId(cityListings[0].id)
+    const settledSnap = progress >= 0.985 ? 'expanded' : progress <= 0.015 ? 'collapsed' : null
+    if (!settledSnap || settledSnap === sheetSnapRef.current) return
+    sheetSnapRef.current = settledSnap
+    if (autoCameraBlocked) return
     const base = handoffViewport || listingViewport || destinationViewport || INITIAL_VIEWPORT
     const activeId = selectedListingId || cityListings[0]?.id
     const activeMarker = activeId ? visibleMarkers.find((marker) => marker.id === activeId) : null
-    const blend = activeMarker ? Math.max(0, Math.min(1, (progress - 0.08) / 0.92)) : 0
-    const focusStrength = blend * 0.72
+    const focusStrength = settledSnap === 'expanded' && activeMarker ? 0.72 : 0
     const lat = activeMarker ? base.lat + (activeMarker.lat - base.lat) * focusStrength : base.lat
     const lng = activeMarker ? base.lng + (activeMarker.lng - base.lng) * focusStrength : base.lng
-    issueViewportCommand({ lat, lng, zoom: Math.min(17, base.zoom + progress * 1.45) })
+    issueViewportCommand({ lat, lng, zoom: Math.min(17, base.zoom + (settledSnap === 'expanded' ? 1.45 : 0)) })
   }, [handoffViewport, listingViewport, destinationViewport, selectedListingId, cityListings, visibleMarkers, setSelectedListingId, issueViewportCommand])
 
   const handleSheetSelectedListingChange = useCallback((listingId) => { setSelectedListingId(listingId); const marker = visibleMarkers.find((item) => item.id === listingId); const base = handoffViewport || listingViewport || destinationViewport || INITIAL_VIEWPORT; if (!marker) return; issueViewportCommand({ lat: marker.lat, lng: marker.lng, zoom: Math.min(17, Math.max(13.6, base.zoom + 1.65)) }) }, [visibleMarkers, handoffViewport, listingViewport, destinationViewport, setSelectedListingId, issueViewportCommand])
