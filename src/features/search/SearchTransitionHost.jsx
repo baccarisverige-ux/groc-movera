@@ -439,8 +439,7 @@ export function SearchTransitionHost({ onNavigate }) {
           <span className="movera-st__persistent-meta">{mapOriginSummary ? mapOriginSummary.meta : datesValid ? `${formatDate(state.checkin)} – ${formatDate(state.checkout)}` : 'Destination · Dates · Voyageurs'}</span>
         </div>
         <button type="button" className="movera-st__persistent-toggle" onPointerDown={closeFromPointer} onClick={closeTransition} aria-label="Fermer">
-          <span className="movera-st__persistent-menu" aria-hidden="true">≡</span>
-          <span className="movera-st__persistent-x" aria-hidden="true">×</span>
+          <span className="movera-st__persistent-close-icon" aria-hidden="true">×</span>
         </button>
       </div>
 
@@ -451,7 +450,6 @@ export function SearchTransitionHost({ onNavigate }) {
             <span className="movera-st__brandmark" aria-hidden="true"><span /></span>
             <div className="movera-st__brandcopy"><strong>Movera</strong><span>Votre séjour, simplement</span></div>
             <span className="movera-st__progress">{stepIndex}/3</span>
-            <button type="button" className="movera-st__close" onPointerDown={closeFromPointer} onClick={closeTransition} aria-label="Fermer">×</button>
           </div>
 
           {addressMode ? (
