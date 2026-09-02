@@ -157,8 +157,10 @@ export function SearchTransitionHost({ onNavigate }) {
     window.requestAnimationFrame(() => {
       setActive(false)
       setComplete(false)
-      setDestinationQuery('')
-      setAddressMode(false)
+      window.requestAnimationFrame(() => {
+        setDestinationQuery('')
+        setAddressMode(false)
+      })
     })
   }, [])
 
@@ -170,9 +172,11 @@ export function SearchTransitionHost({ onNavigate }) {
     setOpen(false)
     closeTimerRef.current = window.setTimeout(() => {
       setActive(false)
-      setDestinationQuery('')
-      setAddressMode(false)
       closingRef.current = false
+      window.requestAnimationFrame(() => {
+        setDestinationQuery('')
+        setAddressMode(false)
+      })
     }, CLOSE_MS)
   }
 
@@ -418,7 +422,7 @@ export function SearchTransitionHost({ onNavigate }) {
             aria-controls="movera-address-suggestions"
             autoComplete="off"
           />
-          <span className="movera-st__persistent-meta">Destination · Dates · Voyageurs</span>
+          <span className="movera-st__persistent-meta">{datesValid ? `${formatDate(state.checkin)} – ${formatDate(state.checkout)}` : 'Destination · Dates · Voyageurs'}</span>
         </div>
         <button type="button" className="movera-st__persistent-toggle" onPointerDown={closeFromPointer} onClick={closeTransition} aria-label="Fermer">
           <span className="movera-st__persistent-menu" aria-hidden="true">≡</span>
