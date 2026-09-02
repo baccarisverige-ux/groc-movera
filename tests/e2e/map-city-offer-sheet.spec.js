@@ -107,7 +107,7 @@ test('sheet attachment uses one Motion translation with a stable structural head
   const progressAt94 = await numberAttribute(sheet, 'data-progress')
   const softenedProgressAt94 = progressAt94 * progressAt94 * (3 - 2 * progressAt94)
   expect(Math.abs((panelBoxAt94.y - sheetBoxAt94.y) - structuralOffset * (1 - softenedProgressAt94))).toBeLessThanOrEqual(2.5)
-  expect(await numberAttribute(surface, 'data-zoom')).toBeCloseTo(zoomAt84, 4)
+  expect(await numberAttribute(surface, 'data-zoom')).toBeGreaterThan(zoomAt84 + 0.02)
 
   await page.mouse.up()
   await expect(sheet).toHaveAttribute('data-expanded', 'true')
@@ -118,6 +118,28 @@ test('sheet attachment uses one Motion translation with a stable structural head
   const attachedPanelBox = await panel.boundingBox()
   expect(attachedPanelBox).not.toBeNull()
   expect(Math.abs(attachedPanelBox.y - mapBox.y)).toBeLessThanOrEqual(2)
+})
+
+test('offer sheet camera preserves a manual zoom as its collapsed base', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/groc-movera/map?destination=la-marsa')
+
+  const surface = page.getByTestId('map-surface')
+  const sheet = page.getByTestId('map-offer-sheet')
+  await expect(sheet).toHaveAttribute('data-snap-state', 'collapsed')
+
+  const initialZoom = await numberAttribute(surface, 'data-zoom')
+  await page.getByRole('button', { name: 'Zoom avant' }).click()
+  await expect.poll(() => numberAttribute(surface, 'data-zoom')).toBeGreaterThan(initialZoom + 0.9)
+  const manualZoom = await numberAttribute(surface, 'data-zoom')
+
+  await page.getByRole('button', { name: 'Afficher la liste des offres' }).click()
+  await expect(sheet).toHaveAttribute('data-snap-state', 'expanded')
+  await expect.poll(() => numberAttribute(surface, 'data-zoom')).toBeGreaterThan(manualZoom + 1)
+
+  await page.getByRole('button', { name: 'Réduire la liste des offres' }).click()
+  await expect(sheet).toHaveAttribute('data-snap-state', 'collapsed')
+  await expect.poll(() => numberAttribute(surface, 'data-zoom')).toBeCloseTo(manualZoom, 2)
 })
 
 test('Grand Tunis fully expanded keeps 16 offers summary and first offer visible below the fixed header', async ({ page }) => {
