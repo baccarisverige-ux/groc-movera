@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { OptimizedListingImage } from '../../shared/media/OptimizedListingImage.jsx'
 import { useFavorites } from '../favorites/favoritesStore.js'
 import { listingLocationLine, listingRatingCopy, nextListingId, rotateListingsForPopup } from './mapOfferPopupModel.js'
 import './map-offer-popup.css'
@@ -25,7 +26,7 @@ function PhotoCarousel({ photos, alt, onOpen }) {
   const startXRef = useRef(0)
   useEffect(() => { setIndex(0) }, [photos])
   const onScroll = (event) => { const width = event.currentTarget.clientWidth; if (width) setIndex(Math.round(event.currentTarget.scrollLeft / width)) }
-  return <div className="map-offer-popup__photos"><div className="map-offer-popup__photo-track" data-testid="map-offer-popup-photos" onScroll={onScroll} onPointerDown={(event) => { event.stopPropagation(); movedRef.current = false; startXRef.current = event.clientX }} onPointerMove={(event) => { if (Math.abs(event.clientX - startXRef.current) > 8) movedRef.current = true }} onClick={(event) => { event.stopPropagation(); if (!movedRef.current) onOpen?.() }}>{photos.map((photo, photoIndex) => <img key={`${photo.src}-${photoIndex}`} src={photo.src} alt={photoIndex === 0 ? alt : ''} draggable="false" />)}</div>{photos.length > 1 ? <div className="map-offer-popup__dots" aria-hidden="true">{photos.map((photo, photoIndex) => <span key={`${photo.src}-dot`} className={photoIndex === index ? 'is-active' : undefined}/>)}</div> : null}</div>
+  return <div className="map-offer-popup__photos"><div className="map-offer-popup__photo-track" data-testid="map-offer-popup-photos" onScroll={onScroll} onPointerDown={(event) => { event.stopPropagation(); movedRef.current = false; startXRef.current = event.clientX }} onPointerMove={(event) => { if (Math.abs(event.clientX - startXRef.current) > 8) movedRef.current = true }} onClick={(event) => { event.stopPropagation(); if (!movedRef.current) onOpen?.() }}>{photos.map((photo, photoIndex) => <OptimizedListingImage key={`${photo.src}-${photoIndex}`} src={photo.src} alt={photoIndex === 0 ? alt : ''} sizes="(max-width:430px) calc(100vw - 32px), 398px" loading={photoIndex === 0 ? 'eager' : 'lazy'} fetchPriority={photoIndex === 0 ? 'high' : undefined} draggable="false" />)}</div>{photos.length > 1 ? <div className="map-offer-popup__dots" aria-hidden="true">{photos.map((photo, photoIndex) => <span key={`${photo.src}-dot`} className={photoIndex === index ? 'is-active' : undefined}/>)}</div> : null}</div>
 }
 
 function OfferCard({ listing, selectedRoomId, onSelectRoom, favorite, onToggleFavorite, onClose, onOpen }) {
