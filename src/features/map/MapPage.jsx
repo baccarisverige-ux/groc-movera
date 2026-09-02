@@ -58,6 +58,13 @@ function listingHasDiscount(listing) {
   return Array.isArray(listing?.promotions) && listing.promotions.length > 0
 }
 
+function validViewport(viewport) {
+  return viewport
+    && Number.isFinite(Number(viewport.lat))
+    && Number.isFinite(Number(viewport.lng))
+    && Number.isFinite(Number(viewport.zoom))
+}
+
 const COLLECTION_ROUTE_BY_CATEGORY = Object.freeze({ beach: '/plage', guesthouse: '/maison-d-hote', hotel: '/hotel', family: '/appartement', prestige: '/villa' })
 const DESTINATION_LISTING_LOCATIONS = Object.freeze({ 'la-marsa': ['La Marsa'], 'sidi-bou-said': ['Sidi Bou Saïd'], gammarth: ['Gammarth'], carthage: ['Carthage'], tunis: ['Tunis'], hammamet: ['Hammamet'], sousse: ['Sousse'], djerba: ['Djerba'], tozeur: ['Tozeur'] })
 const DESTINATION_LABELS = Object.freeze({ 'la-marsa': 'La Marsa', 'sidi-bou-said': 'Sidi Bou Saïd', gammarth: 'Gammarth', carthage: 'Carthage', hammamet: 'Hammamet', tunis: 'Tunis', sousse: 'Sousse', djerba: 'Djerba', tozeur: 'Tozeur', tabarka: 'Tabarka', nabeul: 'Nabeul', bizerte: 'Bizerte' })
@@ -92,6 +99,9 @@ export function MapPage({ onNavigate }) {
   const mapInteractionRef = useRef(false)
   const mapAutoCameraBlockedUntilRef = useRef(0)
   const sheetSnapRef = useRef('collapsed')
+  const sheetProgressRef = useRef(0)
+  const liveViewportRef = useRef(initialViewport)
+  const sheetBaseViewportRef = useRef(initialViewport)
   const [headerHeight, setHeaderHeight] = useState(0)
   const [selectionState, setSelectionState] = useState(() => ({ contextKey: mapContextKey, id: selectedMarker?.id || null }))
   const [viewportState, setViewportState] = useState(() => ({ contextKey: mapContextKey, command: null }))
@@ -102,6 +112,13 @@ export function MapPage({ onNavigate }) {
   const [popupOpen, setPopupOpen] = useState(false)
   const selectedListingId = selectionState.contextKey === mapContextKey ? selectionState.id : selectedMarker?.id || null
   const viewportCommand = viewportState.contextKey === mapContextKey ? viewportState.command : null
+
+  useEffect(() => {
+    liveViewportRef.current = initialViewport
+    sheetBaseViewportRef.current = initialViewport
+    sheetProgressRef.current = 0
+    sheetSnapRef.current = 'collapsed'
+  }, [mapContextKey, initialViewport.lat, initialViewport.lng, initialViewport.zoom])
 
   useEffect(() => {
     const sync = () => setHomeOffers(listMapGuestListings())
@@ -119,6 +136,12 @@ export function MapPage({ onNavigate }) {
 
   const setSelectedListingId = useCallback((id) => { setSelectionState({ contextKey: mapContextKey, id }) }, [mapContextKey])
   const issueViewportCommand = useCallback((command) => { setViewportState({ contextKey: mapContextKey, command: { ...command, revision: performance.now() } }) }, [mapContextKey])
+  const handleViewportChange = useCallback((nextViewport) => {
+    if (!validViewport(nextViewport)) return
+    const next = { lat: Number(nextViewport.lat), lng: Number(nextViewport.lng), zoom: Number(nextViewport.zoom) }
+    liveViewportRef.current = next
+    if (sheetProgressRef.current <= 0.015) sheetBaseViewportRef.current = next
+  }, [])
   const handleMapInteractionChange = useCallback((active) => { const next = Boolean(active); mapInteractionRef.current = next; mapAutoCameraBlockedUntilRef.current = next ? Number.POSITIVE_INFINITY : performance.now() + MAP_GESTURE_SETTLE_MS; setMapInteracting(next) }, [])
 
   const contextListings = useMemo(() => listingsForMapContext(homeOffers, requestedDestination, requestedListing), [homeOffers, requestedDestination, requestedListing])
@@ -137,6 +160,8 @@ export function MapPage({ onNavigate }) {
   const handleSheetProgress = useCallback((progress) => {
     const boundedProgress = Math.max(0, Math.min(1, progress))
     const easedProgress = boundedProgress * boundedProgress * (3 - 2 * boundedProgress)
+    sheetProgressRef.current = boundedProgress
+
     const header = headerRef.current
     if (header) {
       const fadeProgress = Math.max(0, Math.min(1, (boundedProgress - 0.58) / 0.42))
@@ -153,7 +178,7 @@ export function MapPage({ onNavigate }) {
     const autoCameraBlocked = mapInteractionRef.current || performance.now() < mapAutoCameraBlockedUntilRef.current
     if (autoCameraBlocked) return
 
-    const base = handoffViewport || listingViewport || destinationViewport || INITIAL_VIEWPORT
+    const base = sheetBaseViewportRef.current || liveViewportRef.current || initialViewport
     const activeId = selectedListingId || cityListings[0]?.id
     const activeMarker = activeId ? visibleMarkers.find((marker) => marker.id === activeId) : null
     const focusStrength = activeMarker ? 0.72 * easedProgress : 0
@@ -161,9 +186,15 @@ export function MapPage({ onNavigate }) {
     const lng = activeMarker ? base.lng + (activeMarker.lng - base.lng) * focusStrength : base.lng
     const zoom = Math.min(17, base.zoom + 1.45 * easedProgress)
     issueViewportCommand({ lat, lng, zoom })
-  }, [handoffViewport, listingViewport, destinationViewport, selectedListingId, cityListings, visibleMarkers, setSelectedListingId, issueViewportCommand])
+  }, [initialViewport, selectedListingId, cityListings, visibleMarkers, setSelectedListingId, issueViewportCommand])
 
-  const handleSheetSelectedListingChange = useCallback((listingId) => { setSelectedListingId(listingId); const marker = visibleMarkers.find((item) => item.id === listingId); const base = handoffViewport || listingViewport || destinationViewport || INITIAL_VIEWPORT; if (!marker) return; issueViewportCommand({ lat: marker.lat, lng: marker.lng, zoom: Math.min(17, Math.max(13.6, base.zoom + 1.65)) }) }, [visibleMarkers, handoffViewport, listingViewport, destinationViewport, setSelectedListingId, issueViewportCommand])
+  const handleSheetSelectedListingChange = useCallback((listingId) => {
+    setSelectedListingId(listingId)
+    const marker = visibleMarkers.find((item) => item.id === listingId)
+    if (!marker) return
+    const current = liveViewportRef.current || initialViewport
+    issueViewportCommand({ lat: marker.lat, lng: marker.lng, zoom: Math.min(17, Math.max(13.6, current.zoom)) })
+  }, [visibleMarkers, initialViewport, setSelectedListingId, issueViewportCommand])
   const handlePinSelectedListingChange = useCallback((listingId) => { setSelectedListingId(listingId); setPopupOpen(Boolean(listingId)) }, [setSelectedListingId])
   const handlePopupListingChange = useCallback((listingId) => { setSelectedListingId(listingId) }, [setSelectedListingId])
 
@@ -185,7 +216,7 @@ export function MapPage({ onNavigate }) {
 
   return <section className="b225-map-page" data-testid="page-map" data-destination={requestedDestination || ''} data-listing={selectedMarker?.id || ''} data-handoff-viewport={handoffViewport ? 'true' : 'false'} data-city-offer-count={cityListings.length} data-context-offer-count={contextListings.length} data-amenity-filter-count={amenityFilters.size} data-discount-only={discountOnly ? 'true' : 'false'} data-property-filter={propertyFilter} data-map-interacting={mapInteracting ? 'true' : 'false'} data-offer-popup={popupOpen ? 'open' : 'closed'}>
     <div ref={headerRef} className="b225-map-top"><MapSearchFilters cityLabel={cityLabel} primaryLabel={searchTriggered ? cityLabel : undefined} dateLabel={searchTriggered ? requestedDateLabel : ''} amenityFilters={amenityFilters} discountOnly={discountOnly} compact={popupOpen} onHome={() => onNavigate('/')} onAmenityFilterToggle={toggleAmenityFilter} onDiscountToggle={toggleDiscountOnly} onResetFilters={resetFilters}/></div>
-    <div className="b225-map-stage">{requestedListing ? <button type="button" className="b225-map-return b225-map-return--floating" onClick={returnToOffers} aria-label="Retour aux offres"><span className="b225-map-return__icon"><ArrowLeftIcon/></span><span>Retour aux offres</span></button> : null}<MapContainer key={`map-${mapContextKey}`} markers={visibleMarkers} selectedListingId={selectedListingId} onSelectedListingChange={handlePinSelectedListingChange} onInteractionChange={handleMapInteractionChange} initialViewport={initialViewport} viewportCommand={viewportCommand} cameraOnSelect="none"/></div>
+    <div className="b225-map-stage">{requestedListing ? <button type="button" className="b225-map-return b225-map-return--floating" onClick={returnToOffers} aria-label="Retour aux offres"><span className="b225-map-return__icon"><ArrowLeftIcon/></span><span>Retour aux offres</span></button> : null}<MapContainer key={`map-${mapContextKey}`} markers={visibleMarkers} selectedListingId={selectedListingId} onSelectedListingChange={handlePinSelectedListingChange} onViewportChange={handleViewportChange} onInteractionChange={handleMapInteractionChange} initialViewport={initialViewport} viewportCommand={viewportCommand} cameraOnSelect="none"/></div>
     {popupOpen && selectedListingId ? <MapOfferPopup listings={cityListings} selectedListingId={selectedListingId} onSelectedListingChange={handlePopupListingChange} onClose={handlePopupClose} onNavigate={onNavigate}/> : null}
     <MapOfferSheet key={`sheet-${mapContextKey}`} listings={cityListings} cityLabel={cityLabel} headerHeight={headerHeight} selectedListingId={selectedListingId} propertyFilter={propertyFilter} onPropertyFilterChange={handlePropertyFilterChange} onSelectedListingChange={handleSheetSelectedListingChange} onProgressChange={handleSheetProgress} onNavigate={onNavigate}/>
   </section>
