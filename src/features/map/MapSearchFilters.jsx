@@ -7,6 +7,8 @@ import './map-search-filters.css'
 
 export function MapSearchFilters({
   cityLabel,
+  primaryLabel,
+  dateLabel,
   amenityFilters,
   compact = false,
   onHome,
@@ -62,7 +64,10 @@ export function MapSearchFilters({
             onClick={openSearchPopup}
             aria-label="Modifier la recherche"
           >
-            <strong>Logements à {cityLabel}</strong>
+            <span className="map-search-filter-stack__search-copy">
+              <strong>{primaryLabel || `Logements à ${cityLabel}`}</strong>
+              {dateLabel ? <small>{dateLabel}</small> : null}
+            </span>
           </button>
 
           <button
