@@ -1,6 +1,6 @@
 /* Search close hand-off.
    Home and Map both return their REAL header immediately above the Search portal,
-   while the popup itself continues a genuinely slow physical close behind them. */
+   while the popup itself continues a natural physical close behind them. */
 
 .movera-st:not(.movera-st--open):not(.movera-st--complete) .movera-st__persistent-search{
   pointer-events:none!important;
@@ -89,11 +89,7 @@ body:has(.movera-st.movera-st[data-map-origin="true"][data-closing="true"]) .b22
   transition-delay:0ms!important;
 }
 
-/* REAL slow close.
-   Previous versions only stretched the shell while searchTransition-stability.css
-   forced the content to opacity:0 as soon as ready/open were cleared. That made the
-   popup LOOK closed in ~90ms. We now explicitly own the closing content opacity and
-   move the full unchanged rectangle upward for almost the entire 1750ms lifecycle. */
+/* Faster physical close: same geometry and same natural movement, shortened to ~1.1s. */
 .movera-st[data-closing="true"]:not(.movera-st--complete) .movera-st__panel{
   top:calc(10px + env(safe-area-inset-top,0px))!important;
   left:max(10px,calc(50vw - 205px))!important;
@@ -106,37 +102,34 @@ body:has(.movera-st.movera-st[data-map-origin="true"][data-closing="true"]) .b22
   transform-origin:center top!important;
   opacity:0!important;
   transition:
-    transform 1600ms cubic-bezier(.18,.76,.16,1) 55ms,
-    opacity 560ms cubic-bezier(.45,0,.8,.35) 1000ms,
-    box-shadow 920ms ease-out 600ms!important;
+    transform 1080ms cubic-bezier(.18,.76,.16,1) 40ms,
+    opacity 360ms cubic-bezier(.45,0,.8,.35) 690ms,
+    box-shadow 650ms ease-out 380ms!important;
   will-change:transform,opacity!important;
 }
 
-/* Critical fix for the perceived quick close:
-   explicitly override the base opacity:0!important / 90ms close rule. The content
-   stays readable through the first half of the physical retraction and fades late. */
+/* Keep content readable through the physical travel, then fade late. */
 .movera-st[data-closing="true"]:not(.movera-st--complete) .movera-st__content{
   opacity:0!important;
   transform:translate3d(0,-6px,0) scale(1)!important;
   animation:none!important;
   transition:
-    opacity 720ms cubic-bezier(.45,0,.8,.35) 620ms,
-    transform 1450ms cubic-bezier(.18,.76,.16,1) 70ms!important;
+    opacity 470ms cubic-bezier(.45,0,.8,.35) 400ms,
+    transform 980ms cubic-bezier(.18,.76,.16,1) 50ms!important;
 }
 
-/* Keep the background hand-off slow too so it does not visually announce "closed"
-   before the physical panel has finished retracting. */
+/* Background follows the faster physical close without snapping away first. */
 .movera-st[data-closing="true"]:not(.movera-st--complete) .movera-st__map-stage{
   opacity:0!important;
   transform:translate3d(-50%,18px,0) scale(1.008)!important;
   transition:
-    opacity 1050ms cubic-bezier(.45,0,.8,.35) 430ms,
-    transform 1540ms cubic-bezier(.18,.76,.16,1) 80ms!important;
+    opacity 700ms cubic-bezier(.45,0,.8,.35) 280ms,
+    transform 1040ms cubic-bezier(.18,.76,.16,1) 55ms!important;
 }
 
 .movera-st[data-closing="true"]:not(.movera-st--complete) .movera-st__map-veil{
   opacity:0!important;
-  transition:opacity 980ms cubic-bezier(.45,0,.8,.35) 470ms!important;
+  transition:opacity 650ms cubic-bezier(.45,0,.8,.35) 300ms!important;
 }
 
 @media(prefers-reduced-motion:reduce){
