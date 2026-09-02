@@ -25,7 +25,7 @@ export function MarkerLayer({ markers, viewport, size, selectedListingId, onSele
             aria-label={`${marker.label}, ${price}`}
             tabIndex={interactive ? 0 : -1}
             style={{
-              transform: `translate3d(${Math.round(point.x)}px, ${Math.round(point.y)}px, 0)`,
+              transform: `translate3d(${point.x.toFixed(3)}px, ${point.y.toFixed(3)}px, 0)`,
               pointerEvents: interactive ? 'auto' : 'none',
             }}
             onClick={interactive ? (event) => {
