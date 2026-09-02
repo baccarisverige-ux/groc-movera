@@ -142,7 +142,7 @@ test('offer sheet camera preserves a manual zoom as its collapsed base', async (
   await expect.poll(() => numberAttribute(surface, 'data-zoom')).toBeCloseTo(manualZoom, 2)
 })
 
-test('Grand Tunis fully expanded keeps 16 offers summary and first offer visible below the fixed header', async ({ page }) => {
+test('Grand Tunis fully expanded covers the header and keeps 16 offers visible', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/groc-movera/map')
 
@@ -163,8 +163,8 @@ test('Grand Tunis fully expanded keeps 16 offers summary and first offer visible
   await expect(dragZone).toContainText('16 offres')
   await expect(dragZone).toContainText('Grand Tunis')
   await expect.poll(() => panel.evaluate((node) => getComputedStyle(node).boxShadow)).not.toBe('none')
-  await expect(panel).toHaveCSS('border-top-left-radius', '22px')
-  await expect(panel).toHaveCSS('border-top-right-radius', '22px')
+  await expect(panel).toHaveCSS('border-top-left-radius', '28px')
+  await expect(panel).toHaveCSS('border-top-right-radius', '28px')
 
   const list = sheet.locator('.map-offer-sheet__list')
   await expect(list).toHaveCSS('scroll-snap-type', 'none')
@@ -186,11 +186,10 @@ test('Grand Tunis fully expanded keeps 16 offers summary and first offer visible
   expect(dragZoneBox).not.toBeNull()
   expect(mediaBox).not.toBeNull()
 
-  const headerBottom = topPanelBox.y + topPanelBox.height
   const finalHeaderOffset = await numberAttribute(dragZone, 'data-header-offset')
   expect(Math.abs(finalHeaderOffset - topPanelBox.height)).toBeLessThanOrEqual(3)
   expect(Math.abs(sheetBox.y - mapBox.y)).toBeLessThanOrEqual(2)
-  expect(Math.abs(panelBox.y - headerBottom)).toBeLessThanOrEqual(2)
+  expect(Math.abs(panelBox.y - mapBox.y)).toBeLessThanOrEqual(2)
   expect(Math.abs(dragZoneBox.y - panelBox.y)).toBeLessThanOrEqual(2)
   expect(mediaBox.y).toBeGreaterThanOrEqual(dragZoneBox.y + dragZoneBox.height - 2)
   expect(mediaBox.width).toBeGreaterThan(340)
@@ -205,7 +204,7 @@ test('Grand Tunis fully expanded keeps 16 offers summary and first offer visible
       parentClass: offerSheet.parentElement?.className || '',
     }
   })
-  expect(zOrder.header).toBeGreaterThan(zOrder.sheet)
+  expect(zOrder.sheet).toBeGreaterThan(zOrder.header)
   expect(zOrder.parentClass).toContain('b225-map-page')
 
   await page.waitForTimeout(350)

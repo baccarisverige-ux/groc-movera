@@ -78,7 +78,7 @@ test.describe('Movera general E2E + UAT acceptance', () => {
     await expect(page.getByTestId('home-categories').locator('button')).toHaveCount(8)
     await expect(page.getByTestId('home-welcome-cities').locator('.b225-welcome-city')).toHaveCount(7)
     await expect(page.getByTestId('home-selection-all')).toBeVisible()
-    await expect(page.getByTestId('home-services-mini')).toBeVisible()
+    await expect(page.getByTestId('home-services-mini')).toHaveCount(0)
 
     const welcomeCities = page.getByTestId('home-welcome-cities').locator('.b225-welcome-city')
     for (let index = 0; index < await welcomeCities.count(); index += 1) {

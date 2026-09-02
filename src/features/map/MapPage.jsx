@@ -118,7 +118,7 @@ export function MapPage({ onNavigate }) {
     sheetBaseViewportRef.current = initialViewport
     sheetProgressRef.current = 0
     sheetSnapRef.current = 'collapsed'
-  }, [mapContextKey, initialViewport.lat, initialViewport.lng, initialViewport.zoom])
+  }, [mapContextKey, initialViewport])
 
   useEffect(() => {
     const sync = () => setHomeOffers(listMapGuestListings())
