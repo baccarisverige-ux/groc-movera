@@ -354,20 +354,17 @@
 
 .b225-map-top{
   padding:calc(8px + env(safe-area-inset-top,0px)) 10px 8px!important;
-  background:rgba(254,254,253,.86)!important;
+  background:#fff!important;
   border-bottom:0!important;
-  -webkit-backdrop-filter:saturate(175%) blur(18px)!important;
-  backdrop-filter:saturate(175%) blur(18px)!important;
-  box-shadow:inset 0 -1px 0 rgba(32,38,34,.04),0 8px 24px rgba(28,35,31,.035)!important;
+  -webkit-backdrop-filter:none!important;
+  backdrop-filter:none!important;
+  box-shadow:none!important;
 }
 
 .map-search-filter-stack__search-pill{
-  border:1px solid rgba(255,255,255,.88)!important;
-  background:rgba(255,255,255,.96)!important;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.98),
-    inset 0 -1px 0 rgba(115,123,118,.08),
-    0 4px 13px rgba(29,36,32,.055)!important;
+  border:1px solid #fff!important;
+  background:#fff!important;
+  box-shadow:none!important;
 }
 
 .map-search-filter-stack__search-pill strong{
