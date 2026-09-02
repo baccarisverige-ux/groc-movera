@@ -1,0 +1,102 @@
+/* Movera category controls: fine physical depth with per-icon optical tuning. */
+.b225-home .b225-categories-track>.b225-category-button{
+  height:41px!important;
+  min-height:41px!important;
+  max-height:41px!important;
+  padding:0 13px!important;
+  gap:0!important;
+  overflow:visible!important;
+  border:1px solid rgba(67,70,67,.13)!important;
+  border-radius:999px!important;
+  color:#252725!important;
+  background:linear-gradient(180deg,#fff 0%,#fdfdfc 54%,#f5f5f3 100%)!important;
+  box-shadow:
+    inset 0 1px 0 #fff,
+    inset 0 -1px 0 rgba(56,59,56,.055),
+    0 1px 1px rgba(25,28,25,.09),
+    0 3px 6px rgba(25,28,25,.065)!important;
+  transform:translateY(0)!important;
+  transition:background .16s ease,border-color .16s ease,box-shadow .16s ease,transform .16s cubic-bezier(.2,.8,.2,1)!important;
+}
+
+.b225-home .b225-category-button__content{
+  position:relative;
+  z-index:2;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6.5px;
+  pointer-events:none;
+  transform-origin:center;
+}
+
+.b225-home .b225-category-button__label{
+  display:block;
+  font:590 12.35px/1 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  letter-spacing:-.11px;
+  white-space:nowrap;
+  -webkit-font-smoothing:antialiased;
+}
+
+.b225-home .b225-category-button .b225-category-icon{
+  width:19px!important;
+  height:19px!important;
+  max-width:19px!important;
+  max-height:19px!important;
+  flex-basis:19px!important;
+  opacity:.98!important;
+  transform:translateY(var(--category-icon-y,0)) scale(var(--category-icon-scale,1))!important;
+  transform-origin:center!important;
+}
+
+.b225-home .b225-categories-track>.b225-category-button[data-active='true']{
+  border-color:rgba(65,68,65,.15)!important;
+  color:#1f211f!important;
+  background:linear-gradient(180deg,#e5e6e3 0%,#eaebe8 58%,#eff0ed 100%)!important;
+  box-shadow:
+    inset 0 2px 4px rgba(34,38,34,.105),
+    inset 0 -1px 0 rgba(255,255,255,.72),
+    0 1px 0 rgba(255,255,255,.86),
+    0 1px 2px rgba(30,34,30,.045)!important;
+  transform:translateY(1px)!important;
+}
+
+.b225-home .b225-categories-track>.b225-category-button[data-active='true'] .b225-category-button__label{
+  font-weight:650;
+}
+
+.b225-home .b225-categories-track>.b225-category-button:active{
+  border-color:rgba(62,65,62,.14)!important;
+  background:linear-gradient(180deg,#e2e3e0,#e9eae7)!important;
+  box-shadow:
+    inset 0 2px 5px rgba(34,38,34,.125),
+    inset 0 -1px 0 rgba(255,255,255,.62),
+    0 1px 0 rgba(255,255,255,.74)!important;
+  transform:translateY(1.5px)!important;
+}
+
+.b225-home .b225-categories-track>.b225-category-button:focus-visible{
+  outline:2px solid rgba(31,72,54,.58)!important;
+  outline-offset:2px!important;
+}
+
+@media(max-width:350px){
+  .b225-home .b225-categories-track>.b225-category-button{
+    height:39px!important;
+    min-height:39px!important;
+    max-height:39px!important;
+    padding-inline:12px!important;
+  }
+  .b225-home .b225-category-button__label{font-size:11.8px}
+  .b225-home .b225-category-button .b225-category-icon{
+    width:18px!important;
+    height:18px!important;
+    max-width:18px!important;
+    max-height:18px!important;
+    flex-basis:18px!important;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .b225-home .b225-categories-track>.b225-category-button{transition:none!important}
+}
