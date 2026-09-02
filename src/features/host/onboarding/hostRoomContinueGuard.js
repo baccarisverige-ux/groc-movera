@@ -10,6 +10,7 @@ import { readHostOnboardingDraft } from './hostOnboardingDraftStore.js'
 
 const PAGE_SELECTOR = '.host-onboarding[data-screen="basics"]'
 const ADD_CATEGORY_SELECTOR = `${PAGE_SELECTOR} .host-onboarding-room-types__add`
+const MINI_CHOICE_SELECTOR = `${PAGE_SELECTOR} .host-room-setup__mini-choice button`
 const MAX_CATEGORIES = 12
 
 function baseBasicsValid(draft) {
@@ -136,6 +137,18 @@ function addCategorySafely(event) {
   return true
 }
 
+function syncMiniChoiceSelection(event) {
+  const button = event.target.closest?.(MINI_CHOICE_SELECTOR)
+  if (!button) return
+  const rail = button.parentElement
+  if (!rail) return
+  rail.querySelectorAll('button').forEach((choice) => {
+    const active = choice === button
+    choice.dataset.active = active ? 'true' : 'false'
+    choice.setAttribute('aria-pressed', active ? 'true' : 'false')
+  })
+}
+
 let frame = 0
 function scheduleSync() {
   window.cancelAnimationFrame(frame)
@@ -154,6 +167,7 @@ document.addEventListener('click', (event) => {
   if (addCategorySafely(event)) return
   scheduleSync()
 }, true)
+document.addEventListener('click', syncMiniChoiceSelection)
 document.addEventListener('input', scheduleSync, true)
 document.addEventListener('change', scheduleSync, true)
 window.addEventListener('storage', scheduleSync)
