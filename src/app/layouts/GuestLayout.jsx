@@ -3,11 +3,11 @@ import { useAuthSession } from '../../features/auth/authSession.js'
 import { getGuestNavigationPath, isGuestCollectionRoute } from '../../shared/navigation/guestCollectionRoutes.js'
 
 const guestNav = [
-  { label: 'Accueil', path: '/', icon: <><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></> },
-  { label: 'Carte', path: '/map', icon: <><path d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4z"/></> },
-  { label: 'Favoris', path: '/favorites', icon: <><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></> },
-  { label: 'Messages', path: '/messages', requiresAuth: true, icon: <><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></> },
-  { label: 'Profil', path: '/profile', icon: <><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></> },
+  { label: 'Accueil', path: '/', icon: <><path d="M3.75 10.5 12 3.75l8.25 6.75"/><path d="M5.25 9.75v10.5h13.5V9.75"/><path d="M9 20.25v-6h6v6"/></> },
+  { label: 'Carte', path: '/map', icon: <><path d="M3 5.25 8.25 3l7.5 3L21 3.75v15L15.75 21l-7.5-3L3 20.25z"/><path d="M8.25 3v15"/><path d="M15.75 6v15"/></> },
+  { label: 'Favoris', path: '/favorites', icon: <><path d="M12 20.25S4.5 16.1 4.5 9.6A4.35 4.35 0 0 1 12 6.67 4.35 4.35 0 0 1 19.5 9.6C19.5 16.1 12 20.25 12 20.25z"/></> },
+  { label: 'Messages', path: '/messages', requiresAuth: true, icon: <><path d="M20.25 11.25a8.25 8.25 0 0 1-8.25 8.25 8.05 8.05 0 0 1-3.67-.87L4.5 19.5l.87-3.83A8.05 8.05 0 0 1 4.5 12a8.25 8.25 0 1 1 15.75-.75z"/><circle cx="9" cy="12" r=".6"/><circle cx="12" cy="12" r=".6"/><circle cx="15" cy="12" r=".6"/></> },
+  { label: 'Profil', path: '/profile', icon: <><circle cx="12" cy="12" r="9"/><circle cx="12" cy="9" r="3"/><path d="M6.75 18.15c1.28-2.1 3.02-3.15 5.25-3.15s3.97 1.05 5.25 3.15"/></> },
 ]
 
 const COLLECTION_HEADER_LABELS = Object.freeze({
