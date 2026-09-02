@@ -114,6 +114,15 @@
 .movera-st[data-map-origin="true"].movera-st--open .movera-st__persistent-search input{
   opacity:0!important;
 }
+.movera-st[data-map-origin="true"][data-closing="true"] .movera-st__persistent-search input{
+  opacity:1!important;
+  transition:opacity 340ms cubic-bezier(.22,.72,.16,1) 480ms!important;
+}
+.movera-st[data-map-origin="true"][data-closing="true"] .movera-st__persistent-meta{
+  opacity:1!important;
+  transform:translate3d(0,0,0)!important;
+  transition:opacity 340ms cubic-bezier(.22,.72,.16,1) 480ms,transform 430ms cubic-bezier(.22,.72,.16,1) 430ms!important;
+}
 
 
 .movera-st .movera-st__persistent-toggle{
