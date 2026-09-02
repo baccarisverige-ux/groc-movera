@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { SEARCH_ADDRESS_PREVIEW_EVENT } from '../search/useAddressAutocomplete.js'
 import { TileLayer } from './layers/TileLayer.jsx'
 import { ResizeManager } from './lifecycle/ResizeManager.jsx'
+import { clampViewportToTunisia } from './geometry/geometry.js'
 
 export function SearchMapPreview({ viewport }) {
   const surfaceRef = useRef(null)
@@ -28,7 +29,7 @@ export function SearchMapPreview({ viewport }) {
     return () => window.removeEventListener(SEARCH_ADDRESS_PREVIEW_EVENT, onAddressPreview)
   }, [])
 
-  const effectiveViewport = detectedAddress?.viewport || viewport
+  const effectiveViewport = clampViewportToTunisia(detectedAddress?.viewport || viewport)
 
   return (
     <div
