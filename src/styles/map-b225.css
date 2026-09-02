@@ -28,6 +28,6 @@
 .b225-map-top{
   --map-header-disappearance:0;
   opacity:calc(1 - var(--map-header-disappearance));
-  transform:translateY(calc(var(--map-header-disappearance) * -18px));
-  will-change:opacity,transform;
+  transform:none;
+  will-change:opacity;
 }
