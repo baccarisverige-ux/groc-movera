@@ -438,10 +438,10 @@ export function SearchTransitionHost({ onNavigate }) {
           />
           <span className="movera-st__persistent-meta">{mapOriginSummary ? mapOriginSummary.meta : datesValid ? `${formatDate(state.checkin)} – ${formatDate(state.checkout)}` : 'Destination · Dates · Voyageurs'}</span>
         </div>
-        <button type="button" className="movera-st__persistent-toggle" onPointerDown={closeFromPointer} onClick={closeTransition} aria-label="Fermer">
-          <span className="movera-st__persistent-close-icon" aria-hidden="true">×</span>
-        </button>
       </div>
+      <button type="button" className="movera-st__persistent-toggle" onPointerDown={closeFromPointer} onClick={closeTransition} aria-label="Fermer">
+        <span className="movera-st__persistent-close-icon" aria-hidden="true">×</span>
+      </button>
 
       <section className="movera-st__panel" role="dialog" aria-modal="true" aria-label="Recherche Movera">
         <div className="movera-st__shine" aria-hidden="true" />
