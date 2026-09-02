@@ -38,6 +38,19 @@ function isSearchCloseControl(event) {
   return Boolean(target?.closest(SEARCH_CLOSE_CONTROL) && document.querySelector(SEARCH_TRANSITION))
 }
 
+function clearHiddenMapCarryText(event) {
+  const target = eventElement(event)
+  if (!(target instanceof HTMLInputElement)) return
+  if (!target.matches('.movera-st[data-map-origin="true"] .movera-st__persistent-search input')) return
+  if (!target.value) return
+
+  const valueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
+  if (valueSetter) valueSetter.call(target, '')
+  else target.value = ''
+
+  target.dispatchEvent(new Event('input', { bubbles: true }))
+}
+
 function onSearchPointerDown(event) {
   if (isSearchCloseControl(event)) {
     dismissKeyboardNow()
@@ -60,7 +73,8 @@ function onSearchClick(event) {
   dismissKeyboardNow()
 }
 
-function onFocusIn() {
+function onFocusIn(event) {
+  clearHiddenMapCarryText(event)
   if (!KEYBOARD_FREE_STEPS.has(currentSearchStep())) return
   requestAnimationFrame(blurCurrentField)
 }
