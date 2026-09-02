@@ -1,17 +1,17 @@
 /* Category offer rails: Airbnb-inspired image-first cards with text below. */
 
-/* Extra-tight spacing between every offer section. */
+/* Very tight spacing between every offer section (Tout, Maison d’hôte, etc.). */
 .b225-home .b225-category-selection{
-  margin-top:7px!important;
+  margin-top:3px!important;
 }
 
 /* Lift the whole Tout → Partenaire block by reducing only the first gap after Services Movera. */
 .b225-home .b225-services-mini + .b225-category-selection{
-  margin-top:2px!important;
+  margin-top:1px!important;
 }
 
 .b225-home .b225-category-selection .b225-section__title{
-  margin-bottom:5px!important;
+  margin-bottom:4px!important;
 }
 
 .b225-home .b225-category-selection .b225-section__title h2{
@@ -57,7 +57,7 @@
 .b225-home .b225-category-selection__title>.b225-section-scroll-hint:active{transform:translateY(0) scale(.94)!important;box-shadow:none!important}
 
 .b225-home .b225-offer-scroll{
-  display:flex!important;gap:13px!important;overflow-x:auto!important;overflow-y:hidden!important;scroll-snap-type:x proximity!important;scrollbar-width:none!important;padding:1px var(--b225-home-content-edge,16px) 2px!important;margin-inline:0!important;scroll-padding-left:var(--b225-home-content-edge,16px)!important
+  display:flex!important;gap:13px!important;overflow-x:auto!important;overflow-y:hidden!important;scroll-snap-type:x proximity!important;scrollbar-width:none!important;padding:1px var(--b225-home-content-edge,16px) 1px!important;margin-inline:0!important;scroll-padding-left:var(--b225-home-content-edge,16px)!important
 }
 .b225-home .b225-offer-scroll::-webkit-scrollbar{display:none!important}
 
@@ -85,9 +85,9 @@
 .b225-home .b225-offer-card__dot{opacity:.55!important}
 
 @media(max-width:390px){
-  .b225-home .b225-category-selection{margin-top:6px!important}
-  .b225-home .b225-services-mini + .b225-category-selection{margin-top:2px!important}
-  .b225-home .b225-category-selection .b225-section__title{margin-bottom:4px!important}
+  .b225-home .b225-category-selection{margin-top:2px!important}
+  .b225-home .b225-services-mini + .b225-category-selection{margin-top:1px!important}
+  .b225-home .b225-category-selection .b225-section__title{margin-bottom:3px!important}
   .b225-home .b225-category-selection .b225-section__title h2{font-size:15.4px!important}
   .b225-home .b225-category-selection__title>.b225-section-scroll-hint{width:27px!important;min-width:27px!important;height:27px!important;flex-basis:27px!important}
   .b225-home .b225-offer-card{flex-basis:160px!important;min-width:160px!important;max-width:160px!important}
