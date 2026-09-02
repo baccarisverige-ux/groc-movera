@@ -11,6 +11,27 @@ const ZOOM_EPSILON = 0.01
 const MARKER_HIT_RADIUS_PX = 40
 const CLUSTER_HIT_RADIUS_PX = 28
 
+// Bright pastel roadmap inspired by the supplied reference: soft blue water,
+// fresh green land/parks, warm-white roads and restrained grey labels.
+const GOOGLE_REFERENCE_MAP_STYLES = [
+  { elementType: 'geometry', stylers: [{ color: '#eef1e8' }] },
+  { elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#747974' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#f7f8f3' }, { weight: 2 }] },
+  { featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{ color: '#d9dcd4' }] },
+  { featureType: 'landscape', elementType: 'geometry', stylers: [{ color: '#edf2df' }] },
+  { featureType: 'landscape.man_made', elementType: 'geometry', stylers: [{ color: '#f2f2ef' }] },
+  { featureType: 'poi', elementType: 'geometry', stylers: [{ color: '#dff0c8' }] },
+  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#d7efbd' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
+  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#d9dcd5' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#fffdf5' }] },
+  { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#d5d9cf' }] },
+  { featureType: 'transit', elementType: 'geometry', stylers: [{ color: '#e6e8e3' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#bfe5ef' }] },
+  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#66848a' }] },
+]
+
 function loadGoogleMaps() {
   if (typeof window === 'undefined') return Promise.reject(new Error('Google Maps requires a browser'))
   if (window.google?.maps?.Map) return Promise.resolve(window.google.maps)
@@ -219,6 +240,7 @@ export function GoogleMapLayer({
           scaleControl: false,
           scrollwheel: interactiveRef.current,
           streetViewControl: false,
+          styles: GOOGLE_REFERENCE_MAP_STYLES,
           zoomControl: false,
         })
         mapRef.current = map
