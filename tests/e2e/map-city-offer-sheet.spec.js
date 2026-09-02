@@ -91,7 +91,8 @@ test('sheet attachment uses one Motion translation with a stable structural head
   expect(sheetBoxAt84).not.toBeNull()
   expect(panelBoxAt84).not.toBeNull()
   const progressAt84 = await numberAttribute(sheet, 'data-progress')
-  expect(Math.abs((panelBoxAt84.y - sheetBoxAt84.y) - structuralOffset * (1 - progressAt84))).toBeLessThanOrEqual(2.5)
+  const softenedProgressAt84 = progressAt84 * progressAt84 * (3 - 2 * progressAt84)
+  expect(Math.abs((panelBoxAt84.y - sheetBoxAt84.y) - structuralOffset * (1 - softenedProgressAt84))).toBeLessThanOrEqual(2.5)
   const zoomAt84 = await numberAttribute(surface, 'data-zoom')
 
   await page.mouse.move(x, y - travel * 0.94, { steps: 10 })
@@ -104,7 +105,8 @@ test('sheet attachment uses one Motion translation with a stable structural head
   expect(sheetBoxAt94).not.toBeNull()
   expect(panelBoxAt94).not.toBeNull()
   const progressAt94 = await numberAttribute(sheet, 'data-progress')
-  expect(Math.abs((panelBoxAt94.y - sheetBoxAt94.y) - structuralOffset * (1 - progressAt94))).toBeLessThanOrEqual(2.5)
+  const softenedProgressAt94 = progressAt94 * progressAt94 * (3 - 2 * progressAt94)
+  expect(Math.abs((panelBoxAt94.y - sheetBoxAt94.y) - structuralOffset * (1 - softenedProgressAt94))).toBeLessThanOrEqual(2.5)
   expect(await numberAttribute(surface, 'data-zoom')).toBeCloseTo(zoomAt84, 4)
 
   await page.mouse.up()
