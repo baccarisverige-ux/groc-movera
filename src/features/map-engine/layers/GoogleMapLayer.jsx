@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import '../../../styles/map-google-layer.css'
+import { TUNISIA_BOUNDS } from '../geometry/geometry.js'
 
 const GOOGLE_MAPS_BROWSER_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY?.trim()
 const GOOGLE_MAPS_SCRIPT_ID = 'movera-google-maps-js'
@@ -237,6 +238,10 @@ export function GoogleMapLayer({
           mapTypeControl: false,
           mapTypeId: 'roadmap',
           rotateControl: false,
+          restriction: {
+            latLngBounds: TUNISIA_BOUNDS,
+            strictBounds: true,
+          },
           scaleControl: false,
           scrollwheel: interactiveRef.current,
           streetViewControl: false,
