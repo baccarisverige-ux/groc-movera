@@ -174,6 +174,7 @@ export function GoogleMapLayer({
   const onInteractionChangeRef = useRef(onInteractionChange)
   const onMarkerSelectRef = useRef(onMarkerSelect)
   const onClusterFocusRef = useRef(onClusterFocus)
+  const onStatusRef = useRef(onStatus)
   const [ready, setReady] = useState(false)
 
   interactiveRef.current = interactive
@@ -184,6 +185,10 @@ export function GoogleMapLayer({
   onInteractionChangeRef.current = onInteractionChange
   onMarkerSelectRef.current = onMarkerSelect
   onClusterFocusRef.current = onClusterFocus
+  onStatusRef.current = onStatus
+  const viewportLat = viewport.lat
+  const viewportLng = viewport.lng
+  const viewportZoom = viewport.zoom
 
   const setInteractionActive = (active) => {
     if (interactionActiveRef.current === active) return
@@ -209,7 +214,8 @@ export function GoogleMapLayer({
 
   useEffect(() => {
     let cancelled = false
-    onStatus?.('google-loading')
+    const activePointers = activePointersRef.current
+    onStatusRef.current?.('google-loading')
 
     loadGoogleMaps()
       .then((maps) => {
@@ -258,7 +264,7 @@ export function GoogleMapLayer({
           map.addListener('idle', () => {
             cameraMovingRef.current = false
             if (interactiveRef.current) emitViewport()
-            if (activePointersRef.current.size === 0) setInteractionActive(false)
+            if (activePointers.size === 0) setInteractionActive(false)
           }),
           map.addListener('click', (event) => {
             if (!interactiveRef.current || !event?.latLng) return
@@ -294,12 +300,12 @@ export function GoogleMapLayer({
         ]
 
         setReady(true)
-        onStatus?.('google')
+        onStatusRef.current?.('google')
       })
       .catch(() => {
         if (cancelled) return
         setReady(false)
-        onStatus?.('fallback')
+        onStatusRef.current?.('fallback')
       })
 
     return () => {
@@ -310,7 +316,7 @@ export function GoogleMapLayer({
       releaseTimerRef.current = 0
       listenersRef.current.forEach((listener) => listener?.remove?.())
       listenersRef.current = []
-      activePointersRef.current.clear()
+      activePointers.clear()
       setInteractionActive(false)
       if (mapRef.current && mapsRef.current?.event?.clearInstanceListeners) {
         mapsRef.current.event.clearInstanceListeners(mapRef.current)
@@ -362,20 +368,21 @@ export function GoogleMapLayer({
   useEffect(() => {
     const map = mapRef.current
     if (!map || !ready) return
+    const nextViewport = { lat: viewportLat, lng: viewportLng, zoom: viewportZoom }
 
     // Native Google gestures own the camera while the user is touching the map.
     // Viewport updates emitted by Google are mirrors for Movera overlays only and
     // must never be written back into Google, otherwise a delayed React render
     // can move the camera back to an older frame and make pan/pinch feel unstable.
-    if (viewportSource === 'google' || interactionActiveRef.current || cameraMatches(map, viewport)) return
+    if (viewportSource === 'google' || interactionActiveRef.current || cameraMatches(map, nextViewport)) return
 
-    const camera = { center: { lat: viewport.lat, lng: viewport.lng }, zoom: viewport.zoom }
+    const camera = { center: { lat: nextViewport.lat, lng: nextViewport.lng }, zoom: nextViewport.zoom }
     if (typeof map.moveCamera === 'function') map.moveCamera(camera)
     else {
       map.setCenter(camera.center)
       map.setZoom(camera.zoom)
     }
-  }, [viewport.lat, viewport.lng, viewport.zoom, viewportSource, ready])
+  }, [viewportLat, viewportLng, viewportZoom, viewportSource, ready])
 
   return (
     <div
