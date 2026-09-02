@@ -112,9 +112,11 @@ function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListi
   }
   const chooseRoom = (event, listingId, roomId) => { event.preventDefault(); event.stopPropagation(); setRoomSelection((state) => ({ ...state, [listingId]: roomId })) }
 
+  const boundedProgress = Math.max(0, Math.min(1, progress))
+  const softenedProgress = boundedProgress * boundedProgress * (3 - 2 * boundedProgress)
   const headerSpacerHeight = attached
     ? 0
-    : safeHeaderHeight * (1 - Math.max(0, Math.min(1, progress)))
+    : safeHeaderHeight * (1 - softenedProgress)
 
   return <>
     <div className="map-offer-sheet__header-spacer" aria-hidden="true" data-testid="map-offer-sheet-header-spacer" data-attachment-state={attached ? 'attached' : 'moving'} style={{ height: `${headerSpacerHeight}px` }}/>
