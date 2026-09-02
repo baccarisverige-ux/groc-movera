@@ -38,6 +38,7 @@ function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListi
   const attached = useStableAttached(progress)
   const listRef = useMapOfferScrollSheetHandoff({ expanded: attached, externalDrag })
   const dragZoneRef = useRef(null)
+  const propertyDockRef = useRef(null)
   const externalDragRef = useRef(externalDrag)
   const progressRef = useRef(progress)
   const idleHintResetRef = useRef(null)
@@ -53,15 +54,54 @@ function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListi
     return () => { window.clearInterval(intervalId); window.clearTimeout(idleHintResetRef.current) }
   }, [])
   useEffect(() => {
-    const node = dragZoneRef.current
-    if (!node) return undefined
-    let gesture = null
-    const onTouchStart = (event) => { if (event.touches.length !== 1) return; const clientY = event.touches[0]?.clientY; gesture = Number.isFinite(clientY) ? { startClientY: clientY, active: false } : null }
-    const onTouchMove = (event) => { const clientY = event.touches?.[0]?.clientY; if (!gesture || !Number.isFinite(clientY)) return; if (!gesture.active) { if (Math.abs(clientY - gesture.startClientY) < TOP_HANDLE_TOUCH_THRESHOLD_PX) return; const started = externalDragRef.current?.start(gesture.startClientY); if (!started) { gesture = null; return } gesture.active = true } if (event.cancelable) event.preventDefault(); event.stopPropagation(); externalDragRef.current?.move(clientY) }
-    const finishTouch = (cancel = false) => { if (gesture?.active) { if (cancel) externalDragRef.current?.cancel(); else externalDragRef.current?.end() } gesture = null }
-    const onTouchEnd = () => finishTouch(false); const onTouchCancel = () => finishTouch(true)
-    node.addEventListener('touchstart', onTouchStart, { passive: true }); node.addEventListener('touchmove', onTouchMove, { passive: false }); node.addEventListener('touchend', onTouchEnd, { passive: true }); node.addEventListener('touchcancel', onTouchCancel, { passive: true })
-    return () => { node.removeEventListener('touchstart', onTouchStart); node.removeEventListener('touchmove', onTouchMove); node.removeEventListener('touchend', onTouchEnd); node.removeEventListener('touchcancel', onTouchCancel) }
+    const nodes = [dragZoneRef.current, propertyDockRef.current].filter(Boolean)
+    if (!nodes.length) return undefined
+    const cleanups = nodes.map((node) => {
+      let gesture = null
+      const onTouchStart = (event) => {
+        if (event.touches.length !== 1) return
+        const touch = event.touches[0]
+        gesture = Number.isFinite(touch?.clientY) ? { startClientX: touch.clientX, startClientY: touch.clientY, active: false, horizontal: false } : null
+      }
+      const onTouchMove = (event) => {
+        const touch = event.touches?.[0]
+        const clientY = touch?.clientY
+        if (!gesture || !Number.isFinite(clientY)) return
+        const deltaX = Math.abs((touch?.clientX ?? gesture.startClientX) - gesture.startClientX)
+        const deltaY = Math.abs(clientY - gesture.startClientY)
+        if (!gesture.active) {
+          if (gesture.horizontal) return
+          if (node === propertyDockRef.current && deltaX > deltaY) { gesture.horizontal = true; return }
+          if (deltaY < TOP_HANDLE_TOUCH_THRESHOLD_PX) return
+          const started = externalDragRef.current?.start(gesture.startClientY)
+          if (!started) { gesture = null; return }
+          gesture.active = true
+        }
+        if (event.cancelable) event.preventDefault()
+        event.stopPropagation()
+        externalDragRef.current?.move(clientY)
+      }
+      const finishTouch = (cancel = false) => {
+        if (gesture?.active) {
+          if (cancel) externalDragRef.current?.cancel()
+          else externalDragRef.current?.end()
+        }
+        gesture = null
+      }
+      const onTouchEnd = () => finishTouch(false)
+      const onTouchCancel = () => finishTouch(true)
+      node.addEventListener('touchstart', onTouchStart, { passive: true })
+      node.addEventListener('touchmove', onTouchMove, { passive: false })
+      node.addEventListener('touchend', onTouchEnd, { passive: true })
+      node.addEventListener('touchcancel', onTouchCancel, { passive: true })
+      return () => {
+        node.removeEventListener('touchstart', onTouchStart)
+        node.removeEventListener('touchmove', onTouchMove)
+        node.removeEventListener('touchend', onTouchEnd)
+        node.removeEventListener('touchcancel', onTouchCancel)
+      }
+    })
+    return () => cleanups.forEach((cleanup) => cleanup())
   }, [])
 
   const openListing = (listing) => {
@@ -78,7 +118,7 @@ function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListi
       <div ref={dragZoneRef} className="map-offer-sheet__drag-zone" data-testid="map-offer-sheet-handle" data-attachment-state={attached ? 'attached' : 'moving'} data-header-offset={Math.round(safeHeaderHeight)} onPointerDown={(event) => { if (event.pointerType !== 'touch') startDrag(event) }}>
         <button type="button" className="map-offer-sheet__handle-button" onClick={toggleExpanded} aria-label={progress > 0.72 ? 'Réduire la liste des offres' : 'Afficher la liste des offres'}><span className="map-offer-sheet__grabber"/><span className="map-offer-sheet__heading"><strong>{displayedListings.length ? `${displayedListings.length} offre${displayedListings.length > 1 ? 's' : ''}` : 'Aucune offre'}</strong><span className="map-offer-sheet__city-label">{cityLabel}</span><span className="map-offer-sheet__brand-badge">Movera Host</span></span><span className="map-offer-sheet__chevron" data-open={progress > 0.72 ? 'true' : 'false'}><ChevronIcon/></span></button>
       </div>
-      <div className="map-offer-sheet__property-dock" data-testid="map-sheet-property-filters" aria-label="Type de logement"><div className="map-offer-sheet__property-rail">{MAP_PROPERTY_FILTERS.map((filter) => { const active = propertyFilter === filter.id; return <button key={filter.id} type="button" className="map-offer-sheet__property-chip" data-property-filter={filter.id} data-active={active ? 'true' : 'false'} aria-pressed={active} onClick={() => onPropertyFilterChange?.(filter.id)}><span>{filter.label}</span></button> })}</div></div>
+      <div ref={propertyDockRef} className="map-offer-sheet__property-dock" data-testid="map-sheet-property-filters" aria-label="Type de logement"><div className="map-offer-sheet__property-rail">{MAP_PROPERTY_FILTERS.map((filter) => { const active = propertyFilter === filter.id; return <button key={filter.id} type="button" className="map-offer-sheet__property-chip" data-property-filter={filter.id} data-active={active ? 'true' : 'false'} aria-pressed={active} onClick={() => onPropertyFilterChange?.(filter.id)}><span>{filter.label}</span></button> })}</div></div>
       {displayedListings.length ? <MotionList nodeRef={listRef} className="map-offer-sheet__list" data-scroll-enabled={attached ? 'true' : 'false'} data-motion-list="map-offers" data-map-scroll="independent" data-sheet-handoff="drag-from-offer"><div className="map-offer-sheet__list-content" data-testid="map-offer-sheet-list-content">{displayedListings.map((listing, index) => {
         const selected = listing.id === selectedListingId || (!selectedListingId && index === 0 && progress > 0.12)
         const categories = Array.isArray(listing.roomTypes) ? listing.roomTypes : []
