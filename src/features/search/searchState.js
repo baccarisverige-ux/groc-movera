@@ -39,6 +39,7 @@ function appendViewport(params, viewport) {
 export function buildMapSearchPath(state) {
   const params = new URLSearchParams()
   if (state.destination?.id) params.set('destination', state.destination.id)
+  if (state.destination?.label) params.set('place', state.destination.label)
   appendViewport(params, state.destination?.viewport)
   if (state.checkin) params.set('checkin', state.checkin)
   if (state.checkout) params.set('checkout', state.checkout)
