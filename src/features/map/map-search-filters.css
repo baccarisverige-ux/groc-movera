@@ -7,3 +7,7 @@
 /* Align the first amenity chip vertically with the first property chip. */
 [data-testid="map-amenity-filters"]{margin-left:-.5px!important;margin-right:-.5px!important}
 @media(max-width:350px){[data-testid="map-amenity-filters"]{margin-left:.5px!important;margin-right:.5px!important}}
+
+/* Search handoff summary: selected place above the chosen date range. */
+.map-search-filter-stack__search-copy{min-width:0;max-width:100%;display:grid;place-items:center;gap:2px}
+.map-search-filter-stack__search-copy small{max-width:100%;font-size:9px;line-height:1;color:#777d79;font-weight:570;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
