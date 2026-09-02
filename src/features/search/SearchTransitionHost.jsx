@@ -59,6 +59,39 @@ function destinationById(id) {
   return SEARCH_DESTINATIONS.find((destination) => destination.id === id) || null
 }
 
+function numericParam(params, key, fallback, minimum = 0) {
+  const value = Number(params.get(key))
+  return Number.isFinite(value) && value >= minimum ? value : fallback
+}
+
+function mapSearchStateFromLocation() {
+  if (!window.location.pathname.endsWith('/map')) return null
+  const params = new URLSearchParams(window.location.search)
+  const destination = destinationById(params.get('destination'))
+  if (!destination) return null
+
+  const lat = Number(params.get('lat'))
+  const lng = Number(params.get('lng'))
+  const zoom = Number(params.get('zoom'))
+  const viewport = [lat, lng, zoom].every(Number.isFinite)
+    ? { lat, lng, zoom }
+    : destination.viewport
+  const label = params.get('place')?.trim() || destination.label
+
+  return {
+    destinationQuery: label,
+    state: {
+      destination: { ...destination, label, viewport },
+      checkin: params.get('checkin') || '',
+      checkout: params.get('checkout') || '',
+      adults: numericParam(params, 'adults', 1, 1),
+      children: numericParam(params, 'children', 0),
+      infants: numericParam(params, 'infants', 0),
+      pets: numericParam(params, 'pets', 0),
+    },
+  }
+}
+
 export function SearchTransitionHost({ onNavigate }) {
   const [active, setActive] = useState(false)
   const [open, setOpen] = useState(false)
@@ -164,11 +197,12 @@ export function SearchTransitionHost({ onNavigate }) {
       closingRef.current = false
       const rect = trigger.getBoundingClientRect()
       const viewportHeight = Math.round(window.visualViewport?.height || window.innerHeight || 760)
+      const restoredSearch = mapSearchStateFromLocation()
       setOrigin({ top: rect.top, left: rect.left, width: rect.width, height: rect.height })
       setLockedViewportHeight(viewportHeight)
-      setState(createSearchState())
+      setState(restoredSearch?.state || createSearchState())
       setRecentSearches(readRecents())
-      setDestinationQuery('')
+      setDestinationQuery(restoredSearch?.destinationQuery || '')
       setAddressMode(false)
       setStep('destination')
       setComplete(false)
