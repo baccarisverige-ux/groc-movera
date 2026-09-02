@@ -15,7 +15,7 @@ export function ClusterLayer({ markers, viewport, size, onFocus, interactive = t
         className="map-cluster"
         data-testid="map-cluster"
         style={{
-          transform: `translate3d(${Math.round(point.x)}px, ${Math.round(point.y)}px, 0)`,
+          transform: `translate3d(${point.x.toFixed(3)}px, ${point.y.toFixed(3)}px, 0)`,
           pointerEvents: interactive ? 'auto' : 'none',
         }}
         aria-label={`${markers.length} repères`}
