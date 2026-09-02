@@ -131,11 +131,23 @@
 body:has(.movera-st[data-map-origin="true"]) .b225-map-top .map-search-filter-stack__search-pill{
   transition:opacity 300ms cubic-bezier(.22,.72,.16,1),transform 420ms cubic-bezier(.22,.72,.16,1)!important;
 }
+body:has(.movera-st[data-map-origin="true"]) .b225-map-top .map-search-filter-stack__filter-button{
+  transition:opacity 300ms cubic-bezier(.22,.72,.16,1),transform 420ms cubic-bezier(.22,.72,.16,1)!important;
+}
 body:has(.movera-st[data-map-origin="true"][data-closing="false"]) .b225-map-top .map-search-filter-stack__search-pill{
   opacity:0!important;
   transform:scale(.985)!important;
 }
+body:has(.movera-st[data-map-origin="true"][data-closing="false"]) .b225-map-top .map-search-filter-stack__filter-button{
+  opacity:0!important;
+  transform:scale(.82)!important;
+}
 body:has(.movera-st[data-map-origin="true"][data-closing="true"]) .b225-map-top .map-search-filter-stack__search-pill{
+  opacity:1!important;
+  transform:scale(1)!important;
+  transition-delay:570ms,500ms!important;
+}
+body:has(.movera-st[data-map-origin="true"][data-closing="true"]) .b225-map-top .map-search-filter-stack__filter-button{
   opacity:1!important;
   transform:scale(1)!important;
   transition-delay:570ms,500ms!important;
@@ -165,22 +177,30 @@ body:has(.movera-st[data-map-origin="true"][data-closing="true"]) .b225-map-top 
   background:#f4f6f4!important;
 }
 
-.movera-st .movera-st__persistent-menu,
-.movera-st .movera-st__persistent-x{
-  position:absolute!important;
-  inset:0!important;
+.movera-st .movera-st__persistent-close-icon{
   display:grid!important;
   place-items:center!important;
-  font-size:19px!important;
-  font-weight:430!important;
+  width:100%!important;
+  height:100%!important;
+  font-size:23px!important;
   line-height:1!important;
-  transition:opacity 300ms ease,transform 420ms cubic-bezier(.16,1,.3,1)!important;
+  font-weight:320!important;
 }
 
-.movera-st .movera-st__persistent-menu{opacity:1;transform:rotate(0deg) scale(1)}
-.movera-st .movera-st__persistent-x{opacity:0;transform:rotate(-55deg) scale(.72);font-size:23px!important;font-weight:320!important}
-.movera-st--open .movera-st__persistent-menu{opacity:0;transform:rotate(48deg) scale(.72)}
-.movera-st--open .movera-st__persistent-x{opacity:1;transform:rotate(0deg) scale(1)}
+.movera-st[data-map-origin="true"] .movera-st__persistent-search{
+  overflow:visible!important;
+}
+.movera-st[data-map-origin="true"] .movera-st__persistent-toggle{
+  position:fixed!important;
+  z-index:1007!important;
+  top:calc(var(--st-origin-top) + 4px)!important;
+  left:calc(var(--st-origin-left) + var(--st-origin-width) + 6px)!important;
+  width:30px!important;
+  height:30px!important;
+  min-width:30px!important;
+  flex:0 0 30px!important;
+  box-shadow:none!important;
+}
 
 /* The old popup header is removed visually; its DOM remains only to preserve existing component logic. */
 .movera-st .movera-st__topline{display:none!important}
