@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import {
   ArrowLeftIcon,
   SlidersHorizontalIcon,
@@ -16,6 +17,23 @@ export function MapSearchFilters({
   onResetFilters,
 }) {
   const activeFilterCount = amenityFilters.size
+  const [searchDraft, setSearchDraft] = useState(primaryLabel)
+
+  useEffect(() => {
+    setSearchDraft(primaryLabel)
+  }, [primaryLabel])
+
+  useEffect(() => {
+    const syncPopupDraft = (event) => {
+      const target = event.target
+      if (!(target instanceof HTMLInputElement)) return
+      if (!target.closest('.movera-st__persistent-search')) return
+      setSearchDraft(target.value)
+    }
+
+    document.addEventListener('input', syncPopupDraft, true)
+    return () => document.removeEventListener('input', syncPopupDraft, true)
+  }, [])
 
   const openSearchPopup = (event) => {
     const trigger = event.currentTarget
@@ -36,6 +54,10 @@ export function MapSearchFilters({
       homeProxy.remove()
     }
   }
+
+  const displayedPrimaryLabel = searchDraft !== undefined
+    ? searchDraft
+    : `Logements à ${cityLabel}`
 
   return (
     <div
@@ -65,7 +87,7 @@ export function MapSearchFilters({
             aria-label="Modifier la recherche"
           >
             <span className="map-search-filter-stack__search-copy">
-              <strong>{primaryLabel || `Logements à ${cityLabel}`}</strong>
+              <strong>{displayedPrimaryLabel}</strong>
               {dateLabel ? <small>{dateLabel}</small> : null}
             </span>
           </button>
