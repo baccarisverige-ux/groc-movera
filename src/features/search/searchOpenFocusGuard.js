@@ -38,17 +38,27 @@ function isSearchCloseControl(event) {
   return Boolean(target?.closest(SEARCH_CLOSE_CONTROL) && document.querySelector(SEARCH_TRANSITION))
 }
 
-function clearHiddenMapCarryText(event) {
+/* Map search carries the current label only as hidden transition state.
+   Do NOT clear it or dispatch an input event on focus: that would make React
+   think the user edited the search and would destroy the original Map label.
+   Instead select the hidden value so the first real character typed replaces it. */
+function selectHiddenMapCarryText(event) {
   const target = eventElement(event)
   if (!(target instanceof HTMLInputElement)) return
   if (!target.matches('.movera-st[data-map-origin="true"] .movera-st__persistent-search input')) return
   if (!target.value) return
 
-  const valueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
-  if (valueSetter) valueSetter.call(target, '')
-  else target.value = ''
+  const selectAll = () => {
+    if (document.activeElement !== target) return
+    try {
+      target.setSelectionRange(0, target.value.length)
+    } catch {
+      try { target.select() } catch { /* unsupported input selection */ }
+    }
+  }
 
-  target.dispatchEvent(new Event('input', { bubbles: true }))
+  selectAll()
+  requestAnimationFrame(selectAll)
 }
 
 function onSearchPointerDown(event) {
@@ -74,7 +84,7 @@ function onSearchClick(event) {
 }
 
 function onFocusIn(event) {
-  clearHiddenMapCarryText(event)
+  selectHiddenMapCarryText(event)
   if (!KEYBOARD_FREE_STEPS.has(currentSearchStep())) return
   requestAnimationFrame(blurCurrentField)
 }
