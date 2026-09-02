@@ -102,6 +102,7 @@ export function SearchTransitionHost({ onNavigate }) {
   const [origin, setOrigin] = useState({ top: 72, left: 14, width: 362, height: 52 })
   const [lockedViewportHeight, setLockedViewportHeight] = useState(760)
   const [destinationQuery, setDestinationQuery] = useState('')
+  const [mapOriginSummary, setMapOriginSummary] = useState(null)
   const [addressMode, setAddressMode] = useState(false)
   const [recentSearches, setRecentSearches] = useState(readRecents)
   const closeTimerRef = useRef(0)
@@ -160,6 +161,7 @@ export function SearchTransitionHost({ onNavigate }) {
       window.requestAnimationFrame(() => {
         setDestinationQuery('')
         setAddressMode(false)
+        setMapOriginSummary(null)
       })
     })
   }, [])
@@ -176,6 +178,7 @@ export function SearchTransitionHost({ onNavigate }) {
       window.requestAnimationFrame(() => {
         setDestinationQuery('')
         setAddressMode(false)
+        setMapOriginSummary(null)
       })
     }, CLOSE_MS)
   }
@@ -202,11 +205,15 @@ export function SearchTransitionHost({ onNavigate }) {
       const rect = trigger.getBoundingClientRect()
       const viewportHeight = Math.round(window.visualViewport?.height || window.innerHeight || 760)
       const restoredSearch = mapSearchStateFromLocation()
+      const openedFromMap = Boolean(trigger.closest('.b225-map-top'))
+      const originPrimary = openedFromMap ? trigger.querySelector('strong')?.textContent?.trim() || '' : ''
+      const originMeta = openedFromMap ? trigger.querySelector('small')?.textContent?.trim() || '' : ''
       setOrigin({ top: rect.top, left: rect.left, width: rect.width, height: rect.height })
       setLockedViewportHeight(viewportHeight)
       setState(restoredSearch?.state || createSearchState())
       setRecentSearches(readRecents())
-      setDestinationQuery(restoredSearch?.destinationQuery || '')
+      setDestinationQuery(restoredSearch?.destinationQuery || originPrimary)
+      setMapOriginSummary(openedFromMap ? { primary: originPrimary, meta: originMeta } : null)
       setAddressMode(false)
       setStep('destination')
       setComplete(false)
@@ -311,6 +318,7 @@ export function SearchTransitionHost({ onNavigate }) {
 
   const chooseDestination = (destination) => {
     clearTimers()
+    setMapOriginSummary(null)
     setAddressMode(false)
     setState((current) => ({ ...current, destination }))
     stepTimerRef.current = window.setTimeout(() => setStep('dates'), 220)
@@ -320,6 +328,7 @@ export function SearchTransitionHost({ onNavigate }) {
     const destination = destinationById(address.destinationId)
     if (!destination) return
     clearTimers()
+    setMapOriginSummary(null)
     setState((current) => ({
       ...current,
       destination: { ...destination, label: address.label, subtitle: address.subtitle, viewport: address.viewport },
@@ -412,6 +421,7 @@ export function SearchTransitionHost({ onNavigate }) {
             }}
             onChange={(event) => {
               setDestinationQuery(event.target.value)
+              setMapOriginSummary(null)
               setAddressMode(true)
               setStep('destination')
             }}
@@ -422,7 +432,7 @@ export function SearchTransitionHost({ onNavigate }) {
             aria-controls="movera-address-suggestions"
             autoComplete="off"
           />
-          <span className="movera-st__persistent-meta">{datesValid ? `${formatDate(state.checkin)} – ${formatDate(state.checkout)}` : 'Destination · Dates · Voyageurs'}</span>
+          <span className="movera-st__persistent-meta">{mapOriginSummary ? mapOriginSummary.meta : datesValid ? `${formatDate(state.checkin)} – ${formatDate(state.checkout)}` : 'Destination · Dates · Voyageurs'}</span>
         </div>
         <button type="button" className="movera-st__persistent-toggle" onPointerDown={closeFromPointer} onClick={closeTransition} aria-label="Fermer">
           <span className="movera-st__persistent-menu" aria-hidden="true">≡</span>
