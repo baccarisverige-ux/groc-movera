@@ -1,0 +1,112 @@
+/* Airbnb-inspired category rail: large, tactile pills on the page surface. */
+.b225-home.b225-home .b225-categories-shell{
+  margin:8px 0 7px!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+
+.b225-home.b225-home .b225-categories{
+  min-height:64px!important;
+  padding:0 16px!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+
+.b225-home .b225-categories-track{
+  min-height:64px!important;
+  gap:10px!important;
+  padding:6px 0 10px!important;
+}
+
+.b225-home .b225-categories-shell>.b225-category-swipe-hint--overlay{
+  display:none!important;
+}
+
+.b225-home .b225-categories-track>button{
+  height:48px!important;
+  min-height:48px!important;
+  max-height:48px!important;
+  padding:0 16px!important;
+  gap:8px!important;
+  border-radius:24px!important;
+  color:#222!important;
+  font-size:15px!important;
+  line-height:1!important;
+  font-weight:520!important;
+  letter-spacing:-.18px!important;
+  transform:translateY(0)!important;
+  transition:transform .15s cubic-bezier(.2,.8,.2,1),box-shadow .15s ease,background .15s ease,border-color .15s ease!important;
+}
+
+.b225-home .b225-category-icon{
+  width:24px!important;
+  height:24px!important;
+  max-width:24px!important;
+  max-height:24px!important;
+  flex-basis:24px!important;
+  opacity:1!important;
+}
+
+.b225-home .b225-categories-track>button:not([data-active='true']){
+  border:1px solid rgba(0,0,0,.075)!important;
+  background:linear-gradient(180deg,#fff 0%,#fff 62%,#f7f7f6 100%)!important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,1),
+    inset 0 -1px 0 rgba(0,0,0,.035),
+    0 1px 2px rgba(0,0,0,.13),
+    0 4px 8px rgba(0,0,0,.08)!important;
+}
+
+.b225-home .b225-categories-track>button[data-active='true']{
+  border:1px solid rgba(0,0,0,.035)!important;
+  background:#e7e7e5!important;
+  box-shadow:
+    inset 0 2px 4px rgba(0,0,0,.10),
+    inset 0 -1px 0 rgba(255,255,255,.72),
+    0 1px 2px rgba(0,0,0,.10)!important;
+  transform:translateY(1px)!important;
+  font-weight:560!important;
+}
+
+.b225-home .b225-categories-track>button:active{
+  border-color:rgba(0,0,0,.04)!important;
+  background:#e4e4e2!important;
+  box-shadow:
+    inset 0 2px 5px rgba(0,0,0,.12),
+    inset 0 -1px 0 rgba(255,255,255,.65),
+    0 1px 1px rgba(0,0,0,.08)!important;
+  transform:translateY(1px) scale(.98)!important;
+}
+
+.b225-home .b225-categories-track>button:focus-visible{
+  outline:2px solid #222!important;
+  outline-offset:2px!important;
+}
+
+@media(max-width:350px){
+  .b225-home.b225-home .b225-categories-shell{margin:8px 0 7px!important;padding:0!important;border-radius:0!important}
+  .b225-home.b225-home .b225-categories{padding-inline:12px!important}
+  .b225-home .b225-categories-track>button{
+    height:46px!important;
+    min-height:46px!important;
+    max-height:46px!important;
+    padding-inline:15px!important;
+    font-size:14px!important;
+  }
+  .b225-home .b225-category-icon{
+    width:23px!important;
+    height:23px!important;
+    max-width:23px!important;
+    max-height:23px!important;
+    flex-basis:23px!important;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .b225-home .b225-categories-track>button{transition:none!important}
+}
