@@ -11,12 +11,14 @@ export function MapSearchFilters({
   primaryLabel,
   dateLabel,
   amenityFilters,
+  discountOnly = false,
   compact = false,
   onHome,
   onAmenityFilterToggle,
+  onDiscountToggle,
   onResetFilters,
 }) {
-  const activeFilterCount = amenityFilters.size
+  const activeFilterCount = amenityFilters.size + (discountOnly ? 1 : 0)
   const [searchDraft, setSearchDraft] = useState(primaryLabel)
 
   useEffect(() => {
@@ -110,6 +112,17 @@ export function MapSearchFilters({
         aria-label="Équipements"
       >
         <div className="map-offer-sheet__property-rail">
+          <button
+            type="button"
+            className="map-offer-sheet__property-chip map-offer-sheet__property-chip--discount"
+            data-filter-id="discount"
+            data-active={discountOnly ? 'true' : 'false'}
+            aria-pressed={discountOnly}
+            onClick={onDiscountToggle}
+          >
+            <span>Promo</span>
+          </button>
+
           {MAP_AMENITY_FILTERS.map((filter) => {
             const active = amenityFilters.has(filter.id)
             return (
