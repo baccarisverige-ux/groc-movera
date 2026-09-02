@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { HOST_PROFILE_EVENT } from '../../entities/host/hostProfileStore.js'
+import { storageAdapter } from '../../services/storage/storageAdapter.js'
 import { getCollectionRouteForCategory } from '../../shared/navigation/guestCollectionRoutes.js'
 import { MotionList, MotionListItem } from '../../shared/motion/MotionList.jsx'
 import { useFavorites } from '../favorites/favoritesStore.js'
@@ -30,6 +31,8 @@ import GUESTHOUSE_CATEGORY_ICON from './assets/maison-hote-category.png'
 import VILLA_CATEGORY_ICON from './assets/villa-category.png'
 import EXPERIENCE_CATEGORY_ICON from './assets/experience-category.webp'
 import PARTNER_CATEGORY_ICON from './assets/partner-category.png'
+
+const RECENT_SEARCH_KEY = 'movera-search-recents-v1'
 
 const CATEGORY_ARTWORK = {
   all: ALL_CATEGORY_GLOBE,
@@ -70,6 +73,25 @@ function SearchIcon() {
 
 function ScrollArrowIcon() {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 7l5 5-5 5"/></svg>
+}
+
+function readLastSearch() {
+  const recent = storageAdapter.getJson(RECENT_SEARCH_KEY, [])
+  return Array.isArray(recent) && recent.length ? recent[0] : null
+}
+
+function lastSearchPath(recent) {
+  if (!recent?.destinationId) return null
+  const params = new URLSearchParams()
+  params.set('destination', recent.destinationId)
+  if (recent.label) params.set('place', recent.label)
+  if (recent.checkin) params.set('checkin', recent.checkin)
+  if (recent.checkout) params.set('checkout', recent.checkout)
+  params.set('adults', String(Math.max(1, Number(recent.adults) || 1)))
+  params.set('children', String(Math.max(0, Number(recent.children) || 0)))
+  params.set('infants', String(Math.max(0, Number(recent.infants) || 0)))
+  params.set('pets', String(Math.max(0, Number(recent.pets) || 0)))
+  return `/map?${params.toString()}`
 }
 
 function CategoryArtwork({ id }) {
@@ -194,17 +216,23 @@ function CategorySelection({ id, title, items, favoriteIdSet, toggleFavorite, on
 export function HomePage({ onNavigate }) {
   const [category, setCategory] = useState(getSelectedHomeCategory)
   const [hostTick, setHostTick] = useState(0)
+  const [lastSearch, setLastSearch] = useState(readLastSearch)
   const { favoriteIds, toggleFavorite } = useFavorites()
   const favoriteIdSet = useMemo(() => new Set(favoriteIds), [favoriteIds])
   const categoryRailRef = useImmediateCategorySwipe()
 
   useEffect(() => {
-    const sync = () => setHostTick((value) => value + 1)
+    const sync = () => {
+      setHostTick((value) => value + 1)
+      setLastSearch(readLastSearch())
+    }
     window.addEventListener(HOST_PROFILE_EVENT, sync)
     window.addEventListener('storage', sync)
+    window.addEventListener('focus', sync)
     return () => {
       window.removeEventListener(HOST_PROFILE_EVENT, sync)
       window.removeEventListener('storage', sync)
+      window.removeEventListener('focus', sync)
     }
   }, [])
 
@@ -226,6 +254,17 @@ export function HomePage({ onNavigate }) {
 
   const allSelection = categorySelections.find((selection) => selection.id === 'all')
   const remainingSelections = categorySelections.filter((selection) => selection.id !== 'all')
+  const lastSearchPreview = useMemo(() => {
+    if (!lastSearch || !allSelection?.items?.length) return []
+    const query = String(lastSearch.label || '').toLocaleLowerCase('fr')
+    const destinationMatches = allSelection.items.filter((item) => String(item.location || '').toLocaleLowerCase('fr').includes(query))
+    return (destinationMatches.length ? destinationMatches : allSelection.items).filter((item) => item.image).slice(0, 3)
+  }, [lastSearch, allSelection])
+
+  const openLastSearch = () => {
+    const path = lastSearchPath(lastSearch)
+    if (path) onNavigate(path)
+  }
 
   const renderSelection = (selection) => (
     <CategorySelection
@@ -243,11 +282,30 @@ export function HomePage({ onNavigate }) {
     <div className="b225-home" data-testid="page-home">
       <header className="b225-home-header">
         <div className="b225-brand">Movera</div>
-        <button type="button" className="b225-search b225-home-map-search" data-testid="home-search" aria-label="Rechercher une destination">
-          <SearchIcon/>
-          <span className="b225-home-map-search__copy"><strong>Explorez autrement</strong><span>Destination · Dates · Voyageurs</span></span>
-          <span className="b225-home-map-filter-button" aria-hidden="true">≡</span>
-        </button>
+        <div className="b225-home-search-shell" data-has-last-search={lastSearch ? 'true' : 'false'}>
+          <button type="button" className="b225-search b225-home-map-search" data-testid="home-search" aria-label="Rechercher une destination">
+            <SearchIcon/>
+            <span className="b225-home-map-search__copy"><strong>Explorez autrement</strong><span>Destination · Dates · Voyageurs</span></span>
+            {!lastSearch ? <span className="b225-home-map-filter-button" aria-hidden="true">≡</span> : null}
+          </button>
+          {lastSearch && lastSearchPreview.length ? (
+            <button
+              type="button"
+              className="b225-last-search-stack"
+              data-testid="home-last-search"
+              onClick={openLastSearch}
+              aria-label={`Reprendre la dernière recherche ${lastSearch.label || ''}`}
+            >
+              <span className="b225-last-search-stack__cards" aria-hidden="true">
+                {lastSearchPreview.map((item, index) => (
+                  <span key={`last-search-${item.id}`} className="b225-last-search-stack__card" style={{ '--last-search-index': index }}>
+                    <img src={item.image} alt="" decoding="async"/>
+                  </span>
+                ))}
+              </span>
+            </button>
+          ) : null}
+        </div>
       </header>
 
       <div className="b225-categories-shell" aria-label="Catégories">
