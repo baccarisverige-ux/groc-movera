@@ -5,7 +5,7 @@ import { MarkerLayer } from './layers/MarkerLayer.jsx'
 import { ResizeManager } from './lifecycle/ResizeManager.jsx'
 import { TileLayer } from './layers/TileLayer.jsx'
 import { ViewportController } from './lifecycle/ViewportController.jsx'
-import { clampViewportToTunisia, panViewport, zoomViewport, zoomViewportAtPoint } from './geometry/geometry.js'
+import { panViewport, zoomViewport, zoomViewportAtPoint } from './geometry/geometry.js'
 import '../../styles/map-engine.css'
 
 export const INITIAL_VIEWPORT = Object.freeze({ lat: 36.8065, lng: 10.1815, zoom: 11 })
@@ -55,7 +55,7 @@ export function MapContainer({
   const viewportSourceRef = useRef('app')
   const renderCountRef = useRef(0)
   const updateCountRef = useRef(0)
-  const [viewport, setViewport] = useState(() => clampViewportToTunisia(initialViewport))
+  const [viewport, setViewport] = useState(initialViewport)
   const [size, setSize] = useState({ width: 390, height: 560 })
   const [lifecycleEvents, setLifecycleEvents] = useState(0)
   const [internalSelectedId, setInternalSelectedId] = useState(null)
@@ -92,7 +92,7 @@ export function MapContainer({
       if (!updates.length) return
       viewportSourceRef.current = updates[updates.length - 1].source
       updateCountRef.current += 1
-      setViewport((current) => clampViewportToTunisia(updates.reduce((next, update) => update.updater(next), current)))
+      setViewport((current) => updates.reduce((next, update) => update.updater(next), current))
     })
   }, [])
 
