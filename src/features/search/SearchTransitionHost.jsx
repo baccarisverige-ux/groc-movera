@@ -18,7 +18,7 @@ import './searchAddressMode.css'
 import './searchExactFit.css'
 
 const OPEN_MS = 980
-const CLOSE_MS = 950
+const CLOSE_MS = 1750
 const COMPLETE_MS = 560
 const READY_MS = 820
 const RECENT_KEY = 'movera-search-recents-v1'
