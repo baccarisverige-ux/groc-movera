@@ -31,10 +31,6 @@
   pointer-events:none;
 }
 
-.map-offer-sheet:has(.map-offer-sheet__header-spacer[data-attachment-state=attached]){
-  z-index:31;
-  background:#fff;
-}
 
 .map-offer-sheet__panel{
   flex:1 1 auto;
