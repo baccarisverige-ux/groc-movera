@@ -10,7 +10,6 @@ import { listHomeOffersByCategory } from '../listing/guestListings.js'
 import { homeCategories } from './data/homeData.js'
 import { getSelectedHomeCategory, setSelectedHomeCategory } from './homeCategorySelection.js'
 import { useImmediateCategorySwipe } from './useImmediateCategorySwipe.js'
-import { CategoryIcon } from './CategoryIcons.jsx'
 import '../../styles/home-b225.css'
 import '../../styles/home-b225-block2.css'
 import '../../styles/home-b225-block3.css'
@@ -26,16 +25,36 @@ import '../../styles/home-category-offers.css'
 import '../../styles/home-see-all-card.css'
 import '../../styles/home-sizing-adjustments.css'
 import '../../styles/home-scroll-stability.css'
-import '../../styles/home-category-signature.css'
+import '../../styles/home-category-natural.css'
+import ALL_CATEGORY_GLOBE from './assets/all-category-globe.png'
+import BEACH_CATEGORY_ICON from './assets/plage-category.png'
+import HOTEL_CATEGORY_ICON from './assets/hotel-category.png'
+import APPARTEMENT_CATEGORY_ICON from './assets/appartement-category.png'
+import GUESTHOUSE_CATEGORY_ICON from './assets/maison-hote-category.png'
+import VILLA_CATEGORY_ICON from './assets/villa-category.png'
+import EXPERIENCE_CATEGORY_ICON from './assets/experience-category.webp'
+import PARTNER_CATEGORY_ICON from './assets/partner-category.png'
+
 const RECENT_SEARCH_KEY = 'movera-search-recents-v1'
+const CATEGORY_ARTWORK = { all: ALL_CATEGORY_GLOBE, guesthouse: GUESTHOUSE_CATEGORY_ICON, beach: BEACH_CATEGORY_ICON, hotel: HOTEL_CATEGORY_ICON, family: APPARTEMENT_CATEGORY_ICON, prestige: VILLA_CATEGORY_ICON, experience: EXPERIENCE_CATEGORY_ICON, partner: PARTNER_CATEGORY_ICON }
+const CATEGORY_BUTTON_TUNING = Object.freeze({
+  all: { iconScale: .92, iconY: '-.2px' },
+  guesthouse: { iconScale: 1.08, iconY: '-.5px' },
+  beach: { iconScale: 1.02, iconY: '-.3px' },
+  hotel: { iconScale: .94, iconY: '0px' },
+  family: { iconScale: 1.04, iconY: '-.2px' },
+  prestige: { iconScale: 1.02, iconY: '-.2px' },
+  experience: { iconScale: .98, iconY: '0px' },
+  partner: { iconScale: .96, iconY: '0px' },
+})
 const HOME_OFFER_MOTION = Object.freeze({ enterScale: 0.99, enterY: 8, exitScale: 0.99, exitY: -4, initialOpacity: 0.78, layout: true, stagger: 0.018, tapScale: 0.988, spring: Object.freeze({ stiffness: 390, damping: 34, mass: 0.75 }) })
 const WELCOME_CITIES = [{ id:'sidi-bou-said',label:'Sidi Bou Saïd'},{id:'sousse',label:'Sousse'},{id:'hammamet',label:'Hammamet'},{id:'tunis',label:'Tunis'},{id:'djerba',label:'Djerba'},{id:'tozeur',label:'Tozeur'},{id:'tabarka',label:'Tabarka'}]
 function SearchIcon(){return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>}
 function ScrollArrowIcon(){return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 7l5 5-5 5"/></svg>}
 function readLastSearch(){const recent=storageAdapter.getJson(RECENT_SEARCH_KEY,[]);return Array.isArray(recent)&&recent.length?recent[0]:null}
 function lastSearchPath(recent){if(!recent?.destinationId)return null;const params=new URLSearchParams();params.set('destination',recent.destinationId);if(recent.label)params.set('place',recent.label);if(recent.checkin)params.set('checkin',recent.checkin);if(recent.checkout)params.set('checkout',recent.checkout);params.set('adults',String(Math.max(1,Number(recent.adults)||1)));params.set('children',String(Math.max(0,Number(recent.children)||0)));params.set('infants',String(Math.max(0,Number(recent.infants)||0)));params.set('pets',String(Math.max(0,Number(recent.pets)||0)));return `/map?${params.toString()}`}
-function CategoryArtwork({id}){return <span className="b225-category-signature__icon" data-category-icon={id} aria-hidden="true"><CategoryIcon id={id}/></span>}
-function CategoryButton({item,active,onSelect}){return <motion.button type="button" className="b225-category-signature" data-category-id={item.id} data-active={active?'true':'false'} aria-pressed={active} onClick={()=>onSelect(item)} whileTap={{scale:.982,y:1}} transition={{type:'spring',stiffness:720,damping:42,mass:.38}}><CategoryArtwork id={item.id}/><span>{item.label}</span></motion.button>}
+function CategoryArtwork({id}){const src=CATEGORY_ARTWORK[id];return src?<img className="b225-category-icon" data-category-icon={id} src={src} alt="" aria-hidden="true" decoding="async"/>:null}
+function CategoryButton({item,active,onSelect}){const tuning=CATEGORY_BUTTON_TUNING[item.id]||{};return <button type="button" className="b225-category-button" data-category-id={item.id} data-active={active?'true':'false'} aria-pressed={active} onClick={()=>onSelect(item)} style={{'--category-icon-scale':tuning.iconScale||1,'--category-icon-y':tuning.iconY||'0px'}}><motion.span className="b225-category-button__content" animate={{y:active?.35:0}} whileTap={{scale:.975,y:1}} transition={{type:'spring',stiffness:680,damping:38,mass:.42}}><CategoryArtwork id={item.id}/><span className="b225-category-button__label">{item.label}</span></motion.span></button>}
 function ListingCard({item,sectionId,favorite,toggleFavorite,index,onNavigate}){const dates=item.dates||item.dateLabel||'';const price=item.priceLabel||item.priceTotal||(item.nightlyRate!=null?`${item.nightlyRate} ${item.currency||'TND'} / nuit`:'Tarif à confirmer');const rating=item.rating?`★ ${item.rating}`:'Nouveau';const openListing=()=>onNavigate(`/listing/${item.id}`);return <MotionListItem as="article" className="b225-offer-card" config={HOME_OFFER_MOTION} index={index} data-testid={`home-card-${sectionId}-${item.id}`} data-origin={item.origin||'seed'} aria-label={`${item.title}, ${price}, ${rating}`} role="link" tabIndex={0} onClick={openListing} onKeyDown={(event)=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();openListing()}}}><div className="b225-offer-card__image">{item.image?<OptimizedListingImage src={item.image} alt="" sizes="(max-width:390px) 168px, 180px"/>:<span aria-hidden="true">MH</span>}{item.badge?<span className="b225-offer-card__badge">{item.badge}</span>:null}<button type="button" className="b225-offer-card__heart" data-active={favorite?'true':'false'} aria-pressed={favorite} aria-label={`${favorite?'Retirer':'Ajouter'} ${item.title} ${favorite?'des':'aux'} favoris`} onClick={(event)=>{event.stopPropagation();toggleFavorite(item.id)}}>{favorite?'♥':'♡'}</button></div><div className="b225-offer-card__body"><h3 className="b225-offer-card__title">{item.title}</h3><p className="b225-offer-card__dates">{dates||item.location}</p><p className="b225-offer-card__meta"><strong>{price}</strong><span className="b225-offer-card__dot">·</span><span>{rating}</span></p></div></MotionListItem>}
 function SeeAllCard({id,title,items,onNavigate}){const previewItems=items.slice(-3);const openAll=()=>{setSelectedHomeCategory(id);const route=getCollectionRouteForCategory(id);onNavigate(route||`/map?category=${encodeURIComponent(id)}`)};return <button type="button" className="b225-see-all-card" data-category={id} data-testid={`home-see-all-${id}`} onClick={openAll} aria-label={`Tout voir dans ${title}`}><span className="b225-see-all-card__gallery" aria-hidden="true">{previewItems.map((item)=><span key={`${id}-preview-${item.id}`} className="b225-see-all-card__photo">{item.image?<OptimizedListingImage src={item.image} alt="" sizes="96px"/>:<span>MH</span>}</span>)}<span className="b225-see-all-card__mark">M</span></span><span className="b225-see-all-card__copy"><span className="b225-see-all-card__eyebrow">Movera Select</span><span className="b225-see-all-card__title">Tout voir</span><span className="b225-see-all-card__arrow" aria-hidden="true">→</span></span></button>}
 function CategorySelection({id,title,items,favoriteIdSet,toggleFavorite,onNavigate}){const railRef=useRef(null);const scrollForward=()=>railRef.current?.scrollBy({left:Math.max(railRef.current.clientWidth*.72,150),behavior:'smooth'});return <section className="b225-section b225-category-selection" data-category-selection={id} data-testid={`home-selection-${id}`}><div className="b225-section__title b225-category-selection__title"><h2>{title}</h2>{items.length>1?<button type="button" className="b225-section-scroll-hint" onClick={scrollForward} aria-label={`Faire défiler ${title}`}><ScrollArrowIcon/></button>:null}</div>{items.length?<MotionList nodeRef={railRef} className="b225-offer-scroll" data-motion-list={`home-${id}`}>{items.map((item,index)=><ListingCard key={`${id}-${item.id}`} item={item} index={index} sectionId={id} favorite={favoriteIdSet.has(item.id)} toggleFavorite={toggleFavorite} onNavigate={onNavigate}/>)}<SeeAllCard id={id} title={title} items={items} onNavigate={onNavigate}/></MotionList>:<p className="b225-empty">Sélection à venir.</p>}</section>}
