@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { TILE_SIZE, project } from '../geometry/geometry.js'
 import { GoogleMapLayer } from './GoogleMapLayer.jsx'
 
@@ -58,6 +59,29 @@ export function TileLayer({
   onGoogleClusterFocus,
 }) {
   const fallback = showFallbackTiles ? fallbackTiles(viewport, size) : null
+  const fallbackKey = fallback
+    ? `${fallback.zoom}:${fallback.tiles.map((tile) => `${tile.wrappedX}-${tile.y}`).join(',')}`
+    : 'none'
+  const [tileStatus, setTileStatus] = useState({ key: fallbackKey, loaded: 0, failed: 0 })
+  const currentTileStatus = tileStatus.key === fallbackKey ? tileStatus : { key: fallbackKey, loaded: 0, failed: 0 }
+
+  useEffect(() => {
+    setTileStatus({ key: fallbackKey, loaded: 0, failed: 0 })
+  }, [fallbackKey])
+
+  const settleTile = (image, result) => {
+    if (image.dataset.tileSettled === 'true') return
+    image.dataset.tileSettled = 'true'
+    setTileStatus((current) => {
+      const base = current.key === fallbackKey ? current : { key: fallbackKey, loaded: 0, failed: 0 }
+      return { ...base, [result]: base[result] + 1 }
+    })
+  }
+
+  const tileCount = fallback?.tiles.length || 0
+  const tilesUnavailable = tileCount > 0
+    && currentTileStatus.loaded === 0
+    && currentTileStatus.failed >= tileCount
 
   return (
     <>
@@ -88,7 +112,10 @@ export function TileLayer({
                   loading="eager"
                   src={src}
                   data-fallback-src={fallbackSrc}
-                  onLoad={(event) => { event.currentTarget.style.visibility = 'visible' }}
+                  onLoad={(event) => {
+                    event.currentTarget.style.visibility = 'visible'
+                    settleTile(event.currentTarget, 'loaded')
+                  }}
                   onError={(event) => {
                     const image = event.currentTarget
                     const fallbackSrcValue = image.dataset.fallbackSrc
@@ -98,11 +125,18 @@ export function TileLayer({
                       return
                     }
                     image.style.visibility = 'hidden'
+                    settleTile(image, 'failed')
                   }}
                 />
               </div>
             )
           })}
+        </div>
+      ) : null}
+      {tilesUnavailable ? (
+        <div className="map-tile-fallback" data-testid="map-tile-fallback" role="status">
+          <strong>Carte momentanément indisponible</strong>
+          <span>Les offres restent consultables.</span>
         </div>
       ) : null}
       <GoogleMapLayer
