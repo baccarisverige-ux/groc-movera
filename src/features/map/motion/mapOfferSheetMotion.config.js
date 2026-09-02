@@ -1,17 +1,17 @@
 export const MAP_OFFER_SHEET_MOTION = Object.freeze({
   collapsedVisiblePx: 74,
   expandedThreshold: 0.985,
-  fastSwipeVelocity: 680,
+  fastSwipeVelocity: 820,
   snapRatios: Object.freeze([0, 0.5, 1]),
   spring: Object.freeze({
-    stiffness: 420,
-    damping: 44,
-    mass: 0.82,
-    restDelta: 0.3,
-    restSpeed: 2,
+    stiffness: 255,
+    damping: 32,
+    mass: 0.92,
+    restDelta: 0.22,
+    restSpeed: 1.6,
   }),
   toggleThreshold: 0.72,
-  velocityProjectionSeconds: 0.16,
+  velocityProjectionSeconds: 0.12,
 })
 
 export const MAP_OFFER_ITEM_MOTION = Object.freeze({
