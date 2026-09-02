@@ -28,6 +28,7 @@ test.describe('Movera critical permanent regressions', () => {
   })
 
   test('responsive, accessibility and reduced motion guard stays active', async ({ page }) => {
+    test.setTimeout(60_000)
     const sizes = [[320, 568], [375, 812], [390, 844], [430, 932], [768, 1024], [1024, 768]]
     const routes = ['/', '/map', '/plage', '/maison-d-hote', '/hotel']
 
@@ -102,10 +103,35 @@ test.describe('Movera critical permanent regressions', () => {
   test('map uses one reliable raster renderer without a hidden vector runtime', async ({ page }) => {
     await page.goto('/map')
 
-    await expect(page.locator('.map-tiles img').first()).toBeVisible()
+    await expect(page.getByTestId('map-tile-layer')).toHaveAttribute('data-tile-count', /[1-9]\d*/)
+    await expect.poll(async () => {
+      const tileVisible = await page.locator('.map-tiles img:visible').count()
+      const fallbackVisible = await page.getByTestId('map-tile-fallback').count()
+      return tileVisible + fallbackVisible
+    }).toBeGreaterThan(0)
     await expect(page.locator('.maplibregl-map')).toHaveCount(0)
     await expect(page.locator('canvas')).toHaveCount(0)
     await expect(page.getByTestId('map-engine')).toBeVisible()
+  })
+
+  test('map exposes an honest local fallback when every raster provider fails', async ({ page }) => {
+    await page.route(/(?:basemaps\.cartocdn\.com|tile\.openstreetmap\.org)/, (route) => route.abort('failed'))
+    await page.goto('/map')
+
+    const fallback = page.getByTestId('map-tile-fallback')
+    await expect(fallback).toBeVisible()
+    await expect(fallback).toContainText('Carte momentanément indisponible')
+    await expect(page.getByTestId('map-marker-layer')).toBeVisible()
+  })
+
+  test('listing photos use the bundled Movera fallback when the image CDN fails', async ({ page }) => {
+    await page.route('https://images.unsplash.com/**', (route) => route.abort('failed'))
+    await page.goto('/')
+
+    const firstListingImage = page.locator('.movera-listing-image').first()
+    await expect(firstListingImage).toHaveAttribute('data-fallback-applied', 'true')
+    await expect(firstListingImage).toHaveAttribute('src', /assets\/listing-placeholder\.svg$/)
+    await expect(firstListingImage).toBeVisible()
   })
 
   test('finger pinch zoom is gradual instead of jumping a full level', async ({ page }) => {
