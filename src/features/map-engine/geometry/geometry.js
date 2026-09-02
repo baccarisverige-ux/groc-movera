@@ -1,12 +1,6 @@
 export const TILE_SIZE = 256
 export const MIN_ZOOM = 3
 export const MAX_ZOOM = 18
-export const TUNISIA_BOUNDS = Object.freeze({
-  south: 30.15,
-  west: 7.35,
-  north: 37.65,
-  east: 11.75,
-})
 
 export function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value))
@@ -17,14 +11,6 @@ export function normalizeLng(lng) {
   while (value > 180) value -= 360
   while (value < -180) value += 360
   return value
-}
-
-export function clampViewportToTunisia(viewport) {
-  return {
-    ...viewport,
-    lat: clamp(Number(viewport?.lat), TUNISIA_BOUNDS.south, TUNISIA_BOUNDS.north),
-    lng: clamp(Number(viewport?.lng), TUNISIA_BOUNDS.west, TUNISIA_BOUNDS.east),
-  }
 }
 
 export function project(lat, lng, zoom) {
