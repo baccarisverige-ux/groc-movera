@@ -107,21 +107,14 @@
   transform:translate3d(118%,0,0);
 }
 
-/* A search reopened from Map must preserve the exact visible Map summary. */
-.movera-st[data-map-origin="true"] .movera-st__persistent-copy,
-.movera-st[data-map-origin="true"].movera-st--open .movera-st__persistent-copy{
-  transform:translate3d(0,0,0)!important;
-  opacity:1!important;
-}
+/* Hide the carried Map text only while the popup is fully open. */
 .movera-st[data-map-origin="true"] .movera-st__persistent-search input{
-  opacity:1!important;
-  color:#222624!important;
+  transition:opacity 300ms ease!important;
 }
-.movera-st[data-map-origin="true"] .movera-st__persistent-meta,
-.movera-st[data-map-origin="true"].movera-st--open .movera-st__persistent-meta{
-  opacity:1!important;
-  transform:translate3d(0,0,0)!important;
+.movera-st[data-map-origin="true"].movera-st--open .movera-st__persistent-search input{
+  opacity:0!important;
 }
+
 
 .movera-st .movera-st__persistent-toggle{
   position:relative!important;
