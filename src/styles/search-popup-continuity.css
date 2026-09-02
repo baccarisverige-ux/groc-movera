@@ -176,7 +176,15 @@ body:has(.movera-st[data-map-origin="true"][data-closing="true"]) .b225-map-top 
   place-items:center!important;
   overflow:hidden!important;
   box-shadow:0 2px 8px rgba(29,35,31,.032),inset 0 1px 0 rgba(255,255,255,.95)!important;
-  transition:transform .16s cubic-bezier(.2,.8,.2,1),background .16s ease!important;
+  opacity:1!important;
+  transition:opacity 420ms cubic-bezier(.22,.72,.16,1),transform .16s cubic-bezier(.2,.8,.2,1),background .16s ease!important;
+}
+
+.movera-st[data-closing="true"] .movera-st__persistent-toggle{
+  opacity:0!important;
+  pointer-events:none!important;
+  transform:scale(.88)!important;
+  transition:opacity 420ms cubic-bezier(.22,.72,.16,1),transform 420ms cubic-bezier(.22,.72,.16,1)!important;
 }
 
 .movera-st .movera-st__persistent-toggle:active{
