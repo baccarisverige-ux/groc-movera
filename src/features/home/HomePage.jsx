@@ -6,7 +6,6 @@ import { useFavorites } from '../favorites/favoritesStore.js'
 import { listHomeOffersByCategory } from '../listing/guestListings.js'
 import { homeCategories } from './data/homeData.js'
 import { getSelectedHomeCategory, setSelectedHomeCategory } from './homeCategorySelection.js'
-import { MiniServicesSection } from './MiniServicesSection.jsx'
 import { useImmediateCategorySwipe } from './useImmediateCategorySwipe.js'
 import '../../styles/home-b225.css'
 import '../../styles/home-b225-block2.css'
@@ -21,7 +20,6 @@ import '../../styles/home-airbnb-surface.css'
 import '../../styles/home-category-6d.css'
 import '../../styles/home-category-offers.css'
 import '../../styles/home-see-all-card.css'
-import '../../styles/home-services-mini.css'
 import '../../styles/home-sizing-adjustments.css'
 import '../../styles/home-scroll-stability.css'
 import ALL_CATEGORY_GLOBE from './assets/all-category-globe.png'
@@ -277,8 +275,6 @@ export function HomePage({ onNavigate }) {
           ))}
         </div>
       </section>
-
-      <MiniServicesSection onNavigate={onNavigate}/>
 
       {allSelection ? renderSelection(allSelection) : null}
 
