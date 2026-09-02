@@ -1,12 +1,12 @@
 /* Search close hand-off.
-   Closing feels like one physical panel: the top search returns almost instantly,
-   then the popup retracts slowly without morphing its shape. */
+   Home keeps the carried search bridge. Map close is different: the REAL Map header
+   must return above the Search portal immediately, while the popup itself closes slowly. */
 
 .movera-st:not(.movera-st--open):not(.movera-st--complete) .movera-st__persistent-search{
   pointer-events:none!important;
 }
 
-/* Phase 1 — TOP AREA RETURNS ALMOST INSTANTLY to its exact original position. */
+/* Home/non-Map close: return the carried search copy almost instantly. */
 .movera-st[data-closing="true"] .movera-st__persistent-copy{
   transform:translate3d(0,0,0)!important;
   transition:transform 70ms cubic-bezier(.22,.72,.16,1)!important;
@@ -21,37 +21,46 @@
   100%{opacity:1;transform:translate3d(0,0,0)}
 }
 
-/* Map: restore carried search text immediately, with no wait. */
+/* Map close architecture:
+   Do NOT wait for / animate the portal copy back into place. The user must see the
+   actual Map header at its original layout coordinates immediately. */
 .movera-st.movera-st[data-map-origin="true"][data-closing="true"] .movera-st__persistent-search{
-  opacity:1!important;
+  opacity:0!important;
   transform:scale(1)!important;
-  animation:moveraMapSearchReturn 70ms cubic-bezier(.22,.72,.16,1) both!important;
+  animation:none!important;
+  transition:opacity 45ms linear!important;
+}
+
+.movera-st.movera-st[data-map-origin="true"][data-closing="true"] .movera-st__persistent-search input,
+.movera-st.movera-st[data-map-origin="true"][data-closing="true"] .movera-st__persistent-meta{
+  opacity:0!important;
   transition:none!important;
 }
 
-.movera-st.movera-st[data-map-origin="true"][data-closing="true"] .movera-st__persistent-search input{
+/* Critical stacking fix:
+   .movera-st is a z-index:1000 isolated portal and its panel is z-index:1003.
+   The normal Map header is only z-index:30, so opacity changes alone can never make
+   it visibly return during the slow close. Promote the real header above the portal
+   only while Map-origin Search is closing. */
+body:has(.movera-st.movera-st[data-map-origin="true"][data-closing="true"]) .b225-map-top{
+  z-index:2010!important;
   opacity:1!important;
-  transition:opacity 55ms linear!important;
-}
-
-.movera-st.movera-st[data-map-origin="true"][data-closing="true"] .movera-st__persistent-meta{
-  opacity:1!important;
-  transform:translate3d(0,0,0)!important;
-  transition:opacity 60ms linear,transform 70ms cubic-bezier(.22,.72,.16,1)!important;
-}
-
-@keyframes moveraMapSearchReturn{
-  0%{opacity:.45;transform:scale(.996)}
-  100%{opacity:1;transform:scale(1)}
-}
-
-/* Real Map header returns essentially immediately too. */
-body:has(.movera-st.movera-st[data-map-origin="true"][data-closing="true"]) .b225-map-top .map-search-filter-stack__search-pill,
-body:has(.movera-st.movera-st[data-map-origin="true"][data-closing="true"]) .b225-map-top .map-search-filter-stack__filter-button{
-  opacity:1!important;
-  transform:scale(1)!important;
+  transform:none!important;
   pointer-events:none!important;
-  transition:opacity 65ms linear,transform 75ms cubic-bezier(.22,.72,.16,1)!important;
+  transition:none!important;
+  will-change:auto!important;
+}
+
+body:has(.movera-st.movera-st[data-map-origin="true"][data-closing="true"]) .b225-map-top .map-search-filter-stack,
+body:has(.movera-st.movera-st[data-map-origin="true"][data-closing="true"]) .b225-map-top .map-search-filter-stack__toolbar-clip,
+body:has(.movera-st.movera-st[data-map-origin="true"][data-closing="true"]) .b225-map-top .map-search-filter-stack__toolbar,
+body:has(.movera-st.movera-st[data-map-origin="true"][data-closing="true"]) .b225-map-top .map-search-filter-stack__search-pill,
+body:has(.movera-st.movera-st[data-map-origin="true"][data-closing="true"]) .b225-map-top .map-search-filter-stack__side-button,
+body:has(.movera-st.movera-st[data-map-origin="true"][data-closing="true"]) .b225-map-top .map-offer-sheet__property-dock{
+  opacity:1!important;
+  visibility:visible!important;
+  transform:none!important;
+  transition:none!important;
   transition-delay:0ms!important;
 }
 
@@ -63,8 +72,7 @@ body:has(.movera-st.movera-st[data-map-origin="true"][data-closing="true"]) .b22
   transition:opacity 70ms ease-out,transform 80ms cubic-bezier(.22,.72,.16,1)!important;
 }
 
-/* Phase 2 — SLOW POPUP CLOSE. No shape morphing.
-   The panel waits only a moment for the top return, then retracts as one rectangle. */
+/* Slow popup close. It stays one rectangle; the real Map header is already above it. */
 .movera-st[data-closing="true"]:not(.movera-st--complete) .movera-st__panel{
   top:calc(10px + env(safe-area-inset-top,0px))!important;
   left:max(10px,calc(50vw - 205px))!important;
@@ -83,7 +91,6 @@ body:has(.movera-st.movera-st[data-map-origin="true"][data-closing="true"]) .b22
   will-change:transform,opacity!important;
 }
 
-/* Content follows the slow panel instead of disappearing before the top settles. */
 .movera-st[data-closing="true"]:not(.movera-st--complete) .movera-st__content{
   animation:moveraPopupContentRetract 1240ms cubic-bezier(.22,.72,.16,1) 105ms both!important;
 }
@@ -93,7 +100,6 @@ body:has(.movera-st.movera-st[data-map-origin="true"][data-closing="true"]) .b22
   100%{opacity:0;transform:translate3d(0,-8px,0)}
 }
 
-/* Background follows the slow popup; it does not compete with the fast header return. */
 .movera-st[data-closing="true"]:not(.movera-st--complete) .movera-st__map-stage{
   opacity:0!important;
   transform:translate3d(-50%,12px,0) scale(1.008)!important;
