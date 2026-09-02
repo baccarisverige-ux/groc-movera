@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { MotionList, MotionListItem } from '../../shared/motion/MotionList.jsx'
+import { motion, useTransform } from '../../shared/motion/runtime.js'
 import { MapOfferSheetMotionSurface } from './motion/MapOfferSheetMotionSurface.jsx'
 import { MAP_OFFER_ITEM_MOTION } from './motion/mapOfferSheetMotion.config.js'
 import { useMapOfferScrollSheetHandoff } from './motion/useMapOfferScrollSheetHandoff.js'
@@ -34,7 +35,7 @@ function StarIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path d
 function listingPriceCopy(listing) { if (listing.priceLabel) return listing.priceLabel; if (listing.priceTotal) return listing.priceTotal; if (listing.nightlyRate != null) return `${listing.nightlyRate} ${listing.currency || 'TND'}`; if (listing.price != null) return `${listing.price} ${listing.currency || 'TND'}`; return '' }
 function roomPhoto(room, fallback) { return room?.photos?.[0]?.src || fallback }
 
-function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListingId, propertyFilter, onPropertyFilterChange, onSelectedListingChange, onNavigate, progress, startDrag, toggleExpanded, externalDrag }) {
+function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListingId, propertyFilter, onPropertyFilterChange, onSelectedListingChange, onNavigate, progress, progressMotion, startDrag, toggleExpanded, externalDrag }) {
   const attached = useStableAttached(progress)
   const listRef = useMapOfferScrollSheetHandoff({ expanded: attached, externalDrag })
   const dragZoneRef = useRef(null)
@@ -45,6 +46,11 @@ function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListi
   const [idleHintActive, setIdleHintActive] = useState(false)
   const [roomSelection, setRoomSelection] = useState({})
   const safeHeaderHeight = Math.max(0, headerHeight || 0)
+  const panelOffsetY = useTransform(progressMotion, (latest) => {
+    const bounded = Math.max(0, Math.min(1, latest))
+    const softened = bounded * bounded * (3 - 2 * bounded)
+    return -safeHeaderHeight * softened
+  })
   const displayedListings = listings
 
   useEffect(() => { externalDragRef.current = externalDrag }, [externalDrag])
@@ -112,15 +118,9 @@ function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListi
   }
   const chooseRoom = (event, listingId, roomId) => { event.preventDefault(); event.stopPropagation(); setRoomSelection((state) => ({ ...state, [listingId]: roomId })) }
 
-  const boundedProgress = Math.max(0, Math.min(1, progress))
-  const softenedProgress = boundedProgress * boundedProgress * (3 - 2 * boundedProgress)
-  const headerSpacerHeight = attached
-    ? 0
-    : safeHeaderHeight * (1 - softenedProgress)
-
   return <>
-    <div className="map-offer-sheet__header-spacer" aria-hidden="true" data-testid="map-offer-sheet-header-spacer" data-attachment-state={attached ? 'attached' : 'moving'} style={{ height: `${headerSpacerHeight}px` }}/>
-    <div className="map-offer-sheet__panel" data-attachment-state={attached ? 'attached' : 'moving'} data-idle-hint={idleHintActive ? 'true' : 'false'}>
+    <div className="map-offer-sheet__header-spacer" aria-hidden="true" data-testid="map-offer-sheet-header-spacer" data-attachment-state={attached ? 'attached' : 'moving'} style={{ height: `${safeHeaderHeight}px` }}/>
+    <motion.div className="map-offer-sheet__panel" data-attachment-state={attached ? 'attached' : 'moving'} data-idle-hint={idleHintActive ? 'true' : 'false'} style={{ y: panelOffsetY }}>
       <div ref={dragZoneRef} className="map-offer-sheet__drag-zone" data-testid="map-offer-sheet-handle" data-attachment-state={attached ? 'attached' : 'moving'} data-header-offset={Math.round(safeHeaderHeight)} onPointerDown={(event) => { if (event.pointerType !== 'touch') startDrag(event) }}>
         <button type="button" className="map-offer-sheet__handle-button" onClick={toggleExpanded} aria-label={progress > 0.72 ? 'Réduire la liste des offres' : 'Afficher la liste des offres'}><span className="map-offer-sheet__grabber"/><span className="map-offer-sheet__heading"><strong>{displayedListings.length ? `${displayedListings.length} offre${displayedListings.length > 1 ? 's' : ''}` : 'Aucune offre'}</strong><span className="map-offer-sheet__city-label">{cityLabel}</span><span className="map-offer-sheet__brand-badge">Movera Host</span></span><span className="map-offer-sheet__chevron" data-open={progress > 0.72 ? 'true' : 'false'}><ChevronIcon/></span></button>
       </div>
@@ -134,11 +134,11 @@ function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListi
         const price = categorized && activeRoom ? `${activeRoom.basePrice} ${listing.currency || 'TND'} / nuit` : listingPriceCopy(listing)
         return <MotionListItem as="button" type="button" key={listing.id} index={index} active={selected} config={MAP_OFFER_ITEM_MOTION} className="map-offer-sheet__card" data-listing-id={listing.id} data-active={selected ? 'true' : 'false'} onClick={() => openListing(listing)}><span className="map-offer-sheet__media"><img src={image} alt="" loading={index < 2 ? 'eager' : 'lazy'}/>{listing.badge ? <span className="map-offer-sheet__badge">{listing.badge}</span> : null}<span className="map-offer-sheet__position" aria-hidden="true">{index + 1}/{displayedListings.length}</span></span><span className="map-offer-sheet__card-copy"><span className="map-offer-sheet__card-head"><span><strong>{listing.title}</strong><small>{listing.location}, Tunisie</small></span><span className="map-offer-sheet__rating"><StarIcon/>{listing.rating}</span></span>{categorized ? <span className="map-offer-sheet__room-categories"><em>{categories.length} catégories</em><span>{categories.map((room) => <span role="button" tabIndex="0" key={room.id} data-active={room.id === activeRoom?.id ? 'true' : 'false'} onClick={(event) => chooseRoom(event, listing.id, room.id)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') chooseRoom(event, listing.id, room.id) }}>{room.name}<b>{room.basePrice}</b></span>)}</span></span> : null}<span className="map-offer-sheet__price"><b>{price}</b></span></span></MotionListItem>
       })}</div></MotionList> : <div className="map-offer-sheet__empty"><div className="map-offer-sheet__empty-content"><strong>Aucune offre Movera dans cette ville</strong><span>La carte reste disponible pour explorer la zone.</span></div></div>}
-    </div>
+    </motion.div>
   </>
 }
 
 export function MapOfferSheet({ listings, cityLabel, headerHeight = 0, selectedListingId, propertyFilter = 'all', onPropertyFilterChange, onSelectedListingChange, onProgressChange, onNavigate, hidden = false }) {
   const safeHeaderHeight = Math.max(0, (headerHeight || 0) - TOP_BAR_SEAM_OVERLAP_PX)
-  return <MapOfferSheetMotionSurface className={`map-offer-sheet${hidden ? ' map-offer-sheet--popup-hidden' : ''}`} ariaLabel={`Offres ${cityLabel}`} collapsedVisiblePx={COLLAPSED_PANEL_VISIBLE_PX + safeHeaderHeight} onProgressChange={onProgressChange}>{({ progress, startDrag, toggleExpanded, externalDrag }) => <MapOfferSheetContent listings={listings} cityLabel={cityLabel} headerHeight={safeHeaderHeight} selectedListingId={selectedListingId} propertyFilter={propertyFilter} onPropertyFilterChange={onPropertyFilterChange} onSelectedListingChange={onSelectedListingChange} onNavigate={onNavigate} progress={progress} startDrag={startDrag} toggleExpanded={toggleExpanded} externalDrag={externalDrag}/>}</MapOfferSheetMotionSurface>
+  return <MapOfferSheetMotionSurface className={`map-offer-sheet${hidden ? ' map-offer-sheet--popup-hidden' : ''}`} ariaLabel={`Offres ${cityLabel}`} collapsedVisiblePx={COLLAPSED_PANEL_VISIBLE_PX + safeHeaderHeight} onProgressChange={onProgressChange}>{({ progress, progressMotion, startDrag, toggleExpanded, externalDrag }) => <MapOfferSheetContent listings={listings} cityLabel={cityLabel} headerHeight={safeHeaderHeight} selectedListingId={selectedListingId} propertyFilter={propertyFilter} onPropertyFilterChange={onPropertyFilterChange} onSelectedListingChange={onSelectedListingChange} onNavigate={onNavigate} progress={progress} progressMotion={progressMotion} startDrag={startDrag} toggleExpanded={toggleExpanded} externalDrag={externalDrag}/>}</MapOfferSheetMotionSurface>
 }
