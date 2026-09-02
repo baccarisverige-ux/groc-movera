@@ -24,7 +24,9 @@
   appearance:none!important;
   -webkit-appearance:none!important;
   position:relative!important;
+  width:auto!important;
   min-width:0!important;
+  max-width:calc(100% - 48px)!important;
   height:29px!important;
   padding:0 5px 0 10px!important;
   border:1px solid rgba(30,33,31,.075)!important;
@@ -32,14 +34,23 @@
   background:linear-gradient(180deg,rgba(255,255,255,.98) 0%,rgba(246,247,246,.97) 100%)!important;
   color:#191b19!important;
   display:inline-flex!important;
+  flex:0 0 auto!important;
   align-items:center!important;
   gap:7px!important;
+  overflow:hidden!important;
+  white-space:nowrap!important;
   box-shadow:0 1px 2px rgba(31,35,32,.035),0 4px 11px rgba(31,35,32,.035),inset 0 1px 0 rgba(255,255,255,.98)!important;
   font:690 14.2px/1 Inter,-apple-system,BlinkMacSystemFont,sans-serif!important;
   letter-spacing:-.38px!important;
   cursor:pointer!important;
   -webkit-tap-highlight-color:transparent!important;
   transition:transform .16s cubic-bezier(.2,.75,.25,1),background .16s ease,border-color .16s ease,box-shadow .16s ease!important;
+}
+.b225-home .b225-section-title-button>span:first-child{
+  min-width:0!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
 }
 .b225-home .b225-section-title-button::before{
   content:''!important;
@@ -149,7 +160,7 @@
   .b225-home .b225-category-selection{margin-top:1px!important;padding-top:0!important}
   .b225-home .b225-services-mini + .b225-category-selection{margin-top:1px!important}
   .b225-home .b225-category-selection .b225-section__title{min-height:32px!important;padding-top:3px!important;padding-bottom:3px!important;margin-bottom:2px!important}
-  .b225-home .b225-section-title-button{height:27px!important;padding:0 4px 0 9px!important;font-size:13.4px!important;border-radius:9px!important;gap:6px!important}
+  .b225-home .b225-section-title-button{width:auto!important;max-width:calc(100% - 46px)!important;height:27px!important;padding:0 4px 0 9px!important;font-size:13.4px!important;border-radius:9px!important;gap:6px!important;white-space:nowrap!important}
   .b225-home .b225-section-title-button__chevron{width:18px!important;height:18px!important;flex-basis:18px!important;font-size:14px!important}
   .b225-home .b225-category-selection__title>.b225-section-scroll-hint{width:27px!important;min-width:27px!important;height:27px!important;flex-basis:27px!important}
   .b225-home .b225-offer-card{flex-basis:160px!important;min-width:160px!important;max-width:160px!important}
