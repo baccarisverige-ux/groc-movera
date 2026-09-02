@@ -12,22 +12,23 @@
     opacity 210ms ease-out 710ms!important;
 }
 
-.movera-st:not(.movera-st--open):not(.movera-st--complete) .movera-st__panel{
+.movera-st[data-closing="true"] .movera-st__panel{
+  top:var(--st-origin-top)!important;
+  left:var(--st-origin-left)!important;
+  width:var(--st-origin-width)!important;
+  height:var(--st-origin-height)!important;
   opacity:0!important;
   pointer-events:none!important;
-  animation:moveraStCloseRadius 900ms var(--st-motion-close) forwards!important;
+  border-radius:999px!important;
+  transform:translate3d(0,0,0)!important;
   transition:
-    transform 900ms var(--st-motion-close),
+    top 900ms cubic-bezier(.32,.72,0,1),
+    left 900ms cubic-bezier(.32,.72,0,1),
+    width 900ms cubic-bezier(.32,.72,0,1),
+    height 900ms cubic-bezier(.32,.72,0,1),
+    border-radius 760ms cubic-bezier(.32,.72,0,1),
     box-shadow 820ms var(--st-motion-close),
     opacity 210ms ease-in 710ms!important;
-}
-
-@keyframes moveraStCloseRadius{
-  0%{border-radius:30px 30px 26px 26px}
-  48%{border-radius:38px}
-  72%{border-radius:58px}
-  88%{border-radius:110px}
-  100%{border-radius:250px}
 }
 
 .movera-st:not(.movera-st--open):not(.movera-st--complete) .movera-st__persistent-search{
