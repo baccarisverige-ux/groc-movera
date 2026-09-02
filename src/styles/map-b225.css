@@ -17,3 +17,9 @@
 .b225-map-top .map-offer-sheet__property-chip:active,
 .b225-map-top .map-offer-sheet__property-chip[data-active=true]{background:#fff!important}
 .b225-map-top .map-search-filter-stack__filter-count{background:#fff!important;color:#202421!important;border-color:#fff!important}
+
+/* Keep the area around the top search button genuinely white. */
+.b225-map-top .map-search-filter-stack__search-pill{
+  border-color:#fff!important;
+  box-shadow:none!important;
+}
