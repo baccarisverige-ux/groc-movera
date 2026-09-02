@@ -8,7 +8,7 @@
 
 /* Phase 1 — return the search copy softly. */
 .movera-st[data-closing="true"]:not([data-map-origin="true"]) .movera-st__persistent-copy{
-  animation:moveraSearchCopyReturn 500ms cubic-bezier(.22,.72,.16,1) both!important;
+  animation:moveraSearchCopyReturn 650ms cubic-bezier(.22,.72,.16,1) both!important;
 }
 
 @keyframes moveraSearchCopyReturn{
@@ -20,19 +20,19 @@
 .movera-st.movera-st[data-map-origin="true"][data-closing="true"] .movera-st__persistent-search{
   opacity:1!important;
   transform:scale(1)!important;
-  animation:moveraMapSearchReturn 500ms cubic-bezier(.22,.72,.16,1) both!important;
+  animation:moveraMapSearchReturn 650ms cubic-bezier(.22,.72,.16,1) both!important;
   transition:none!important;
 }
 
 .movera-st.movera-st[data-map-origin="true"][data-closing="true"] .movera-st__persistent-search input{
   opacity:1!important;
-  transition:opacity 450ms ease 30ms!important;
+  transition:opacity 600ms ease 30ms!important;
 }
 
 .movera-st.movera-st[data-map-origin="true"][data-closing="true"] .movera-st__persistent-meta{
   opacity:1!important;
   transform:translate3d(0,0,0)!important;
-  transition:opacity 470ms ease 35ms,transform 500ms cubic-bezier(.22,.72,.16,1)!important;
+  transition:opacity 620ms ease 35ms,transform 650ms cubic-bezier(.22,.72,.16,1)!important;
 }
 
 @keyframes moveraMapSearchReturn{
@@ -61,15 +61,15 @@ body:has(.movera-st.movera-st[data-map-origin="true"][data-closing="true"]) .b22
   transform-origin:center top!important;
   opacity:0!important;
   transition:
-    transform 890ms cubic-bezier(.22,.72,.16,1) 40ms,
-    opacity 880ms cubic-bezier(.22,.72,.16,1) 50ms,
-    box-shadow 850ms ease-out 50ms!important;
+    transform 1500ms cubic-bezier(.22,.72,.16,1) 80ms,
+    opacity 1420ms cubic-bezier(.22,.72,.16,1) 120ms,
+    box-shadow 1380ms ease-out 100ms!important;
   will-change:transform,opacity!important;
 }
 
 /* Content remains attached and fades over most of the close instead of vanishing early. */
 .movera-st[data-closing="true"]:not(.movera-st--complete) .movera-st__content{
-  animation:moveraPopupContentRetract 800ms cubic-bezier(.22,.72,.16,1) 60ms both!important;
+  animation:moveraPopupContentRetract 1250ms cubic-bezier(.22,.72,.16,1) 90ms both!important;
 }
 
 @keyframes moveraPopupContentRetract{
@@ -81,12 +81,12 @@ body:has(.movera-st.movera-st[data-map-origin="true"][data-closing="true"]) .b22
 .movera-st[data-closing="true"]:not(.movera-st--complete) .movera-st__map-stage{
   opacity:0!important;
   transform:translate3d(-50%,12px,0) scale(1.008)!important;
-  transition:opacity 820ms ease-out 90ms,transform 890ms cubic-bezier(.22,.72,.16,1) 40ms!important;
+  transition:opacity 1320ms ease-out 140ms,transform 1500ms cubic-bezier(.22,.72,.16,1) 80ms!important;
 }
 
 .movera-st[data-closing="true"]:not(.movera-st--complete) .movera-st__map-veil{
   opacity:0!important;
-  transition:opacity 800ms ease-out 90ms!important;
+  transition:opacity 1280ms ease-out 140ms!important;
 }
 
 @media(prefers-reduced-motion:reduce){
