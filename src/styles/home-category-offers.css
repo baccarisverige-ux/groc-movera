@@ -1,17 +1,22 @@
 /* Category offer rails: Airbnb-inspired image-first cards with text below. */
 
-/* Very tight spacing between every offer section (Tout, Maison d’hôte, etc.). */
+/* Actual vertical spacing between offer sections (Tout, Maison d’hôte, etc.).
+   The base .b225-section adds its own top padding, so override it here as well. */
 .b225-home .b225-category-selection{
-  margin-top:3px!important;
+  margin-top:2px!important;
+  padding-top:0!important;
 }
 
-/* Lift the whole Tout → Partenaire block by reducing only the first gap after Services Movera. */
+/* Legacy Services selector kept isolated; Services is currently not rendered on Home. */
 .b225-home .b225-services-mini + .b225-category-selection{
   margin-top:1px!important;
 }
 
 .b225-home .b225-category-selection .b225-section__title{
-  margin-bottom:4px!important;
+  min-height:34px!important;
+  padding-top:4px!important;
+  padding-bottom:4px!important;
+  margin-bottom:3px!important;
 }
 
 .b225-home .b225-category-selection .b225-section__title h2{
@@ -85,9 +90,9 @@
 .b225-home .b225-offer-card__dot{opacity:.55!important}
 
 @media(max-width:390px){
-  .b225-home .b225-category-selection{margin-top:2px!important}
+  .b225-home .b225-category-selection{margin-top:1px!important;padding-top:0!important}
   .b225-home .b225-services-mini + .b225-category-selection{margin-top:1px!important}
-  .b225-home .b225-category-selection .b225-section__title{margin-bottom:3px!important}
+  .b225-home .b225-category-selection .b225-section__title{min-height:32px!important;padding-top:3px!important;padding-bottom:3px!important;margin-bottom:2px!important}
   .b225-home .b225-category-selection .b225-section__title h2{font-size:15.4px!important}
   .b225-home .b225-category-selection__title>.b225-section-scroll-hint{width:27px!important;min-width:27px!important;height:27px!important;flex-basis:27px!important}
   .b225-home .b225-offer-card{flex-basis:160px!important;min-width:160px!important;max-width:160px!important}
