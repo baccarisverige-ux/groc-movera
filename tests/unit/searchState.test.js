@@ -27,7 +27,7 @@ describe('search state', () => {
 
   it('builds stable map search parameters', () => {
     const path = buildMapSearchPath({
-      destination: { id: 'la-marsa' },
+      destination: { id: 'la-marsa', label: 'La Marsa' },
       checkin: '2026-09-10',
       checkout: '2026-09-14',
       adults: 2,
@@ -38,6 +38,7 @@ describe('search state', () => {
     const url = new URL(path, 'https://movera.local')
     expect(url.pathname).toBe('/map')
     expect(url.searchParams.get('destination')).toBe('la-marsa')
+    expect(url.searchParams.get('place')).toBe('La Marsa')
     expect(url.searchParams.get('guests')).toBe('3')
     expect(url.searchParams.get('infants')).toBe('1')
     expect(url.searchParams.get('pets')).toBe('1')
