@@ -18,11 +18,6 @@ const MAP_MOTION_PROGRESS_LIMIT = 0.72
 const MAP_GESTURE_SETTLE_MS = 500
 const GRAND_TUNIS_LOCATIONS = Object.freeze(['La Marsa', 'Sidi Bou Saïd', 'Gammarth', 'Carthage', 'Tunis'])
 
-function smoothStep(from, to, value) {
-  const t = Math.max(0, Math.min(1, (value - from) / (to - from)))
-  return t * t * (3 - 2 * t)
-}
-
 function formatMapPrice(listing) {
   const source = `${listing.priceTotal || listing.priceLabel || ''}`
   const match = source.match(/(\d[\d\s]*)\s*TND/i)
@@ -120,9 +115,9 @@ export function MapPage({ onNavigate }) {
   const handleSheetProgress = useCallback((progress) => {
     const header = headerRef.current
     if (header) {
-      const disappearance = smoothStep(0.08, 0.92, progress)
+      const disappearance = Math.max(0, Math.min(1, progress))
       header.style.setProperty('--map-header-disappearance', disappearance.toFixed(4))
-      header.style.pointerEvents = disappearance > 0.92 ? 'none' : ''
+      header.style.pointerEvents = disappearance > 0.97 ? 'none' : ''
     }
     const autoCameraBlocked = mapInteractionRef.current || performance.now() < mapAutoCameraBlockedUntilRef.current
     if (autoCameraBlocked || progress > MAP_MOTION_PROGRESS_LIMIT) return
