@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { animate, motion, useDragControls, useMotionValue, useMotionValueEvent, useReducedMotion } from './runtime.js'
+import { animate, motion, useDragControls, useMotionValue, useMotionValueEvent, useReducedMotion, useTransform } from './runtime.js'
 
 const DEFAULT_SPRING = Object.freeze({
   stiffness: 430,
@@ -63,6 +63,11 @@ export function SnapSheetMotionSurface({
   const suppressClickRef = useRef(false)
   const externalDragRef = useRef(null)
   const y = useMotionValue(0)
+  const progressMotion = useTransform(y, (latest) => {
+    const distance = collapsedYRef.current
+    if (distance <= 0) return 0
+    return clamp(1 - clamp(latest, 0, distance) / distance)
+  })
   const dragControls = useDragControls()
   const reduceMotion = useReducedMotion()
   const [collapsedY, setCollapsedY] = useState(1)
@@ -217,7 +222,7 @@ export function SnapSheetMotionSurface({
         }), info.velocity.y)
       }}
     >
-      {children({ progress, startDrag, toggleExpanded, externalDrag })}
+      {children({ progress, progressMotion, startDrag, toggleExpanded, externalDrag })}
     </motion.section>
   )
 }
