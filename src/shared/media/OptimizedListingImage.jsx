@@ -1,6 +1,7 @@
 import './optimized-listing-image.css'
 
 const RESPONSIVE_WIDTHS = [320, 480, 640, 800, 1080, 1440]
+const LISTING_FALLBACK_SRC = `${import.meta.env.BASE_URL}assets/listing-placeholder.svg`
 
 function optimizedUrl(src, width) {
   if (!src || !width) return src
@@ -43,6 +44,14 @@ export function OptimizedListingImage({
 }) {
   if (!src) return null
   const srcSet = responsiveSrcSet(src)
+  const handleError = (event) => {
+    const image = event.currentTarget
+    if (image.dataset.fallbackApplied === 'true') return
+    image.dataset.fallbackApplied = 'true'
+    image.removeAttribute('srcset')
+    image.removeAttribute('sizes')
+    image.src = LISTING_FALLBACK_SRC
+  }
   return <img
     {...props}
     className={`movera-listing-image ${className}`.trim()}
@@ -54,5 +63,6 @@ export function OptimizedListingImage({
     decoding={decoding}
     fetchPriority={fetchPriority}
     draggable={draggable}
+    onError={handleError}
   />
 }
