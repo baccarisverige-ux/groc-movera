@@ -3,6 +3,9 @@
 .map-surface:active { cursor: grabbing; }
 .map-tiles, .map-marker-layer, .map-cluster-layer { position: absolute; inset: 0; pointer-events: none; }
 .map-tiles { z-index: 0; overflow: hidden; }
+.map-tile-fallback { position:absolute; inset:0; z-index:1; display:grid; place-content:center; gap:5px; padding:24px; text-align:center; color:#6c736e; pointer-events:none; background:linear-gradient(145deg,#f5f6f3,#e9ece8); }
+.map-tile-fallback strong { font:700 13px/1.2 var(--font-sans); }
+.map-tile-fallback span { font:500 11px/1.3 var(--font-sans); }
 .map-marker-layer, .map-cluster-layer { z-index: 2; }
 .map-tile { position: absolute; width: 256px; height: 256px; overflow: hidden; transform-origin: 0 0; background-color: #f5f7f8; background-image: linear-gradient(135deg, rgba(255,255,255,.72) 25%, transparent 25%), linear-gradient(225deg, rgba(255,255,255,.54) 25%, transparent 25%), linear-gradient(45deg, rgba(218,225,228,.28) 25%, transparent 25%), linear-gradient(315deg, rgba(218,225,228,.24) 25%, #f5f7f8 25%); background-position: 18px 0, 18px 0, 0 0, 0 0; background-size: 36px 36px; will-change: transform; }
 /* B225 baseline plus explicit sizing so CARTO @2x tiles render crisp instead of cropping on Retina screens. */
