@@ -30,6 +30,51 @@ const HOST_PRESENTATION_IMAGES = Object.freeze({
   prestige: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=900&q=90&fm=webp',
 })
 
+const SEED_GALLERY_IMAGES = Object.freeze({
+  guesthouse: Object.freeze([
+    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=90&fm=webp',
+    'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=900&q=90&fm=webp',
+    'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=900&q=90&fm=webp',
+    'https://images.unsplash.com/photo-1600047509358-9dc75507daeb?auto=format&fit=crop&w=900&q=90&fm=webp',
+  ]),
+  beach: Object.freeze([
+    'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=900&q=90&fm=webp',
+    'https://images.unsplash.com/photo-1506929562872-bb421503ef21?auto=format&fit=crop&w=900&q=90&fm=webp',
+    'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&w=900&q=90&fm=webp',
+    'https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=900&q=90&fm=webp',
+  ]),
+  hotel: Object.freeze([
+    'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=90&fm=webp',
+    'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=900&q=90&fm=webp',
+    'https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=900&q=90&fm=webp',
+    'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=900&q=90&fm=webp',
+  ]),
+  family: Object.freeze([
+    'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=900&q=90&fm=webp',
+    'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?auto=format&fit=crop&w=900&q=90&fm=webp',
+    'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=900&q=90&fm=webp',
+    'https://images.unsplash.com/photo-1600607688969-a5bfcd646154?auto=format&fit=crop&w=900&q=90&fm=webp',
+  ]),
+  prestige: Object.freeze([
+    'https://images.unsplash.com/photo-1613977257363-707ba9348227?auto=format&fit=crop&w=900&q=90&fm=webp',
+    'https://images.unsplash.com/photo-1600607687644-c7171b42498f?auto=format&fit=crop&w=900&q=90&fm=webp',
+    'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=900&q=90&fm=webp',
+    'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=900&q=90&fm=webp',
+  ]),
+  experience: Object.freeze([
+    'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=90&fm=webp',
+    'https://images.unsplash.com/photo-1509316785289-025f5b846b35?auto=format&fit=crop&w=900&q=90&fm=webp',
+    'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=900&q=90&fm=webp',
+    'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=900&q=90&fm=webp',
+  ]),
+  partner: Object.freeze([
+    'https://images.unsplash.com/photo-1600585152915-d208bec867a1?auto=format&fit=crop&w=900&q=90&fm=webp',
+    'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=900&q=90&fm=webp',
+    'https://images.unsplash.com/photo-1600607688066-890987f18a86?auto=format&fit=crop&w=900&q=90&fm=webp',
+    'https://images.unsplash.com/photo-1600047509782-20d39509f26d?auto=format&fit=crop&w=900&q=90&fm=webp',
+  ]),
+})
+
 function numberOrNull(value) {
   const number = Number(value)
   return Number.isFinite(number) ? number : null
@@ -42,6 +87,13 @@ function ratingValue(value) {
 
 function categoriesFrom(value) {
   return [...new Set(String(value || '').split(/\s+/).map((item) => item.trim()).filter(Boolean))]
+}
+
+function seedPhotos(image, categories) {
+  const categoryImages = categories.flatMap((category) => SEED_GALLERY_IMAGES[category] || [])
+  return Array.from(new Set([image, ...categoryImages].filter(Boolean)))
+    .slice(0, 4)
+    .map((src, index) => ({ src, label: index === 0 ? 'Photo principale' : `Photo ${index + 1}` }))
 }
 
 function priceFromLabel(value) {
@@ -94,7 +146,7 @@ function seedListing(item, category = '') {
     longitude: null,
     image,
     imageIsPlaceholder: false,
-    photos: image ? [{ src: image, label: 'Photo principale' }] : [],
+    photos: seedPhotos(image, categories),
     rating,
     reviews: Number.isFinite(Number(detail?.reviews)) ? Number(detail.reviews) : null,
     badge: item.badge || '',
@@ -222,7 +274,7 @@ function buildSeedMap() {
     for (const item of items) {
       const existing = byId.get(item.id)
       const next = seedListing(item, category)
-      byId.set(item.id, existing ? { ...next, ...existing, image: item.image || existing.image, badge: item.badge || existing.badge, priceLabel: item.priceTotal || existing.priceLabel, category: next.category || existing.category, categories: next.categories.length ? next.categories : existing.categories } : next)
+      byId.set(item.id, existing ? { ...next, ...existing, image: item.image || existing.image, photos: next.photos.length ? next.photos : existing.photos, badge: item.badge || existing.badge, priceLabel: item.priceTotal || existing.priceLabel, category: next.category || existing.category, categories: next.categories.length ? next.categories : existing.categories } : next)
     }
   }
   return byId
