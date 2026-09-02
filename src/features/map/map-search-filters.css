@@ -3,3 +3,7 @@
 /* Equipment filters: +17% touch target and label scale. */
 [data-testid="map-amenity-filters"] .map-offer-sheet__property-chip{height:30.303px!important;min-height:30.303px!important;padding:0 11.115px!important;font-size:11.934px!important}
 @media(max-width:350px){[data-testid="map-amenity-filters"] .map-offer-sheet__property-chip{height:28.899px!important;min-height:28.899px!important;padding:0 9.594px!important;font-size:11.583px!important}}
+
+/* Align the first amenity chip vertically with the first property chip. */
+[data-testid="map-amenity-filters"]{margin-left:-.5px!important;margin-right:-.5px!important}
+@media(max-width:350px){[data-testid="map-amenity-filters"]{margin-left:.5px!important;margin-right:.5px!important}}
