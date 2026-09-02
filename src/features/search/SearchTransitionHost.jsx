@@ -97,6 +97,7 @@ export function SearchTransitionHost({ onNavigate }) {
   const [open, setOpen] = useState(false)
   const [ready, setReady] = useState(false)
   const [complete, setComplete] = useState(false)
+  const [closing, setClosing] = useState(false)
   const [step, setStep] = useState('destination')
   const [state, setState] = useState(createSearchState)
   const [origin, setOrigin] = useState({ top: 72, left: 14, width: 362, height: 52 })
@@ -169,6 +170,7 @@ export function SearchTransitionHost({ onNavigate }) {
   const closeTransition = () => {
     if (!active || complete || closingRef.current) return
     closingRef.current = true
+    setClosing(true)
     clearTimers()
     setReady(false)
     setOpen(false)
@@ -176,6 +178,7 @@ export function SearchTransitionHost({ onNavigate }) {
       setActive(false)
       closingRef.current = false
       window.requestAnimationFrame(() => {
+        setClosing(false)
         setDestinationQuery('')
         setAddressMode(false)
         setMapOriginSummary(null)
@@ -202,6 +205,7 @@ export function SearchTransitionHost({ onNavigate }) {
       mapHandoffRef.current = false
       skipScrollRestoreRef.current = false
       closingRef.current = false
+      setClosing(false)
       const rect = trigger.getBoundingClientRect()
       const viewportHeight = Math.round(window.visualViewport?.height || window.innerHeight || 760)
       const restoredSearch = mapSearchStateFromLocation()
@@ -404,7 +408,7 @@ export function SearchTransitionHost({ onNavigate }) {
   const stepIndex = step === 'destination' ? 1 : step === 'dates' ? 2 : 3
 
   return createPortal(
-    <div className={rootClass} style={rootStyle} data-testid="search-transition" data-step={step} data-ready={ready ? 'true' : 'false'} data-address-mode={addressMode ? 'true' : 'false'} data-map-origin={mapOriginSummary ? 'true' : 'false'} data-exact-fit="true">
+    <div className={rootClass} style={rootStyle} data-testid="search-transition" data-step={step} data-ready={ready ? 'true' : 'false'} data-address-mode={addressMode ? 'true' : 'false'} data-map-origin={mapOriginSummary ? 'true' : 'false'} data-closing={closing ? 'true' : 'false'} data-exact-fit="true">
       <div className="movera-st__map-stage" aria-hidden="true">
         <SearchMapPreview viewport={selectedViewport} />
       </div>
