@@ -15,9 +15,10 @@
 .movera-st:not(.movera-st--open):not(.movera-st--complete) .movera-st__panel{
   opacity:0!important;
   pointer-events:none!important;
+  border-radius:999px!important;
   transition:
     transform 900ms var(--st-motion-close),
-    border-radius 820ms var(--st-motion-close),
+    border-radius 720ms cubic-bezier(.22,.72,.16,1),
     box-shadow 820ms var(--st-motion-close),
     opacity 210ms ease-in 710ms!important;
 }
