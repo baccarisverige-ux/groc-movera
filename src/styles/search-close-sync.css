@@ -1,120 +1,92 @@
-/* Search close hand-off: balanced reverse motion, then reveal Home near the end. */
-.movera-st:not(.movera-st--open):not(.movera-st--complete) .movera-st__map-veil{
-  opacity:0!important;
-  transition:opacity 190ms ease-out 730ms!important;
-}
-
-.movera-st:not(.movera-st--open):not(.movera-st--complete) .movera-st__map-stage{
-  opacity:0!important;
-  transition:
-    transform 900ms var(--st-motion-close),
-    filter 620ms ease-out,
-    opacity 210ms ease-out 710ms!important;
-}
-
-.movera-st[data-closing="true"] .movera-st__panel{
-  top:var(--st-origin-top)!important;
-  left:var(--st-origin-left)!important;
-  width:var(--st-origin-width)!important;
-  height:var(--st-origin-height)!important;
-  opacity:0!important;
-  pointer-events:none!important;
-  border-radius:999px!important;
-  transform:translate3d(0,0,0)!important;
-  transition:
-    top 900ms cubic-bezier(.32,.72,0,1),
-    left 900ms cubic-bezier(.32,.72,0,1),
-    width 900ms cubic-bezier(.32,.72,0,1),
-    height 900ms cubic-bezier(.32,.72,0,1),
-    border-radius 760ms cubic-bezier(.32,.72,0,1),
-    box-shadow 820ms var(--st-motion-close),
-    opacity 210ms ease-in 710ms!important;
-}
+/* Search close hand-off.
+   Closing must feel like one physical panel: keep its open shape, let the search return,
+   then retract the whole popup without morphing into the search pill. */
 
 .movera-st:not(.movera-st--open):not(.movera-st--complete) .movera-st__persistent-search{
   pointer-events:none!important;
 }
 
-/* Content leaves first while the physical panel finishes its reverse motion. */
-.movera-st:not(.movera-st--open):not(.movera-st--complete) .movera-st__content{
-  transition:opacity 190ms ease-in,transform 430ms var(--st-motion-close)!important;
-}
-
-/*
- * Two-stage dismissal.
- * 1) The carried search control and its copy return first.
- * 2) The popup geometry starts its reverse motion only after that return is readable.
- *
- * The whole sequence stays inside SearchTransitionHost's existing 950 ms close window,
- * so Home and Map keep the same lifecycle and no navigation logic changes are needed.
- */
-.movera-st[data-closing="true"]:not(.movera-st--complete) .movera-st__panel{
-  transition:
-    top 650ms cubic-bezier(.32,.72,0,1) 230ms,
-    left 650ms cubic-bezier(.32,.72,0,1) 230ms,
-    width 650ms cubic-bezier(.32,.72,0,1) 230ms,
-    height 650ms cubic-bezier(.32,.72,0,1) 230ms,
-    border-radius 610ms cubic-bezier(.32,.72,0,1) 230ms,
-    box-shadow 620ms var(--st-motion-close) 230ms,
-    opacity 150ms ease-in 760ms!important;
-}
-
-.movera-st[data-closing="true"]:not(.movera-st--complete) .movera-st__map-stage{
-  transition:
-    transform 650ms var(--st-motion-close) 230ms,
-    filter 520ms ease-out 230ms,
-    opacity 150ms ease-out 760ms!important;
-}
-
-.movera-st[data-closing="true"]:not(.movera-st--complete) .movera-st__map-veil{
-  transition:opacity 150ms ease-out 760ms!important;
-}
-
-/* Home: bring the search wording back softly before the panel starts moving. */
+/* Phase 1 — return the search copy softly. */
 .movera-st[data-closing="true"]:not([data-map-origin="true"]) .movera-st__persistent-copy{
-  animation:moveraSearchCopyReturn 300ms cubic-bezier(.22,.72,.16,1) both!important;
+  animation:moveraSearchCopyReturn 280ms cubic-bezier(.22,.72,.16,1) both!important;
 }
 
 @keyframes moveraSearchCopyReturn{
-  0%{opacity:.08;transform:translate3d(0,5px,0)}
+  0%{opacity:.05;transform:translate3d(0,5px,0)}
   100%{opacity:1;transform:translate3d(0,0,0)}
 }
 
-/* Map: the carried search is the visual bridge back to the real map control.
-   It returns immediately; the original map pill stays hidden until the portal hands off. */
+/* Map uses the carried search as the bridge back to the real map header. */
 .movera-st.movera-st[data-map-origin="true"][data-closing="true"] .movera-st__persistent-search{
   opacity:1!important;
   transform:scale(1)!important;
-  animation:moveraMapSearchReturn 300ms cubic-bezier(.22,.72,.16,1) both!important;
-  transition:opacity 260ms cubic-bezier(.22,.72,.16,1),transform 300ms cubic-bezier(.22,.72,.16,1)!important;
+  animation:moveraMapSearchReturn 280ms cubic-bezier(.22,.72,.16,1) both!important;
+  transition:none!important;
 }
 
 .movera-st.movera-st[data-map-origin="true"][data-closing="true"] .movera-st__persistent-search input{
   opacity:1!important;
-  transition:opacity 260ms ease 30ms!important;
+  transition:opacity 240ms ease 20ms!important;
 }
 
 .movera-st.movera-st[data-map-origin="true"][data-closing="true"] .movera-st__persistent-meta{
   opacity:1!important;
   transform:translate3d(0,0,0)!important;
-  transition:opacity 280ms ease 45ms,transform 320ms cubic-bezier(.22,.72,.16,1)!important;
+  transition:opacity 250ms ease 30ms,transform 280ms cubic-bezier(.22,.72,.16,1)!important;
 }
 
 @keyframes moveraMapSearchReturn{
-  0%{opacity:.06;transform:scale(.985)}
+  0%{opacity:.05;transform:scale(.985)}
   100%{opacity:1;transform:scale(1)}
 }
 
-body:has(.movera-st.movera-st[data-map-origin="true"][data-closing="true"]) .b225-map-top .map-search-filter-stack__search-pill{
+body:has(.movera-st.movera-st[data-map-origin="true"][data-closing="true"]) .b225-map-top .map-search-filter-stack__search-pill,
+body:has(.movera-st.movera-st[data-map-origin="true"][data-closing="true"]) .b225-map-top .map-search-filter-stack__filter-button{
   opacity:0!important;
-  transform:scale(.985)!important;
+  pointer-events:none!important;
   transition:none!important;
 }
 
-body:has(.movera-st.movera-st[data-map-origin="true"][data-closing="true"]) .b225-map-top .map-search-filter-stack__filter-button{
+/* Phase 2 — IMPORTANT: no shape morphing.
+   The popup keeps exactly the same open geometry and retracts as one rectangle. */
+.movera-st[data-closing="true"]:not(.movera-st--complete) .movera-st__panel{
+  top:calc(10px + env(safe-area-inset-top,0px))!important;
+  left:max(10px,calc(50vw - 205px))!important;
+  width:min(calc(100vw - 20px),410px)!important;
+  height:var(--st-panel-height)!important;
+  max-height:var(--st-panel-height)!important;
+  border-radius:30px 30px 26px 26px!important;
+  pointer-events:none!important;
+  transform:translate3d(0,-22px,0) scale3d(1,1,1)!important;
+  transform-origin:center top!important;
   opacity:0!important;
-  transform:scale(.9)!important;
-  transition:none!important;
+  transition:
+    transform 610ms cubic-bezier(.22,.72,.16,1) 210ms,
+    opacity 470ms cubic-bezier(.22,.72,.16,1) 270ms,
+    box-shadow 520ms ease-out 210ms!important;
+  will-change:transform,opacity!important;
+}
+
+/* The content stays attached to the panel instead of vanishing before it moves. */
+.movera-st[data-closing="true"]:not(.movera-st--complete) .movera-st__content{
+  animation:moveraPopupContentRetract 430ms cubic-bezier(.22,.72,.16,1) 180ms both!important;
+}
+
+@keyframes moveraPopupContentRetract{
+  0%{opacity:1;transform:translate3d(0,0,0)}
+  100%{opacity:0;transform:translate3d(0,-8px,0)}
+}
+
+/* Background follows quietly; no second competing shape animation. */
+.movera-st[data-closing="true"]:not(.movera-st--complete) .movera-st__map-stage{
+  opacity:0!important;
+  transform:translate3d(-50%,12px,0) scale(1.008)!important;
+  transition:opacity 430ms ease-out 320ms,transform 610ms cubic-bezier(.22,.72,.16,1) 210ms!important;
+}
+
+.movera-st[data-closing="true"]:not(.movera-st--complete) .movera-st__map-veil{
+  opacity:0!important;
+  transition:opacity 390ms ease-out 300ms!important;
 }
 
 @media(prefers-reduced-motion:reduce){
@@ -122,7 +94,8 @@ body:has(.movera-st.movera-st[data-map-origin="true"][data-closing="true"]) .b22
   .movera-st[data-closing="true"] .movera-st__map-stage,
   .movera-st[data-closing="true"] .movera-st__map-veil,
   .movera-st[data-closing="true"] .movera-st__persistent-copy,
-  .movera-st[data-closing="true"] .movera-st__persistent-search{
+  .movera-st[data-closing="true"] .movera-st__persistent-search,
+  .movera-st[data-closing="true"] .movera-st__content{
     animation:none!important;
     transition-duration:1ms!important;
     transition-delay:0ms!important;
