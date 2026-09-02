@@ -4,6 +4,11 @@
 [data-testid="map-amenity-filters"] .map-offer-sheet__property-chip{height:30.303px!important;min-height:30.303px!important;padding:0 11.115px!important;font-size:11.934px!important}
 @media(max-width:350px){[data-testid="map-amenity-filters"] .map-offer-sheet__property-chip{height:28.899px!important;min-height:28.899px!important;padding:0 9.594px!important;font-size:11.583px!important}}
 
+/* Promo is intentionally smaller and shorter than equipment labels. */
+[data-testid="map-amenity-filters"] .map-offer-sheet__property-chip--discount{padding-left:8px!important;padding-right:8px!important;font-size:10.7px!important;font-weight:760!important}
+[data-testid="map-amenity-filters"] .map-offer-sheet__property-chip--discount[data-active=true]{background:#dfe3e0!important;border-color:rgba(34,39,36,.16)!important;box-shadow:inset 0 1px 4px rgba(28,33,30,.13),inset 0 -1px 0 rgba(255,255,255,.72)!important}
+@media(max-width:350px){[data-testid="map-amenity-filters"] .map-offer-sheet__property-chip--discount{padding-left:7px!important;padding-right:7px!important;font-size:10.3px!important}}
+
 /* Align the first amenity chip vertically with the first property chip. */
 [data-testid="map-amenity-filters"]{margin-left:-.5px!important;margin-right:-.5px!important}
 @media(max-width:350px){[data-testid="map-amenity-filters"]{margin-left:.5px!important;margin-right:.5px!important}}
