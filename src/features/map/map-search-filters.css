@@ -11,3 +11,16 @@
 /* Search handoff summary: selected place above the chosen date range. */
 .map-search-filter-stack__search-copy{min-width:0;max-width:100%;display:grid;place-items:center;gap:2px}
 .map-search-filter-stack__search-copy small{max-width:100%;font-size:9px;line-height:1;color:#777d79;font-weight:570;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Map sheet hand-off: Wi-Fi / Parking / etc. physically tuck under the search row
+   instead of only fading with the whole header. The search row stays above as a
+   white mask while the amenity dock travels behind it. */
+.b225-map-top .map-search-filter-stack{position:relative;isolation:isolate}
+.b225-map-top .map-search-filter-stack__toolbar-clip{position:relative;z-index:3;background:#fff}
+.b225-map-top [data-testid="map-amenity-filters"]{
+  position:relative;
+  z-index:1;
+  transform:translate3d(0,calc(var(--map-header-disappearance,0) * -54px),0);
+  transform-origin:center top;
+  will-change:transform;
+}
