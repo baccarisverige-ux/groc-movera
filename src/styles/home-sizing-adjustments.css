@@ -55,21 +55,10 @@
   font-size:5.8px!important;
 }
 
-/* Offer stack: keep the original spacing between sections, then lift the whole Tout → Partenaire block together. */
-.b225-home .b225-category-selection{
-  margin-top:24px!important;
-}
-
-.b225-home .b225-services-mini + .b225-category-selection{
-  margin-top:4px!important;
-}
+/* Offer-section spacing is intentionally owned by home-category-offers.css.
+   Do not override .b225-category-selection here: this file loads later. */
 
 /* Destination cards intentionally inherit their original dimensions from welcome-city-cards.css. */
-
-@media(max-width:390px){
-  .b225-home .b225-category-selection{margin-top:22px!important}
-  .b225-home .b225-services-mini + .b225-category-selection{margin-top:2px!important}
-}
 
 @media(max-width:350px){
   .b225-home .b225-services-mini{margin-top:3px!important}
