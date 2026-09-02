@@ -404,7 +404,7 @@ export function SearchTransitionHost({ onNavigate }) {
   const stepIndex = step === 'destination' ? 1 : step === 'dates' ? 2 : 3
 
   return createPortal(
-    <div className={rootClass} style={rootStyle} data-testid="search-transition" data-step={step} data-ready={ready ? 'true' : 'false'} data-address-mode={addressMode ? 'true' : 'false'} data-exact-fit="true">
+    <div className={rootClass} style={rootStyle} data-testid="search-transition" data-step={step} data-ready={ready ? 'true' : 'false'} data-address-mode={addressMode ? 'true' : 'false'} data-map-origin={mapOriginSummary ? 'true' : 'false'} data-exact-fit="true">
       <div className="movera-st__map-stage" aria-hidden="true">
         <SearchMapPreview viewport={selectedViewport} />
       </div>
