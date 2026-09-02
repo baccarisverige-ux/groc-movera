@@ -6,6 +6,15 @@
   pointer-events:none!important;
 }
 
+/* MAP open architecture.
+   The current Map label is carried only as transition state. Never paint it in
+   the editable popup input, including the two pre-open RAF frames. The first
+   real user edit removes data-map-origin and the newly typed text can appear. */
+.movera-st.movera-st[data-map-origin="true"][data-closing="false"] .movera-st__persistent-search input{
+  opacity:0!important;
+  transition:none!important;
+}
+
 /* Shared close button leaves with the immediate top hand-off. */
 .movera-st[data-closing="true"] .movera-st__persistent-toggle{
   opacity:0!important;
