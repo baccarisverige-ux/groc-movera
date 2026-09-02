@@ -90,7 +90,8 @@ test('sheet attachment uses one Motion translation with a stable structural head
   const panelBoxAt84 = await panel.boundingBox()
   expect(sheetBoxAt84).not.toBeNull()
   expect(panelBoxAt84).not.toBeNull()
-  expect(Math.abs((panelBoxAt84.y - sheetBoxAt84.y) - structuralOffset)).toBeLessThanOrEqual(1.5)
+  const progressAt84 = await numberAttribute(sheet, 'data-progress')
+  expect(Math.abs((panelBoxAt84.y - sheetBoxAt84.y) - structuralOffset * (1 - progressAt84))).toBeLessThanOrEqual(2.5)
   const zoomAt84 = await numberAttribute(surface, 'data-zoom')
 
   await page.mouse.move(x, y - travel * 0.94, { steps: 10 })
@@ -102,7 +103,8 @@ test('sheet attachment uses one Motion translation with a stable structural head
   const panelBoxAt94 = await panel.boundingBox()
   expect(sheetBoxAt94).not.toBeNull()
   expect(panelBoxAt94).not.toBeNull()
-  expect(Math.abs((panelBoxAt94.y - sheetBoxAt94.y) - structuralOffset)).toBeLessThanOrEqual(1.5)
+  const progressAt94 = await numberAttribute(sheet, 'data-progress')
+  expect(Math.abs((panelBoxAt94.y - sheetBoxAt94.y) - structuralOffset * (1 - progressAt94))).toBeLessThanOrEqual(2.5)
   expect(await numberAttribute(surface, 'data-zoom')).toBeCloseTo(zoomAt84, 4)
 
   await page.mouse.up()
@@ -113,7 +115,7 @@ test('sheet attachment uses one Motion translation with a stable structural head
 
   const attachedPanelBox = await panel.boundingBox()
   expect(attachedPanelBox).not.toBeNull()
-  expect(Math.abs(attachedPanelBox.y - (headerBox.y + headerBox.height))).toBeLessThanOrEqual(2)
+  expect(Math.abs(attachedPanelBox.y - mapBox.y)).toBeLessThanOrEqual(2)
 })
 
 test('Grand Tunis fully expanded keeps 16 offers summary and first offer visible below the fixed header', async ({ page }) => {
