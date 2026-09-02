@@ -1,27 +1,61 @@
 /* Search close hand-off.
-   Home keeps the carried search bridge. Map close is different: the REAL Map header
-   must return above the Search portal immediately, while the popup itself closes slowly. */
+   Home and Map both return their REAL header immediately above the Search portal,
+   while the popup itself continues its slow close behind them. */
 
 .movera-st:not(.movera-st--open):not(.movera-st--complete) .movera-st__persistent-search{
   pointer-events:none!important;
 }
 
-/* Home/non-Map close: return the carried search copy almost instantly. */
-.movera-st[data-closing="true"] .movera-st__persistent-copy{
-  transform:translate3d(0,0,0)!important;
-  transition:transform 70ms cubic-bezier(.22,.72,.16,1)!important;
+/* Shared close button leaves with the immediate top hand-off. */
+.movera-st[data-closing="true"] .movera-st__persistent-toggle{
+  opacity:0!important;
+  pointer-events:none!important;
+  transform:scale(.94)!important;
+  transition:opacity 70ms ease-out,transform 80ms cubic-bezier(.22,.72,.16,1)!important;
 }
 
-.movera-st[data-closing="true"]:not([data-map-origin="true"]) .movera-st__persistent-copy{
-  animation:moveraSearchCopyReturn 70ms cubic-bezier(.22,.72,.16,1) both!important;
+/* HOME close architecture.
+   The old implementation animated the portal copy back to Home. That copy sits at
+   z-index 1006 while the real sticky Home header is only z-index 35, so changing its
+   animation duration could not make the original Home header visibly return sooner.
+   Hide the copy and promote the REAL Home header immediately instead. */
+.movera-st.movera-st[data-map-origin="false"][data-closing="true"] .movera-st__persistent-search{
+  opacity:0!important;
+  transform:none!important;
+  animation:none!important;
+  transition:opacity 45ms linear!important;
 }
 
-@keyframes moveraSearchCopyReturn{
-  0%{opacity:.45;transform:translate3d(0,2px,0)}
-  100%{opacity:1;transform:translate3d(0,0,0)}
+.movera-st.movera-st[data-map-origin="false"][data-closing="true"] .movera-st__persistent-search input,
+.movera-st.movera-st[data-map-origin="false"][data-closing="true"] .movera-st__persistent-copy,
+.movera-st.movera-st[data-map-origin="false"][data-closing="true"] .movera-st__persistent-meta{
+  opacity:0!important;
+  transform:none!important;
+  animation:none!important;
+  transition:none!important;
 }
 
-/* Map close architecture:
+body:has(.movera-st.movera-st[data-map-origin="false"][data-closing="true"]) .b225-home-header{
+  z-index:2010!important;
+  opacity:1!important;
+  transform:none!important;
+  pointer-events:none!important;
+  transition:none!important;
+  will-change:auto!important;
+}
+
+body:has(.movera-st.movera-st[data-map-origin="false"][data-closing="true"]) .b225-home-header .b225-brand,
+body:has(.movera-st.movera-st[data-map-origin="false"][data-closing="true"]) .b225-home-header .b225-home-map-search,
+body:has(.movera-st.movera-st[data-map-origin="false"][data-closing="true"]) .b225-home-header .b225-home-map-search__copy,
+body:has(.movera-st.movera-st[data-map-origin="false"][data-closing="true"]) .b225-home-header .b225-home-map-filter-button{
+  opacity:1!important;
+  visibility:visible!important;
+  transform:none!important;
+  transition:none!important;
+  transition-delay:0ms!important;
+}
+
+/* MAP close architecture.
    Do NOT wait for / animate the portal copy back into place. The user must see the
    actual Map header at its original layout coordinates immediately. */
 .movera-st.movera-st[data-map-origin="true"][data-closing="true"] .movera-st__persistent-search{
@@ -37,7 +71,7 @@
   transition:none!important;
 }
 
-/* Critical stacking fix:
+/* Critical stacking fix for Map.
    .movera-st is a z-index:1000 isolated portal and its panel is z-index:1003.
    The normal Map header is only z-index:30, so opacity changes alone can never make
    it visibly return during the slow close. Promote the real header above the portal
@@ -64,15 +98,7 @@ body:has(.movera-st.movera-st[data-map-origin="true"][data-closing="true"]) .b22
   transition-delay:0ms!important;
 }
 
-/* Close button leaves with the immediate top hand-off. */
-.movera-st[data-closing="true"] .movera-st__persistent-toggle{
-  opacity:0!important;
-  pointer-events:none!important;
-  transform:scale(.94)!important;
-  transition:opacity 70ms ease-out,transform 80ms cubic-bezier(.22,.72,.16,1)!important;
-}
-
-/* Slow popup close. It stays one rectangle; the real Map header is already above it. */
+/* Slow popup close. It stays one rectangle; the real origin header is already above it. */
 .movera-st[data-closing="true"]:not(.movera-st--complete) .movera-st__panel{
   top:calc(10px + env(safe-area-inset-top,0px))!important;
   left:max(10px,calc(50vw - 205px))!important;
