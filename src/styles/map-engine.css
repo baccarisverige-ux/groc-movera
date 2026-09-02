@@ -11,10 +11,10 @@
 .map-tile::after { content: ''; position: absolute; inset: 0; border: 1px solid rgba(80, 96, 84, .05); pointer-events: none; }
 .b225-map-page .map-surface, .movera-st__map-stage .map-surface { background: #f5f7f8 !important; }
 
-/* Main map: calmer luxury palette, cleaner tile joins and a very light neutral veil. */
-.b225-map-page .map-tile img { filter: grayscale(.06) saturate(.92) contrast(1.045) brightness(1.035); }
+/* Main map fallback: bright pastel palette matching the Google reference. */
+.b225-map-page .map-tile img { filter: saturate(1.08) contrast(.98) brightness(1.045); }
 .b225-map-page .map-tile::after { border-color: rgba(255,255,255,.012); }
-.b225-map-page .map-tiles::after { content:''; position:absolute; inset:0; z-index:1; pointer-events:none; background:linear-gradient(180deg,rgba(250,251,250,.035),rgba(239,243,240,.025)); }
+.b225-map-page .map-tiles::after { content:''; position:absolute; inset:0; z-index:1; pointer-events:none; background:rgba(248,250,242,.025); }
 
 .map-marker, .map-cluster { position: absolute; left: 0; top: 0; translate: -50% -50%; pointer-events: auto; will-change: transform; }
 .map-marker { min-width: 72px; height: 40px; border: 0; background: transparent; padding: 0; cursor: pointer; display: grid; place-items: center; }
