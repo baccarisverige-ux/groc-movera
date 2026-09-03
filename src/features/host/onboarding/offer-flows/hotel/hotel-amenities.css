@@ -128,3 +128,12 @@
 }
 .host-onboarding__step[data-offer-variant="hotel"] .host-onboarding__amenity-section[data-group="essentials"]{--hotel-amenity-bg:#edf5ff;--hotel-amenity-fg:#356da5}
 .host-onboarding__step[data-offer-variant="hotel"] .host-onboarding__amenity-section[data-group="features"]{--hotel-amenity-bg:#edf6e9;--hotel-amenity-fg:#4f793b}
+
+/* Each essential keeps its own instantly recognisable, coloured pictogram. */
+.host-onboarding__step[data-offer-variant="hotel"] .host-onboarding__amenity-section[data-group="essentials"] .host-onboarding__amenity-grid>button:nth-child(1)::before{content:"❄";background:#e7f3ff;color:#2674b8}
+.host-onboarding__step[data-offer-variant="hotel"] .host-onboarding__amenity-section[data-group="essentials"] .host-onboarding__amenity-grid>button:nth-child(2)::before{content:"▥";background:#f2eaff;color:#7952a8}
+.host-onboarding__step[data-offer-variant="hotel"] .host-onboarding__amenity-section[data-group="essentials"] .host-onboarding__amenity-grid>button:nth-child(3)::before{content:"♨";background:#fff0e2;color:#b55e24}
+.host-onboarding__step[data-offer-variant="hotel"] .host-onboarding__amenity-section[data-group="essentials"] .host-onboarding__amenity-grid>button:nth-child(4)::before{content:"♨";background:#e5f7f5;color:#26827c}
+.host-onboarding__step[data-offer-variant="hotel"] .host-onboarding__amenity-section[data-group="essentials"] .host-onboarding__amenity-grid>button:nth-child(5)::before{content:"▣";background:#eeeaff;color:#6855a3}
+.host-onboarding__step[data-offer-variant="hotel"] .host-onboarding__amenity-section[data-group="essentials"] .host-onboarding__amenity-grid>button:nth-child(6)::before{content:"⌁";background:#e8f4ec;color:#34734b;font-size:22px}
+.host-onboarding__step[data-offer-variant="hotel"] .host-onboarding__amenity-section[data-group="features"] .host-onboarding__amenity-grid>button:nth-child(1)::before{content:"P";background:#edf6e9;color:#4f793b;font-size:16px;font-weight:850}
