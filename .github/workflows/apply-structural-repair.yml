@@ -103,4 +103,6 @@ jobs:
             exit 1
           fi
           git commit -m "Consolidate hotel host flow and published offer data"
+          git fetch origin main
+          git rebase origin/main
           git push origin HEAD:main
