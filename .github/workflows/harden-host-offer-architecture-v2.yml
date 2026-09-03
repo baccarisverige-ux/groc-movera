@@ -1,0 +1,93 @@
+name: Finalize Host Offer Architecture
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/harden-host-offer-architecture-v2.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: finalize-host-offer-architecture
+  cancel-in-progress: true
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Reuse validated hardening transformation
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          source = Path('.github/workflows/harden-host-offer-architecture.yml').read_text().splitlines()
+          start = next(i for i, line in enumerate(source) if "python3 <<'PY'" in line) + 1
+          end = next(i for i in range(start, len(source)) if source[i].strip() == 'PY')
+          block = source[start:end]
+          indents = [len(line) - len(line.lstrip()) for line in block if line.strip()]
+          trim = min(indents) if indents else 0
+          Path('/tmp/harden.py').write_text('\n'.join(line[trim:] for line in block) + '\n')
+          PY
+          python3 /tmp/harden.py
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Architecture lint unit build bundle
+        run: npm run quality:fast && npm run quality:bundle
+
+      - name: Install test browsers
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: Hotel E2E Chromium
+        run: npx playwright test tests/e2e/host-hotel-room-categories.spec.js --project=mobile-chromium
+
+      - name: Hotel E2E WebKit
+        shell: bash
+        run: |
+          cat > playwright.webkit.arch.config.mjs <<'EOF'
+          import { defineConfig, devices } from '@playwright/test'
+          export default defineConfig({
+            testDir: './tests', timeout: 30_000, expect: { timeout: 7_000 }, fullyParallel: false, retries: 1,
+            use: { baseURL: 'http://127.0.0.1:4173', trace: 'retain-on-failure' },
+            projects: [{ name: 'mobile-webkit', use: { ...devices['iPhone 14'], browserName: 'webkit', viewport: { width: 390, height: 844 } } }],
+            webServer: {
+              command: 'MOVERA_TEST_BASE=root npm run build && MOVERA_TEST_BASE=root npm run preview -- --host 127.0.0.1',
+              url: 'http://127.0.0.1:4173/', timeout: 120_000, reuseExistingServer: false,
+            },
+          })
+          EOF
+          npx playwright test tests/e2e/host-hotel-room-categories.spec.js --config=playwright.webkit.arch.config.mjs --project=mobile-webkit
+          rm playwright.webkit.arch.config.mjs
+
+      - name: Commit safely on latest main
+        shell: bash
+        run: |
+          rm .github/workflows/harden-host-offer-architecture.yml
+          rm .github/workflows/harden-host-offer-architecture-v2.yml
+          git config user.name 'Movera Architecture Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'Harden category-owned host offer architecture'
+          for attempt in 1 2 3 4; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+            git rebase --abort || true
+            sleep 3
+          done
+          exit 1
