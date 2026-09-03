@@ -1,6 +1,64 @@
 import './hotel-amenities.css'
 import './hotel-highlights.css'
 
+const HOTEL_ICON_BASE = `${import.meta.env.BASE_URL}assets/hotel-icons/`
+
+const HOTEL_AMENITY_IMAGE_CODES = Object.freeze({
+  ac: '2744',
+  essentials: '1F6CF',
+  heating: '1F525',
+  'hot-water': '1F4A7',
+  tv: '1F4FA',
+  wifi: '1F4F6',
+  parking: '1F17F',
+  'hotel-minibar': '1F964',
+  'hotel-room-safe': '1F512',
+  'hotel-soundproofing': '1F508',
+  'hotel-reception-24h': '1F6CE',
+  'hotel-luggage-storage': '1F9F3',
+  'hotel-multilingual-staff': '1F30D',
+  'hotel-daily-housekeeping': '1F9F9',
+  'hotel-laundry-service': '1F9FA',
+  'hotel-restaurant': '1F37D',
+  'hotel-bar': '1F378',
+  'hotel-food-room-service': '1F961',
+  'hotel-outdoor-pool': '1F3CA',
+  'hotel-spa': '1FAB7',
+  'hotel-fitness-24h': '1F3CB',
+  'hotel-airport-shuttle': '1F690',
+  'hotel-elevator': '1F6D7',
+  'hotel-accessible-rooms': '267F',
+  'hotel-security-24h': '1F6E1',
+  'hotel-smoke-detectors': '1F9EF',
+})
+
+const HOTEL_HIGHLIGHT_IMAGE_CODES = Object.freeze({
+  breakfast: '1F95E',
+  'half-board': '1F35B',
+  'full-board': '1F374',
+  'all-inclusive': '1F3AB',
+  'sea-view': '1F30A',
+  beachfront: '1F3D6',
+  central: '1F3AF',
+  airport: '2708',
+  luxury: '1F451',
+  stylish: '2728',
+  peaceful: '1F54A',
+  eco: '1F33F',
+  spa: '1FAB7',
+  'pool-highlight': '1F3CA',
+  fitness: '1F3CB',
+  'private-beach': '1F3DD',
+  family: '1F46A',
+  'adults-only': '1F51E',
+  business: '1F4BC',
+  accessible: '267F',
+})
+
+function HotelColorImage({ code, className }) {
+  return <img className={className} src={`${HOTEL_ICON_BASE}${code}.svg`} alt="" aria-hidden="true" draggable="false" />
+}
+
 export const HOTEL_AMENITY_SYMBOLS = Object.freeze({
   essentials: '✦',
   features: 'P',
@@ -15,6 +73,8 @@ export const HOTEL_AMENITY_SYMBOLS = Object.freeze({
 })
 
 export function HotelAmenityIcon({ id, fallback = null }) {
+  const imageCode = HOTEL_AMENITY_IMAGE_CODES[id]
+  if (imageCode) return <HotelColorImage code={imageCode} className="host-hotel-amenity-image" />
   if (!id.startsWith('hotel-')) return fallback
   const icons = {
     'hotel-minibar': <><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M7 11h10M10 7h.01M10 15h.01"/></>,
@@ -41,6 +101,8 @@ export function HotelAmenityIcon({ id, fallback = null }) {
 }
 
 export function HotelHighlightIcon({ id }) {
+  const imageCode = HOTEL_HIGHLIGHT_IMAGE_CODES[id]
+  if (imageCode) return <HotelColorImage code={imageCode} className="host-hotel-highlight-image" />
   const icons = {
     breakfast: <><path d="M5 11h14a7 7 0 0 1-14 0Z"/><path d="M8 7c0-2 2-2 2-4M13 7c0-2 2-2 2-4M4 19h16"/></>,
     'half-board': <><path d="M4 4v7M7 4v7M4 8h3M18 4v16M15 4c0 4 3 5 3 5"/><path d="M10 16h4"/></>,

@@ -63,6 +63,18 @@
   stroke-linejoin:round;
 }
 
+.host-onboarding__step[data-offer-variant="hotel"] .host-onboarding__amenity-grid>button>.host-hotel-amenity-image:first-child{
+  display:block;
+  width:42px;
+  height:42px;
+  flex:0 0 42px;
+  padding:5px;
+  border-radius:13px;
+  background:linear-gradient(145deg,#fff,#f6f8f7);
+  object-fit:contain;
+  filter:drop-shadow(0 3px 5px rgba(36,54,42,.12));
+}
+
 .host-onboarding__step[data-offer-variant="hotel"] .host-onboarding__amenity-section[data-group] .host-onboarding__amenity-grid>button::before{
   content:attr(data-group-symbol);
   width:34px;
