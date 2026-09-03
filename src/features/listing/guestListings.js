@@ -23,6 +23,33 @@ const HOST_AMENITY_LABELS = Object.freeze({
   essentials: 'Linge & essentiels',
 })
 
+const HOST_HIGHLIGHT_LABELS = Object.freeze({
+  peaceful: 'Calme',
+  unique: 'Unique',
+  family: 'Familial',
+  stylish: 'Élégant',
+  central: 'Central',
+  spacious: 'Spacieux',
+  'sea-view': 'Vue mer',
+  panoramic: 'Panoramique',
+  rooftop: 'Rooftop',
+  spa: 'Spa',
+  'pool-highlight': 'Piscine',
+  beachfront: 'Bord de mer',
+  luxury: 'Luxe',
+  romantic: 'Romantique',
+  business: 'Business',
+  breakfast: 'Petit-déjeuner',
+  'adults-only': 'Adults only',
+  'all-inclusive': 'All inclusive',
+  wellness: 'Bien-être',
+  design: 'Design',
+  historic: 'Historique',
+  airport: 'Proche aéroport',
+  nightlife: 'Vie nocturne',
+  eco: 'Éco-responsable',
+})
+
 const HOST_PRESENTATION_IMAGES = Object.freeze({
   hotel: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=90&fm=webp',
   guesthouse: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=90&fm=webp',
@@ -180,6 +207,10 @@ function hostListing(profile) {
     baths: Math.max(0, Number(source.bathrooms) || 0),
   }
   const amenities = (Array.isArray(source.amenities) ? source.amenities : []).map((id) => HOST_AMENITY_LABELS[id] || id).filter(Boolean)
+  const highlights = (Array.isArray(source.highlights) ? source.highlights : [])
+    .map((id) => HOST_HIGHLIGHT_LABELS[id] || '')
+    .filter(Boolean)
+    .slice(0, 2)
 
   return {
     id: source.id,
@@ -197,7 +228,8 @@ function hostListing(profile) {
     photos: actualPhotos,
     rating: null,
     reviews: 0,
-    badge: 'Nouveau',
+    badge: highlights.length ? highlights.join(' · ') : 'Nouveau',
+    highlights,
     nightlyRate,
     currency,
     priceLabel: categorized ? `À partir de ${nightlyRate} ${currency} / nuit` : `${nightlyRate} ${currency} / nuit`,
