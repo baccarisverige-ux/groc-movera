@@ -1,3 +1,4 @@
+import { storageAdapter } from '../../../services/storage/storageAdapter.js'
 import './host-hotel-highlights.css'
 
 const STORE_KEY = 'movera:host-hotel-highlight-badges:v1'
@@ -122,16 +123,11 @@ function iconMarkup(item) {
 }
 
 function readJson(key, fallback) {
-  try {
-    const raw = window.localStorage.getItem(key)
-    return raw ? JSON.parse(raw) : fallback
-  } catch {
-    return fallback
-  }
+  return storageAdapter.getJson(key, fallback)
 }
 
 function writeJson(key, value) {
-  try { window.localStorage.setItem(key, JSON.stringify(value)) } catch {}
+  storageAdapter.setJson(key, value)
 }
 
 function readSelections() {
