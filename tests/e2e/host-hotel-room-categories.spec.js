@@ -4,6 +4,15 @@ const PROFILE_KEY = 'movera:host-profiles:v1'
 const CALENDAR_KEY = 'movera:host-calendar:v1'
 const DRAFT_KEY = 'movera:host-onboarding-drafts:v1'
 const ROOM_DRAFT_KEY = 'movera:host-room-type-drafts:v1'
+const TINY_PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Z8xQAAAAASUVORK5CYII=', 'base64')
+
+function photoFiles(prefix, count = 5) {
+  return Array.from({ length: count }, (_, index) => ({
+    name: `${prefix}-${index + 1}.png`,
+    mimeType: 'image/png',
+    buffer: TINY_PNG,
+  }))
+}
 
 async function resetHost(page) {
   await page.evaluate((keys) => keys.forEach((key) => window.localStorage.removeItem(key)), [PROFILE_KEY, CALENDAR_KEY, DRAFT_KEY, ROOM_DRAFT_KEY])
@@ -89,10 +98,27 @@ test('hotel offers room-level reservation choices only before room categories', 
   await expect(gallery).toHaveCount(1)
   await expect(gallery.locator('.host-room-pro-gallery__requirement')).toContainText('Minimum 5 photos · maximum 20')
   await expect(gallery.locator('.host-room-pro-gallery__requirement')).toContainText('5 photos à ajouter · 0/20')
+  await expect(page.getByRole('button', { name: 'Continuer' })).toBeDisabled()
+
   const photoInput = gallery.locator('input[type="file"]')
   await expect(photoInput).toHaveAttribute('data-min-photos', '5')
   await expect(photoInput).toHaveAttribute('data-max-photos', '20')
+  await photoInput.setInputFiles(photoFiles('category-1'))
+  await expect(photoTabs.first()).toContainText('5/20 photos · min. 5')
+  await expect(photoTabs.first()).toHaveAttribute('data-photos-valid', 'true')
   await expect(page.getByRole('button', { name: 'Continuer' })).toBeDisabled()
+
+  await photoTabs.nth(1).click()
+  await expect(photoTabs.nth(1)).toHaveAttribute('data-active', 'true')
+  await gallery.locator('input[type="file"]').setInputFiles(photoFiles('category-2'))
+  await expect(photoTabs.nth(1)).toContainText('5/20 photos · min. 5')
+  await expect(photoTabs.nth(1)).toHaveAttribute('data-photos-valid', 'true')
+  await expect(page.getByRole('button', { name: 'Continuer' })).toBeEnabled()
+
+  const roomDraftRaw = await page.evaluate((key) => window.localStorage.getItem(key) || '', ROOM_DRAFT_KEY)
+  expect(roomDraftRaw).not.toContain('data:image')
+  expect(roomDraftRaw).toContain('host-photo:')
+
   await expect(page.locator('.host-onboarding__photo-uploader')).toBeHidden()
   await expect(page.locator('.host-room-photo-setup')).toBeHidden()
 })
