@@ -1,0 +1,30 @@
+name: Source Snapshot
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Upload source snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: movera-source-snapshot
+          path: |
+            src
+            tests
+            scripts
+            package.json
+            package-lock.json
+            playwright.config.mjs
+            vite.config.js
+            index.html
+          if-no-files-found: error
+          retention-days: 1
