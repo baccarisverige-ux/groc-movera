@@ -264,6 +264,64 @@
   -webkit-tap-highlight-color:transparent;
 }
 
+.map-offer-sheet__card-main{
+  appearance:none;
+  width:100%;
+  border:0;
+  background:transparent;
+  display:grid;
+  gap:13px;
+  padding:0;
+  text-align:left;
+  color:inherit;
+  font:inherit;
+  -webkit-tap-highlight-color:transparent;
+}
+
+.map-offer-sheet__room-categories--card{margin:0 4px}
+
+.map-offer-sheet__map-button{
+  appearance:none;
+  width:calc(100% - 8px);
+  min-height:42px;
+  margin:0 4px;
+  border:1px solid rgba(49,95,76,.16);
+  border-radius:14px;
+  background:linear-gradient(180deg,#f5faf7 0%,#edf5f0 100%);
+  color:#28533d;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  font-size:12px;
+  font-weight:780;
+  letter-spacing:-.01em;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 3px 10px rgba(37,67,51,.06);
+  transition:transform .14s ease,background .14s ease,box-shadow .14s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+
+.map-offer-sheet__map-button svg{
+  width:17px;
+  height:17px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.8;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+
+.map-offer-sheet__map-button:active{
+  transform:translateY(1px) scale(.992);
+  background:#e5f0e9;
+  box-shadow:inset 0 2px 5px rgba(38,70,52,.08);
+}
+
+.map-offer-sheet__map-button:focus-visible{
+  outline:2px solid rgba(49,95,76,.4);
+  outline-offset:2px;
+}
+
 .map-offer-sheet__card+.map-offer-sheet__card{padding-top:18px}
 .map-offer-sheet__card[data-active=true]{background:linear-gradient(180deg,#fff 0%,#fbfcfb 100%)}
 
@@ -427,6 +485,7 @@
   .map-offer-sheet__card{padding-left:11px;padding-right:11px}
   .map-offer-sheet__media{border-radius:21px}
   .map-offer-sheet__card-head strong{font-size:14px}
+  .map-offer-sheet__map-button{min-height:40px;border-radius:13px}
 }
 
 @media(prefers-reduced-motion:reduce){
@@ -434,7 +493,8 @@
   .map-offer-sheet__panel,
   .map-offer-sheet__chevron,
   .map-offer-sheet__property-chip,
-  .map-offer-sheet__card{transition:none}
+  .map-offer-sheet__card,
+  .map-offer-sheet__map-button{transition:none}
 }
 
 /* Property filters on the map: +17% touch target and label scale. */
