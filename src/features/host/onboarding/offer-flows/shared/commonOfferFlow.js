@@ -17,13 +17,23 @@ const DEFAULT_COPY = Object.freeze({
 
 const DEFAULT_PRESENTATION = Object.freeze({
   variant: 'default',
+  propertyIcon: 'house',
   amenitySymbols: Object.freeze({}),
   HighlightIcon: null,
 })
 
+function freezeRoomAccessPresentation(value) {
+  if (!value) return null
+  return Object.freeze({
+    ...value,
+    options: Object.freeze((value.options || []).map((option) => Object.freeze({ ...option }))),
+  })
+}
+
 export function createCommonOfferFlow({
   id,
   propertyType,
+  guestAccess = HOST_GUEST_ACCESS,
   supportsRoomInventory = false,
   photoPolicy = { min: 5, max: 20, scope: 'listing' },
   amenityGroups = COMMON_HOST_AMENITY_GROUPS,
@@ -34,12 +44,13 @@ export function createCommonOfferFlow({
   maxHighlights = 2,
   copy = {},
   presentation = {},
+  roomAccessPresentation = null,
 }) {
   return Object.freeze({
     id,
     propertyType,
     screens: HOST_ONBOARDING_SCREENS,
-    guestAccess: HOST_GUEST_ACCESS,
+    guestAccess: Object.freeze([...guestAccess]),
     supportsRoomInventory,
     photoPolicy: Object.freeze({ ...photoPolicy }),
     amenityGroups: Object.freeze([...amenityGroups]),
@@ -54,5 +65,6 @@ export function createCommonOfferFlow({
       ...presentation,
       amenitySymbols: Object.freeze({ ...(presentation.amenitySymbols || {}) }),
     }),
+    roomAccessPresentation: freezeRoomAccessPresentation(roomAccessPresentation),
   })
 }

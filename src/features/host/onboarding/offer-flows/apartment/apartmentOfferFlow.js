@@ -5,4 +5,5 @@ export const apartmentOfferFlow = createCommonOfferFlow({
   propertyType: 'Appartement',
   supportsRoomInventory: false,
   photoPolicy: { min: 5, max: 20, scope: 'listing' },
+  presentation: { propertyIcon: 'building' },
 })

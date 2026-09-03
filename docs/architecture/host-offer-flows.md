@@ -24,7 +24,8 @@ A category may override its own:
 - amenities and amenity groups;
 - highlight groups and selection limits;
 - category-specific copy;
-- category-specific presentation adapter (variant, symbols, icons and styles).
+- category-specific presentation adapter (variant, symbols, icons and styles);
+- hospitality room-access policy, copy and allowed options when applicable.
 
 ## Hospitality rules
 
@@ -38,3 +39,6 @@ A category may override its own:
 `scripts/check-architecture.mjs` requires every category module and rejects Hotel business or presentation rules leaking back into `hostOnboardingModel.js`, the common `HostOnboardingPage.jsx` orchestrator, or `hostRoomProfessionalFlow.js`. The professional room flow resolves photo limits from `getOfferFlow(...).photoPolicy`; it does not own Hotel constants.
 
 `tests/unit/hostOfferFlowRegistry.test.js` verifies that every supported property type resolves to its own flow and that Hotel/Maison d’hôte room inventory remains isolated from Appartement/Villa.
+## Policy / engine rule
+
+Category modules own category decisions and wording. Shared enhancers (`hostHospitalityGuestAccessEnhancer.js`, `hostRoomTypesOnboardingEnhancer.js`, `hostRoomProfessionalFlow.js`) only render or execute generic mechanics from the active `offerFlowRegistry` contract. No Hotel-only model wrapper is allowed at the onboarding root.

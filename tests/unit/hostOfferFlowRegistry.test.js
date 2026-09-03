@@ -31,6 +31,23 @@ describe('host offer flow registry', () => {
     expect(getOfferFlow('Villa').supportsRoomInventory).toBe(false)
   })
 
+  it('keeps room-access policy inside hospitality category flows', () => {
+    const hotel = getOfferFlow('Hôtel')
+    const guesthouse = getOfferFlow('Maison d’hôte')
+    expect(hotel.guestAccess.map((item) => item.id)).toEqual(['private', 'shared'])
+    expect(hotel.roomAccessPresentation.options.map((item) => item.id)).toEqual(['private', 'shared'])
+    expect(guesthouse.roomAccessPresentation.options.map((item) => item.id)).toEqual(['private', 'shared', 'entire'])
+    expect(getOfferFlow('Appartement').roomAccessPresentation).toBeNull()
+    expect(getOfferFlow('Villa').roomAccessPresentation).toBeNull()
+  })
+
+  it('keeps property selector presentation category-owned', () => {
+    expect(getOfferFlow('Appartement').presentation.propertyIcon).toBe('building')
+    expect(getOfferFlow('Hôtel').presentation.propertyIcon).toBe('building')
+    expect(getOfferFlow('Villa').presentation.propertyIcon).toBe('house')
+    expect(getOfferFlow('Maison d’hôte').presentation.propertyIcon).toBe('house')
+  })
+
   it('keeps the hotel photo contract at 5 to 20 photos per room category', () => {
     expect(getOfferFlow('Hôtel').photoPolicy).toEqual({ min: 5, max: 20, scope: 'room-category' })
   })

@@ -68,22 +68,9 @@ function BathIcon() {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16v3a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4v-3ZM7 12V6a3 3 0 0 1 6 0M8 19l-1 2M16 19l1 2" /></svg>
 }
 
-function PropertyTypeIcon({ type }) {
-  const name = String(type).toLowerCase()
-  if (name.includes('appartement') || name.includes('hôtel')) {
+function PropertyTypeIcon({ kind = 'house' }) {
+  if (kind === 'building') {
     return <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M12 42V9h18v33M30 18h7v24M18 16h5M18 23h5M18 30h5M34 25h3M34 32h3M8 42h33"/></svg>
-  }
-  if (name.includes('bateau')) {
-    return <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M14 31h25l-5 9H13l-5-9h6ZM18 31V8l15 10H18M8 43c4 2 8 2 12 0 4 2 8 2 12 0 4 2 7 2 10 0"/></svg>
-  }
-  if (name.includes('tiny')) {
-    return <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M10 31V16l14-9 14 9v15M15 31h18M19 31V21h10v10M13 37h22M15 37a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM33 37a3 3 0 1 0 0 6 3 3 0 0 0 0-6"/></svg>
-  }
-  if (name.includes('loft') || name.includes('studio')) {
-    return <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M10 39V15L24 7l14 8v24H10ZM18 39V25h12v14M14 19h20M31 12v9"/></svg>
-  }
-  if (name.includes('chalet')) {
-    return <svg viewBox="0 0 48 48" aria-hidden="true"><path d="m8 27 16-18 16 18M13 24v17h22V24M19 41V29h10v12M36 15h5M39 12v16"/></svg>
   }
   return <svg viewBox="0 0 48 48" aria-hidden="true"><path d="m7 23 17-15 17 15M11 20v22h26V20M19 42V29h10v13M15 25h6M31 25h4"/></svg>
 }
@@ -348,12 +335,15 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
           <h1>Quel type décrit le mieux votre logement ?</h1>
           <p>Choisissez la catégorie qui correspond le plus à votre bien.</p>
           <div className="host-onboarding__choice-grid" role="radiogroup" aria-label="Type de logement">
-            {HOST_PROPERTY_TYPES.map((item) => (
-              <button key={item} type="button" role="radio" aria-checked={draft.propertyType === item} data-active={draft.propertyType === item ? 'true' : 'false'} onClick={() => updateDraft({ propertyType: item })}>
-                <span><PropertyTypeIcon type={item} /></span>
-                <strong>{item}</strong>
-              </button>
-            ))}
+            {HOST_PROPERTY_TYPES.map((item) => {
+              const itemFlow = getOfferFlow(item)
+              return (
+                <button key={item} type="button" role="radio" data-property-type={item} aria-checked={draft.propertyType === item} data-active={draft.propertyType === item ? 'true' : 'false'} onClick={() => updateDraft({ propertyType: item })}>
+                  <span><PropertyTypeIcon kind={itemFlow.presentation.propertyIcon} /></span>
+                  <strong>{item}</strong>
+                </button>
+              )
+            })}
           </div>
         </main>
       ) : null}
@@ -365,7 +355,7 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
           <p>Choisissez l’option qui décrit le mieux l’espace proposé.</p>
           <div className="host-onboarding__stacked-options" role="radiogroup" aria-label="Accès voyageurs">
             {offerFlow.guestAccess.map((item) => (
-              <button key={item.id} type="button" role="radio" aria-checked={draft.guestAccess === item.id} data-active={draft.guestAccess === item.id ? 'true' : 'false'} onClick={() => updateDraft({ guestAccess: item.id })}>
+              <button key={item.id} type="button" role="radio" data-guest-access-id={item.id} aria-checked={draft.guestAccess === item.id} data-active={draft.guestAccess === item.id ? 'true' : 'false'} onClick={() => updateDraft({ guestAccess: item.id })}>
                 <span className="host-onboarding__radio-dot">{draft.guestAccess === item.id ? <CheckIcon /> : null}</span>
                 <div><strong>{item.label}</strong><small>{item.description}</small></div>
                 <GuestAccessIcon id={item.id} />

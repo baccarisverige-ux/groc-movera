@@ -15,6 +15,7 @@ const forbidden = [
   'src/features/beach/beach-page-scale.css',
   'src/features/host/onboarding/host-hotel-amenities.css',
   'src/features/host/onboarding/host-hotel-highlights.css',
+  'src/features/host/onboarding/hostHotelAmenitiesModel.js',
 ];
 const required = [
   'src/app/router/routes.jsx',
@@ -146,6 +147,9 @@ if (onboardingPage.includes('supportsPooledRoomInventory') || onboardingPage.inc
 for (const token of ['offer-flows/hotel/', 'HOTEL_', 'data-hotel-', 'host-hotel-', "offerFlow.id === 'hotel'"]) {
   if (onboardingPage.includes(token)) violations.push(`HostOnboardingPage.jsx: category-specific presentation leak: ${token}`);
 }
+for (const token of ["name.includes('hôtel')", "name.includes('appartement')", "name.includes('villa')", "name.includes('maison')"]) {
+  if (onboardingPage.includes(token)) violations.push(`HostOnboardingPage.jsx: property selector policy leaked into generic icon renderer: ${token}`);
+}
 
 const professionalRoomFlow = await readFile(new URL('../src/features/host/onboarding/hostRoomProfessionalFlow.js', import.meta.url), 'utf8');
 if (!professionalRoomFlow.includes('getOfferFlow(ctx?.draft?.propertyType).photoPolicy')) {
@@ -153,6 +157,23 @@ if (!professionalRoomFlow.includes('getOfferFlow(ctx?.draft?.propertyType).photo
 }
 for (const token of ["propertyType === 'Hôtel'", 'HOTEL_CATEGORY_', 'hotelCategoryPhoto']) {
   if (professionalRoomFlow.includes(token)) violations.push(`hostRoomProfessionalFlow.js: Hotel-specific photo policy leak: ${token}`);
+}
+
+const hospitalityEnhancer = await readFile(new URL('../src/features/host/onboarding/hostHospitalityGuestAccessEnhancer.js', import.meta.url), 'utf8');
+if (!hospitalityEnhancer.includes('getOfferFlow(propertyType)') || !hospitalityEnhancer.includes('roomAccessPresentation')) {
+  violations.push('hostHospitalityGuestAccessEnhancer.js: shared renderer must consume room-access policy through offerFlowRegistry');
+}
+for (const token of ['supportsPooledRoomInventory', 'HOSPITALITY_OPTIONS', 'isGuestHouse', 'Pour votre hôtel', 'Pour votre maison']) {
+  if (hospitalityEnhancer.includes(token)) violations.push(`hostHospitalityGuestAccessEnhancer.js: category policy leaked into shared renderer: ${token}`);
+}
+
+const hotelOfferFlow = await readFile(new URL('../src/features/host/onboarding/offer-flows/hotel/hotelOfferFlow.js', import.meta.url), 'utf8');
+const guestHouseOfferFlow = await readFile(new URL('../src/features/host/onboarding/offer-flows/guesthouse/guestHouseOfferFlow.js', import.meta.url), 'utf8');
+if (!hotelOfferFlow.includes('roomAccessPresentation') || !guestHouseOfferFlow.includes('roomAccessPresentation')) {
+  violations.push('Hospitality category files must own their room-access presentation policy');
+}
+if (hotelOfferFlow.includes('hostHotelAmenitiesModel')) {
+  violations.push('hotelOfferFlow.js: Hotel amenities must be imported directly from the entity model');
 }
 
 const indexHtml = await readFile(new URL('../index.html', import.meta.url), 'utf8');
