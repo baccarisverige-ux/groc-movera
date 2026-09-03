@@ -11,6 +11,14 @@ const DEFAULT_COPY = Object.freeze({
   amenitiesText: 'Sélectionnez uniquement ce qui est réellement disponible.',
   highlightsTitle: 'Décrivez votre logement',
   highlightsText: 'Choisissez jusqu’à 2 points forts pour commencer.',
+  highlightsSummaryTitle: 'Affichage sur votre offre',
+  highlightsSummaryText: 'Les points forts sélectionnés seront affichés sur votre offre.',
+})
+
+const DEFAULT_PRESENTATION = Object.freeze({
+  variant: 'default',
+  amenitySymbols: Object.freeze({}),
+  HighlightIcon: null,
 })
 
 export function createCommonOfferFlow({
@@ -25,6 +33,7 @@ export function createCommonOfferFlow({
   minHighlights = 1,
   maxHighlights = 2,
   copy = {},
+  presentation = {},
 }) {
   return Object.freeze({
     id,
@@ -40,5 +49,10 @@ export function createCommonOfferFlow({
     minHighlights,
     maxHighlights,
     copy: Object.freeze({ ...DEFAULT_COPY, ...copy }),
+    presentation: Object.freeze({
+      ...DEFAULT_PRESENTATION,
+      ...presentation,
+      amenitySymbols: Object.freeze({ ...(presentation.amenitySymbols || {}) }),
+    }),
   })
 }

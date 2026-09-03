@@ -1,0 +1,46 @@
+.host-onboarding__step[data-offer-variant="hotel"]{gap:18px}
+.host-onboarding__step[data-offer-variant="hotel"]>.host-onboarding__chips,
+.host-onboarding__step[data-offer-variant="hotel"]>.host-onboarding__selection-count{display:none!important}
+.host-offer-grouped-highlights{display:grid;gap:18px;width:100%}
+.host-offer-grouped-highlights__summary{display:grid;gap:5px;padding:15px 16px;border:1px solid #e3e9e5;border-radius:20px;background:linear-gradient(180deg,#fbfdfb,#f5f8f6);box-shadow:0 10px 28px rgba(29,52,37,.045)}
+.host-offer-grouped-highlights__summary strong{font-size:13px;color:#193223;letter-spacing:-.015em}
+.host-offer-grouped-highlights__summary span{font-size:10.5px;line-height:1.45;color:#748079}
+.host-offer-grouped-highlights__summary b{justify-self:start;margin-top:3px;padding:6px 9px;border-radius:999px;background:#e9f1eb;color:#2d6241;font-size:9px;letter-spacing:.01em}
+.host-offer-grouped-highlights__group{display:grid;gap:10px}
+.host-offer-grouped-highlights__group-head{display:grid;gap:3px;padding:0 2px}
+.host-offer-grouped-highlights__group-head h2{margin:0;font-size:18px!important;line-height:1.15;letter-spacing:-.035em;color:#1a2a20}
+.host-offer-grouped-highlights__group-head p{margin:0!important;font-size:10px!important;line-height:1.45!important;color:#7f8883!important}
+.host-offer-grouped-highlights__grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.host-offer-grouped-highlight{position:relative;min-height:92px;padding:12px 11px;border:1px solid #e3e7e4;border-radius:18px;background:#fff;display:flex;align-items:flex-start;gap:9px;text-align:left;box-shadow:0 5px 18px rgba(26,42,31,.035);transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease,background .16s ease}
+.host-offer-grouped-highlight:active{transform:scale(.985)}
+.host-offer-grouped-highlight[data-active="true"]{border-color:#afc5b5;background:linear-gradient(180deg,#fbfdfb,#f2f7f3);box-shadow:0 0 0 2px rgba(50,93,65,.055),0 8px 22px rgba(31,62,42,.065)}
+.host-offer-grouped-highlight__icon{flex:0 0 36px;width:36px;height:36px;border-radius:12px;display:grid;place-items:center;background:var(--hotel-tone-bg,#eef4ef);color:var(--hotel-tone-fg,#315e40);box-shadow:inset 0 0 0 1px rgba(255,255,255,.65)}
+.host-offer-grouped-highlight__icon svg{width:20px;height:20px}
+.host-offer-grouped-highlight__copy{display:grid;gap:3px;min-width:0;padding-top:2px}
+.host-offer-grouped-highlight__copy strong{font-size:11px;line-height:1.18;color:#1e2822}
+.host-offer-grouped-highlight__copy small{font-size:8.3px;line-height:1.35;color:#7b8580}
+.host-offer-grouped-highlight__check{position:absolute;right:8px;top:8px;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:#315f42;color:#fff;font-size:10px;font-weight:900;opacity:0;transform:scale(.72);transition:.14s ease}
+.host-offer-grouped-highlight[data-active="true"] .host-offer-grouped-highlight__check{opacity:1;transform:scale(1)}
+[data-tone="amber"]{--hotel-tone-bg:#fff5d9;--hotel-tone-fg:#a36900}
+[data-tone="orange"]{--hotel-tone-bg:#fff0df;--hotel-tone-fg:#ad5c13}
+[data-tone="terracotta"]{--hotel-tone-bg:#f9e8e1;--hotel-tone-fg:#9c503a}
+[data-tone="rose"],[data-tone="pink"]{--hotel-tone-bg:#fce9ef;--hotel-tone-fg:#a84666}
+[data-tone="gold"]{--hotel-tone-bg:#f8efd9;--hotel-tone-fg:#8e6b20}
+[data-tone="berry"]{--hotel-tone-bg:#f6e7ee;--hotel-tone-fg:#8c3f62}
+[data-tone="plum"]{--hotel-tone-bg:#f1e8f2;--hotel-tone-fg:#73477c}
+[data-tone="sky"]{--hotel-tone-bg:#e7f4fb;--hotel-tone-fg:#34749a}
+[data-tone="cyan"],[data-tone="aqua"]{--hotel-tone-bg:#e3f6f5;--hotel-tone-fg:#247c78}
+[data-tone="blue"]{--hotel-tone-bg:#e7eefb;--hotel-tone-fg:#3e64a5}
+[data-tone="violet"],[data-tone="purple"]{--hotel-tone-bg:#eee9fb;--hotel-tone-fg:#684fa1}
+[data-tone="green"],[data-tone="sage"]{--hotel-tone-bg:#eaf3eb;--hotel-tone-fg:#3c6e49}
+[data-tone="indigo"],[data-tone="navy"]{--hotel-tone-bg:#e8ecf5;--hotel-tone-fg:#415777}
+[data-tone="sand"]{--hotel-tone-bg:#f3ede3;--hotel-tone-fg:#806548}
+[data-tone="coral"]{--hotel-tone-bg:#fbeae5;--hotel-tone-fg:#a45445}
+[data-tone="teal"]{--hotel-tone-bg:#e5f1ef;--hotel-tone-fg:#39726b}
+[data-tone="lavender"]{--hotel-tone-bg:#f0eafb;--hotel-tone-fg:#7252a2}
+[data-tone="mint"]{--hotel-tone-bg:#e6f5ed;--hotel-tone-fg:#36765a}
+[data-tone="lime"]{--hotel-tone-bg:#eff6df;--hotel-tone-fg:#657d2d}
+[data-tone="charcoal"]{--hotel-tone-bg:#eceeed;--hotel-tone-fg:#444c47}
+[data-tone="olive"]{--hotel-tone-bg:#f0f1e5;--hotel-tone-fg:#6d7042}
+@media(max-width:350px){.host-offer-grouped-highlights__grid{grid-template-columns:1fr}.host-offer-grouped-highlight{min-height:78px}.host-onboarding__step[data-offer-variant="hotel"]{gap:15px}}
+@media(prefers-reduced-motion:reduce){.host-offer-grouped-highlight,.host-offer-grouped-highlight__check{transition:none!important}}

@@ -13,6 +13,8 @@ const forbidden = [
   'src/features/listing-detail/listingDetailData.js',
   'src/features/beach/beach-page.css',
   'src/features/beach/beach-page-scale.css',
+  'src/features/host/onboarding/host-hotel-amenities.css',
+  'src/features/host/onboarding/host-hotel-highlights.css',
 ];
 const required = [
   'src/app/router/routes.jsx',
@@ -42,6 +44,8 @@ const required = [
   'src/features/host/onboarding/offer-flows/guesthouse/guestHouseOfferFlow.js',
   'src/features/host/onboarding/offer-flows/hotel/hotelOfferFlow.js',
   'src/features/host/onboarding/offer-flows/hotel/hotelOfferVisuals.jsx',
+  'src/features/host/onboarding/offer-flows/hotel/hotel-amenities.css',
+  'src/features/host/onboarding/offer-flows/hotel/hotel-highlights.css',
   'src/features/map/MapPage.jsx',
   'src/features/map/constants/map.constants.js',
   'src/features/map-engine/MapContainer.jsx',
@@ -138,6 +142,17 @@ if (!onboardingPage.includes('getOfferFlow(draft.propertyType)')) {
 }
 if (onboardingPage.includes('supportsPooledRoomInventory') || onboardingPage.includes('HOST_HOTEL_HIGHLIGHTS')) {
   violations.push('HostOnboardingPage.jsx: category business rules leaked back into the common orchestrator');
+}
+for (const token of ['offer-flows/hotel/', 'HOTEL_', 'data-hotel-', 'host-hotel-', "offerFlow.id === 'hotel'"]) {
+  if (onboardingPage.includes(token)) violations.push(`HostOnboardingPage.jsx: category-specific presentation leak: ${token}`);
+}
+
+const professionalRoomFlow = await readFile(new URL('../src/features/host/onboarding/hostRoomProfessionalFlow.js', import.meta.url), 'utf8');
+if (!professionalRoomFlow.includes('getOfferFlow(ctx?.draft?.propertyType).photoPolicy')) {
+  violations.push('hostRoomProfessionalFlow.js: room photo rules must come from the active category offer flow');
+}
+for (const token of ["propertyType === 'Hôtel'", 'HOTEL_CATEGORY_', 'hotelCategoryPhoto']) {
+  if (professionalRoomFlow.includes(token)) violations.push(`hostRoomProfessionalFlow.js: Hotel-specific photo policy leak: ${token}`);
 }
 
 const indexHtml = await readFile(new URL('../index.html', import.meta.url), 'utf8');

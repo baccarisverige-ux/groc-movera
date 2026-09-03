@@ -14,10 +14,7 @@ import {
   screenPhase,
 } from './hostOnboardingModel.js'
 import { getOfferFlow } from './offer-flows/offerFlowRegistry.js'
-import { HOTEL_AMENITY_SYMBOLS, HotelHighlightIcon } from './offer-flows/hotel/hotelOfferVisuals.jsx'
 import './host-onboarding-page.css'
-import './host-hotel-highlights.css'
-import './host-hotel-amenities.css'
 
 function ArrowIcon({ back = false }) {
   return (
@@ -235,7 +232,8 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
   const internalProgress = phaseProgress(step)
   const visualStage = visualStageFor(id)
   const offerFlow = useMemo(() => getOfferFlow(draft.propertyType), [draft.propertyType])
-  const isHotel = offerFlow.id === 'hotel'
+  const offerPresentation = offerFlow.presentation
+  const HighlightIcon = offerPresentation.HighlightIcon
 
   useEffect(() => {
     const nextDraft = readHostOnboardingDraft(session?.userId)
@@ -425,19 +423,19 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
       ) : null}
 
       {id === 'amenities' ? (
-        <main className="host-onboarding__step host-onboarding__step--amenities" data-hotel-amenities={isHotel ? 'true' : 'false'}>
+        <main className="host-onboarding__step host-onboarding__step--amenities" data-offer-variant={offerPresentation.variant}>
           <span className="host-onboarding__eyebrow">Étape {step + 1}</span>
           <h1>{offerFlow.copy.amenitiesTitle}</h1>
           <p>{offerFlow.copy.amenitiesText}</p>
           <div className="host-onboarding__amenity-groups">
             {offerFlow.amenityGroups.map((group) => (
               <section className="host-onboarding__amenity-section" data-group={group.id} key={group.id}>
-                <h2 data-hotel-symbol={isHotel ? HOTEL_AMENITY_SYMBOLS[group.id] : undefined}>{group.label}</h2>
+                <h2 data-group-symbol={offerPresentation.amenitySymbols[group.id] || undefined}>{group.label}</h2>
                 <div className="host-onboarding__amenity-grid">
                   {offerFlow.amenities.filter((item) => item.group === group.id).map((item) => {
                     const active = draft.amenities.includes(item.id)
                     return (
-                      <button key={item.id} type="button" aria-pressed={active} data-active={active ? 'true' : 'false'} data-hotel-symbol={isHotel ? HOTEL_AMENITY_SYMBOLS[group.id] : undefined} onClick={() => toggleArrayValue('amenities', item.id)}>
+                      <button key={item.id} type="button" aria-pressed={active} data-active={active ? 'true' : 'false'} data-group-symbol={offerPresentation.amenitySymbols[group.id] || undefined} onClick={() => toggleArrayValue('amenities', item.id)}>
                         <AmenityGlyph id={item.id} />
                         <span className="host-onboarding__amenity-copy"><strong>{item.label}</strong>{item.detail ? <small>{item.detail}</small> : null}</span>
                         {active ? <span className="host-onboarding__choice-check"><CheckIcon /></span> : null}
@@ -479,28 +477,28 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
       ) : null}
 
       {id === 'highlights' ? (
-        <main className="host-onboarding__step" data-hotel-highlights={isHotel ? 'true' : 'false'}>
+        <main className="host-onboarding__step" data-offer-variant={offerPresentation.variant}>
           <span className="host-onboarding__eyebrow">Étape {step + 1}</span>
           <h1>{offerFlow.copy.highlightsTitle}</h1>
           <p>{offerFlow.copy.highlightsText}</p>
           {offerFlow.highlightGroups.length ? (
-            <div className="host-hotel-highlights">
-              <div className="host-hotel-highlights__summary">
-                <strong>Affichage sur votre offre</strong>
-                <span>Vous pouvez sélectionner plusieurs points forts. Tous les éléments cochés seront affichés comme badges sur l’offre.</span>
+            <div className="host-offer-grouped-highlights">
+              <div className="host-offer-grouped-highlights__summary">
+                <strong>{offerFlow.copy.highlightsSummaryTitle}</strong>
+                <span>{offerFlow.copy.highlightsSummaryText}</span>
                 <b>{draft.highlights.length} sélectionné{draft.highlights.length > 1 ? 's' : ''}</b>
               </div>
               {offerFlow.highlightGroups.map((group) => (
-                <section className="host-hotel-highlights__group" data-group={group.id} key={group.id}>
-                  <div className="host-hotel-highlights__group-head"><h2>{group.title}</h2><p>{group.text}</p></div>
-                  <div className="host-hotel-highlights__grid">
+                <section className="host-offer-grouped-highlights__group" data-group={group.id} key={group.id}>
+                  <div className="host-offer-grouped-highlights__group-head"><h2>{group.title}</h2><p>{group.text}</p></div>
+                  <div className="host-offer-grouped-highlights__grid">
                     {offerFlow.highlights.filter((item) => item.group === group.id).map((item) => {
                       const active = draft.highlights.includes(item.id)
                       return (
-                        <button className="host-hotel-highlight" key={item.id} type="button" aria-pressed={active} data-active={active ? 'true' : 'false'} data-tone={item.tone} onClick={() => toggleArrayValue('highlights', item.id)}>
-                          <span className="host-hotel-highlight__icon"><HotelHighlightIcon id={item.id} /></span>
-                          <span className="host-hotel-highlight__copy"><strong>{item.label}</strong>{item.detail ? <small>{item.detail}</small> : null}</span>
-                          <span className="host-hotel-highlight__check">✓</span>
+                        <button className="host-offer-grouped-highlight" key={item.id} type="button" aria-pressed={active} data-active={active ? 'true' : 'false'} data-tone={item.tone} onClick={() => toggleArrayValue('highlights', item.id)}>
+                          <span className="host-offer-grouped-highlight__icon">{HighlightIcon ? <HighlightIcon id={item.id} /> : null}</span>
+                          <span className="host-offer-grouped-highlight__copy"><strong>{item.label}</strong>{item.detail ? <small>{item.detail}</small> : null}</span>
+                          <span className="host-offer-grouped-highlight__check">✓</span>
                         </button>
                       )
                     })}

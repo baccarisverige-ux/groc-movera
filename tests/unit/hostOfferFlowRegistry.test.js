@@ -18,6 +18,10 @@ describe('host offer flow registry', () => {
     expect(hotel.amenityGroups.some((group) => group.id.startsWith('hotel-'))).toBe(true)
     expect(apartment.amenityGroups.some((group) => group.id.startsWith('hotel-'))).toBe(false)
     expect(villa.amenityGroups.some((group) => group.id.startsWith('hotel-'))).toBe(false)
+    expect(hotel.presentation.variant).toBe('hotel')
+    expect(typeof hotel.presentation.HighlightIcon).toBe('function')
+    expect(apartment.presentation.variant).toBe('default')
+    expect(apartment.presentation.HighlightIcon).toBeNull()
   })
 
   it('keeps hospitality room inventory separate from single-property offers', () => {

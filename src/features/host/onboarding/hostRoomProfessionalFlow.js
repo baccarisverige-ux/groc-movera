@@ -6,6 +6,7 @@ import {
 } from '../../../entities/host/hostRoomTypeDraftStore.js'
 import { readAuthSession } from '../../auth/authSession.js'
 import { readHostOnboardingDraft } from './hostOnboardingDraftStore.js'
+import { getOfferFlow } from './offer-flows/offerFlowRegistry.js'
 import {
   migrateLegacyHostPhoto,
   removeHostPhoto,
@@ -17,8 +18,6 @@ import './host-room-professional-flow.css'
 const BASIC = '.host-onboarding[data-screen="basics"]'
 const PHOTOS = '.host-onboarding[data-screen="photos"]'
 const DEFAULT_MAX_PHOTOS = 8
-const HOTEL_CATEGORY_MIN_PHOTOS = 5
-const HOTEL_CATEGORY_MAX_PHOTOS = 20
 let observer
 let frame = 0
 let busy = false
@@ -56,15 +55,16 @@ function write(ctx, value) { return writeHostRoomConfigurationDraft(ctx.userId, 
 function units(room) { return Math.max(1, Math.round(Number(room?.totalUnits) || 1)) }
 function price(room) { return Math.max(1, Math.round(Number(room?.basePrice) || 1)) }
 
-function hotelCategoryPhotoRules(ctx, configuration) {
-  const enforced = ctx?.draft?.propertyType === 'Hôtel' && configuration?.mode === HOST_ROOM_SETUP_MODES.CATEGORIES
+function roomCategoryPhotoRules(ctx, configuration) {
+  const policy = getOfferFlow(ctx?.draft?.propertyType).photoPolicy
+  const enforced = configuration?.mode === HOST_ROOM_SETUP_MODES.CATEGORIES && policy?.scope === 'room-category'
   return enforced
-    ? { enforced: true, min: HOTEL_CATEGORY_MIN_PHOTOS, max: HOTEL_CATEGORY_MAX_PHOTOS }
+    ? { enforced: true, min: Math.max(0, Number(policy.min) || 0), max: Math.max(1, Number(policy.max) || DEFAULT_MAX_PHOTOS) }
     : { enforced: false, min: 0, max: DEFAULT_MAX_PHOTOS }
 }
 
-function hotelCategoryPhotosValid(ctx, configuration) {
-  const rules = hotelCategoryPhotoRules(ctx, configuration)
+function roomCategoryPhotosValid(ctx, configuration) {
+  const rules = roomCategoryPhotoRules(ctx, configuration)
   if (!rules.enforced) return true
   const rooms = Array.isArray(configuration?.roomTypes) ? configuration.roomTypes : []
   return rooms.length > 0 && rooms.every((room) => {
@@ -76,12 +76,12 @@ function hotelCategoryPhotosValid(ctx, configuration) {
 function syncPhotoContinueButton(page, ctx, configuration) {
   const button = page?.querySelector('.host-onboarding__primary')
   if (!button) return
-  const rules = hotelCategoryPhotoRules(ctx, configuration)
+  const rules = roomCategoryPhotoRules(ctx, configuration)
   if (!rules.enforced) {
     delete button.dataset.roomPhotosValid
     return
   }
-  const valid = hotelCategoryPhotosValid(ctx, configuration)
+  const valid = roomCategoryPhotosValid(ctx, configuration)
   button.dataset.roomPhotosValid = valid ? 'true' : 'false'
   button.disabled = !valid
 }
@@ -179,7 +179,7 @@ async function migrateLegacyPhotos(ctx, configuration) {
 
 function gallery(ctx, configuration, room, roomIndex) {
   const section = el('section', 'host-room-pro-gallery')
-  const rules = hotelCategoryPhotoRules(ctx, configuration)
+  const rules = roomCategoryPhotoRules(ctx, configuration)
   const head = el('header')
   head.append(
     el('strong', '', configuration.mode === HOST_ROOM_SETUP_MODES.CATEGORIES ? room.name : 'Votre chambre'),
@@ -285,7 +285,7 @@ function enhancePhotos(ctx) {
   if (!step) return
   const configuration = read(ctx)
   if (configuration.mode === HOST_ROOM_SETUP_MODES.MULTIPLE_UNSET) return
-  const rules = hotelCategoryPhotoRules(ctx, configuration)
+  const rules = roomCategoryPhotoRules(ctx, configuration)
   step.dataset.roomProfessionalPhotos = 'true'
   let flow = step.querySelector('.host-room-pro-photos')
   if (!flow) { flow = el('section', 'host-room-pro-photos'); step.append(flow) }

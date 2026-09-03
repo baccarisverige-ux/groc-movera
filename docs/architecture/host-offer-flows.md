@@ -8,7 +8,8 @@ Each property category owns its offer-creation business rules. The common onboar
 - `src/features/host/onboarding/offer-flows/villa/villaOfferFlow.js` — Villa
 - `src/features/host/onboarding/offer-flows/guesthouse/guestHouseOfferFlow.js` — Maison d’hôte
 - `src/features/host/onboarding/offer-flows/hotel/hotelOfferFlow.js` — Hôtel
-- `src/features/host/onboarding/offer-flows/hotel/hotelOfferVisuals.jsx` — Hôtel-specific presentation assets
+- `src/features/host/onboarding/offer-flows/hotel/hotelOfferVisuals.jsx` — Hôtel-specific presentation adapter
+- `src/features/host/onboarding/offer-flows/hotel/hotel-amenities.css` and `hotel-highlights.css` — Hôtel-owned styles
 
 `offerFlowRegistry.js` is the only selector used by the common onboarding orchestrator.
 
@@ -22,7 +23,8 @@ A category may override its own:
 - photo policy;
 - amenities and amenity groups;
 - highlight groups and selection limits;
-- category-specific copy.
+- category-specific copy;
+- category-specific presentation adapter (variant, symbols, icons and styles).
 
 ## Hospitality rules
 
@@ -33,6 +35,6 @@ A category may override its own:
 
 ## Architecture contract
 
-`scripts/check-architecture.mjs` requires every category module and rejects Hotel business rules leaking back into `hostOnboardingModel.js` or the common `HostOnboardingPage.jsx` orchestrator.
+`scripts/check-architecture.mjs` requires every category module and rejects Hotel business or presentation rules leaking back into `hostOnboardingModel.js`, the common `HostOnboardingPage.jsx` orchestrator, or `hostRoomProfessionalFlow.js`. The professional room flow resolves photo limits from `getOfferFlow(...).photoPolicy`; it does not own Hotel constants.
 
 `tests/unit/hostOfferFlowRegistry.test.js` verifies that every supported property type resolves to its own flow and that Hotel/Maison d’hôte room inventory remains isolated from Appartement/Villa.

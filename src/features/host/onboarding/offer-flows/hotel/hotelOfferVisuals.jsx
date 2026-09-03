@@ -1,3 +1,6 @@
+import './hotel-amenities.css'
+import './hotel-highlights.css'
+
 export const HOTEL_AMENITY_SYMBOLS = Object.freeze({
   'hotel-room': '◇',
   'hotel-bath': '◡',
@@ -26,3 +29,9 @@ export function HotelHighlightIcon({ id }) {
   if (audience) return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="3"/><path d="M5 20c.5-5 2.8-8 7-8s6.5 3 7 8"/></svg>
   return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9Z"/></svg>
 }
+
+export const HOTEL_OFFER_PRESENTATION = Object.freeze({
+  variant: 'hotel',
+  amenitySymbols: HOTEL_AMENITY_SYMBOLS,
+  HighlightIcon: HotelHighlightIcon,
+})
