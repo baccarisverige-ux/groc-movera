@@ -96,9 +96,9 @@ export function GuestLayout({ children, currentPath, onNavigate }) {
                 onNavigate={onNavigate}
                 disabled={disabled}
               >
-                <span className="app-shell__nav-icon" data-tone={tone} aria-hidden="true">
+                <div className="app-shell__nav-icon" data-tone={tone} aria-hidden="true">
                   <svg viewBox="0 0 256 256">{icon}</svg>
-                </span>
+                </div>
                 <span className="app-shell__nav-label">{label}</span>
               </AppLink>
             )
