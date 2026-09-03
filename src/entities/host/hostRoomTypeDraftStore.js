@@ -73,7 +73,9 @@ function normalizeRoom(room, index, fallback = {}) {
     amenities: normalizeIds(Array.isArray(source.amenities) ? source.amenities : fallback.amenities),
     highlights: normalizeIds(Array.isArray(source.highlights) ? source.highlights : fallback.highlights, 30),
     promotions: normalizeIds(Array.isArray(source.promotions) ? source.promotions : fallback.promotions, 10),
-    bookingMode: source.bookingMode === 'instant' ? 'instant' : (fallback.bookingMode === 'instant' ? 'instant' : 'request-first'),
+    bookingMode: source.bookingMode === 'instant' || source.bookingMode === 'request-first'
+      ? source.bookingMode
+      : (fallback.bookingMode === 'instant' ? 'instant' : 'request-first'),
     safety: normalizeSafety(source.safety, fallback.safety),
     photos: normalizePhotos(source.photos),
   }

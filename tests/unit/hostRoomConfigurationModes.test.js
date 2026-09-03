@@ -1,6 +1,24 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import { listingCategoryFromType, supportsPooledRoomInventory, usesPooledRoomInventory } from '../../src/entities/host/hostProfileStore.js'
-import { HOST_ROOM_SETUP_MODES, roomConfigurationIsValid } from '../../src/entities/host/hostRoomTypeDraftStore.js'
+import { HOST_ROOM_SETUP_MODES, readHostRoomConfigurationDraft, roomConfigurationIsValid, writeHostRoomConfigurationDraft } from '../../src/entities/host/hostRoomTypeDraftStore.js'
+
+const originalWindow = globalThis.window
+
+afterEach(() => {
+  if (originalWindow === undefined) delete globalThis.window
+  else globalThis.window = originalWindow
+})
+
+function installMemoryStorage() {
+  const values = new Map()
+  globalThis.window = {
+    localStorage: {
+      getItem: (key) => values.has(key) ? values.get(key) : null,
+      setItem: (key, value) => values.set(key, String(value)),
+      removeItem: (key) => values.delete(key),
+    },
+  }
+}
 
 function room(overrides = {}) {
   return {
@@ -55,6 +73,21 @@ describe('host hotel and guesthouse room configuration', () => {
         room({ id: 'deluxe', name: 'Deluxe', totalUnits: 1 }),
       ],
     })).toBe(false)
+  })
+
+  it('keeps each category booking mode independent when the first category changes', () => {
+    installMemoryStorage()
+    writeHostRoomConfigurationDraft('hotel-user', {
+      mode: HOST_ROOM_SETUP_MODES.CATEGORIES,
+      totalRooms: 2,
+      roomTypes: [
+        room({ id: 'standard', bookingMode: 'instant' }),
+        room({ id: 'deluxe', name: 'Deluxe', bookingMode: 'request-first' }),
+      ],
+    }, { bookingMode: 'instant' })
+
+    const stored = readHostRoomConfigurationDraft('hotel-user', { bookingMode: 'instant' })
+    expect(stored.roomTypes.map((item) => item.bookingMode)).toEqual(['instant', 'request-first'])
   })
 })
 
