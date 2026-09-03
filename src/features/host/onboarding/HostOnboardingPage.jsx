@@ -267,10 +267,12 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
       amenities: draft.amenities,
       highlights: draft.highlights,
       promotions: draft.promotions,
+      bookingMode: draft.bookingMode,
+      safety: draft.safety,
     })
     setRoomConfiguration(next)
     setActiveRoomId((current) => next.roomTypes.some((room) => room.id === current) ? current : next.roomTypes[0]?.id || '')
-  }, [session?.userId, id, draft.propertyType, draft.guests, draft.beds, draft.bathrooms, draft.basePrice, draft.amenities, draft.highlights, draft.promotions])
+  }, [session?.userId, id, draft.propertyType, draft.guests, draft.beds, draft.bathrooms, draft.basePrice, draft.amenities, draft.highlights, draft.promotions, draft.bookingMode, draft.safety])
 
   useEffect(() => {
     if (!session?.userId) return
@@ -278,7 +280,13 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
   }, [session?.userId, draft, step])
 
   const updateDraft = (patch) => setDraft((current) => ({ ...current, ...patch }))
-  const updateSafety = (key, value) => setDraft((current) => ({ ...current, safety: { ...current.safety, [key]: value } }))
+  const updateSafety = (key, value) => {
+    if (activeRoom) {
+      updateActiveRoom({ safety: { ...activeRoom.safety, [key]: value } })
+      return
+    }
+    setDraft((current) => ({ ...current, safety: { ...current.safety, [key]: value } }))
+  }
 
   const canContinue = useMemo(() => {
     if (id === 'property-type') return Boolean(draft.propertyType)
@@ -312,6 +320,8 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
       amenities: draft.amenities,
       highlights: draft.highlights,
       promotions: draft.promotions,
+      bookingMode: draft.bookingMode,
+      safety: draft.safety,
     })
     setRoomConfiguration(next)
     setDraft((current) => ({
@@ -320,6 +330,8 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
       highlights: [...new Set(next.roomTypes.flatMap((room) => room.highlights || []))],
       promotions: [...new Set(next.roomTypes.flatMap((room) => room.promotions || []))],
       basePrice: String(next.roomTypes[0]?.basePrice || current.basePrice),
+      bookingMode: next.roomTypes[0]?.bookingMode || current.bookingMode,
+      safety: next.roomTypes[0]?.safety || current.safety,
     }))
   }
 
@@ -608,16 +620,17 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
           <span className="host-onboarding__eyebrow">Étape {step + 1}</span>
           <h1>Partagez les informations de sécurité</h1>
           <p>Indiquez clairement les dispositifs présents dans le logement.</p>
+          <HotelRoomCategorySelector rooms={hasRoomCategories ? roomConfiguration.roomTypes : []} activeId={activeRoom?.id} onChange={setActiveRoomId} />
           <div className="host-onboarding__safety-card">
             <strong>Surveillance & sécurité</strong>
-            <label className="host-onboarding__toggle-row"><span>Caméra extérieure présente</span><input type="checkbox" checked={draft.safety.exteriorCamera} onChange={(event) => updateSafety('exteriorCamera', event.target.checked)} /></label>
-            <label className="host-onboarding__toggle-row"><span>Moniteur de bruit présent</span><input type="checkbox" checked={draft.safety.noiseMonitor} onChange={(event) => updateSafety('noiseMonitor', event.target.checked)} /></label>
-            <label className="host-onboarding__toggle-row"><span>Arme présente sur la propriété</span><input type="checkbox" checked={draft.safety.weapons} onChange={(event) => updateSafety('weapons', event.target.checked)} /></label>
+            <label className="host-onboarding__toggle-row"><span>Caméra extérieure présente</span><input type="checkbox" checked={(activeRoom?.safety || draft.safety).exteriorCamera} onChange={(event) => updateSafety('exteriorCamera', event.target.checked)} /></label>
+            <label className="host-onboarding__toggle-row"><span>Moniteur de bruit présent</span><input type="checkbox" checked={(activeRoom?.safety || draft.safety).noiseMonitor} onChange={(event) => updateSafety('noiseMonitor', event.target.checked)} /></label>
+            <label className="host-onboarding__toggle-row"><span>Arme présente sur la propriété</span><input type="checkbox" checked={(activeRoom?.safety || draft.safety).weapons} onChange={(event) => updateSafety('weapons', event.target.checked)} /></label>
           </div>
           <div className="host-onboarding__safety-card">
             <strong>Détecteurs</strong>
-            <label className="host-onboarding__toggle-row"><span>Détecteur de fumée</span><input type="checkbox" checked={draft.safety.smokeAlarm} onChange={(event) => updateSafety('smokeAlarm', event.target.checked)} /></label>
-            <label className="host-onboarding__toggle-row"><span>Détecteur de monoxyde de carbone</span><input type="checkbox" checked={draft.safety.carbonMonoxideAlarm} onChange={(event) => updateSafety('carbonMonoxideAlarm', event.target.checked)} /></label>
+            <label className="host-onboarding__toggle-row"><span>Détecteur de fumée</span><input type="checkbox" checked={(activeRoom?.safety || draft.safety).smokeAlarm} onChange={(event) => updateSafety('smokeAlarm', event.target.checked)} /></label>
+            <label className="host-onboarding__toggle-row"><span>Détecteur de monoxyde de carbone</span><input type="checkbox" checked={(activeRoom?.safety || draft.safety).carbonMonoxideAlarm} onChange={(event) => updateSafety('carbonMonoxideAlarm', event.target.checked)} /></label>
           </div>
         </main>
       ) : null}
@@ -631,9 +644,10 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
           <span className="host-onboarding__eyebrow">Étape {step + 1}</span>
           <h1>Choisissez vos préférences de réservation</h1>
           <p>Vous pourrez modifier ce réglage plus tard.</p>
+          <HotelRoomCategorySelector rooms={hasRoomCategories ? roomConfiguration.roomTypes : []} activeId={activeRoom?.id} onChange={setActiveRoomId} />
           <div className="host-onboarding__stacked-options host-onboarding__stacked-options--booking" role="radiogroup" aria-label="Mode de réservation">
-            <button type="button" role="radio" aria-checked={draft.bookingMode === 'request-first'} data-active={draft.bookingMode === 'request-first' ? 'true' : 'false'} onClick={() => updateDraft({ bookingMode: 'request-first' })}><span className="host-onboarding__radio-dot">{draft.bookingMode === 'request-first' ? <CheckIcon /> : null}</span><div><strong>Approuver les premières réservations</strong><small>Vous examinez chaque demande avant de confirmer.</small></div></button>
-            <button type="button" role="radio" aria-checked={draft.bookingMode === 'instant'} data-active={draft.bookingMode === 'instant' ? 'true' : 'false'} onClick={() => updateDraft({ bookingMode: 'instant' })}><span className="host-onboarding__radio-dot">{draft.bookingMode === 'instant' ? <CheckIcon /> : null}</span><div><strong>Réservation instantanée</strong><small>Les voyageurs peuvent réserver automatiquement.</small></div></button>
+            <button type="button" role="radio" aria-checked={(activeRoom?.bookingMode || draft.bookingMode) === 'request-first'} data-active={(activeRoom?.bookingMode || draft.bookingMode) === 'request-first' ? 'true' : 'false'} onClick={() => activeRoom ? updateActiveRoom({ bookingMode: 'request-first' }) : updateDraft({ bookingMode: 'request-first' })}><span className="host-onboarding__radio-dot">{(activeRoom?.bookingMode || draft.bookingMode) === 'request-first' ? <CheckIcon /> : null}</span><div><strong>Approuver les premières réservations</strong><small>Vous examinez chaque demande avant de confirmer.</small></div></button>
+            <button type="button" role="radio" aria-checked={(activeRoom?.bookingMode || draft.bookingMode) === 'instant'} data-active={(activeRoom?.bookingMode || draft.bookingMode) === 'instant' ? 'true' : 'false'} onClick={() => activeRoom ? updateActiveRoom({ bookingMode: 'instant' }) : updateDraft({ bookingMode: 'instant' })}><span className="host-onboarding__radio-dot">{(activeRoom?.bookingMode || draft.bookingMode) === 'instant' ? <CheckIcon /> : null}</span><div><strong>Réservation instantanée</strong><small>Les voyageurs peuvent réserver automatiquement.</small></div></button>
           </div>
         </main>
       ) : null}
@@ -669,9 +683,10 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
           <span className="host-onboarding__eyebrow">Étape finale</span>
           <h1>Finalisez et publiez</h1>
           <p>Vérifiez vos principaux réglages avant d’activer votre espace Hôte.</p>
+          <HotelRoomCategorySelector rooms={hasRoomCategories ? roomConfiguration.roomTypes : []} activeId={activeRoom?.id} onChange={setActiveRoomId} />
           <div className="host-onboarding__review-summary">
-            <section><span className="host-onboarding__review-icon">▣</span><div><strong>Préférence de réservation</strong><small>{draft.bookingMode === 'instant' ? 'Réservation instantanée' : 'Validation des premières demandes'}</small></div><b>›</b></section>
-            <section><span className="host-onboarding__review-icon">◇</span><div><strong>Tarification</strong><small>Prix de base</small></div><em>{Number(draft.basePrice) || 0} TND</em></section>
+            <section><span className="host-onboarding__review-icon">▣</span><div><strong>Préférence de réservation</strong><small>{(activeRoom?.bookingMode || draft.bookingMode) === 'instant' ? 'Réservation instantanée' : 'Validation des premières demandes'}</small></div><b>›</b></section>
+            <section><span className="host-onboarding__review-icon">◇</span><div><strong>Tarification</strong><small>{activeRoom ? activeRoom.name : 'Prix de base'}</small></div><em>{Number(activeRoom?.basePrice ?? draft.basePrice) || 0} TND</em></section>
             <section><span className="host-onboarding__review-icon">✓</span><div><strong>Sécurité</strong><small>Informations renseignées</small></div><i>Complet</i></section>
           </div>
           <div className="host-onboarding__review-card">

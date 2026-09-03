@@ -34,6 +34,8 @@ function fallbackFromDraft(draft) {
     beds: draft.beds,
     bathrooms: draft.bathrooms,
     basePrice: draft.basePrice,
+    bookingMode: draft.bookingMode,
+    safety: draft.safety,
   }
 }
 
@@ -125,6 +127,11 @@ function newCategory(index, fallback, totalUnits = 1) {
     basePrice: Math.max(1, Number(fallback.basePrice) || 180),
     totalUnits: Math.max(1, totalUnits),
     features: [],
+    amenities: [],
+    highlights: [],
+    promotions: [],
+    bookingMode: fallback.bookingMode === 'instant' ? 'instant' : 'request-first',
+    safety: { ...(fallback.safety || {}) },
     photos: [],
   }
 }
@@ -426,6 +433,8 @@ function renderReview(target, userId, draft) {
         `${room.highlights?.length || 0} options`,
         room.description?.trim() ? 'Description prête' : 'Description à compléter',
         `${room.promotions?.length || 0} promotions`,
+        room.bookingMode === 'instant' ? 'Réservation instantanée' : 'Réservation sur demande',
+        room.safety?.smokeAlarm ? 'Détecteur de fumée' : 'Sécurité à vérifier',
         `${room.basePrice} TND/nuit`,
       ].filter(Boolean).join(' · ')
       item.append(
