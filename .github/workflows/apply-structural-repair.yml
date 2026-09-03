@@ -22,7 +22,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cat docs/ci/movera-structural-repair.patch.gz.b64.part-* > /tmp/movera-structural-repair.patch.gz.b64
+          cat \
+            docs/ci/movera-structural-repair.patch.gz.b64.part-00 \
+            docs/ci/movera-structural-repair.patch.gz.b64.part-01a \
+            docs/ci/movera-structural-repair.patch.gz.b64.part-01b1 \
+            docs/ci/movera-structural-repair.patch.gz.b64.part-01b2a1x \
+            docs/ci/movera-structural-repair.patch.gz.b64.part-01b2a1y \
+            docs/ci/movera-structural-repair.patch.gz.b64.part-01b2a2 \
+            docs/ci/movera-structural-repair.patch.gz.b64.part-01b2b \
+            docs/ci/movera-structural-repair.patch.gz.b64.part-02 \
+            > /tmp/movera-structural-repair.patch.gz.b64
+          test "$(wc -c < /tmp/movera-structural-repair.patch.gz.b64)" -eq 43868
+          echo "4d44873610d7bc7a7a28bb141b889909022205bd914bb7a59b6dce0ddc8d2a29  /tmp/movera-structural-repair.patch.gz.b64" | sha256sum -c -
           base64 -d /tmp/movera-structural-repair.patch.gz.b64 | gunzip > /tmp/movera-structural-repair.patch
           git apply --check /tmp/movera-structural-repair.patch
           git apply /tmp/movera-structural-repair.patch
