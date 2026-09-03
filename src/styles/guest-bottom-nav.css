@@ -1,4 +1,4 @@
-:root{--movera-nav-active:#50735f}
+:root{--movera-nav-active:#315f4b}
 
 .app-shell--guest > .app-shell__nav{
   position:fixed!important;
@@ -110,11 +110,11 @@
 .app-shell--guest > .app-shell__nav > .app-shell__nav-item:active{transform:scale(.93)!important}
 
 .app-shell--guest > .app-shell__nav > .app-shell__nav-item svg{
-  width:23px!important;
-  height:23px!important;
-  min-width:23px!important;
-  min-height:23px!important;
-  flex:0 0 23px!important;
+  width:22px!important;
+  height:22px!important;
+  min-width:22px!important;
+  min-height:22px!important;
+  flex:0 0 22px!important;
   margin:0!important;
   padding:0!important;
   fill:none!important;
@@ -123,6 +123,44 @@
   stroke-linecap:round!important;
   stroke-linejoin:round!important;
   box-sizing:content-box!important;
+}
+
+/* Imported Phosphor Duotone artwork: one quiet, distinctive colour per destination. */
+.app-shell--guest > .app-shell__nav > .app-shell__nav-item .app-shell__nav-icon{
+  --nav-tone:61,114,89;
+  position:relative!important;
+  width:34px!important;
+  height:32px!important;
+  min-width:34px!important;
+  min-height:32px!important;
+  margin:-1px 0 0!important;
+  padding:0!important;
+  display:grid!important;
+  place-items:center!important;
+  border:1px solid rgba(var(--nav-tone),.11)!important;
+  border-radius:11px!important;
+  color:rgb(var(--nav-tone))!important;
+  background:linear-gradient(145deg,rgba(255,255,255,.96),rgba(var(--nav-tone),.09))!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.98),0 3px 8px rgba(var(--nav-tone),.08)!important;
+  transition:transform .18s cubic-bezier(.2,.8,.2,1),background .18s ease,box-shadow .18s ease!important;
+}
+
+.app-shell--guest > .app-shell__nav > .app-shell__nav-item .app-shell__nav-icon[data-tone='map']{--nav-tone:62,105,154}
+.app-shell--guest > .app-shell__nav > .app-shell__nav-item .app-shell__nav-icon[data-tone='favorites']{--nav-tone:171,76,101}
+.app-shell--guest > .app-shell__nav > .app-shell__nav-item .app-shell__nav-icon[data-tone='messages']{--nav-tone:105,87,153}
+.app-shell--guest > .app-shell__nav > .app-shell__nav-item .app-shell__nav-icon[data-tone='profile']{--nav-tone:142,94,52}
+
+.app-shell--guest > .app-shell__nav > .app-shell__nav-item .app-shell__nav-icon svg{
+  fill:currentColor!important;
+  stroke:none!important;
+  color:inherit!important;
+}
+
+.app-shell--guest > .app-shell__nav > .app-shell__nav-item[data-active='true'] .app-shell__nav-icon{
+  transform:translateY(-1px) scale(1.045)!important;
+  background:linear-gradient(145deg,#fff,rgba(var(--nav-tone),.16))!important;
+  border-color:rgba(var(--nav-tone),.22)!important;
+  box-shadow:inset 0 1px 0 #fff,0 5px 12px rgba(var(--nav-tone),.17)!important;
 }
 
 .app-shell--guest > .app-shell__nav > .app-shell__nav-item span{
@@ -145,9 +183,7 @@
 
 .app-shell--guest > .app-shell__nav > .app-shell__nav-item[data-active='true'] svg,
 .app-shell--guest:has(.b225-home) > .app-shell__nav > .app-shell__nav-item[data-active='true'] svg{
-  stroke:var(--movera-nav-active)!important;
-  color:var(--movera-nav-active)!important;
-  stroke-width:1.95!important;
+  color:inherit!important;
 }
 
 .app-shell--guest > .app-shell__nav > .app-shell__nav-item[data-active='true'] span,
@@ -174,5 +210,6 @@
 @media(max-width:350px){
   .app-shell--guest > .app-shell__nav{height:calc(67px + env(safe-area-inset-bottom,0px))!important}
   .app-shell--guest > .app-shell__nav > .app-shell__nav-item{font-size:9.5px!important;min-height:49px!important;height:49px!important;max-height:49px!important}
-  .app-shell--guest > .app-shell__nav > .app-shell__nav-item svg{width:22px!important;height:22px!important;min-width:22px!important;min-height:22px!important;flex-basis:22px!important}
+  .app-shell--guest > .app-shell__nav > .app-shell__nav-item .app-shell__nav-icon{width:32px!important;height:30px!important;min-width:32px!important;min-height:30px!important}
+  .app-shell--guest > .app-shell__nav > .app-shell__nav-item svg{width:20px!important;height:20px!important;min-width:20px!important;min-height:20px!important;flex-basis:20px!important}
 }
