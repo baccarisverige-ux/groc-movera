@@ -1,0 +1,239 @@
+name: Harden Host Offer Architecture
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/harden-host-offer-architecture.yml
+
+permissions:
+  contents: write
+
+jobs:
+  harden:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Harden category boundaries
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          root = Path('.')
+
+          def replace_required(path, old, new):
+              p = root / path
+              text = p.read_text()
+              if old not in text:
+                  raise SystemExit(f'Missing expected block in {path}: {old[:80]!r}')
+              p.write_text(text.replace(old, new))
+
+          # Category-specific styles belong to the Hotel category module.
+          hotel_dir = root / 'src/features/host/onboarding/offer-flows/hotel'
+          old_amenities = root / 'src/features/host/onboarding/host-hotel-amenities.css'
+          old_highlights = root / 'src/features/host/onboarding/host-hotel-highlights.css'
+          new_amenities = hotel_dir / 'hotel-amenities.css'
+          new_highlights = hotel_dir / 'hotel-highlights.css'
+          if old_amenities.exists(): old_amenities.rename(new_amenities)
+          if old_highlights.exists(): old_highlights.rename(new_highlights)
+
+          # Make Hotel CSS consume generic presentation attributes/classes.
+          text = new_amenities.read_text()
+          text = text.replace('[data-hotel-amenities="true"]', '[data-offer-variant="hotel"]')
+          text = text.replace('data-hotel-symbol', 'data-group-symbol')
+          new_amenities.write_text(text)
+
+          text = new_highlights.read_text()
+          text = text.replace('[data-hotel-highlights="true"]', '[data-offer-variant="hotel"]')
+          text = text.replace('host-hotel-highlights', 'host-offer-grouped-highlights')
+          text = text.replace('host-hotel-highlight', 'host-offer-grouped-highlight')
+          new_highlights.write_text(text)
+
+          # Hotel visuals own their styles and expose one presentation adapter.
+          visuals = hotel_dir / 'hotelOfferVisuals.jsx'
+          text = visuals.read_text()
+          if not text.startswith("import './hotel-amenities.css'"):
+              text = "import './hotel-amenities.css'\nimport './hotel-highlights.css'\n\n" + text
+          if 'export const HOTEL_OFFER_PRESENTATION' not in text:
+              text += "\nexport const HOTEL_OFFER_PRESENTATION = Object.freeze({\n  variant: 'hotel',\n  amenitySymbols: HOTEL_AMENITY_SYMBOLS,\n  HighlightIcon: HotelHighlightIcon,\n})\n"
+          visuals.write_text(text)
+
+          # Shared flow exposes a generic presentation contract and generic grouped-highlight copy.
+          common = root / 'src/features/host/onboarding/offer-flows/shared/commonOfferFlow.js'
+          text = common.read_text()
+          text = text.replace(
+              "  highlightsText: 'Choisissez jusqu’à 2 points forts pour commencer.',\n})",
+              "  highlightsText: 'Choisissez jusqu’à 2 points forts pour commencer.',\n  highlightsSummaryTitle: 'Affichage sur votre offre',\n  highlightsSummaryText: 'Les points forts sélectionnés seront affichés sur votre offre.',\n})\n\nconst DEFAULT_PRESENTATION = Object.freeze({\n  variant: 'default',\n  amenitySymbols: Object.freeze({}),\n  HighlightIcon: null,\n})",
+          )
+          text = text.replace(
+              "  maxHighlights = 2,\n  copy = {},\n}) {",
+              "  maxHighlights = 2,\n  copy = {},\n  presentation = {},\n}) {",
+          )
+          text = text.replace(
+              "    maxHighlights,\n    copy: Object.freeze({ ...DEFAULT_COPY, ...copy }),\n  })",
+              "    maxHighlights,\n    copy: Object.freeze({ ...DEFAULT_COPY, ...copy }),\n    presentation: Object.freeze({\n      ...DEFAULT_PRESENTATION,\n      ...presentation,\n      amenitySymbols: Object.freeze({ ...(presentation.amenitySymbols || {}) }),\n    }),\n  })",
+          )
+          common.write_text(text)
+
+          # Hotel flow owns all Hotel-specific presentation/copy configuration.
+          hotel_flow = hotel_dir / 'hotelOfferFlow.js'
+          text = hotel_flow.read_text()
+          if "./hotelOfferVisuals.jsx" not in text:
+              text = text.replace(
+                  "import { createCommonOfferFlow } from '../shared/commonOfferFlow.js'",
+                  "import { createCommonOfferFlow } from '../shared/commonOfferFlow.js'\nimport { HOTEL_OFFER_PRESENTATION } from './hotelOfferVisuals.jsx'",
+              )
+          text = text.replace(
+              "  maxHighlights: Infinity,\n  copy: {",
+              "  maxHighlights: Infinity,\n  presentation: HOTEL_OFFER_PRESENTATION,\n  copy: {",
+          )
+          text = text.replace(
+              "    highlightsText: 'Cochez tout ce qui décrit réellement votre établissement. Tous vos choix seront visibles sur l’offre.',\n",
+              "    highlightsText: 'Cochez tout ce qui décrit réellement votre établissement. Tous vos choix seront visibles sur l’offre.',\n    highlightsSummaryTitle: 'Affichage sur votre offre',\n    highlightsSummaryText: 'Vous pouvez sélectionner plusieurs points forts. Tous les éléments cochés seront affichés comme badges sur l’offre.',\n",
+          )
+          hotel_flow.write_text(text)
+
+          # Common page becomes category-blind: no direct Hotel imports, flags, classes or copy.
+          page = root / 'src/features/host/onboarding/HostOnboardingPage.jsx'
+          text = page.read_text()
+          text = text.replace("import { HOTEL_AMENITY_SYMBOLS, HotelHighlightIcon } from './offer-flows/hotel/hotelOfferVisuals.jsx'\n", '')
+          text = text.replace("import './host-hotel-highlights.css'\n", '')
+          text = text.replace("import './host-hotel-amenities.css'\n", '')
+          text = text.replace("  const isHotel = offerFlow.id === 'hotel'\n", "  const offerPresentation = offerFlow.presentation\n  const HighlightIcon = offerPresentation.HighlightIcon\n")
+          text = text.replace('data-hotel-amenities={isHotel ? \'true\' : \'false\'}', 'data-offer-variant={offerPresentation.variant}')
+          text = text.replace('data-hotel-symbol={isHotel ? HOTEL_AMENITY_SYMBOLS[group.id] : undefined}', 'data-group-symbol={offerPresentation.amenitySymbols[group.id] || undefined}')
+          text = text.replace('data-hotel-highlights={isHotel ? \'true\' : \'false\'}', 'data-offer-variant={offerPresentation.variant}')
+          text = text.replace('host-hotel-highlights', 'host-offer-grouped-highlights')
+          text = text.replace('host-hotel-highlight', 'host-offer-grouped-highlight')
+          text = text.replace('<strong>Affichage sur votre offre</strong>', '<strong>{offerFlow.copy.highlightsSummaryTitle}</strong>')
+          text = text.replace('<span>Vous pouvez sélectionner plusieurs points forts. Tous les éléments cochés seront affichés comme badges sur l’offre.</span>', '<span>{offerFlow.copy.highlightsSummaryText}</span>')
+          text = text.replace('<HotelHighlightIcon id={item.id} />', '{HighlightIcon ? <HighlightIcon id={item.id} /> : null}')
+          forbidden = ['offer-flows/hotel/', 'HOTEL_AMENITY_SYMBOLS', 'HotelHighlightIcon', 'data-hotel-', 'host-hotel-', "offerFlow.id === 'hotel'", 'const isHotel']
+          leaks = [token for token in forbidden if token in text]
+          if leaks:
+              raise SystemExit(f'HostOnboardingPage still contains category-specific leaks: {leaks}')
+          page.write_text(text)
+
+          # Professional room/photo enhancement reads category photo policy from the registry.
+          pro = root / 'src/features/host/onboarding/hostRoomProfessionalFlow.js'
+          text = pro.read_text()
+          if "./offer-flows/offerFlowRegistry.js" not in text:
+              text = text.replace(
+                  "import { readHostOnboardingDraft } from './hostOnboardingDraftStore.js'\n",
+                  "import { readHostOnboardingDraft } from './hostOnboardingDraftStore.js'\nimport { getOfferFlow } from './offer-flows/offerFlowRegistry.js'\n",
+              )
+          text = text.replace("const HOTEL_CATEGORY_MIN_PHOTOS = 5\n", '')
+          text = text.replace("const HOTEL_CATEGORY_MAX_PHOTOS = 20\n", '')
+          old_rules = """function hotelCategoryPhotoRules(ctx, configuration) {\n  const enforced = ctx?.draft?.propertyType === 'Hôtel' && configuration?.mode === HOST_ROOM_SETUP_MODES.CATEGORIES\n  return enforced\n    ? { enforced: true, min: HOTEL_CATEGORY_MIN_PHOTOS, max: HOTEL_CATEGORY_MAX_PHOTOS }\n    : { enforced: false, min: 0, max: DEFAULT_MAX_PHOTOS }\n}\n\nfunction hotelCategoryPhotosValid(ctx, configuration) {\n  const rules = hotelCategoryPhotoRules(ctx, configuration)\n"""
+          new_rules = """function roomCategoryPhotoRules(ctx, configuration) {\n  const policy = getOfferFlow(ctx?.draft?.propertyType).photoPolicy\n  const enforced = configuration?.mode === HOST_ROOM_SETUP_MODES.CATEGORIES && policy?.scope === 'room-category'\n  return enforced\n    ? { enforced: true, min: Math.max(0, Number(policy.min) || 0), max: Math.max(1, Number(policy.max) || DEFAULT_MAX_PHOTOS) }\n    : { enforced: false, min: 0, max: DEFAULT_MAX_PHOTOS }\n}\n\nfunction roomCategoryPhotosValid(ctx, configuration) {\n  const rules = roomCategoryPhotoRules(ctx, configuration)\n"""
+          if old_rules not in text:
+              raise SystemExit('Expected legacy Hotel photo rule block not found')
+          text = text.replace(old_rules, new_rules)
+          text = text.replace('hotelCategoryPhotoRules(', 'roomCategoryPhotoRules(')
+          text = text.replace('hotelCategoryPhotosValid(', 'roomCategoryPhotosValid(')
+          if "propertyType === 'Hôtel'" in text or 'HOTEL_CATEGORY_' in text or 'hotelCategoryPhoto' in text:
+              raise SystemExit('Professional room flow still contains Hotel-specific photo policy')
+          pro.write_text(text)
+
+          # Architecture guard now enforces category blindness in both common orchestration layers.
+          guard = root / 'scripts/check-architecture.mjs'
+          text = guard.read_text()
+          text = text.replace(
+              "  'src/features/host/onboarding/offer-flows/hotel/hotelOfferVisuals.jsx',\n",
+              "  'src/features/host/onboarding/offer-flows/hotel/hotelOfferVisuals.jsx',\n  'src/features/host/onboarding/offer-flows/hotel/hotel-amenities.css',\n  'src/features/host/onboarding/offer-flows/hotel/hotel-highlights.css',\n",
+          )
+          text = text.replace(
+              "  'src/features/beach/beach-page-scale.css',\n];",
+              "  'src/features/beach/beach-page-scale.css',\n  'src/features/host/onboarding/host-hotel-amenities.css',\n  'src/features/host/onboarding/host-hotel-highlights.css',\n];",
+          )
+          old_page_guard = """if (onboardingPage.includes('supportsPooledRoomInventory') || onboardingPage.includes('HOST_HOTEL_HIGHLIGHTS')) {\n  violations.push('HostOnboardingPage.jsx: category business rules leaked back into the common orchestrator');\n}\n\nconst indexHtml"""
+          new_page_guard = """if (onboardingPage.includes('supportsPooledRoomInventory') || onboardingPage.includes('HOST_HOTEL_HIGHLIGHTS')) {\n  violations.push('HostOnboardingPage.jsx: category business rules leaked back into the common orchestrator');\n}\nfor (const token of ['offer-flows/hotel/', 'HOTEL_', 'data-hotel-', 'host-hotel-', \"offerFlow.id === 'hotel'\"]) {\n  if (onboardingPage.includes(token)) violations.push(`HostOnboardingPage.jsx: category-specific presentation leak: ${token}`);\n}\n\nconst professionalRoomFlow = await readFile(new URL('../src/features/host/onboarding/hostRoomProfessionalFlow.js', import.meta.url), 'utf8');\nif (!professionalRoomFlow.includes('getOfferFlow(ctx?.draft?.propertyType).photoPolicy')) {\n  violations.push('hostRoomProfessionalFlow.js: room photo rules must come from the active category offer flow');\n}\nfor (const token of [\"propertyType === 'Hôtel'\", 'HOTEL_CATEGORY_', 'hotelCategoryPhoto']) {\n  if (professionalRoomFlow.includes(token)) violations.push(`hostRoomProfessionalFlow.js: Hotel-specific photo policy leak: ${token}`);\n}\n\nconst indexHtml"""
+          if old_page_guard not in text:
+              raise SystemExit('Expected architecture guard insertion point not found')
+          text = text.replace(old_page_guard, new_page_guard)
+          guard.write_text(text)
+
+          # Unit contract also checks that presentation overrides stay category-owned.
+          test = root / 'tests/unit/hostOfferFlowRegistry.test.js'
+          text = test.read_text()
+          marker = """    expect(villa.amenityGroups.some((group) => group.id.startsWith('hotel-'))).toBe(false)\n  })\n"""
+          replacement = """    expect(villa.amenityGroups.some((group) => group.id.startsWith('hotel-'))).toBe(false)\n    expect(hotel.presentation.variant).toBe('hotel')\n    expect(typeof hotel.presentation.HighlightIcon).toBe('function')\n    expect(apartment.presentation.variant).toBe('default')\n    expect(apartment.presentation.HighlightIcon).toBeNull()\n  })\n"""
+          if marker not in text:
+              raise SystemExit('Expected unit test insertion point not found')
+          test.write_text(text.replace(marker, replacement))
+
+          # Keep architecture documentation aligned with the enforced contract.
+          doc = root / 'docs/architecture/host-offer-flows.md'
+          text = doc.read_text()
+          text = text.replace(
+              "- `src/features/host/onboarding/offer-flows/hotel/hotelOfferVisuals.jsx` — Hôtel-specific presentation assets\n",
+              "- `src/features/host/onboarding/offer-flows/hotel/hotelOfferVisuals.jsx` — Hôtel-specific presentation adapter\n- `src/features/host/onboarding/offer-flows/hotel/hotel-amenities.css` and `hotel-highlights.css` — Hôtel-owned styles\n",
+          )
+          text = text.replace(
+              "- category-specific copy.\n",
+              "- category-specific copy;\n- category-specific presentation adapter (variant, symbols, icons and styles).\n",
+          )
+          text = text.replace(
+              "`scripts/check-architecture.mjs` requires every category module and rejects Hotel business rules leaking back into `hostOnboardingModel.js` or the common `HostOnboardingPage.jsx` orchestrator.\n",
+              "`scripts/check-architecture.mjs` requires every category module and rejects Hotel business or presentation rules leaking back into `hostOnboardingModel.js`, the common `HostOnboardingPage.jsx` orchestrator, or `hostRoomProfessionalFlow.js`. The professional room flow resolves photo limits from `getOfferFlow(...).photoPolicy`; it does not own Hotel constants.\n",
+          )
+          doc.write_text(text)
+          PY
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate architecture and build
+        run: npm run quality:fast && npm run quality:bundle
+
+      - name: Install browsers
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: Targeted Hotel E2E Chromium
+        run: npx playwright test tests/e2e/host-hotel-room-categories.spec.js --project=mobile-chromium
+
+      - name: Targeted Hotel E2E WebKit
+        shell: bash
+        run: |
+          cat > playwright.webkit.arch.config.mjs <<'EOF'
+          import { defineConfig, devices } from '@playwright/test'
+          export default defineConfig({
+            testDir: './tests',
+            timeout: 30_000,
+            expect: { timeout: 7_000 },
+            fullyParallel: false,
+            retries: 1,
+            use: { baseURL: 'http://127.0.0.1:4173', trace: 'retain-on-failure' },
+            projects: [{ name: 'mobile-webkit', use: { ...devices['iPhone 14'], browserName: 'webkit', viewport: { width: 390, height: 844 } } }],
+            webServer: {
+              command: 'MOVERA_TEST_BASE=root npm run build && MOVERA_TEST_BASE=root npm run preview -- --host 127.0.0.1',
+              url: 'http://127.0.0.1:4173/',
+              timeout: 120_000,
+              reuseExistingServer: false,
+            },
+          })
+          EOF
+          npx playwright test tests/e2e/host-hotel-room-categories.spec.js --config=playwright.webkit.arch.config.mjs --project=mobile-webkit
+          rm playwright.webkit.arch.config.mjs
+
+      - name: Commit hardened architecture
+        shell: bash
+        run: |
+          rm .github/workflows/harden-host-offer-architecture.yml
+          git config user.name 'Movera Architecture Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'Harden category-owned host offer architecture'
+          git push origin HEAD:main
