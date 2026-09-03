@@ -1,8 +1,23 @@
 import { HOTEL_HIGHLIGHT_GROUPS, HOTEL_LISTING_HIGHLIGHTS } from '../../../../../entities/listing/listingHighlights.js'
-import { HOTEL_AMENITIES, HOTEL_AMENITY_GROUPS } from '../../../../../entities/listing/listingAmenities.js'
-import { COMMON_HOST_AMENITIES, COMMON_HOST_AMENITY_GROUPS, HOST_GUEST_ACCESS } from '../../hostOnboardingModel.js'
+import { HOST_GUEST_ACCESS } from '../../hostOnboardingModel.js'
 import { createCommonOfferFlow } from '../shared/commonOfferFlow.js'
 import { HOTEL_OFFER_PRESENTATION } from './hotelOfferVisuals.jsx'
+
+const HOTEL_AMENITY_GROUPS = Object.freeze([
+  { id: 'hotel-essential', label: 'Les essentiels' },
+  { id: 'hotel-comfort', label: 'Confort & services' },
+])
+
+const HOTEL_AMENITIES = Object.freeze([
+  { id: 'wifi', group: 'hotel-essential', label: 'Wi‑Fi', detail: 'Internet haut débit' },
+  { id: 'ac', group: 'hotel-essential', label: 'Climatisation', detail: 'Confort dans les chambres' },
+  { id: 'parking', group: 'hotel-essential', label: 'Parking', detail: 'Sur place ou privé' },
+  { id: 'essentials', group: 'hotel-essential', label: 'Linge & essentiels', detail: 'Draps, serviettes, savon' },
+  { id: 'pool', group: 'hotel-comfort', label: 'Piscine', detail: 'Espace détente' },
+  { id: 'gym', group: 'hotel-comfort', label: 'Salle de sport', detail: 'Espace fitness' },
+  { id: 'workspace', group: 'hotel-comfort', label: 'Espace de travail', detail: 'Bureau ou coworking' },
+  { id: 'coffee-maker', group: 'hotel-comfort', label: 'Café & boissons', detail: 'À disposition des voyageurs' },
+])
 
 export const hotelOfferFlow = createCommonOfferFlow({
   id: 'hotel',
@@ -10,8 +25,8 @@ export const hotelOfferFlow = createCommonOfferFlow({
   guestAccess: HOST_GUEST_ACCESS.filter((item) => item.id === 'private' || item.id === 'shared'),
   supportsRoomInventory: true,
   photoPolicy: { min: 5, max: 20, scope: 'room-category' },
-  amenityGroups: [...COMMON_HOST_AMENITY_GROUPS, ...HOTEL_AMENITY_GROUPS],
-  amenities: [...COMMON_HOST_AMENITIES, ...HOTEL_AMENITIES],
+  amenityGroups: HOTEL_AMENITY_GROUPS,
+  amenities: HOTEL_AMENITIES,
   highlightGroups: HOTEL_HIGHLIGHT_GROUPS,
   highlights: HOTEL_LISTING_HIGHLIGHTS,
   minHighlights: 1,
@@ -31,8 +46,8 @@ export const hotelOfferFlow = createCommonOfferFlow({
     ],
   },
   copy: {
-    amenitiesTitle: 'Quels équipements et services propose votre établissement ?',
-    amenitiesText: 'Sélectionnez tout ce qui est réellement disponible dans votre hôtel ou hostel.',
+    amenitiesTitle: 'Équipements & services',
+    amenitiesText: 'Sélectionnez uniquement les principaux équipements réellement disponibles dans votre établissement.',
     highlightsTitle: 'Les points forts de votre hôtel',
     highlightsText: 'Cochez tout ce qui décrit réellement votre établissement. Tous vos choix seront visibles sur l’offre.',
     highlightsSummaryTitle: 'Affichage sur votre offre',
