@@ -1,11 +1,11 @@
 import { usesPooledRoomInventory } from '../../../entities/host/hostProfileStore.js'
+import { readAuthSession } from '../../auth/authSession.js'
 import {
   HOST_ROOM_SETUP_MODES,
+  readHostOnboardingDraft,
   readHostRoomConfigurationDraft,
   writeHostRoomConfigurationDraft,
-} from '../../../entities/host/hostRoomTypeDraftStore.js'
-import { readAuthSession } from '../../auth/authSession.js'
-import { readHostOnboardingDraft } from './hostOnboardingDraftStore.js'
+} from './hostOfferDraftStore.js'
 import { getOfferFlow } from './offer-flows/offerFlowRegistry.js'
 import {
   migrateLegacyHostPhoto,

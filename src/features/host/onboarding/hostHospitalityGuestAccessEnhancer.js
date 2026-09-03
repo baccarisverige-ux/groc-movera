@@ -1,6 +1,6 @@
 import { getOfferFlow } from './offer-flows/offerFlowRegistry.js'
 import { readAuthSession } from '../../auth/authSession.js'
-import { readHostOnboardingDraft } from './hostOnboardingDraftStore.js'
+import { readHostOnboardingDraft } from './hostOfferDraftStore.js'
 import './hostHospitalityGuestAccessEnhancer.css'
 
 const PROPERTY_SCREEN = '.host-onboarding[data-screen="property-type"]'

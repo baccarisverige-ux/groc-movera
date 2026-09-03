@@ -2,8 +2,14 @@ import { useEffect, useMemo, useState } from 'react'
 import { activateHostProfile } from '../../../entities/host/hostProfileStore.js'
 import { ParkingIcon, SnowflakeIcon, WavesIcon, WifiIcon } from '../../../shared/icons/AppIcons.jsx'
 import { useAuthSession } from '../../auth/authSession.js'
-import { clearHostOnboardingDraft, readHostOnboardingDraft, writeHostOnboardingDraft } from './hostOnboardingDraftStore.js'
-import { HOST_ROOM_SETUP_MODES, readHostRoomConfigurationDraft, writeHostRoomConfigurationDraft } from '../../../entities/host/hostRoomTypeDraftStore.js'
+import {
+  clearHostOfferDraft,
+  HOST_ROOM_SETUP_MODES,
+  readHostOnboardingDraft,
+  readHostRoomConfigurationDraft,
+  writeHostOnboardingDraft,
+  writeHostRoomConfigurationDraft,
+} from './hostOfferDraftStore.js'
 import { useHostMapLocationSync } from './hostLocationSync.js'
 import {
   HOST_ONBOARDING_SCREENS,
@@ -403,7 +409,7 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
       roomInventory: roomConfig ? { mode: roomConfig.mode, totalUnits: roomConfig.totalRooms } : undefined,
       photos: roomPhotos,
     })
-    clearHostOnboardingDraft(session.userId)
+    clearHostOfferDraft(session.userId)
     onActivated?.(profile)
   }
 

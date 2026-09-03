@@ -1,7 +1,6 @@
-import { HOST_ROOM_SETUP_MODES, readHostRoomConfigurationDraft } from '../../../entities/host/hostRoomTypeDraftStore.js'
 import { supportsPooledRoomInventory } from '../../../entities/host/hostProfileStore.js'
 import { readAuthSession } from '../../auth/authSession.js'
-import { readHostOnboardingDraft } from './hostOnboardingDraftStore.js'
+import { HOST_ROOM_SETUP_MODES, readHostOnboardingDraft, readHostRoomConfigurationDraft } from './hostOfferDraftStore.js'
 import './host-room-allocation-polish.css'
 
 const PAGE_SELECTOR = '.host-onboarding[data-screen="basics"]'
