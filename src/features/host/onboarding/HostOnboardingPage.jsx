@@ -220,6 +220,7 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
   const visualStage = visualStageFor(id)
   const offerFlow = useMemo(() => getOfferFlow(draft.propertyType), [draft.propertyType])
   const offerPresentation = offerFlow.presentation
+  const AmenityIcon = offerPresentation.AmenityIcon
   const HighlightIcon = offerPresentation.HighlightIcon
 
   useEffect(() => {
@@ -426,7 +427,7 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
                     const active = draft.amenities.includes(item.id)
                     return (
                       <button key={item.id} type="button" aria-pressed={active} data-active={active ? 'true' : 'false'} data-group-symbol={offerPresentation.amenitySymbols[group.id] || undefined} onClick={() => toggleArrayValue('amenities', item.id)}>
-                        <AmenityGlyph id={item.id} />
+                        {AmenityIcon ? <AmenityIcon id={item.id} fallback={<AmenityGlyph id={item.id} />} /> : <AmenityGlyph id={item.id} />}
                         <span className="host-onboarding__amenity-copy"><strong>{item.label}</strong>{item.detail ? <small>{item.detail}</small> : null}</span>
                         {active ? <span className="host-onboarding__choice-check"><CheckIcon /></span> : null}
                       </button>
