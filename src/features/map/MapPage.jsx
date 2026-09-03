@@ -9,7 +9,7 @@ import { INITIAL_VIEWPORT, MapContainer } from '../map-engine/MapContainer.jsx'
 import { announceMapReady } from '../search/mapHandoff.js'
 import { DESTINATION_VIEWPORTS } from './constants/map.constants.js'
 import { listingMatchesMapFilters } from './mapListingFilters.js'
-import { panToKeepMarkerAbovePopup, parseMapSurfaceViewport, uncoveredMapBottom } from './mapPopupCamera.js'
+import { panToKeepMarkerAbovePopup, panViewportToScreenPoint, parseMapSurfaceViewport, uncoveredMapBottom } from './mapPopupCamera.js'
 import { MapOfferPopup } from './MapOfferPopup.jsx'
 import { MapOfferSheet } from './MapOfferSheet.jsx'
 import { MapSearchFilters } from './MapSearchFilters.jsx'
@@ -196,6 +196,27 @@ export function MapPage({ onNavigate }) {
     const current = liveViewportRef.current || initialViewport
     issueViewportCommand({ lat: marker.lat, lng: marker.lng, zoom: Math.min(17, Math.max(13.6, current.zoom)) })
   }, [visibleMarkers, initialViewport, setSelectedListingId, issueViewportCommand])
+  const focusListingFromSheet = useCallback((listingId) => {
+    const marker = visibleMarkers.find((item) => item.id === listingId)
+    if (!marker) return
+    setSelectedListingId(listingId)
+    setPopupOpen(false)
+    mapAutoCameraBlockedUntilRef.current = performance.now() + 900
+
+    const surface = document.querySelector('.b225-map-page [data-testid="map-surface"]')
+    const parsed = parseMapSurfaceViewport(surface)
+    const current = parsed || liveViewportRef.current || initialViewport
+    const zoom = Math.min(17, Math.max(13.6, current.zoom + 0.65))
+    if (!parsed) {
+      issueViewportCommand({ lat: marker.lat, lng: marker.lng, zoom })
+      return
+    }
+
+    const viewport = { lat: current.lat, lng: current.lng, zoom }
+    const size = { width: parsed.width, height: parsed.height }
+    const focused = panViewportToScreenPoint(viewport, size, marker, { x: size.width / 2, y: size.height * 0.26 })
+    issueViewportCommand(focused)
+  }, [visibleMarkers, initialViewport, setSelectedListingId, issueViewportCommand])
   const handlePinSelectedListingChange = useCallback((listingId) => { setSelectedListingId(listingId); setPopupOpen(Boolean(listingId)) }, [setSelectedListingId])
   const handlePopupListingChange = useCallback((listingId) => { setSelectedListingId(listingId) }, [setSelectedListingId])
 
@@ -219,6 +240,6 @@ export function MapPage({ onNavigate }) {
     <div ref={headerRef} className="b225-map-top"><MapSearchFilters cityLabel={cityLabel} primaryLabel={searchTriggered ? cityLabel : undefined} dateLabel={searchTriggered ? requestedDateLabel : ''} amenityFilters={amenityFilters} discountOnly={discountOnly} compact={popupOpen} onHome={() => onNavigate('/')} onAmenityFilterToggle={toggleAmenityFilter} onDiscountToggle={toggleDiscountOnly} onResetFilters={resetFilters}/></div>
     <div className="b225-map-stage">{requestedListing ? <button type="button" className="b225-map-return b225-map-return--floating" onClick={returnToOffers} aria-label="Retour aux offres"><span className="b225-map-return__icon"><ArrowLeftIcon/></span><span>Retour aux offres</span></button> : null}<MapContainer key={`map-${mapContextKey}`} markers={visibleMarkers} selectedListingId={selectedListingId} onSelectedListingChange={handlePinSelectedListingChange} onViewportChange={handleViewportChange} onInteractionChange={handleMapInteractionChange} initialViewport={initialViewport} viewportCommand={viewportCommand} cameraOnSelect="none"/></div>
     {popupOpen && selectedListingId ? <MapOfferPopup listings={cityListings} selectedListingId={selectedListingId} onSelectedListingChange={handlePopupListingChange} onClose={handlePopupClose} onNavigate={onNavigate}/> : null}
-    <MapOfferSheet key={`sheet-${mapContextKey}`} listings={cityListings} cityLabel={cityLabel} headerHeight={headerHeight} selectedListingId={selectedListingId} propertyFilter={propertyFilter} onPropertyFilterChange={handlePropertyFilterChange} onSelectedListingChange={handleSheetSelectedListingChange} onProgressChange={handleSheetProgress} onNavigate={onNavigate}/>
+    <MapOfferSheet key={`sheet-${mapContextKey}`} listings={cityListings} cityLabel={cityLabel} headerHeight={headerHeight} selectedListingId={selectedListingId} propertyFilter={propertyFilter} onPropertyFilterChange={handlePropertyFilterChange} onSelectedListingChange={handleSheetSelectedListingChange} onFocusListing={focusListingFromSheet} onProgressChange={handleSheetProgress} onNavigate={onNavigate}/>
   </section>
 }

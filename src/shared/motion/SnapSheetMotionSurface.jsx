@@ -136,6 +136,12 @@ export function SnapSheetMotionSurface({
     animateTo(progressRef.current > toggleThreshold ? distance : 0)
   }
 
+  const snapToProgress = (nextProgress) => {
+    const distance = collapsedYRef.current
+    const boundedProgress = clamp(Number(nextProgress) || 0)
+    animateTo((1 - boundedProgress) * distance)
+  }
+
   const startExternalDrag = (clientY) => {
     if (!Number.isFinite(clientY)) return false
     animationRef.current?.stop?.()
@@ -222,7 +228,7 @@ export function SnapSheetMotionSurface({
         }), info.velocity.y)
       }}
     >
-      {children({ progress, progressMotion, startDrag, toggleExpanded, externalDrag })}
+      {children({ progress, progressMotion, startDrag, toggleExpanded, snapToProgress, externalDrag })}
     </motion.section>
   )
 }

@@ -142,6 +142,28 @@ test('offer sheet camera preserves a manual zoom as its collapsed base', async (
   await expect.poll(() => numberAttribute(surface, 'data-zoom')).toBeCloseTo(manualZoom, 2)
 })
 
+test('offer map button focuses its exact marker and moves the list to the middle snap', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/groc-movera/map?destination=la-marsa')
+
+  const sheet = page.getByTestId('map-offer-sheet')
+  const surface = page.getByTestId('map-surface')
+  const engine = page.getByTestId('map-engine')
+  const focusButton = page.getByTestId('map-focus-maison-jasmin')
+
+  await page.getByRole('button', { name: 'Afficher la liste des offres' }).click()
+  await expect(sheet).toHaveAttribute('data-snap-state', 'expanded')
+  const zoomBefore = await numberAttribute(surface, 'data-zoom')
+
+  await focusButton.click()
+
+  await expect(engine).toHaveAttribute('data-selected-listing-id', 'maison-jasmin')
+  await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeGreaterThan(0.45)
+  await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeLessThan(0.55)
+  await expect(sheet).toHaveAttribute('data-snap-state', 'moving')
+  await expect.poll(() => numberAttribute(surface, 'data-zoom')).toBeGreaterThan(zoomBefore + 0.5)
+})
+
 test('Grand Tunis fully expanded covers the header and keeps 16 offers visible', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/groc-movera/map')
