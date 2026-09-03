@@ -162,9 +162,9 @@ function PhaseTracker({ stage }) {
 function HotelRoomCategorySelector({ rooms, activeId, onChange }) {
   if (!Array.isArray(rooms) || rooms.length < 2) return null
   return (
-    <section className="host-hotel-category-picker" aria-label="Catégorie de chambre">
+    <section className="host-room-category-picker" aria-label="Catégorie de chambre">
       <div><strong>Catégorie concernée</strong><span>Les choix ci-dessous s’appliquent uniquement à cette catégorie.</span></div>
-      <div className="host-hotel-category-picker__tabs" role="tablist" aria-label="Choisir une catégorie de chambre">
+      <div className="host-room-category-picker__tabs" role="tablist" aria-label="Choisir une catégorie de chambre">
         {rooms.map((room) => (
           <button key={room.id} type="button" role="tab" aria-selected={room.id === activeId} data-active={room.id === activeId ? 'true' : 'false'} onClick={() => onChange(room.id)}>
             <strong>{room.name}</strong>

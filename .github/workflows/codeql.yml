@@ -2,9 +2,9 @@ name: CodeQL Security
 
 on:
   push:
-    branches: [b225-ui-home]
+    branches: [main, architecture-safe-rebuild]
   pull_request:
-    branches: [b225-ui-home]
+    branches: [main]
   schedule:
     - cron: '17 4 * * 1'
 
