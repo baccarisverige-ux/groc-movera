@@ -14,6 +14,32 @@ export const HOTEL_AMENITY_SYMBOLS = Object.freeze({
   'hotel-security': '🛡️',
 })
 
+export function HotelAmenityIcon({ id, fallback = null }) {
+  if (!id.startsWith('hotel-')) return fallback
+  const icons = {
+    'hotel-minibar': <><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M7 11h10M10 7h.01M10 15h.01"/></>,
+    'hotel-room-safe': <><rect x="4" y="5" width="16" height="15" rx="2"/><circle cx="13" cy="12" r="3"/><path d="M13 9v3l2 1M7 8h2"/></>,
+    'hotel-soundproofing': <><path d="M5 10v4h3l4 4V6L8 10H5ZM16 9c2 2 2 4 0 6M19 6c4 4 4 8 0 12"/></>,
+    'hotel-reception-24h': <><path d="M4 18h16M6 18a6 6 0 0 1 12 0M12 9V6M9 6h6"/><circle cx="12" cy="4" r="1"/></>,
+    'hotel-luggage-storage': <><rect x="6" y="7" width="12" height="14" rx="2"/><path d="M9 7V4h6v3M10 11v6M14 11v6"/></>,
+    'hotel-multilingual-staff': <><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></>,
+    'hotel-daily-housekeeping': <><path d="M5 20 9 8h6l4 12M8 14h8M10 8V4h4v4"/></>,
+    'hotel-laundry-service': <><rect x="5" y="3" width="14" height="18" rx="2"/><circle cx="12" cy="13" r="5"/><path d="M8 7h.01M12 7h4"/></>,
+    'hotel-restaurant': <><path d="M5 3v8M8 3v8M5 7h3M7 11v10M17 3v18M14 3c0 5 3 6 3 6"/></>,
+    'hotel-bar': <><path d="M5 4h14l-7 8-7-8ZM12 12v7M8 20h8"/></>,
+    'hotel-food-room-service': <><path d="M4 18h16M6 18a6 6 0 0 1 12 0M12 10V7M9 7h6"/></>,
+    'hotel-outdoor-pool': <><path d="M3 16c2-2 4-2 6 0s4 2 6 0 4-2 6 0M3 20c2-2 4-2 6 0s4 2 6 0 4-2 6 0M7 13V5h6M7 9h6"/></>,
+    'hotel-spa': <><path d="M12 20c-5-2-7-5-6-9 3 0 5 1 6 4 1-3 3-4 6-4 1 4-1 7-6 9ZM12 15V5"/></>,
+    'hotel-fitness-24h': <><path d="M6 9v6M18 9v6M3 10v4M21 10v4M6 12h12"/></>,
+    'hotel-airport-shuttle': <><path d="M3 16V8h13l4 4v4M7 16h7M16 8v4h4"/><circle cx="6" cy="18" r="2"/><circle cx="16" cy="18" r="2"/></>,
+    'hotel-elevator': <><rect x="5" y="3" width="14" height="18" rx="1"/><path d="m9 9 3-3 3 3M9 15l3 3 3-3"/></>,
+    'hotel-accessible-rooms': <><circle cx="11" cy="4" r="2"/><path d="M10 7v6h5l3 6M8 10a6 6 0 1 0 7 9M10 10h5"/></>,
+    'hotel-security-24h': <><path d="M12 3 5 6v5c0 5 3 8 7 10 4-2 7-5 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-5"/></>,
+    'hotel-smoke-detectors': <><circle cx="12" cy="12" r="8"/><path d="M8 12h8M9 8c2 1 4 1 6 0M9 16c2-1 4-1 6 0"/></>,
+  }
+  return <svg className="host-hotel-amenity-icon" viewBox="0 0 24 24" aria-hidden="true">{icons[id] || <path d="M6 6h12v12H6z"/>}</svg>
+}
+
 export function HotelHighlightIcon({ id }) {
   const icons = {
     breakfast: <><path d="M5 11h14a7 7 0 0 1-14 0Z"/><path d="M8 7c0-2 2-2 2-4M13 7c0-2 2-2 2-4M4 19h16"/></>,
@@ -43,5 +69,6 @@ export function HotelHighlightIcon({ id }) {
 export const HOTEL_OFFER_PRESENTATION = Object.freeze({
   variant: 'hotel',
   amenitySymbols: HOTEL_AMENITY_SYMBOLS,
+  AmenityIcon: HotelAmenityIcon,
   HighlightIcon: HotelHighlightIcon,
 })
