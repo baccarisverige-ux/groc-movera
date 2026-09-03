@@ -3,6 +3,7 @@ import './hostHospitalityGuestAccessEnhancer.js'
 import './hostRoomTypesOnboardingEnhancer.js'
 import './hostRoomContinueGuard.js'
 import './hostRoomProfessionalFlow.js'
+import './hostHotelAmenitiesEnhancer.js'
 
 const INTRO_SELECTOR = '.host-onboarding[data-screen="intro-place"] .host-onboarding__phase-visual'
 const PRESENTATION_SELECTOR = '.host-onboarding[data-screen="intro-presentation"] .host-onboarding__phase-visual'
