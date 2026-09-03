@@ -1,3 +1,5 @@
+import { HOST_HOTEL_AMENITIES, HOST_HOTEL_AMENITY_GROUPS } from './hostHotelAmenitiesModel.js'
+
 export const HOST_ONBOARDING_SCREENS = Object.freeze([
   { id: 'intro-place', phase: 1 },
   { id: 'property-type', phase: 1 },
@@ -43,6 +45,7 @@ export const HOST_AMENITY_GROUPS = Object.freeze([
   { id: 'popular', label: 'Confort apprécié' },
   { id: 'features', label: 'Équipements & services' },
   { id: 'location', label: 'Cadre & emplacement' },
+  ...HOST_HOTEL_AMENITY_GROUPS,
 ])
 
 export const HOST_AMENITIES = Object.freeze([
@@ -73,6 +76,7 @@ export const HOST_AMENITIES = Object.freeze([
   { id: 'pool', label: 'Piscine', group: 'features' },
   { id: 'beach-access', label: 'Accès plage', group: 'location' },
   { id: 'waterfront', label: 'Bord de mer', group: 'location' },
+  ...HOST_HOTEL_AMENITIES,
 ])
 
 export const HOST_HIGHLIGHTS = Object.freeze([
