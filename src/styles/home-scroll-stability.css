@@ -11,6 +11,154 @@
   .b225-home{overflow-x:hidden!important}
 }
 
+/* Final Home cleanup: one spacing rhythm and clearer hierarchy while keeping
+   the existing Movera composition, palette and interactions unchanged. */
+.b225-home .b225-home-header{
+  padding:calc(12px + env(safe-area-inset-top,0px)) var(--b225-home-content-edge,16px) 10px!important;
+}
+
+.b225-home .b225-search.b225-home-map-search{
+  width:100%!important;
+  min-height:60px!important;
+  margin-inline:0!important;
+  padding-left:18px!important;
+  border-color:rgba(79,82,78,.10)!important;
+  box-shadow:0 3px 8px rgba(28,30,28,.045),0 10px 24px rgba(28,30,28,.045)!important;
+}
+
+.b225-home .b225-home-map-search__copy{
+  gap:3px!important;
+  align-content:center!important;
+}
+
+.b225-home .b225-home-map-search__copy strong{
+  font-size:14px!important;
+  line-height:1.15!important;
+  letter-spacing:-.18px!important;
+}
+
+.b225-home .b225-home-map-search__copy span{
+  font-size:11.3px!important;
+  line-height:1.2!important;
+}
+
+.b225-home .b225-home-map-filter-button{
+  width:40px!important;
+  height:40px!important;
+  flex-basis:40px!important;
+  color:#343633!important;
+}
+
+.b225-home .b225-welcome{
+  min-height:162px!important;
+  margin:16px var(--b225-home-content-edge,16px) 12px!important;
+  padding:16px 14px 11px 16px!important;
+  border-radius:24px!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.96),0 5px 16px rgba(56,53,48,.055)!important;
+}
+
+.b225-home .b225-welcome__title{
+  font-size:11px!important;
+  line-height:1.2!important;
+  font-weight:700!important;
+}
+
+.b225-home .b225-welcome-cities{
+  margin-top:4px!important;
+}
+
+.b225-home .b225-welcome-city{
+  font-size:10px!important;
+  line-height:1.15!important;
+}
+
+.b225-home .b225-category-selection{
+  margin-top:12px!important;
+}
+
+.b225-home .b225-welcome + .b225-category-selection{
+  margin-top:8px!important;
+}
+
+.b225-home .b225-category-selection .b225-section__title{
+  min-height:40px!important;
+  margin-bottom:5px!important;
+  padding-top:6px!important;
+  padding-bottom:6px!important;
+}
+
+.b225-home .b225-category-selection .b225-section__title h2{
+  font-size:17px!important;
+  line-height:1.15!important;
+  font-weight:730!important;
+}
+
+.b225-home .b225-offer-scroll{
+  gap:12px!important;
+  padding-top:2px!important;
+  padding-bottom:12px!important;
+}
+
+.b225-home .b225-offer-card__image{
+  box-shadow:0 2px 7px rgba(31,32,29,.055)!important;
+}
+
+.b225-home .b225-offer-card__body{
+  min-height:57px!important;
+  row-gap:3px!important;
+  padding:8px 3px 1px!important;
+}
+
+.b225-home .b225-offer-card__title{
+  font-size:12.7px!important;
+  line-height:1.2!important;
+  font-weight:670!important;
+}
+
+.b225-home .b225-offer-card__dates{
+  font-size:11.2px!important;
+  line-height:1.25!important;
+}
+
+.b225-home .b225-offer-card__meta{
+  font-size:10.8px!important;
+  line-height:1.25!important;
+}
+
+.b225-home .b225-offer-card .listing-highlight-badges{
+  width:100%!important;
+  margin:4px 0 1px!important;
+  gap:3px!important;
+  overflow:hidden!important;
+  flex-wrap:nowrap!important;
+}
+
+.b225-home .b225-offer-card .listing-highlight-badges>span{
+  min-height:19px!important;
+  padding:3px 6px!important;
+  font-size:8px!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+
+.b225-home .b225-see-all-card{
+  height:157px!important;
+  aspect-ratio:auto!important;
+  border-radius:18px!important;
+  box-shadow:inset 0 1px 0 #fff,0 3px 10px rgba(37,43,39,.06)!important;
+}
+
+.b225-home .b225-empty{
+  margin:2px var(--b225-home-content-edge,16px) 12px!important;
+  padding:22px 18px!important;
+  border:1px solid rgba(75,79,74,.06)!important;
+  color:#70736f!important;
+}
+
+.app-shell--guest:has(.b225-home) > .app-shell__nav{
+  box-shadow:0 -5px 16px rgba(37,39,36,.035)!important;
+}
+
 .b225-home .b225-categories,
 .b225-home .b225-offer-scroll{
   -webkit-overflow-scrolling:touch!important;
@@ -119,6 +267,15 @@
 }
 
 @media(max-width:350px){
+  .b225-home .b225-home-header{padding-inline:12px!important}
+  .b225-home .b225-search.b225-home-map-search{min-height:57px!important;padding-left:16px!important}
+  .b225-home .b225-home-map-search__copy strong{font-size:13.5px!important}
+  .b225-home .b225-home-map-search__copy span{font-size:10.8px!important}
+  .b225-home .b225-welcome{min-height:155px!important;margin-inline:12px!important;padding-inline:12px!important}
+  .b225-home .b225-welcome-city{font-size:9.2px!important}
+  .b225-home .b225-category-selection{margin-top:10px!important}
+  .b225-home .b225-category-selection .b225-section__title h2{font-size:16px!important}
+  .b225-home .b225-see-all-card{height:140px!important}
   .b225-home .b225-categories,
   .b225-home .b225-categories-track{
     min-height:54px!important;
