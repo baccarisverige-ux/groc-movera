@@ -424,6 +424,8 @@ function renderReview(target, userId, draft) {
         `${room.beds} lit${room.beds > 1 ? 's' : ''}`,
         `${room.amenities?.length || 0} équipements`,
         `${room.highlights?.length || 0} options`,
+        room.description?.trim() ? 'Description prête' : 'Description à compléter',
+        `${room.promotions?.length || 0} promotions`,
         `${room.basePrice} TND/nuit`,
       ].filter(Boolean).join(' · ')
       item.append(

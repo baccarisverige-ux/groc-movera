@@ -249,6 +249,7 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
     : null
   const selectedAmenities = activeRoom ? activeRoom.amenities : draft.amenities
   const selectedHighlights = activeRoom ? activeRoom.highlights : draft.highlights
+  const selectedPromotions = activeRoom ? activeRoom.promotions : draft.promotions
 
   useEffect(() => {
     const nextDraft = readHostOnboardingDraft(session?.userId)
@@ -265,10 +266,11 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
       basePrice: Number(draft.basePrice),
       amenities: draft.amenities,
       highlights: draft.highlights,
+      promotions: draft.promotions,
     })
     setRoomConfiguration(next)
     setActiveRoomId((current) => next.roomTypes.some((room) => room.id === current) ? current : next.roomTypes[0]?.id || '')
-  }, [session?.userId, id, draft.propertyType])
+  }, [session?.userId, id, draft.propertyType, draft.guests, draft.beds, draft.bathrooms, draft.basePrice, draft.amenities, draft.highlights, draft.promotions])
 
   useEffect(() => {
     if (!session?.userId) return
@@ -284,9 +286,13 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
     if (id === 'address') return Boolean(draft.address.trim() && draft.city.trim())
     if (id === 'pin') return draft.pinConfirmed
     if (id === 'basics') return draft.guests >= 1 && draft.bedrooms >= 0 && draft.beds >= 1 && draft.bathrooms >= 0
-    if (id === 'title') return draft.title.trim().length >= 5
+    if (id === 'title') return hasRoomCategories
+      ? roomConfiguration.roomTypes.every((room) => room.name.trim().length >= 2)
+      : draft.title.trim().length >= 5
     if (id === 'highlights') return selectedHighlights.length >= offerFlow.minHighlights && selectedHighlights.length <= offerFlow.maxHighlights
-    if (id === 'description') return draft.description.trim().length >= 20
+    if (id === 'description') return hasRoomCategories
+      ? roomConfiguration.roomTypes.every((room) => room.description.trim().length >= 20)
+      : draft.description.trim().length >= 20
     if (id === 'booking') return Boolean(draft.bookingMode)
     if (id === 'price') return hasRoomCategories
       ? roomConfiguration.roomTypes.every((room) => Number(room.basePrice) > 0)
@@ -305,18 +311,20 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
       basePrice: Number(draft.basePrice),
       amenities: draft.amenities,
       highlights: draft.highlights,
+      promotions: draft.promotions,
     })
     setRoomConfiguration(next)
     setDraft((current) => ({
       ...current,
       amenities: [...new Set(next.roomTypes.flatMap((room) => room.amenities || []))],
       highlights: [...new Set(next.roomTypes.flatMap((room) => room.highlights || []))],
+      promotions: [...new Set(next.roomTypes.flatMap((room) => room.promotions || []))],
       basePrice: String(next.roomTypes[0]?.basePrice || current.basePrice),
     }))
   }
 
   const toggleArrayValue = (field, value, max = Infinity) => {
-    if (activeRoom && (field === 'amenities' || field === 'highlights')) {
+    if (activeRoom && (field === 'amenities' || field === 'highlights' || field === 'promotions')) {
       const values = Array.isArray(activeRoom[field]) ? activeRoom[field] : []
       const exists = values.includes(value)
       if (!exists && values.length >= max) return
@@ -531,10 +539,11 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
       {id === 'title' ? (
         <main className="host-onboarding__step host-onboarding__step--title">
           <span className="host-onboarding__eyebrow">Étape {step + 1}</span>
-          <h1>Donnez un titre mémorable à votre logement</h1>
-          <p>Les titres courts et précis fonctionnent le mieux.</p>
-          <label className="host-onboarding__big-field"><span>Titre de l’annonce</span><textarea rows="7" maxLength="50" value={draft.title} onChange={(event) => updateDraft({ title: event.target.value })} placeholder="Écrivez votre titre ici" aria-label="Titre de l’annonce" /></label>
-          <span className="host-onboarding__char-count">{draft.title.length}/50</span>
+          <h1>{activeRoom ? 'Nommez chaque catégorie de chambre' : 'Donnez un titre mémorable à votre logement'}</h1>
+          <p>{activeRoom ? 'Choisissez un nom clair pour que les voyageurs distinguent facilement les catégories.' : 'Les titres courts et précis fonctionnent le mieux.'}</p>
+          <HotelRoomCategorySelector rooms={hasRoomCategories ? roomConfiguration.roomTypes : []} activeId={activeRoom?.id} onChange={setActiveRoomId} />
+          <label className="host-onboarding__big-field"><span>{activeRoom ? `Nom · ${activeRoom.name}` : 'Titre de l’annonce'}</span><textarea rows="7" maxLength="50" value={activeRoom ? activeRoom.name : draft.title} onChange={(event) => { const value = event.target.value; if (activeRoom) { updateActiveRoom({ name: value }); if (roomConfiguration.roomTypes[0]?.id === activeRoom.id) updateDraft({ title: value }) } else updateDraft({ title: value }) }} placeholder={activeRoom ? 'Ex. Chambre Deluxe vue mer' : 'Écrivez votre titre ici'} aria-label={activeRoom ? `Nom de la catégorie ${activeRoom.name}` : 'Titre de l’annonce'} /></label>
+          <span className="host-onboarding__char-count">{activeRoom ? activeRoom.name.length : draft.title.length}/50</span>
         </main>
       ) : null}
 
@@ -586,10 +595,11 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
       {id === 'description' ? (
         <main className="host-onboarding__step host-onboarding__step--description">
           <span className="host-onboarding__eyebrow">Étape {step + 1}</span>
-          <h1>Présentez ce qui rend votre logement spécial</h1>
-          <p>Une description simple et chaleureuse suffit.</p>
-          <label className="host-onboarding__big-field"><span>Description</span><textarea rows="12" maxLength="500" value={draft.description} onChange={(event) => updateDraft({ description: event.target.value })} placeholder="Décrivez l’ambiance, les espaces et les principaux atouts…" aria-label="Description du logement" /></label>
-          <span className="host-onboarding__char-count">{draft.description.length}/500</span>
+          <h1>{activeRoom ? 'Décrivez chaque catégorie de chambre' : 'Présentez ce qui rend votre logement spécial'}</h1>
+          <p>{activeRoom ? 'Chaque catégorie possède sa propre description visible par les voyageurs.' : 'Une description simple et chaleureuse suffit.'}</p>
+          <HotelRoomCategorySelector rooms={hasRoomCategories ? roomConfiguration.roomTypes : []} activeId={activeRoom?.id} onChange={setActiveRoomId} />
+          <label className="host-onboarding__big-field"><span>{activeRoom ? `Description · ${activeRoom.name}` : 'Description'}</span><textarea rows="12" maxLength="500" value={activeRoom ? activeRoom.description : draft.description} onChange={(event) => { const value = event.target.value; if (activeRoom) { updateActiveRoom({ description: value }); if (roomConfiguration.roomTypes[0]?.id === activeRoom.id) updateDraft({ description: value }) } else updateDraft({ description: value }) }} placeholder="Décrivez l’ambiance, les espaces et les principaux atouts…" aria-label={activeRoom ? `Description de ${activeRoom.name}` : 'Description du logement'} /></label>
+          <span className="host-onboarding__char-count">{activeRoom ? activeRoom.description.length : draft.description.length}/500</span>
         </main>
       ) : null}
 
@@ -644,9 +654,10 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
           <span className="host-onboarding__eyebrow">Étape {step + 1}</span>
           <h1>Ajoutez des réductions si vous le souhaitez</h1>
           <p>Ces promotions sont facultatives et pourront être modifiées ensuite.</p>
+          <HotelRoomCategorySelector rooms={hasRoomCategories ? roomConfiguration.roomTypes : []} activeId={activeRoom?.id} onChange={setActiveRoomId} />
           <div className="host-onboarding__promotion-list">
             {HOST_PROMOTIONS.map((item) => {
-              const active = draft.promotions.includes(item.id)
+              const active = selectedPromotions.includes(item.id)
               return <button key={item.id} type="button" aria-pressed={active} data-active={active ? 'true' : 'false'} onClick={() => toggleArrayValue('promotions', item.id)}><b>{item.value}%</b><span><strong>{item.label}</strong><small>{item.detail}</small></span><i>{active ? <CheckIcon /> : null}</i></button>
             })}
           </div>

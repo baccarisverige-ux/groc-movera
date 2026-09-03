@@ -61,6 +61,7 @@ function normalizeRoom(room, index, fallback = {}) {
     features: normalizeFeatures(source.features),
     amenities: normalizeIds(Array.isArray(source.amenities) ? source.amenities : fallback.amenities),
     highlights: normalizeIds(Array.isArray(source.highlights) ? source.highlights : fallback.highlights, 30),
+    promotions: normalizeIds(Array.isArray(source.promotions) ? source.promotions : fallback.promotions, 10),
     photos: normalizePhotos(source.photos),
   }
 }
