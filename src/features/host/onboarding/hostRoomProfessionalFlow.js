@@ -6,6 +6,12 @@ import {
 } from '../../../entities/host/hostRoomTypeDraftStore.js'
 import { readAuthSession } from '../../auth/authSession.js'
 import { readHostOnboardingDraft } from './hostOnboardingDraftStore.js'
+import {
+  migrateLegacyHostPhoto,
+  removeHostPhoto,
+  resolveHostPhotoUrl,
+  saveHostPhotoFile,
+} from './hostPhotoMediaStore.js'
 import './host-room-professional-flow.css'
 
 const BASIC = '.host-onboarding[data-screen="basics"]'
@@ -145,13 +151,30 @@ function enhanceBasics(ctx) {
   })
 }
 
-function dataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '')
-    reader.onerror = reject
-    reader.readAsDataURL(file)
-  })
+function hydrateImage(image, ref) {
+  if (typeof ref !== 'string' || !ref) return
+  if (ref.startsWith('data:') || ref.startsWith('blob:')) {
+    image.src = ref
+    return
+  }
+  resolveHostPhotoUrl(ref).then((url) => {
+    if (url && image.isConnected) image.src = url
+  }).catch(() => {})
+}
+
+async function migrateLegacyPhotos(ctx, configuration) {
+  let changed = false
+  const roomTypes = await Promise.all((configuration.roomTypes || []).map(async (room) => {
+    const refs = Array.isArray(room.photos) ? room.photos : []
+    const photos = await Promise.all(refs.map(async (ref) => {
+      if (typeof ref !== 'string' || !ref.startsWith('data:')) return ref
+      changed = true
+      return migrateLegacyHostPhoto(ref, { userId: ctx.userId, roomId: room.id })
+    }))
+    return { ...room, photos }
+  }))
+  if (!changed) return configuration
+  return write(ctx, { ...configuration, roomTypes })
 }
 
 function gallery(ctx, configuration, room, roomIndex) {
@@ -183,21 +206,24 @@ function gallery(ctx, configuration, room, roomIndex) {
   if (photos.length) {
     const hero = el('div', 'host-room-pro-gallery__hero')
     const image = document.createElement('img')
-    image.src = photos[0]
     image.alt = `${room.name || 'Chambre'} — photo principale`
+    hydrateImage(image, photos[0])
     hero.append(image, el('span', '', 'Photo principale'))
     section.append(hero)
 
     const thumbs = el('div', 'host-room-pro-gallery__thumbs')
-    photos.forEach((src, index) => {
+    photos.forEach((ref, index) => {
       const figure = el('figure')
       const thumb = document.createElement('img')
-      thumb.src = src
       thumb.alt = `${room.name || 'Chambre'} — photo ${index + 1}`
-      const remove = btn('×', '', () => {
+      hydrateImage(thumb, ref)
+      const remove = btn('×', '', async () => {
         const next = read(ctx)
-        next.roomTypes[roomIndex].photos = photos.filter((_, photoIndex) => photoIndex !== index)
+        const currentPhotos = Array.isArray(next.roomTypes?.[roomIndex]?.photos) ? next.roomTypes[roomIndex].photos : []
+        const removedRef = currentPhotos[index]
+        next.roomTypes[roomIndex].photos = currentPhotos.filter((_, photoIndex) => photoIndex !== index)
         write(ctx, next)
+        await removeHostPhoto(removedRef)
         schedule()
       })
       remove.setAttribute('aria-label', `Supprimer la photo ${index + 1}`)
@@ -221,15 +247,32 @@ function gallery(ctx, configuration, room, roomIndex) {
   input.dataset.minPhotos = String(rules.min)
   input.dataset.maxPhotos = String(rules.max)
   input.addEventListener('change', async () => {
-    const files = Array.from(input.files || []).slice(0, rules.max - photos.length)
-    if (!files.length) return
+    const selectedFiles = Array.from(input.files || [])
+    if (!selectedFiles.length) return
+    input.disabled = true
     try {
-      const urls = (await Promise.all(files.map(dataUrl))).filter(Boolean)
-      const next = read(ctx)
-      next.roomTypes[roomIndex].photos = [...photos, ...urls].slice(0, rules.max)
+      let next = await migrateLegacyPhotos(ctx, read(ctx))
+      const target = next.roomTypes?.[roomIndex]
+      if (!target) return
+      const existing = Array.isArray(target.photos) ? target.photos : []
+      const files = selectedFiles.slice(0, Math.max(0, rules.max - existing.length))
+      if (!files.length) return
+      const refs = await Promise.all(files.map((file) => saveHostPhotoFile(file, {
+        userId: ctx.userId,
+        roomId: target.id,
+      })))
+      next = read(ctx)
+      const currentTarget = next.roomTypes?.[roomIndex]
+      if (!currentTarget) return
+      const current = Array.isArray(currentTarget.photos) ? currentTarget.photos : []
+      currentTarget.photos = [...current, ...refs].slice(0, rules.max)
       write(ctx, next)
+      input.value = ''
       schedule()
-    } catch { input.value = '' }
+    } catch {
+      input.value = ''
+      input.disabled = false
+    }
   })
   upload.append(input)
   section.append(upload)
