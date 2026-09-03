@@ -422,6 +422,8 @@ function renderReview(target, userId, draft) {
         room.surface ? `${room.surface} m²` : '',
         `${room.guests} voyageur${room.guests > 1 ? 's' : ''}`,
         `${room.beds} lit${room.beds > 1 ? 's' : ''}`,
+        `${room.amenities?.length || 0} équipements`,
+        `${room.highlights?.length || 0} options`,
         `${room.basePrice} TND/nuit`,
       ].filter(Boolean).join(' · ')
       item.append(

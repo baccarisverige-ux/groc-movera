@@ -146,6 +146,18 @@
 .host-hotel-amenities__intro strong{font-size:10px;color:#1e3728}
 .host-hotel-amenities__intro span{font-size:8px;line-height:1.48;color:#758078}
 
+.host-hotel-category-picker{display:grid;gap:11px;margin:16px 0 8px;padding:14px;border:1px solid #e1e7e3;border-radius:20px;background:linear-gradient(145deg,#fbfdfb,#f4f8f5);box-shadow:0 9px 24px rgba(25,55,36,.045)}
+.host-hotel-category-picker>div:first-child{display:grid;gap:3px}
+.host-hotel-category-picker>div:first-child strong{font-size:14px;color:#173823}
+.host-hotel-category-picker>div:first-child span{font-size:11px;line-height:1.4;color:#77827b}
+.host-hotel-category-picker__tabs{display:flex;gap:8px;overflow-x:auto;padding:1px 1px 5px;scrollbar-width:none;scroll-snap-type:x proximity}
+.host-hotel-category-picker__tabs::-webkit-scrollbar{display:none}
+.host-hotel-category-picker__tabs button{min-width:126px;padding:11px 12px;border:1px solid #dfe5e1;border-radius:15px;background:#fff;display:grid;gap:3px;text-align:left;scroll-snap-align:start;box-shadow:0 4px 12px rgba(30,52,37,.035)}
+.host-hotel-category-picker__tabs button strong{font-size:12px;line-height:1.2;color:#26332a}
+.host-hotel-category-picker__tabs button small{font-size:9px;color:#818b84}
+.host-hotel-category-picker__tabs button[data-active="true"]{border-color:#2f6b47;background:#edf6f0;box-shadow:inset 0 0 0 1px #2f6b47,0 5px 14px rgba(38,91,57,.08)}
+.host-hotel-category-picker__tabs button[data-active="true"] strong{color:#235c3a}
+
 @media(max-width:350px){
   .host-onboarding__step[data-offer-variant="hotel"] .host-onboarding__amenity-section[data-group] .host-onboarding__amenity-grid{grid-template-columns:1fr}
   .host-onboarding__step[data-offer-variant="hotel"] .host-onboarding__amenity-section[data-group] .host-onboarding__amenity-grid>button{min-height:72px}

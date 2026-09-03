@@ -3,7 +3,7 @@ import { activateHostProfile } from '../../../entities/host/hostProfileStore.js'
 import { ParkingIcon, SnowflakeIcon, WavesIcon, WifiIcon } from '../../../shared/icons/AppIcons.jsx'
 import { useAuthSession } from '../../auth/authSession.js'
 import { clearHostOnboardingDraft, readHostOnboardingDraft, writeHostOnboardingDraft } from './hostOnboardingDraftStore.js'
-import { readHostRoomConfigurationDraft } from '../../../entities/host/hostRoomTypeDraftStore.js'
+import { HOST_ROOM_SETUP_MODES, readHostRoomConfigurationDraft, writeHostRoomConfigurationDraft } from '../../../entities/host/hostRoomTypeDraftStore.js'
 import { useHostMapLocationSync } from './hostLocationSync.js'
 import {
   HOST_ONBOARDING_SCREENS,
@@ -159,6 +159,23 @@ function PhaseTracker({ stage }) {
   )
 }
 
+function HotelRoomCategorySelector({ rooms, activeId, onChange }) {
+  if (!Array.isArray(rooms) || rooms.length < 2) return null
+  return (
+    <section className="host-hotel-category-picker" aria-label="Catégorie de chambre">
+      <div><strong>Catégorie concernée</strong><span>Les choix ci-dessous s’appliquent uniquement à cette catégorie.</span></div>
+      <div className="host-hotel-category-picker__tabs" role="tablist" aria-label="Choisir une catégorie de chambre">
+        {rooms.map((room) => (
+          <button key={room.id} type="button" role="tab" aria-selected={room.id === activeId} data-active={room.id === activeId ? 'true' : 'false'} onClick={() => onChange(room.id)}>
+            <strong>{room.name}</strong>
+            <small>{room.totalUnits} chambre{room.totalUnits > 1 ? 's' : ''}</small>
+          </button>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 function HeroHouseIllustration() {
   return (
     <svg className="host-onboarding__hero-house" viewBox="0 0 560 400" aria-hidden="true">
@@ -212,6 +229,8 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
   const [draft, setDraft] = useState(() => readHostOnboardingDraft(session?.userId))
   const [step, setStep] = useState(() => Math.min(readHostOnboardingDraft(session?.userId).screenIndex || 0, HOST_ONBOARDING_SCREENS.length - 1))
   const [feedback, setFeedback] = useState('')
+  const [roomConfiguration, setRoomConfiguration] = useState(() => readHostRoomConfigurationDraft(session?.userId))
+  const [activeRoomId, setActiveRoomId] = useState('')
   useHostMapLocationSync(setDraft)
 
   const id = screenId(step)
@@ -222,12 +241,34 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
   const offerPresentation = offerFlow.presentation
   const AmenityIcon = offerPresentation.AmenityIcon
   const HighlightIcon = offerPresentation.HighlightIcon
+  const hasRoomCategories = draft.propertyType === 'Hôtel'
+    && roomConfiguration.mode === HOST_ROOM_SETUP_MODES.CATEGORIES
+    && roomConfiguration.roomTypes.length > 1
+  const activeRoom = hasRoomCategories
+    ? roomConfiguration.roomTypes.find((room) => room.id === activeRoomId) || roomConfiguration.roomTypes[0]
+    : null
+  const selectedAmenities = activeRoom ? activeRoom.amenities : draft.amenities
+  const selectedHighlights = activeRoom ? activeRoom.highlights : draft.highlights
 
   useEffect(() => {
     const nextDraft = readHostOnboardingDraft(session?.userId)
     setDraft(nextDraft)
     setStep(Math.min(nextDraft.screenIndex || 0, HOST_ONBOARDING_SCREENS.length - 1))
   }, [session?.userId])
+
+  useEffect(() => {
+    if (!session?.userId || draft.propertyType !== 'Hôtel') return
+    const next = readHostRoomConfigurationDraft(session.userId, {
+      guests: draft.guests,
+      beds: draft.beds,
+      bathrooms: draft.bathrooms,
+      basePrice: Number(draft.basePrice),
+      amenities: draft.amenities,
+      highlights: draft.highlights,
+    })
+    setRoomConfiguration(next)
+    setActiveRoomId((current) => next.roomTypes.some((room) => room.id === current) ? current : next.roomTypes[0]?.id || '')
+  }, [session?.userId, id, draft.propertyType])
 
   useEffect(() => {
     if (!session?.userId) return
@@ -244,15 +285,44 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
     if (id === 'pin') return draft.pinConfirmed
     if (id === 'basics') return draft.guests >= 1 && draft.bedrooms >= 0 && draft.beds >= 1 && draft.bathrooms >= 0
     if (id === 'title') return draft.title.trim().length >= 5
-    if (id === 'highlights') return draft.highlights.length >= offerFlow.minHighlights && draft.highlights.length <= offerFlow.maxHighlights
+    if (id === 'highlights') return selectedHighlights.length >= offerFlow.minHighlights && selectedHighlights.length <= offerFlow.maxHighlights
     if (id === 'description') return draft.description.trim().length >= 20
     if (id === 'booking') return Boolean(draft.bookingMode)
-    if (id === 'price') return Number(draft.basePrice) > 0
+    if (id === 'price') return hasRoomCategories
+      ? roomConfiguration.roomTypes.every((room) => Number(room.basePrice) > 0)
+      : Number(draft.basePrice) > 0
     if (id === 'review') return draft.confirmedAuthority && draft.acceptedRules
     return true
-  }, [id, draft, offerFlow])
+  }, [id, draft, offerFlow, hasRoomCategories, roomConfiguration, selectedHighlights])
+
+  const updateActiveRoom = (patch) => {
+    if (!session?.userId || !activeRoom) return
+    const nextRooms = roomConfiguration.roomTypes.map((room) => room.id === activeRoom.id ? { ...room, ...patch } : room)
+    const next = writeHostRoomConfigurationDraft(session.userId, { ...roomConfiguration, roomTypes: nextRooms }, {
+      guests: draft.guests,
+      beds: draft.beds,
+      bathrooms: draft.bathrooms,
+      basePrice: Number(draft.basePrice),
+      amenities: draft.amenities,
+      highlights: draft.highlights,
+    })
+    setRoomConfiguration(next)
+    setDraft((current) => ({
+      ...current,
+      amenities: [...new Set(next.roomTypes.flatMap((room) => room.amenities || []))],
+      highlights: [...new Set(next.roomTypes.flatMap((room) => room.highlights || []))],
+      basePrice: String(next.roomTypes[0]?.basePrice || current.basePrice),
+    }))
+  }
 
   const toggleArrayValue = (field, value, max = Infinity) => {
+    if (activeRoom && (field === 'amenities' || field === 'highlights')) {
+      const values = Array.isArray(activeRoom[field]) ? activeRoom[field] : []
+      const exists = values.includes(value)
+      if (!exists && values.length >= max) return
+      updateActiveRoom({ [field]: exists ? values.filter((item) => item !== value) : [...values, value] })
+      return
+    }
     setDraft((current) => {
       const values = Array.isArray(current[field]) ? current[field] : []
       const exists = values.includes(value)
@@ -418,13 +488,14 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
           <span className="host-onboarding__eyebrow">Étape {step + 1}</span>
           <h1>{offerFlow.copy.amenitiesTitle}</h1>
           <p>{offerFlow.copy.amenitiesText}</p>
+          <HotelRoomCategorySelector rooms={hasRoomCategories ? roomConfiguration.roomTypes : []} activeId={activeRoom?.id} onChange={setActiveRoomId} />
           <div className="host-onboarding__amenity-groups">
             {offerFlow.amenityGroups.map((group) => (
               <section className="host-onboarding__amenity-section" data-group={group.id} key={group.id}>
                 <h2 data-group-symbol={offerPresentation.amenitySymbols[group.id] || undefined}>{group.label}</h2>
                 <div className="host-onboarding__amenity-grid">
                   {offerFlow.amenities.filter((item) => item.group === group.id).map((item) => {
-                    const active = draft.amenities.includes(item.id)
+                    const active = selectedAmenities.includes(item.id)
                     return (
                       <button key={item.id} type="button" aria-pressed={active} data-active={active ? 'true' : 'false'} data-group-symbol={offerPresentation.amenitySymbols[group.id] || undefined} onClick={() => toggleArrayValue('amenities', item.id)}>
                         {AmenityIcon ? <AmenityIcon id={item.id} fallback={<AmenityGlyph id={item.id} />} /> : <AmenityGlyph id={item.id} />}
@@ -472,19 +543,20 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
           <span className="host-onboarding__eyebrow">Étape {step + 1}</span>
           <h1>{offerFlow.copy.highlightsTitle}</h1>
           <p>{offerFlow.copy.highlightsText}</p>
+          <HotelRoomCategorySelector rooms={hasRoomCategories ? roomConfiguration.roomTypes : []} activeId={activeRoom?.id} onChange={setActiveRoomId} />
           {offerFlow.highlightGroups.length ? (
             <div className="host-offer-grouped-highlights">
               <div className="host-offer-grouped-highlights__summary">
                 <strong>{offerFlow.copy.highlightsSummaryTitle}</strong>
                 <span>{offerFlow.copy.highlightsSummaryText}</span>
-                <b>{draft.highlights.length} sélectionné{draft.highlights.length > 1 ? 's' : ''}</b>
+                <b>{selectedHighlights.length} sélectionné{selectedHighlights.length > 1 ? 's' : ''}</b>
               </div>
               {offerFlow.highlightGroups.map((group) => (
                 <section className="host-offer-grouped-highlights__group" data-group={group.id} key={group.id}>
                   <div className="host-offer-grouped-highlights__group-head"><h2>{group.title}</h2><p>{group.text}</p></div>
                   <div className="host-offer-grouped-highlights__grid">
                     {offerFlow.highlights.filter((item) => item.group === group.id).map((item) => {
-                      const active = draft.highlights.includes(item.id)
+                      const active = selectedHighlights.includes(item.id)
                       return (
                         <button className="host-offer-grouped-highlight" key={item.id} type="button" aria-pressed={active} data-active={active ? 'true' : 'false'} data-tone={item.tone} onClick={() => toggleArrayValue('highlights', item.id)}>
                           <span className="host-offer-grouped-highlight__icon">{HighlightIcon ? <HighlightIcon id={item.id} /> : null}</span>
@@ -561,7 +633,8 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
           <span className="host-onboarding__eyebrow">Étape {step + 1}</span>
           <h1>Définissez votre prix de départ</h1>
           <p>Ce tarif servira de base dans votre calendrier Hôte.</p>
-          <label className="host-onboarding__price"><span>Prix de base par nuit</span><div><input inputMode="numeric" value={draft.basePrice} onChange={(event) => updateDraft({ basePrice: event.target.value.replace(/\D/g, '').slice(0, 5) })} aria-label="Prix par nuit" /><b>TND</b></div></label>
+          <HotelRoomCategorySelector rooms={hasRoomCategories ? roomConfiguration.roomTypes : []} activeId={activeRoom?.id} onChange={setActiveRoomId} />
+          <label className="host-onboarding__price"><span>{activeRoom ? `Prix par nuit · ${activeRoom.name}` : 'Prix de base par nuit'}</span><div><input inputMode="numeric" value={activeRoom ? activeRoom.basePrice : draft.basePrice} onChange={(event) => { const value = event.target.value.replace(/\D/g, '').slice(0, 5); if (activeRoom) updateActiveRoom({ basePrice: Number(value) || 0 }); else updateDraft({ basePrice: value }) }} aria-label={activeRoom ? `Prix par nuit pour ${activeRoom.name}` : 'Prix par nuit'} /><b>TND</b></div></label>
           <div className="host-onboarding__weekend-card"><span>Ajustement week-end</span><strong>+7%</strong><small>modifiable après publication</small></div>
         </main>
       ) : null}

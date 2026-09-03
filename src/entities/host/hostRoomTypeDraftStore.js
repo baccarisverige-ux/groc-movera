@@ -35,6 +35,12 @@ function normalizeFeatures(value) {
     : []
 }
 
+function normalizeIds(value, max = 80) {
+  return Array.isArray(value)
+    ? [...new Set(value.filter((item) => typeof item === 'string' && item.trim()).map((item) => item.trim()))].slice(0, max)
+    : []
+}
+
 function normalizeRoom(room, index, fallback = {}) {
   const source = room && typeof room === 'object' ? room : {}
   const id = cleanString(source.id) || `room-type-${index + 1}`
@@ -53,6 +59,8 @@ function normalizeRoom(room, index, fallback = {}) {
     basePrice: clampInt(source.basePrice, 1, 99999, Number(fallback.basePrice) || 180),
     totalUnits: clampInt(source.totalUnits, 1, 999, 1),
     features: normalizeFeatures(source.features),
+    amenities: normalizeIds(Array.isArray(source.amenities) ? source.amenities : fallback.amenities),
+    highlights: normalizeIds(Array.isArray(source.highlights) ? source.highlights : fallback.highlights, 30),
     photos: normalizePhotos(source.photos),
   }
 }
