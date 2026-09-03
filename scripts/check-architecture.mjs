@@ -35,6 +35,13 @@ const required = [
   'src/features/search/searchState.js',
   'src/features/host/onboarding/HostPinMap.jsx',
   'src/features/host/onboarding/hostPinReactEngineEnhancer.jsx',
+  'src/features/host/onboarding/offer-flows/offerFlowRegistry.js',
+  'src/features/host/onboarding/offer-flows/shared/commonOfferFlow.js',
+  'src/features/host/onboarding/offer-flows/apartment/apartmentOfferFlow.js',
+  'src/features/host/onboarding/offer-flows/villa/villaOfferFlow.js',
+  'src/features/host/onboarding/offer-flows/guesthouse/guestHouseOfferFlow.js',
+  'src/features/host/onboarding/offer-flows/hotel/hotelOfferFlow.js',
+  'src/features/host/onboarding/offer-flows/hotel/hotelOfferVisuals.jsx',
   'src/features/map/MapPage.jsx',
   'src/features/map/constants/map.constants.js',
   'src/features/map-engine/MapContainer.jsx',
@@ -118,6 +125,19 @@ for (const file of files) {
   if (importsMotionPackage && repoPath !== 'src/shared/motion/runtime.js') {
     violations.push(`${repoPath}: direct Motion package import; use src/shared/motion/runtime.js`);
   }
+}
+
+const onboardingModel = await readFile(new URL('../src/features/host/onboarding/hostOnboardingModel.js', import.meta.url), 'utf8');
+if (onboardingModel.includes('hostHotelAmenitiesModel') || onboardingModel.includes('HOTEL_LISTING_HIGHLIGHTS')) {
+  violations.push('hostOnboardingModel.js: category-specific Hotel rules must live in offer-flows/hotel');
+}
+
+const onboardingPage = await readFile(new URL('../src/features/host/onboarding/HostOnboardingPage.jsx', import.meta.url), 'utf8');
+if (!onboardingPage.includes('getOfferFlow(draft.propertyType)')) {
+  violations.push('HostOnboardingPage.jsx: common orchestrator must resolve category rules through offerFlowRegistry');
+}
+if (onboardingPage.includes('supportsPooledRoomInventory') || onboardingPage.includes('HOST_HOTEL_HIGHLIGHTS')) {
+  violations.push('HostOnboardingPage.jsx: category business rules leaked back into the common orchestrator');
 }
 
 const indexHtml = await readFile(new URL('../index.html', import.meta.url), 'utf8');

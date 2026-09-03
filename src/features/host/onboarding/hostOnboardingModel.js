@@ -1,5 +1,4 @@
-import { HOST_HOTEL_AMENITIES, HOST_HOTEL_AMENITY_GROUPS } from './hostHotelAmenitiesModel.js'
-import { COMMON_LISTING_HIGHLIGHTS, HOTEL_HIGHLIGHT_GROUPS, HOTEL_LISTING_HIGHLIGHTS } from '../../../entities/listing/listingHighlights.js'
+import { COMMON_LISTING_HIGHLIGHTS } from '../../../entities/listing/listingHighlights.js'
 
 export const HOST_ONBOARDING_SCREENS = Object.freeze([
   { id: 'intro-place', phase: 1 },
@@ -41,15 +40,16 @@ export const HOST_GUEST_ACCESS = Object.freeze([
   { id: 'shared', label: 'Chambre partagée', description: 'Les voyageurs dorment dans un espace partagé.' },
 ])
 
-export const HOST_AMENITY_GROUPS = Object.freeze([
+export const COMMON_HOST_AMENITY_GROUPS = Object.freeze([
   { id: 'essentials', label: 'Les indispensables' },
   { id: 'popular', label: 'Confort apprécié' },
   { id: 'features', label: 'Équipements & services' },
   { id: 'location', label: 'Cadre & emplacement' },
-  ...HOST_HOTEL_AMENITY_GROUPS,
 ])
 
-export const HOST_AMENITIES = Object.freeze([
+export const HOST_AMENITY_GROUPS = COMMON_HOST_AMENITY_GROUPS
+
+export const COMMON_HOST_AMENITIES = Object.freeze([
   { id: 'ac', label: 'Climatisation', group: 'essentials' },
   { id: 'dryer', label: 'Sèche-linge', group: 'essentials' },
   { id: 'essentials', label: 'Linge & essentiels', detail: 'Draps, serviettes, savon et papier', group: 'essentials' },
@@ -77,12 +77,11 @@ export const HOST_AMENITIES = Object.freeze([
   { id: 'pool', label: 'Piscine', group: 'features' },
   { id: 'beach-access', label: 'Accès plage', group: 'location' },
   { id: 'waterfront', label: 'Bord de mer', group: 'location' },
-  ...HOST_HOTEL_AMENITIES,
 ])
 
-export const HOST_HIGHLIGHTS = COMMON_LISTING_HIGHLIGHTS
-export const HOST_HOTEL_HIGHLIGHT_GROUPS = HOTEL_HIGHLIGHT_GROUPS
-export const HOST_HOTEL_HIGHLIGHTS = HOTEL_LISTING_HIGHLIGHTS
+export const HOST_AMENITIES = COMMON_HOST_AMENITIES
+export const COMMON_HOST_HIGHLIGHTS = COMMON_LISTING_HIGHLIGHTS
+export const HOST_HIGHLIGHTS = COMMON_HOST_HIGHLIGHTS
 
 export const HOST_PROMOTIONS = Object.freeze([
   { id: 'new-listing', label: 'Promotion nouveau logement', value: 20, detail: 'Pour lancer les premières réservations.' },
