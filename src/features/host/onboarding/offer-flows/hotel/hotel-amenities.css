@@ -36,14 +36,21 @@
 
 .host-onboarding__step[data-offer-variant="hotel"] .host-onboarding__amenity-section[data-group] .host-onboarding__amenity-grid{
   gap:10px;
+  align-items:stretch;
+  grid-auto-rows:1fr;
 }
 
 .host-onboarding__step[data-offer-variant="hotel"] .host-onboarding__amenity-section[data-group] .host-onboarding__amenity-grid>button{
-  min-height:88px;
-  padding:13px 12px;
+  width:100%;
+  min-height:96px;
+  padding:12px 30px 12px 11px;
   border-color:#e4e8e5;
   border-radius:19px;
   background:linear-gradient(180deg,#fff,#fbfcfb);
+  grid-template-columns:44px minmax(0,1fr);
+  align-content:center;
+  align-items:center;
+  column-gap:10px;
   box-shadow:0 7px 20px rgba(20,40,27,.035);
 }
 
@@ -68,6 +75,7 @@
   width:42px;
   height:42px;
   flex:0 0 42px;
+  justify-self:center;
   padding:5px;
   border-radius:13px;
   background:linear-gradient(145deg,#fff,#f6f8f7);
@@ -111,13 +119,23 @@
 }
 
 .host-onboarding__step[data-offer-variant="hotel"] .host-onboarding__amenity-section[data-group] .host-onboarding__amenity-copy strong{
-  font-size:11px;
-  line-height:1.26;
+  font-size:11.5px;
+  line-height:1.22;
+  overflow-wrap:anywhere;
 }
 
 .host-onboarding__step[data-offer-variant="hotel"] .host-onboarding__amenity-section[data-group] .host-onboarding__amenity-copy small{
-  font-size:8px;
-  line-height:1.4;
+  font-size:9px;
+  line-height:1.35;
+  overflow-wrap:anywhere;
+}
+
+.host-onboarding__step[data-offer-variant="hotel"] .host-onboarding__amenity-section[data-group] .host-onboarding__amenity-copy{
+  width:100%;
+  min-width:0;
+  align-content:center;
+  gap:4px;
+  text-align:left;
 }
 
 .host-hotel-amenities__intro{
@@ -150,17 +168,18 @@
 .host-room-category-picker>div:first-child{display:grid;gap:3px}
 .host-room-category-picker>div:first-child strong{font-size:14px;color:#173823}
 .host-room-category-picker>div:first-child span{font-size:11px;line-height:1.4;color:#77827b}
-.host-room-category-picker__tabs{display:flex;gap:8px;overflow-x:auto;padding:1px 1px 5px;scrollbar-width:none;scroll-snap-type:x proximity}
+.host-room-category-picker__tabs{display:flex;align-items:stretch;gap:8px;overflow-x:auto;padding:1px 1px 5px;scrollbar-width:none;scroll-snap-type:x proximity}
 .host-room-category-picker__tabs::-webkit-scrollbar{display:none}
-.host-room-category-picker__tabs button{min-width:126px;padding:11px 12px;border:1px solid #dfe5e1;border-radius:15px;background:#fff;display:grid;gap:3px;text-align:left;scroll-snap-align:start;box-shadow:0 4px 12px rgba(30,52,37,.035)}
-.host-room-category-picker__tabs button strong{font-size:12px;line-height:1.2;color:#26332a}
-.host-room-category-picker__tabs button small{font-size:9px;color:#818b84}
+.host-room-category-picker__tabs button{box-sizing:border-box;min-width:144px;max-width:178px;min-height:64px;padding:11px 13px;border:1px solid #dfe5e1;border-radius:15px;background:#fff;display:grid;grid-template-rows:minmax(29px,auto) auto;align-content:center;gap:4px;text-align:left;scroll-snap-align:start;box-shadow:0 4px 12px rgba(30,52,37,.035)}
+.host-room-category-picker__tabs button strong{display:-webkit-box;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:2;font-size:12px;line-height:1.2;color:#26332a;overflow-wrap:anywhere}
+.host-room-category-picker__tabs button small{align-self:end;font-size:9px;line-height:1.25;color:#818b84;white-space:nowrap}
 .host-room-category-picker__tabs button[data-active="true"]{border-color:#2f6b47;background:#edf6f0;box-shadow:inset 0 0 0 1px #2f6b47,0 5px 14px rgba(38,91,57,.08)}
 .host-room-category-picker__tabs button[data-active="true"] strong{color:#235c3a}
 
 @media(max-width:350px){
   .host-onboarding__step[data-offer-variant="hotel"] .host-onboarding__amenity-section[data-group] .host-onboarding__amenity-grid{grid-template-columns:1fr}
-  .host-onboarding__step[data-offer-variant="hotel"] .host-onboarding__amenity-section[data-group] .host-onboarding__amenity-grid>button{min-height:72px}
+  .host-onboarding__step[data-offer-variant="hotel"] .host-onboarding__amenity-section[data-group] .host-onboarding__amenity-grid>button{min-height:82px}
+  .host-room-category-picker__tabs button{min-width:136px}
 }
 .host-onboarding__step[data-offer-variant="hotel"] .host-onboarding__amenity-section[data-group="essentials"]{--hotel-amenity-bg:#edf5ff;--hotel-amenity-fg:#356da5}
 .host-onboarding__step[data-offer-variant="hotel"] .host-onboarding__amenity-section[data-group="features"]{--hotel-amenity-bg:#edf6e9;--hotel-amenity-fg:#4f793b}
