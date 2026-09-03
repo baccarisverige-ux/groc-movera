@@ -10,6 +10,8 @@ import {
   HOST_AMENITY_GROUPS,
   HOST_GUEST_ACCESS,
   HOST_HIGHLIGHTS,
+  HOST_HOTEL_HIGHLIGHT_GROUPS,
+  HOST_HOTEL_HIGHLIGHTS,
   HOST_ONBOARDING_SCREENS,
   HOST_PROMOTIONS,
   HOST_PROPERTY_TYPES,
@@ -18,6 +20,8 @@ import {
   screenPhase,
 } from './hostOnboardingModel.js'
 import './host-onboarding-page.css'
+import './host-hotel-highlights.css'
+import './host-hotel-amenities.css'
 
 function ArrowIcon({ back = false }) {
   return (
@@ -132,6 +136,35 @@ function AmenityGlyph({ id }) {
   return <SimpleAmenityIcon kind={id} />
 }
 
+const HOTEL_AMENITY_SYMBOLS = Object.freeze({
+  'hotel-room': '◇',
+  'hotel-bath': '◡',
+  'hotel-reception': '✦',
+  'hotel-housekeeping': '✧',
+  'hotel-food': '○',
+  'hotel-wellness': '≈',
+  'hotel-business': '□',
+  'hotel-family': '◎',
+  'hotel-transport': '→',
+  'hotel-accessibility': '＋',
+  'hotel-security': '◆',
+  'hotel-hostel': '▤',
+  'hotel-outdoor': '☼',
+  'hotel-sustainability': '⌁',
+})
+
+function HotelHighlightIcon({ id }) {
+  const board = ['breakfast', 'half-board', 'full-board', 'all-inclusive', 'restaurant', 'bar', 'room-service'].includes(id)
+  const setting = ['sea-view', 'beachfront', 'panoramic', 'rooftop', 'central', 'airport', 'nightlife', 'historic'].includes(id)
+  const wellness = ['spa', 'wellness', 'pool-highlight', 'fitness', 'hammam', 'private-beach'].includes(id)
+  const audience = ['family', 'adults-only', 'business', 'couples', 'long-stay', 'accessible'].includes(id)
+  if (board) return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M4 4v7M6 4v7M4 8h2M19 4v16M17 4c0 4 2 5 2 5"/></svg>
+  if (setting) return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 10-8 10S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2"/></svg>
+  if (wellness) return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19c-5-2-7-5-6-9 3 0 5 1 6 4 1-3 3-4 6-4 1 4-1 7-6 9ZM12 14V5"/></svg>
+  if (audience) return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="3"/><path d="M5 20c.5-5 2.8-8 7-8s6.5 3 7 8"/></svg>
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9Z"/></svg>
+}
+
 function CounterRow({ label, value, min = 0, onChange, icon }) {
   return (
     <div className="host-onboarding__counter-row">
@@ -234,6 +267,7 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
   const phase = screenPhase(step)
   const internalProgress = phaseProgress(step)
   const visualStage = visualStageFor(id)
+  const isHotel = draft.propertyType === 'Hôtel'
 
   useEffect(() => {
     const nextDraft = readHostOnboardingDraft(session?.userId)
@@ -256,13 +290,13 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
     if (id === 'pin') return draft.pinConfirmed
     if (id === 'basics') return draft.guests >= 1 && draft.bedrooms >= 0 && draft.beds >= 1 && draft.bathrooms >= 0
     if (id === 'title') return draft.title.trim().length >= 5
-    if (id === 'highlights') return draft.highlights.length >= 1 && draft.highlights.length <= 2
+    if (id === 'highlights') return isHotel ? draft.highlights.length >= 1 : draft.highlights.length >= 1 && draft.highlights.length <= 2
     if (id === 'description') return draft.description.trim().length >= 20
     if (id === 'booking') return Boolean(draft.bookingMode)
     if (id === 'price') return Number(draft.basePrice) > 0
     if (id === 'review') return draft.confirmedAuthority && draft.acceptedRules
     return true
-  }, [id, draft])
+  }, [id, draft, isHotel])
 
   const toggleArrayValue = (field, value, max = Infinity) => {
     setDraft((current) => {
@@ -423,19 +457,19 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
       ) : null}
 
       {id === 'amenities' ? (
-        <main className="host-onboarding__step host-onboarding__step--amenities">
+        <main className="host-onboarding__step host-onboarding__step--amenities" data-hotel-amenities={isHotel ? 'true' : 'false'}>
           <span className="host-onboarding__eyebrow">Étape {step + 1}</span>
-          <h1>Choisissez les équipements qui font la différence</h1>
-          <p>Sélectionnez uniquement ce qui est réellement disponible.</p>
+          <h1>{isHotel ? 'Quels équipements et services propose votre établissement ?' : 'Choisissez les équipements qui font la différence'}</h1>
+          <p>{isHotel ? 'Sélectionnez tout ce qui est réellement disponible dans votre hôtel ou hostel.' : 'Sélectionnez uniquement ce qui est réellement disponible.'}</p>
           <div className="host-onboarding__amenity-groups">
-            {HOST_AMENITY_GROUPS.map((group) => (
+            {HOST_AMENITY_GROUPS.filter((group) => isHotel || !group.id.startsWith('hotel-')).map((group) => (
               <section className="host-onboarding__amenity-section" data-group={group.id} key={group.id}>
-                <h2>{group.label}</h2>
+                <h2 data-hotel-symbol={isHotel ? HOTEL_AMENITY_SYMBOLS[group.id] : undefined}>{group.label}</h2>
                 <div className="host-onboarding__amenity-grid">
                   {HOST_AMENITIES.filter((item) => item.group === group.id).map((item) => {
                     const active = draft.amenities.includes(item.id)
                     return (
-                      <button key={item.id} type="button" aria-pressed={active} data-active={active ? 'true' : 'false'} onClick={() => toggleArrayValue('amenities', item.id)}>
+                      <button key={item.id} type="button" aria-pressed={active} data-active={active ? 'true' : 'false'} data-hotel-symbol={isHotel ? HOTEL_AMENITY_SYMBOLS[group.id] : undefined} onClick={() => toggleArrayValue('amenities', item.id)}>
                         <AmenityGlyph id={item.id} />
                         <span className="host-onboarding__amenity-copy"><strong>{item.label}</strong>{item.detail ? <small>{item.detail}</small> : null}</span>
                         {active ? <span className="host-onboarding__choice-check"><CheckIcon /></span> : null}
@@ -477,17 +511,46 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
       ) : null}
 
       {id === 'highlights' ? (
-        <main className="host-onboarding__step">
+        <main className="host-onboarding__step" data-hotel-highlights={isHotel ? 'true' : 'false'}>
           <span className="host-onboarding__eyebrow">Étape {step + 1}</span>
-          <h1>Décrivez votre logement</h1>
-          <p>Choisissez jusqu’à 2 points forts pour commencer.</p>
-          <div className="host-onboarding__chips">
-            {HOST_HIGHLIGHTS.map((item) => {
-              const active = draft.highlights.includes(item.id)
-              return <button key={item.id} type="button" aria-pressed={active} data-active={active ? 'true' : 'false'} onClick={() => toggleArrayValue('highlights', item.id, 2)}>{active ? <CheckIcon /> : null}{item.label}</button>
-            })}
-          </div>
-          <small className="host-onboarding__selection-count">{draft.highlights.length}/2 sélectionné{draft.highlights.length > 1 ? 's' : ''}</small>
+          <h1>{isHotel ? 'Les points forts de votre hôtel' : 'Décrivez votre logement'}</h1>
+          <p>{isHotel ? 'Cochez tout ce qui décrit réellement votre établissement. Tous vos choix seront visibles sur l’offre.' : 'Choisissez jusqu’à 2 points forts pour commencer.'}</p>
+          {isHotel ? (
+            <div className="host-hotel-highlights">
+              <div className="host-hotel-highlights__summary">
+                <strong>Affichage sur votre offre</strong>
+                <span>Vous pouvez sélectionner plusieurs points forts. Tous les éléments cochés seront affichés comme badges sur l’offre.</span>
+                <b>{draft.highlights.length} sélectionné{draft.highlights.length > 1 ? 's' : ''}</b>
+              </div>
+              {HOST_HOTEL_HIGHLIGHT_GROUPS.map((group) => (
+                <section className="host-hotel-highlights__group" data-group={group.id} key={group.id}>
+                  <div className="host-hotel-highlights__group-head"><h2>{group.title}</h2><p>{group.text}</p></div>
+                  <div className="host-hotel-highlights__grid">
+                    {HOST_HOTEL_HIGHLIGHTS.filter((item) => item.group === group.id).map((item) => {
+                      const active = draft.highlights.includes(item.id)
+                      return (
+                        <button className="host-hotel-highlight" key={item.id} type="button" aria-pressed={active} data-active={active ? 'true' : 'false'} data-tone={item.tone} onClick={() => toggleArrayValue('highlights', item.id)}>
+                          <span className="host-hotel-highlight__icon"><HotelHighlightIcon id={item.id} /></span>
+                          <span className="host-hotel-highlight__copy"><strong>{item.label}</strong>{item.detail ? <small>{item.detail}</small> : null}</span>
+                          <span className="host-hotel-highlight__check">✓</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </section>
+              ))}
+            </div>
+          ) : (
+            <>
+              <div className="host-onboarding__chips">
+                {HOST_HIGHLIGHTS.map((item) => {
+                  const active = draft.highlights.includes(item.id)
+                  return <button key={item.id} type="button" aria-pressed={active} data-active={active ? 'true' : 'false'} onClick={() => toggleArrayValue('highlights', item.id, 2)}>{active ? <CheckIcon /> : null}{item.label}</button>
+                })}
+              </div>
+              <small className="host-onboarding__selection-count">{draft.highlights.length}/2 sélectionné{draft.highlights.length > 1 ? 's' : ''}</small>
+            </>
+          )}
         </main>
       ) : null}
 

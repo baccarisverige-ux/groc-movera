@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { OptimizedListingImage } from '../../../shared/media/OptimizedListingImage.jsx'
 import { readHostCalendar, readHostCalendarForListing, writeHostCalendarDays } from '../../../entities/host/hostCalendarStore.js'
 import { HOST_PROFILE_EVENT, supportsPooledRoomInventory, updateHostRoomTypeTotal, useHostProfile } from '../../../entities/host/hostProfileStore.js'
 import { HOST_ROOM_INVENTORY_EVENT, readHostRoomInventoryForListing, remainingRoomUnitsForDay } from '../../../entities/host/hostRoomInventoryStore.js'
@@ -194,7 +195,7 @@ export function HostCalendarPage({ onNavigate, hostProfile = null }) {
       <main className="host-calendar-page__content">
         <section className="host-calendar-page__listing" aria-label="Logement actif">
           {listingPhoto
-            ? <img className="host-calendar-page__listing-photo" src={listingPhoto} alt="" />
+            ? <OptimizedListingImage className="host-calendar-page__listing-photo" src={listingPhoto} alt="" sizes="72px" />
             : <span className="host-calendar-page__listing-icon"><CalendarIcon /></span>}
           <span><small>Logement actif</small><strong>{listing.name}</strong><em>{listing.type} · {listing.city}</em></span>
           <b>{categorizedRooms ? `Dès ${startingPrice}` : startingPrice} TND</b>

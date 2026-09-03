@@ -1,4 +1,5 @@
 import { HOST_HOTEL_AMENITIES, HOST_HOTEL_AMENITY_GROUPS } from './hostHotelAmenitiesModel.js'
+import { COMMON_LISTING_HIGHLIGHTS, HOTEL_HIGHLIGHT_GROUPS, HOTEL_LISTING_HIGHLIGHTS } from '../../../entities/listing/listingHighlights.js'
 
 export const HOST_ONBOARDING_SCREENS = Object.freeze([
   { id: 'intro-place', phase: 1 },
@@ -79,32 +80,9 @@ export const HOST_AMENITIES = Object.freeze([
   ...HOST_HOTEL_AMENITIES,
 ])
 
-export const HOST_HIGHLIGHTS = Object.freeze([
-  { id: 'peaceful', label: 'Calme' },
-  { id: 'unique', label: 'Unique' },
-  { id: 'family', label: 'Familial' },
-  { id: 'stylish', label: 'Élégant' },
-  { id: 'central', label: 'Central' },
-  { id: 'spacious', label: 'Spacieux' },
-  { id: 'sea-view', label: 'Vue mer' },
-  { id: 'panoramic', label: 'Panoramique' },
-  { id: 'rooftop', label: 'Rooftop' },
-  { id: 'spa', label: 'Spa' },
-  { id: 'pool-highlight', label: 'Piscine' },
-  { id: 'beachfront', label: 'Bord de mer' },
-  { id: 'luxury', label: 'Luxe' },
-  { id: 'romantic', label: 'Romantique' },
-  { id: 'business', label: 'Business' },
-  { id: 'breakfast', label: 'Petit-déjeuner' },
-  { id: 'adults-only', label: 'Adults only' },
-  { id: 'all-inclusive', label: 'All inclusive' },
-  { id: 'wellness', label: 'Bien-être' },
-  { id: 'design', label: 'Design' },
-  { id: 'historic', label: 'Historique' },
-  { id: 'airport', label: 'Proche aéroport' },
-  { id: 'nightlife', label: 'Vie nocturne' },
-  { id: 'eco', label: 'Éco-responsable' },
-])
+export const HOST_HIGHLIGHTS = COMMON_LISTING_HIGHLIGHTS
+export const HOST_HOTEL_HIGHLIGHT_GROUPS = HOTEL_HIGHLIGHT_GROUPS
+export const HOST_HOTEL_HIGHLIGHTS = HOTEL_LISTING_HIGHLIGHTS
 
 export const HOST_PROMOTIONS = Object.freeze([
   { id: 'new-listing', label: 'Promotion nouveau logement', value: 20, detail: 'Pour lancer les premières réservations.' },

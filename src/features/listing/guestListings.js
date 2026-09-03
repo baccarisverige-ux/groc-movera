@@ -1,54 +1,8 @@
 import { findHostProfileByListingId, listActiveHostProfiles, listingCategoryFromType } from '../../entities/host/hostProfileStore.js'
 import { getListingDetail, listingCatalog } from '../../entities/listing/listingCatalog.js'
+import { listingAmenityLabels } from '../../entities/listing/listingAmenities.js'
+import { listingHighlightBadges } from '../../entities/listing/listingHighlights.js'
 import { homeCategoryOffers } from '../home/data/homeData.js'
-
-const HOST_AMENITY_LABELS = Object.freeze({
-  wifi: 'Wi-Fi haut débit',
-  parking: 'Parking privé',
-  ac: 'Climatisation',
-  kitchen: 'Cuisine équipée',
-  tv: 'Télévision',
-  pool: 'Piscine',
-  waterfront: 'Bord de mer',
-  'beach-access': 'Accès plage',
-  outdoor: 'Mobilier de terrasse',
-  gym: 'Espace fitness',
-  workspace: 'Coin bureau',
-  heating: 'Chauffage',
-  'hot-water': 'Eau chaude',
-  refrigerator: 'Réfrigérateur',
-  washer: 'Lave-linge',
-  dryer: 'Sèche-linge',
-  'coffee-maker': 'Machine à café',
-  essentials: 'Linge & essentiels',
-})
-
-const HOST_HIGHLIGHT_LABELS = Object.freeze({
-  peaceful: 'Calme',
-  unique: 'Unique',
-  family: 'Familial',
-  stylish: 'Élégant',
-  central: 'Central',
-  spacious: 'Spacieux',
-  'sea-view': 'Vue mer',
-  panoramic: 'Panoramique',
-  rooftop: 'Rooftop',
-  spa: 'Spa',
-  'pool-highlight': 'Piscine',
-  beachfront: 'Bord de mer',
-  luxury: 'Luxe',
-  romantic: 'Romantique',
-  business: 'Business',
-  breakfast: 'Petit-déjeuner',
-  'adults-only': 'Adults only',
-  'all-inclusive': 'All inclusive',
-  wellness: 'Bien-être',
-  design: 'Design',
-  historic: 'Historique',
-  airport: 'Proche aéroport',
-  nightlife: 'Vie nocturne',
-  eco: 'Éco-responsable',
-})
 
 const HOST_PRESENTATION_IMAGES = Object.freeze({
   hotel: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=90&fm=webp',
@@ -129,6 +83,8 @@ function seedListing(item, category = '') {
     rating,
     reviews: Number.isFinite(Number(detail?.reviews)) ? Number(detail.reviews) : null,
     badge: item.badge || '',
+    highlights: [],
+    highlightBadges: [],
     nightlyRate,
     currency,
     priceLabel: item.priceTotal || (nightlyRate != null ? `${nightlyRate} ${currency} / nuit` : 'Tarif à confirmer'),
@@ -206,11 +162,9 @@ function hostListing(profile) {
     beds: Math.max(1, Number(source.beds) || 1),
     baths: Math.max(0, Number(source.bathrooms) || 0),
   }
-  const amenities = (Array.isArray(source.amenities) ? source.amenities : []).map((id) => HOST_AMENITY_LABELS[id] || id).filter(Boolean)
-  const highlights = (Array.isArray(source.highlights) ? source.highlights : [])
-    .map((id) => HOST_HIGHLIGHT_LABELS[id] || '')
-    .filter(Boolean)
-    .slice(0, 2)
+  const amenities = listingAmenityLabels(source.amenities)
+  const highlightBadges = listingHighlightBadges(source.highlights)
+  const highlights = highlightBadges.map((item) => item.label)
 
   return {
     id: source.id,
@@ -228,8 +182,9 @@ function hostListing(profile) {
     photos: actualPhotos,
     rating: null,
     reviews: 0,
-    badge: highlights.length ? highlights.join(' · ') : 'Nouveau',
+    badge: highlightBadges[0]?.label || 'Nouveau',
     highlights,
+    highlightBadges,
     nightlyRate,
     currency,
     priceLabel: categorized ? `À partir de ${nightlyRate} ${currency} / nuit` : `${nightlyRate} ${currency} / nuit`,

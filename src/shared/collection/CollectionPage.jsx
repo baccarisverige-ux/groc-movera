@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import { useFavorites } from '../../entities/favorite/favoritesStore.js'
 import { MotionList, MotionListItem } from '../motion/MotionList.jsx'
+import { OptimizedListingImage } from '../media/OptimizedListingImage.jsx'
+import { ListingHighlightBadges } from '../listing/ListingHighlightBadges.jsx'
 import './collection-page.css'
 import './collection-page-scale.css'
 import './collection-premium-architecture.css'
@@ -227,8 +229,8 @@ export function CollectionPage({
                 }}
               >
                 <div className="beach-offer__media">
-                  {item.image ? <img src={item.image} alt="" loading="lazy" decoding="async" /> : <span aria-hidden="true">MH</span>}
-                  <span className="beach-offer__badge">{item.badge || badgeLabel}</span>
+                  {item.image ? <OptimizedListingImage src={item.image} alt="" loading="lazy" sizes="(max-width:430px) 100vw, 520px" /> : <span aria-hidden="true">MH</span>}
+                  {!item.highlightBadges?.length ? <span className="beach-offer__badge">{item.badge || badgeLabel}</span> : null}
                   <button type="button" className="beach-offer__heart" data-active={favorite ? 'true' : 'false'} aria-pressed={favorite} aria-label={`${favorite ? 'Retirer' : 'Ajouter'} ${item.title} ${favorite ? 'des' : 'aux'} favoris`} onClick={(event) => { event.stopPropagation(); toggleFavorite(item.id) }}>
                     <HeartIcon />
                   </button>
@@ -238,6 +240,7 @@ export function CollectionPage({
                   <div>
                     <span className="beach-offer__location"><PinIcon />{item.location}{item.location ? ', Tunisie' : ''}</span>
                     <h3>{item.title}</h3>
+                    <ListingHighlightBadges badges={item.highlightBadges} variant="collection" />
                   </div>
                   <div className="beach-offer__price">
                     <strong>{item.priceLabel || item.priceTotal || `${item.price ?? ''} ${item.currency ?? ''}`.trim() || 'Tarif à confirmer'}</strong>

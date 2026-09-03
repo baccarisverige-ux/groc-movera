@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowLeftIcon } from '../../shared/icons/AppIcons.jsx'
+import { OptimizedListingImage } from '../../shared/media/OptimizedListingImage.jsx'
+import { ListingHighlightBadges } from '../../shared/listing/ListingHighlightBadges.jsx'
 import { getListingMapPosition } from '../../entities/listing/listingMapPositions.js'
 import { readHostPublicIdentity } from '../../entities/host/hostPublicIdentityStore.js'
 import { useFavorites } from '../favorites/favoritesStore.js'
@@ -163,6 +165,7 @@ export function ListingDetailPage({ params, onNavigate }) {
   const mapMarker = { id: listing.id, label: listing.location, lat: mapCenter.lat, lng: mapCenter.lng }
   const knowItems = hostKnowItems(listing)
   const hasRating = Number.isFinite(Number(listing.rating)) && Number(listing.rating) > 0 && Number(listing.reviews) > 0
+  const highlightBadges = Array.isArray(listing.highlightBadges) ? listing.highlightBadges : []
 
   const selectRoom = (roomId) => {
     setSelectedRoomTypeId(roomId)
@@ -185,7 +188,7 @@ export function ListingDetailPage({ params, onNavigate }) {
   return (
     <div className="listing-detail-page" data-testid="page-listing" data-listing-id={listing.id} data-origin={listing.origin} data-room-category={categorized ? selectedRoom?.id || '' : ''}>
       <div className="listing-detail-hero" onTouchStart={onGalleryTouchStart} onTouchEnd={onGalleryTouchEnd}>
-        {heroPhoto ? <img key={heroPhoto} src={heroPhoto} alt={`${listing.title} — ${heroPhotoLabel}`} /> : <div className="listing-detail-hero-fallback" aria-hidden="true"/>}
+        {heroPhoto ? <OptimizedListingImage key={heroPhoto} src={heroPhoto} alt={`${listing.title} — ${heroPhotoLabel}`} sizes="100vw" loading="eager" fetchPriority="high" /> : <div className="listing-detail-hero-fallback" aria-hidden="true"/>}
         <div className="listing-detail-hero-shade" aria-hidden="true"/>
         <div className="listing-detail-hero-bar"><OverlayButton label="Retour" onClick={() => goBack(onNavigate)}><ArrowLeftIcon/></OverlayButton><div className="listing-detail-hero-end"><OverlayButton label={shareHint || 'Partager'} onClick={onShare}><ShareGlyph/></OverlayButton><OverlayButton label={`${favorite ? 'Retirer' : 'Ajouter'} ${listing.title} ${favorite ? 'des' : 'aux'} favoris`} pressed={favorite} onClick={() => toggleFavorite(listing.id)}><span className={favorite ? 'listing-detail-heart is-on' : 'listing-detail-heart'}><HeartGlyph filled={favorite}/></span></OverlayButton></div></div>
         <div className="listing-detail-gallery-meta">{activePhotos.length > 1 ? <span className="listing-detail-gallery-dots" aria-hidden="true">{activePhotos.map((photo, index) => <i key={`${photo.src}-${index}`} data-active={index === safePhotoIndex ? 'true' : 'false'}/>)}</span> : null}<span className="listing-detail-counter">{activePhotos.length ? safePhotoIndex + 1 : 0}/{photoTotal}</span></div>
@@ -193,7 +196,8 @@ export function ListingDetailPage({ params, onNavigate }) {
 
       <div className="listing-detail-sheet">
         <section className="listing-detail-intro">
-          <div className="listing-detail-kicker"><span>Movera Host</span>{listing.badge ? <b>{listing.badge}</b> : null}</div>
+          <div className="listing-detail-kicker"><span>Movera Host</span>{listing.badge && !highlightBadges.length ? <b>{listing.badge}</b> : null}</div>
+          <ListingHighlightBadges badges={highlightBadges} variant="detail" />
           <h1>{listing.title}</h1><p className="listing-detail-place">{listing.location}, Tunisie</p>{activeCapacityLine ? <p className="listing-detail-capacity">{activeCapacityLine}</p> : null}
           <p className="listing-detail-rating-row">{hasRating ? <><span>★ {listing.rating}</span><span className="listing-detail-dot">·</span><button type="button" className="listing-detail-reviews-link" onClick={() => scrollTo('listing-reviews')}>{listing.reviews} avis</button></> : <button type="button" className="listing-detail-reviews-link" onClick={() => scrollTo('listing-reviews')}>Nouvelle annonce · aucun avis</button>}</p>
         </section>
@@ -204,7 +208,7 @@ export function ListingDetailPage({ params, onNavigate }) {
 
         <section className="listing-detail-block listing-detail-description"><p className={descOpen ? 'listing-detail-copy' : 'listing-detail-copy is-clamped'}>{activeDescription || 'Description non renseignée.'}</p>{activeDescription?.length > 180 ? <button type="button" className="listing-detail-more" aria-expanded={descOpen} onClick={() => setDescOpen((open) => !open)}>{descOpen ? 'Réduire' : 'Lire la suite'}</button> : null}</section>
 
-        {spaceCards.length ? <section className="listing-detail-block"><h2>{categorized && selectedRoom ? `Photos · ${selectedRoom.name}` : 'Photos du logement'}</h2><div className={spaceCards.length === 1 ? 'listing-detail-sleep is-single' : 'listing-detail-sleep'}>{spaceCards.map((photo, index) => <article className="listing-detail-sleep-card" key={photo.label || photo.src}><img src={photo.src} alt={`${listing.title} — ${photo.label || `Photo ${index + 1}`}`} loading="lazy" decoding="async"/><strong>{photo.label || `Photo ${index + 1}`}</strong><span>{spaceDetail(photo, activeListing, index)}</span></article>)}</div></section> : listing.imageIsPlaceholder ? <section className="listing-detail-block"><h2>Photos du logement</h2><p className="listing-detail-copy">L’hôte n’a pas encore fourni de photo exploitable pour cette annonce. Le visuel supérieur sert uniquement à représenter la catégorie.</p></section> : null}
+        {spaceCards.length ? <section className="listing-detail-block"><h2>{categorized && selectedRoom ? `Photos · ${selectedRoom.name}` : 'Photos du logement'}</h2><div className={spaceCards.length === 1 ? 'listing-detail-sleep is-single' : 'listing-detail-sleep'}>{spaceCards.map((photo, index) => <article className="listing-detail-sleep-card" key={photo.label || photo.src}><OptimizedListingImage src={photo.src} alt={`${listing.title} — ${photo.label || `Photo ${index + 1}`}`} loading="lazy" sizes="(max-width:430px) 76vw, 360px" /><strong>{photo.label || `Photo ${index + 1}`}</strong><span>{spaceDetail(photo, activeListing, index)}</span></article>)}</div></section> : listing.imageIsPlaceholder ? <section className="listing-detail-block"><h2>Photos du logement</h2><p className="listing-detail-copy">L’hôte n’a pas encore fourni de photo exploitable pour cette annonce. Le visuel supérieur sert uniquement à représenter la catégorie.</p></section> : null}
 
         <section className="listing-detail-block"><h2>Ce que propose ce lieu</h2>{visibleAmenities.length ? <ul className="listing-detail-amenities">{visibleAmenities.map((name) => <li key={name}><span className="listing-detail-ico">{amenityIcon(name)}</span><span>{name}</span></li>)}</ul> : <p className="listing-detail-copy">Aucun équipement supplémentaire n’a été renseigné pour cette annonce.</p>}{listing.amenities.length > 5 ? <button type="button" className="listing-detail-more" aria-expanded={amenitiesOpen} onClick={() => setAmenitiesOpen((open) => !open)}>{amenitiesOpen ? 'Réduire' : `Voir les ${listing.amenities.length} équipements`}</button> : null}</section>
 

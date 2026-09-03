@@ -149,7 +149,7 @@ function normalizeRoomTypes(value, type, guestAccess, fallback) {
       basePrice: Number.isFinite(price) && price > 0 ? Math.round(price) : fallbackPrice,
       totalUnits: clampInt(sourceRoom.totalUnits, 1, 999, legacyUnits),
       features: stringArray(sourceRoom.features, 8),
-      photos: stringArray(sourceRoom.photos, 8),
+      photos: stringArray(sourceRoom.photos, foldType(type) === 'hotel' ? 20 : 8),
     }
   })
 }
@@ -210,7 +210,7 @@ function normalizeListing(value, fallbackId = 'primary-listing') {
     beds,
     bathrooms,
     amenities: stringArray(value.amenities),
-    highlights: stringArray(value.highlights).slice(0, 2),
+    highlights: stringArray(value.highlights, foldType(type) === 'hotel' ? Infinity : 2),
     description: typeof value.description === 'string' ? value.description.trim() : '',
     bookingMode: value.bookingMode === 'instant' ? 'instant' : 'request-first',
     promotions: stringArray(value.promotions),

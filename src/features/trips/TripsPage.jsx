@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { listReservationsForGuest, RESERVATIONS_EVENT } from '../../entities/reservation/reservationStore.js'
 import { changeReservationStatus } from '../../entities/reservation/reservationService.js'
+import { OptimizedListingImage } from '../../shared/media/OptimizedListingImage.jsx'
 import { useAuthSession } from '../auth/authSession.js'
 import { getGuestListingById } from '../listing/guestListings.js'
 import './trips-page.css'
@@ -67,7 +68,7 @@ export function TripsPage({ onNavigate }) {
             {trips.map(({ reservation, listing }) => (
               <article className="trips-page__card" key={reservation.id} data-status={reservation.status}>
                 <button type="button" className="trips-page__listing" onClick={() => listing && onNavigate(`/listing/${listing.id}`)} disabled={!listing}>
-                  <span className="trips-page__image">{listing?.image ? <img src={listing.image} alt="" loading="lazy" decoding="async" /> : <b>MH</b>}</span>
+                  <span className="trips-page__image">{listing?.image ? <OptimizedListingImage src={listing.image} alt="" loading="lazy" sizes="84px" /> : <b>MH</b>}</span>
                   <span className="trips-page__copy">
                     <small>{statusLabel(reservation.status)}</small>
                     <strong>{listing?.title || 'Annonce indisponible'}</strong>

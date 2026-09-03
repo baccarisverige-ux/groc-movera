@@ -11,13 +11,10 @@ import './host-room-types-onboarding.css'
 import './host-room-basics-logic.css'
 
 const BASICS_SELECTOR = '.host-onboarding[data-screen="basics"] .host-onboarding__step'
-const PHOTOS_SELECTOR = '.host-onboarding[data-screen="photos"] .host-onboarding__step'
 const REVIEW_SELECTOR = '.host-onboarding[data-screen="review"] .host-onboarding__step'
 const SETUP_CLASS = 'host-room-setup'
-const PHOTO_CLASS = 'host-room-photo-setup'
 const REVIEW_CLASS = 'host-onboarding-room-types-review'
 const MAX_CATEGORIES = 12
-const MAX_PHOTOS_PER_CATEGORY = 6
 
 function roomId() {
   return `room-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`
@@ -97,7 +94,14 @@ function radioField(label, value, choices, onChange) {
   fieldset.append(textElement('legend', label))
   const rail = document.createElement('div')
   choices.forEach((choice) => {
-    const button = buttonElement(choice.label, '', () => onChange(choice.value))
+    const button = buttonElement(choice.label, '', () => {
+      onChange(choice.value)
+      rail.querySelectorAll('button').forEach((item) => {
+        const active = item === button
+        item.dataset.active = active ? 'true' : 'false'
+        item.setAttribute('aria-pressed', active ? 'true' : 'false')
+      })
+    })
     button.dataset.active = value === choice.value ? 'true' : 'false'
     button.setAttribute('aria-pressed', value === choice.value ? 'true' : 'false')
     rail.append(button)
@@ -154,7 +158,7 @@ function syncContinueState(configuration) {
   if (!button) return
   const valid = roomConfigurationIsValid(configuration)
   button.dataset.roomSetupValid = valid ? 'true' : 'false'
-  if (!valid) button.disabled = true
+  button.disabled = !valid
 }
 
 function persistConfiguration(userId, configuration, fallback) {
@@ -359,15 +363,19 @@ function renderSetup(target, userId, draft) {
 
       const add = buttonElement('+ Ajouter une catégorie', 'host-onboarding-room-types__add', () => {
         if (configuration.roomTypes.length >= Math.min(MAX_CATEGORIES, configuration.totalRooms)) return
-        const donor = [...configuration.roomTypes].sort((a, b) => Number(b.totalUnits) - Number(a.totalUnits)).find((room) => Number(room.totalUnits) > 1)
-        if (!donor) return
-        donor.totalUnits -= 1
+        const assigned = configuration.roomTypes.reduce((sum, room) => sum + Math.max(1, Number(room.totalUnits) || 1), 0)
+        if (assigned >= configuration.totalRooms) {
+          const donor = [...configuration.roomTypes].sort((a, b) => Number(b.totalUnits) - Number(a.totalUnits)).find((room) => Number(room.totalUnits) > 1)
+          if (!donor) return
+          donor.totalUnits -= 1
+        }
         configuration.roomTypes.push(newCategory(configuration.roomTypes.length, fallback, 1))
         configuration = persistConfiguration(userId, configuration, fallback)
         draw()
       })
+      const assigned = configuration.roomTypes.reduce((sum, room) => sum + Math.max(1, Number(room.totalUnits) || 1), 0)
       const canAdd = configuration.roomTypes.length < Math.min(MAX_CATEGORIES, configuration.totalRooms)
-        && configuration.roomTypes.some((room) => Number(room.totalUnits) > 1)
+        && (assigned < configuration.totalRooms || configuration.roomTypes.some((room) => Number(room.totalUnits) > 1))
       add.disabled = !canAdd
       section.append(add)
       section.append(textElement('p', 'Exemple : 3 chambres toutes différentes = 3 catégories de 1 chambre. 6 chambres avec 4 Standard + 2 Deluxe = 2 catégories.', 'host-onboarding-room-types__note'))
@@ -383,106 +391,6 @@ function renderSetup(target, userId, draft) {
   if (capacityHeading) capacityHeading.insertAdjacentElement('beforebegin', section)
   else if (counterCard) counterCard.insertAdjacentElement('beforebegin', section)
   else target.append(section)
-}
-
-function fileToDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '')
-    reader.onerror = reject
-    reader.readAsDataURL(file)
-  })
-}
-
-function renderCategoryPhotos(target, userId, draft) {
-  if (!target) return
-  const fallback = fallbackFromDraft(draft)
-  let configuration = readHostRoomConfigurationDraft(userId, fallback)
-  const existing = target.querySelector(`.${PHOTO_CLASS}`)
-  const genericUploader = target.querySelector('.host-onboarding__photo-uploader')
-  const genericSlots = target.querySelector('.host-onboarding__photo-slots')
-  const genericNote = target.querySelector('.host-onboarding__skip-note')
-
-  if (configuration.mode !== HOST_ROOM_SETUP_MODES.CATEGORIES) {
-    existing?.remove()
-    genericUploader?.removeAttribute('hidden')
-    genericSlots?.removeAttribute('hidden')
-    genericNote?.removeAttribute('hidden')
-    return
-  }
-  if (existing) return
-
-  genericUploader?.setAttribute('hidden', '')
-  genericSlots?.setAttribute('hidden', '')
-  genericNote?.setAttribute('hidden', '')
-
-  const section = document.createElement('section')
-  section.className = PHOTO_CLASS
-
-  const draw = () => {
-    section.replaceChildren()
-    const header = document.createElement('div')
-    header.className = 'host-room-photo-setup__header'
-    header.append(
-      textElement('span', 'Photos par catégorie'),
-      textElement('h2', 'Montrez chaque catégorie séparément'),
-      textElement('p', 'Les voyageurs verront uniquement les photos correspondant à la catégorie qu’ils consultent.'),
-    )
-    section.append(header)
-
-    configuration.roomTypes.forEach((room) => {
-      const card = document.createElement('article')
-      card.className = 'host-room-photo-setup__card'
-      const head = document.createElement('div')
-      head.append(textElement('strong', room.name), textElement('span', `${room.totalUnits} chambre${room.totalUnits > 1 ? 's' : ''} dans cette catégorie`))
-      card.append(head)
-
-      const previews = document.createElement('div')
-      previews.className = 'host-room-photo-setup__previews'
-      ;(room.photos || []).forEach((src, index) => {
-        const figure = document.createElement('figure')
-        const image = document.createElement('img')
-        image.src = src
-        image.alt = `${room.name} — photo ${index + 1}`
-        const remove = buttonElement('×', '', () => {
-          room.photos = room.photos.filter((_, photoIndex) => photoIndex !== index)
-          configuration = persistConfiguration(userId, configuration, fallback)
-          draw()
-        })
-        remove.setAttribute('aria-label', `Supprimer la photo ${index + 1} de ${room.name}`)
-        figure.append(image, remove)
-        previews.append(figure)
-      })
-      card.append(previews)
-
-      const upload = document.createElement('label')
-      upload.className = 'host-room-photo-setup__upload'
-      upload.append(textElement('strong', room.photos?.length ? 'Ajouter d’autres photos' : 'Ajouter les photos de cette catégorie'), textElement('span', `${room.photos?.length || 0}/${MAX_PHOTOS_PER_CATEGORY} photos`))
-      const input = document.createElement('input')
-      input.type = 'file'
-      input.accept = 'image/*'
-      input.multiple = true
-      input.disabled = (room.photos?.length || 0) >= MAX_PHOTOS_PER_CATEGORY
-      input.addEventListener('change', async () => {
-        const files = Array.from(input.files || []).slice(0, Math.max(0, MAX_PHOTOS_PER_CATEGORY - (room.photos?.length || 0)))
-        if (!files.length) return
-        try {
-          const urls = (await Promise.all(files.map(fileToDataUrl))).filter(Boolean)
-          room.photos = [...(room.photos || []), ...urls].slice(0, MAX_PHOTOS_PER_CATEGORY)
-          configuration = persistConfiguration(userId, configuration, fallback)
-          draw()
-        } catch {
-          input.value = ''
-        }
-      })
-      upload.append(input)
-      card.append(upload)
-      section.append(card)
-    })
-  }
-
-  draw()
-  target.append(section)
 }
 
 function renderReview(target, userId, draft) {
@@ -531,12 +439,11 @@ function renderReview(target, userId, draft) {
 
 function enhanceRoomSetup() {
   const current = context()
-  document.querySelectorAll(`.${SETUP_CLASS}, .${PHOTO_CLASS}, .${REVIEW_CLASS}`).forEach((node) => {
+  document.querySelectorAll(`.${SETUP_CLASS}, .${REVIEW_CLASS}`).forEach((node) => {
     if (!current) node.remove()
   })
   if (!current) return
   renderSetup(document.querySelector(BASICS_SELECTOR), current.userId, current.draft)
-  renderCategoryPhotos(document.querySelector(PHOTOS_SELECTOR), current.userId, current.draft)
   renderReview(document.querySelector(REVIEW_SELECTOR), current.userId, current.draft)
   const configuration = readHostRoomConfigurationDraft(current.userId, fallbackFromDraft(current.draft))
   syncContinueState(configuration)

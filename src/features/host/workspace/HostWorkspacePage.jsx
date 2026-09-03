@@ -9,6 +9,7 @@ import {
   readHostWorkspaceSettings,
   writeHostWorkspaceSettings,
 } from '../../../entities/host/hostWorkspaceSettingsStore.js'
+import { OptimizedListingImage } from '../../../shared/media/OptimizedListingImage.jsx'
 import { HostRoomTypeManager } from '../rooms/HostRoomTypeManager.jsx'
 import {
   estimateReservationGross,
@@ -196,7 +197,7 @@ function ListingView({ profile, userId, onNavigate }) {
   return (
     <div className="host-workspace-view" data-testid="host-listings">
       <section className="host-listing-card">
-        <div className="host-listing-card__media">{cover ? <img src={cover} alt="" /> : <span>MH</span>}<b>Publié</b></div>
+        <div className="host-listing-card__media">{cover ? <OptimizedListingImage src={cover} alt="" sizes="160px" /> : <span>MH</span>}<b>Publié</b></div>
         <div className="host-listing-card__body"><small>{listing.type} · {listing.city}</small><h2>{listing.name}</h2><p>{listing.address || 'Adresse enregistrée dans votre annonce'}</p><div><span>{pooled && listing.roomTypes.length > 1 ? `${listing.roomTypes.length} catégories` : `${listing.roomInventory?.totalUnits || 1} unité${(listing.roomInventory?.totalUnits || 1) > 1 ? 's' : ''}`}</span><strong>{pooled && listing.roomTypes.length > 1 ? `Dès ${Math.min(...listing.roomTypes.map((room) => room.basePrice))}` : listing.basePrice} {listing.currency}</strong></div></div>
         <div className="host-listing-card__actions"><button type="button" onClick={() => setEditing((value) => !value)}>{editing ? 'Fermer' : 'Modifier'}</button><button type="button" onClick={() => onNavigate(`/listing/${encodeURIComponent(listing.id)}`)}>Voir comme voyageur</button></div>
       </section>

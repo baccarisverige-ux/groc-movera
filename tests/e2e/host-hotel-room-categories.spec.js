@@ -120,7 +120,7 @@ test('hotel offers room-level reservation choices only before room categories', 
   expect(roomDraftRaw).toContain('host-photo:')
 
   await expect(page.locator('.host-onboarding__photo-uploader')).toBeHidden()
-  await expect(page.locator('.host-room-photo-setup')).toBeHidden()
+  await expect(page.locator('.host-room-photo-setup')).toHaveCount(0)
 })
 
 test('guest house whole-establishment mode keeps a normal whole-property basics page', async ({ page }) => {

@@ -42,10 +42,5 @@
 [data-tone="lime"]{--hotel-tone-bg:#eff6df;--hotel-tone-fg:#657d2d}
 [data-tone="charcoal"]{--hotel-tone-bg:#eceeed;--hotel-tone-fg:#444c47}
 [data-tone="olive"]{--hotel-tone-bg:#f0f1e5;--hotel-tone-fg:#6d7042}
-.b225-offer-card[data-has-hotel-badges="true"] .b225-offer-card__badge{display:none!important}
-.b225-offer-card__host-highlights{display:flex;flex-wrap:wrap;gap:4px;margin:5px 0 2px}
-.b225-offer-card__host-highlights span,.listing-detail-host-badges span{display:inline-flex;align-items:center;min-height:20px;padding:4px 7px;border-radius:999px;background:var(--hotel-tone-bg,#edf3ef);color:var(--hotel-tone-fg,#315f42);font-size:7.4px;font-weight:800;line-height:1.05;white-space:nowrap;box-shadow:inset 0 0 0 1px rgba(60,80,68,.07)}
-.listing-detail-host-badges{display:flex;flex-wrap:wrap;gap:6px;margin:7px 0 9px}
-.listing-detail-host-badges span{min-height:24px;padding:5px 9px;font-size:8.5px}
 @media(max-width:350px){.host-hotel-highlights__grid{grid-template-columns:1fr}.host-hotel-highlight{min-height:78px}.host-onboarding__step[data-hotel-highlights="true"]{gap:15px}}
 @media(prefers-reduced-motion:reduce){.host-hotel-highlight,.host-hotel-highlight__check{transition:none!important}}

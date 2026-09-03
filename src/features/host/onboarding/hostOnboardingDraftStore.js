@@ -3,6 +3,12 @@ import { DEFAULT_HOST_DRAFT } from './hostOnboardingModel.js'
 
 const HOST_ONBOARDING_DRAFT_KEY = 'movera:host-onboarding-drafts:v1'
 
+
+function normalizePropertyType(value) {
+  const folded = String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()
+  return folded === 'hotel' ? 'Hôtel' : value
+}
+
 function readAllDrafts() {
   const value = storageAdapter.getJson(HOST_ONBOARDING_DRAFT_KEY, {})
   return value && typeof value === 'object' && !Array.isArray(value) ? value : {}
@@ -34,6 +40,7 @@ export function readHostOnboardingDraft(userId) {
   return {
     ...fallback,
     ...draft,
+    propertyType: normalizePropertyType(draft.propertyType),
     roomTypes: Array.isArray(draft.roomTypes) && draft.roomTypes.length ? cloneRoomTypes(draft.roomTypes) : fallback.roomTypes,
     amenities: Array.isArray(draft.amenities) ? draft.amenities : fallback.amenities,
     highlights: Array.isArray(draft.highlights) ? draft.highlights : fallback.highlights,

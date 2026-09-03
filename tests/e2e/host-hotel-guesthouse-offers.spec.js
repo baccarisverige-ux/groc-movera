@@ -55,7 +55,14 @@ async function completeHostOnboarding(page, { type, title, city }) {
   await next(page)
 
   await expect(onboarding).toHaveAttribute('data-screen', 'highlights')
-  await page.getByRole('button', { name: 'Calme' }).click()
+  if (type === 'Hôtel') {
+    await page.getByRole('button', { name: /Demi-pension/ }).click()
+    await page.getByRole('button', { name: /Pension complète/ }).click()
+    await page.getByRole('button', { name: /All inclusive/ }).click()
+    await expect(page.getByText('3 sélectionnés', { exact: true })).toBeVisible()
+  } else {
+    await page.getByRole('button', { name: 'Calme' }).click()
+  }
   await next(page)
 
   await expect(onboarding).toHaveAttribute('data-screen', 'description')
@@ -106,11 +113,23 @@ test('published hotel offer appears on calendar, hotel collection and map', asyn
   await page.getByRole('button', { name: 'Mode Voyageur' }).click()
   await page.goto('/groc-movera/hotel')
   await expect(page.getByTestId('page-hotel')).toBeVisible()
-  await expect(page.locator('[data-offer-id]').filter({ hasText: 'Hôtel Palmier Marsa' })).toHaveCount(1)
+  const hotelCard = page.locator('[data-offer-id]').filter({ hasText: 'Hôtel Palmier Marsa' })
+  await expect(hotelCard).toHaveCount(1)
+  await expect(hotelCard).toContainText('Demi-pension')
+  await expect(hotelCard).toContainText('Pension complète')
+  await expect(hotelCard).toContainText('All inclusive')
+  await hotelCard.click()
+  await expect(page.getByTestId('page-listing')).toBeVisible()
+  await expect(page.getByTestId('page-listing')).toContainText('Demi-pension')
+  await expect(page.getByTestId('page-listing')).toContainText('Pension complète')
+  await expect(page.getByTestId('page-listing')).toContainText('All inclusive')
 
   await page.goto('/groc-movera/map')
   await expect(page.getByTestId('page-map')).toBeVisible()
   await expect(page.getByTestId('map-offer-sheet')).toContainText('Hôtel Palmier Marsa')
+  await expect(page.getByTestId('map-offer-sheet')).toContainText('Demi-pension')
+  await expect(page.getByTestId('map-offer-sheet')).toContainText('Pension complète')
+  await expect(page.getByTestId('map-offer-sheet')).toContainText('All inclusive')
 })
 
 test('published maison d’hôte offer appears on calendar and collection', async ({ page }) => {

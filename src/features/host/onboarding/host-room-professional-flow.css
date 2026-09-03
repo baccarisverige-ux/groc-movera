@@ -37,8 +37,7 @@
 .host-onboarding__step--photos[data-room-professional-photos=true]>p,
 .host-onboarding__step--photos[data-room-professional-photos=true]>.host-onboarding__photo-uploader,
 .host-onboarding__step--photos[data-room-professional-photos=true]>.host-onboarding__photo-slots,
-.host-onboarding__step--photos[data-room-professional-photos=true]>.host-onboarding__skip-note,
-.host-onboarding__step--photos[data-room-professional-photos=true]>.host-room-photo-setup{display:none!important}
+.host-onboarding__step--photos[data-room-professional-photos=true]>.host-onboarding__skip-note{display:none!important}
 .host-room-pro-photos{width:100%;display:grid;gap:12px}
 .host-room-pro-photos__header{display:grid;gap:5px;padding:2px 1px 3px}
 .host-room-pro-photos__header>span{font:800 8px/1 Inter,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#7c8680}

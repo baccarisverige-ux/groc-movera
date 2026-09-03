@@ -13,7 +13,7 @@ function stringArray(value, max = Infinity) {
     : []
 }
 
-function cleanRoom(room, index) {
+function cleanRoom(room, index, photoLimit = 8) {
   const source = room && typeof room === 'object' ? room : {}
   const id = typeof source.id === 'string' && source.id.trim() ? source.id.trim() : `room-type-${index + 1}`
   return {
@@ -30,7 +30,7 @@ function cleanRoom(room, index) {
     basePrice: Math.max(1, Math.round(Number(source.basePrice) || 1)),
     totalUnits: Math.max(1, Math.min(999, Math.round(Number(source.totalUnits) || 1))),
     features: stringArray(source.features, 8),
-    photos: stringArray(source.photos, 8),
+    photos: stringArray(source.photos, photoLimit),
   }
 }
 
@@ -46,7 +46,8 @@ export function saveHostRoomTypes(userId, roomTypes) {
   const current = readHostProfile(userId)
   if (!current || !supportsPooledRoomInventory(current.listing.type)) throw new Error('Room configuration is only available for hotels and guest houses')
 
-  const cleaned = (Array.isArray(roomTypes) ? roomTypes : []).slice(0, 12).map(cleanRoom)
+  const photoLimit = String(current.listing.type || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase() === 'hotel' ? 20 : 8
+  const cleaned = (Array.isArray(roomTypes) ? roomTypes : []).slice(0, 12).map((room, index) => cleanRoom(room, index, photoLimit))
   if (!cleaned.length) throw new Error('At least one room is required')
   const ids = new Set(cleaned.map((room) => room.id))
   if (ids.size !== cleaned.length) throw new Error('Room identifiers must be unique')

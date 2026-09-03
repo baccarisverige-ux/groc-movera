@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { HOST_PROFILE_EVENT } from '../../entities/host/hostProfileStore.js'
+import { OptimizedListingImage } from '../../shared/media/OptimizedListingImage.jsx'
+import { ListingHighlightBadges } from '../../shared/listing/ListingHighlightBadges.jsx'
 import { MotionList, MotionListItem } from '../../shared/motion/MotionList.jsx'
 import { listGuestListingsByIds } from '../listing/guestListings.js'
 import { useFavorites } from './favoritesStore.js'
@@ -80,8 +82,8 @@ export function FavoritesPage({ onNavigate }) {
                 }}
               >
                 <div className="favorite-card__media">
-                  {item.image ? <img src={item.image} alt={item.title} loading="lazy" decoding="async" /> : <span aria-hidden="true">MH</span>}
-                  {item.badge ? <span className="favorite-card__badge">{item.badge}</span> : null}
+                  {item.image ? <OptimizedListingImage src={item.image} alt={item.title} loading="lazy" sizes="(max-width:430px) 100vw, 520px" /> : <span aria-hidden="true">MH</span>}
+                  {item.badge && !item.highlightBadges?.length ? <span className="favorite-card__badge">{item.badge}</span> : null}
                   <button
                     type="button"
                     className="favorite-card__heart"
@@ -97,6 +99,7 @@ export function FavoritesPage({ onNavigate }) {
                 <div className="favorite-card__body">
                   <span className="favorite-card__location">{item.location}{item.location ? ', Tunisie' : ''}</span>
                   <h2>{item.title}</h2>
+                  <ListingHighlightBadges badges={item.highlightBadges} variant="favorite" />
                   <div className="favorite-card__meta">
                     <strong>{item.priceLabel}</strong>
                     <span>{item.rating ? `★ ${item.rating}` : 'Nouveau'}</span>
