@@ -1,0 +1,92 @@
+name: Apply Structural Repair
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - docs/ci/movera-structural-repair.patch.gz.b64
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply audited repair patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          base64 -d docs/ci/movera-structural-repair.patch.gz.b64 | gunzip > /tmp/movera-structural-repair.patch
+          git apply --check /tmp/movera-structural-repair.patch
+          git apply /tmp/movera-structural-repair.patch
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate architecture lint unit and build
+        run: |
+          npm run lint
+          npm run quality:architecture
+          npm run test:unit
+          npm run build
+          npm run quality:bundle
+
+      - name: Install Chromium and WebKit
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: Targeted Hotel E2E Chromium
+        run: npx playwright test tests/e2e/host-hotel-highlights.spec.js tests/e2e/host-hotel-room-categories.spec.js tests/e2e/host-hotel-guesthouse-offers.spec.js --project=mobile-chromium
+
+      - name: Prepare WebKit target
+        shell: bash
+        run: |
+          cat > playwright.webkit.config.mjs <<'EOF'
+          import { defineConfig, devices } from '@playwright/test'
+          import baseConfig from './playwright.config.mjs'
+
+          export default defineConfig({
+            ...baseConfig,
+            projects: [{
+              name: 'mobile-webkit',
+              use: {
+                ...devices['iPhone 14'],
+                browserName: 'webkit',
+                viewport: { width: 390, height: 844 },
+              },
+            }],
+          })
+          EOF
+
+      - name: Targeted Hotel E2E WebKit
+        run: npx playwright test tests/e2e/host-hotel-highlights.spec.js tests/e2e/host-hotel-room-categories.spec.js tests/e2e/host-hotel-guesthouse-offers.spec.js --config=playwright.webkit.config.mjs --project=mobile-webkit
+
+      - name: Commit validated structural repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f playwright.webkit.config.mjs
+          rm -f .github/workflows/source-snapshot.yml
+          rm -f docs/ci/source-snapshot-trigger.txt
+          rm -f docs/ci/movera-structural-repair.patch.gz.b64
+          rm -f .github/workflows/apply-structural-repair.yml
+          git config user.name "Movera Repair Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No repair changes to commit"
+            exit 1
+          fi
+          git commit -m "Consolidate hotel host flow and published offer data"
+          git push origin HEAD:main
