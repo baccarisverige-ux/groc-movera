@@ -1,0 +1,385 @@
+name: Refactor Offer Flow Architecture
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - docs/ci/offer-flow-architecture.trigger
+
+permissions:
+  contents: write
+
+jobs:
+  refactor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create category-owned offer flows
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p \
+            src/features/host/onboarding/offer-flows/shared \
+            src/features/host/onboarding/offer-flows/apartment \
+            src/features/host/onboarding/offer-flows/villa \
+            src/features/host/onboarding/offer-flows/guesthouse \
+            src/features/host/onboarding/offer-flows/hotel
+
+          cat > src/features/host/onboarding/offer-flows/shared/commonOfferFlow.js <<'EOF'
+          import {
+            COMMON_HOST_AMENITIES,
+            COMMON_HOST_AMENITY_GROUPS,
+            COMMON_HOST_HIGHLIGHTS,
+            HOST_GUEST_ACCESS,
+            HOST_ONBOARDING_SCREENS,
+          } from '../../hostOnboardingModel.js'
+
+          const DEFAULT_COPY = Object.freeze({
+            amenitiesTitle: 'Choisissez les équipements qui font la différence',
+            amenitiesText: 'Sélectionnez uniquement ce qui est réellement disponible.',
+            highlightsTitle: 'Décrivez votre logement',
+            highlightsText: 'Choisissez jusqu’à 2 points forts pour commencer.',
+          })
+
+          export function createCommonOfferFlow({
+            id,
+            propertyType,
+            supportsRoomInventory = false,
+            photoPolicy = { min: 5, max: 20, scope: 'listing' },
+            amenityGroups = COMMON_HOST_AMENITY_GROUPS,
+            amenities = COMMON_HOST_AMENITIES,
+            highlightGroups = [],
+            highlights = COMMON_HOST_HIGHLIGHTS,
+            minHighlights = 1,
+            maxHighlights = 2,
+            copy = {},
+          }) {
+            return Object.freeze({
+              id,
+              propertyType,
+              screens: HOST_ONBOARDING_SCREENS,
+              guestAccess: HOST_GUEST_ACCESS,
+              supportsRoomInventory,
+              photoPolicy: Object.freeze({ ...photoPolicy }),
+              amenityGroups: Object.freeze([...amenityGroups]),
+              amenities: Object.freeze([...amenities]),
+              highlightGroups: Object.freeze([...highlightGroups]),
+              highlights: Object.freeze([...highlights]),
+              minHighlights,
+              maxHighlights,
+              copy: Object.freeze({ ...DEFAULT_COPY, ...copy }),
+            })
+          }
+          EOF
+
+          cat > src/features/host/onboarding/offer-flows/apartment/apartmentOfferFlow.js <<'EOF'
+          import { createCommonOfferFlow } from '../shared/commonOfferFlow.js'
+
+          export const apartmentOfferFlow = createCommonOfferFlow({
+            id: 'apartment',
+            propertyType: 'Appartement',
+            supportsRoomInventory: false,
+            photoPolicy: { min: 5, max: 20, scope: 'listing' },
+          })
+          EOF
+
+          cat > src/features/host/onboarding/offer-flows/villa/villaOfferFlow.js <<'EOF'
+          import { createCommonOfferFlow } from '../shared/commonOfferFlow.js'
+
+          export const villaOfferFlow = createCommonOfferFlow({
+            id: 'villa',
+            propertyType: 'Villa',
+            supportsRoomInventory: false,
+            photoPolicy: { min: 5, max: 20, scope: 'listing' },
+          })
+          EOF
+
+          cat > src/features/host/onboarding/offer-flows/guesthouse/guestHouseOfferFlow.js <<'EOF'
+          import { createCommonOfferFlow } from '../shared/commonOfferFlow.js'
+
+          export const guestHouseOfferFlow = createCommonOfferFlow({
+            id: 'guesthouse',
+            propertyType: 'Maison d’hôte',
+            supportsRoomInventory: true,
+            photoPolicy: { min: 5, max: 20, scope: 'room-category-when-pooled' },
+          })
+          EOF
+
+          cat > src/features/host/onboarding/offer-flows/hotel/hotelOfferVisuals.jsx <<'EOF'
+          export const HOTEL_AMENITY_SYMBOLS = Object.freeze({
+            'hotel-room': '◇',
+            'hotel-bath': '◡',
+            'hotel-reception': '✦',
+            'hotel-housekeeping': '✧',
+            'hotel-food': '○',
+            'hotel-wellness': '≈',
+            'hotel-business': '□',
+            'hotel-family': '◎',
+            'hotel-transport': '→',
+            'hotel-accessibility': '＋',
+            'hotel-security': '◆',
+            'hotel-hostel': '▤',
+            'hotel-outdoor': '☼',
+            'hotel-sustainability': '⌁',
+          })
+
+          export function HotelHighlightIcon({ id }) {
+            const board = ['breakfast', 'half-board', 'full-board', 'all-inclusive', 'restaurant', 'bar', 'room-service'].includes(id)
+            const setting = ['sea-view', 'beachfront', 'panoramic', 'rooftop', 'central', 'airport', 'nightlife', 'historic'].includes(id)
+            const wellness = ['spa', 'wellness', 'pool-highlight', 'fitness', 'hammam', 'private-beach'].includes(id)
+            const audience = ['family', 'adults-only', 'business', 'couples', 'long-stay', 'accessible'].includes(id)
+            if (board) return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M4 4v7M6 4v7M4 8h2M19 4v16M17 4c0 4 2 5 2 5"/></svg>
+            if (setting) return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 10-8 10S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2"/></svg>
+            if (wellness) return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19c-5-2-7-5-6-9 3 0 5 1 6 4 1-3 3-4 6-4 1 4-1 7-6 9ZM12 14V5"/></svg>
+            if (audience) return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="3"/><path d="M5 20c.5-5 2.8-8 7-8s6.5 3 7 8"/></svg>
+            return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9Z"/></svg>
+          }
+          EOF
+
+          cat > src/features/host/onboarding/offer-flows/hotel/hotelOfferFlow.js <<'EOF'
+          import { HOTEL_HIGHLIGHT_GROUPS, HOTEL_LISTING_HIGHLIGHTS } from '../../../../../entities/listing/listingHighlights.js'
+          import { HOST_HOTEL_AMENITIES, HOST_HOTEL_AMENITY_GROUPS } from '../../hostHotelAmenitiesModel.js'
+          import { COMMON_HOST_AMENITIES, COMMON_HOST_AMENITY_GROUPS } from '../../hostOnboardingModel.js'
+          import { createCommonOfferFlow } from '../shared/commonOfferFlow.js'
+
+          export const hotelOfferFlow = createCommonOfferFlow({
+            id: 'hotel',
+            propertyType: 'Hôtel',
+            supportsRoomInventory: true,
+            photoPolicy: { min: 5, max: 20, scope: 'room-category' },
+            amenityGroups: [...COMMON_HOST_AMENITY_GROUPS, ...HOST_HOTEL_AMENITY_GROUPS],
+            amenities: [...COMMON_HOST_AMENITIES, ...HOST_HOTEL_AMENITIES],
+            highlightGroups: HOTEL_HIGHLIGHT_GROUPS,
+            highlights: HOTEL_LISTING_HIGHLIGHTS,
+            minHighlights: 1,
+            maxHighlights: Infinity,
+            copy: {
+              amenitiesTitle: 'Quels équipements et services propose votre établissement ?',
+              amenitiesText: 'Sélectionnez tout ce qui est réellement disponible dans votre hôtel ou hostel.',
+              highlightsTitle: 'Les points forts de votre hôtel',
+              highlightsText: 'Cochez tout ce qui décrit réellement votre établissement. Tous vos choix seront visibles sur l’offre.',
+            },
+          })
+          EOF
+
+          cat > src/features/host/onboarding/offer-flows/offerFlowRegistry.js <<'EOF'
+          import { apartmentOfferFlow } from './apartment/apartmentOfferFlow.js'
+          import { guestHouseOfferFlow } from './guesthouse/guestHouseOfferFlow.js'
+          import { hotelOfferFlow } from './hotel/hotelOfferFlow.js'
+          import { villaOfferFlow } from './villa/villaOfferFlow.js'
+
+          export const HOST_OFFER_FLOWS = Object.freeze([
+            apartmentOfferFlow,
+            villaOfferFlow,
+            guestHouseOfferFlow,
+            hotelOfferFlow,
+          ])
+
+          function foldType(value) {
+            return String(value || '')
+              .normalize('NFD')
+              .replace(/[\u0300-\u036f]/g, '')
+              .replace(/[’‘`]/g, "'")
+              .toLowerCase()
+              .trim()
+          }
+
+          const FLOW_BY_TYPE = new Map(HOST_OFFER_FLOWS.map((flow) => [foldType(flow.propertyType), flow]))
+
+          export function getOfferFlow(propertyType) {
+            return FLOW_BY_TYPE.get(foldType(propertyType)) || apartmentOfferFlow
+          }
+          EOF
+
+      - name: Wire common orchestrator to category flows
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          model_path = Path('src/features/host/onboarding/hostOnboardingModel.js')
+          model = model_path.read_text()
+          old_imports = "import { HOST_HOTEL_AMENITIES, HOST_HOTEL_AMENITY_GROUPS } from './hostHotelAmenitiesModel.js'\nimport { COMMON_LISTING_HIGHLIGHTS, HOTEL_HIGHLIGHT_GROUPS, HOTEL_LISTING_HIGHLIGHTS } from '../../../entities/listing/listingHighlights.js'"
+          new_imports = "import { COMMON_LISTING_HIGHLIGHTS } from '../../../entities/listing/listingHighlights.js'"
+          assert old_imports in model
+          model = model.replace(old_imports, new_imports)
+
+          old_groups = """export const HOST_AMENITY_GROUPS = Object.freeze([\n  { id: 'essentials', label: 'Les indispensables' },\n  { id: 'popular', label: 'Confort apprécié' },\n  { id: 'features', label: 'Équipements & services' },\n  { id: 'location', label: 'Cadre & emplacement' },\n  ...HOST_HOTEL_AMENITY_GROUPS,\n])"""
+          new_groups = """export const COMMON_HOST_AMENITY_GROUPS = Object.freeze([\n  { id: 'essentials', label: 'Les indispensables' },\n  { id: 'popular', label: 'Confort apprécié' },\n  { id: 'features', label: 'Équipements & services' },\n  { id: 'location', label: 'Cadre & emplacement' },\n])\n\nexport const HOST_AMENITY_GROUPS = COMMON_HOST_AMENITY_GROUPS"""
+          assert old_groups in model
+          model = model.replace(old_groups, new_groups)
+          assert 'export const HOST_AMENITIES = Object.freeze([' in model
+          model = model.replace('export const HOST_AMENITIES = Object.freeze([', 'export const COMMON_HOST_AMENITIES = Object.freeze([', 1)
+          old_tail = """  ...HOST_HOTEL_AMENITIES,\n])\n\nexport const HOST_HIGHLIGHTS = COMMON_LISTING_HIGHLIGHTS\nexport const HOST_HOTEL_HIGHLIGHT_GROUPS = HOTEL_HIGHLIGHT_GROUPS\nexport const HOST_HOTEL_HIGHLIGHTS = HOTEL_LISTING_HIGHLIGHTS"""
+          new_tail = """ ])\n\nexport const HOST_AMENITIES = COMMON_HOST_AMENITIES\nexport const COMMON_HOST_HIGHLIGHTS = COMMON_LISTING_HIGHLIGHTS\nexport const HOST_HIGHLIGHTS = COMMON_HOST_HIGHLIGHTS"""
+          assert old_tail in model
+          model = model.replace(old_tail, new_tail)
+          model = model.replace('export const COMMON_HOST_AMENITIES = Object.freeze([\n', 'export const COMMON_HOST_AMENITIES = Object.freeze([\n')
+          model = model.replace("  { id: 'waterfront', label: 'Bord de mer', group: 'location' },\n ])", "  { id: 'waterfront', label: 'Bord de mer', group: 'location' },\n])")
+          model_path.write_text(model)
+
+          page_path = Path('src/features/host/onboarding/HostOnboardingPage.jsx')
+          page = page_path.read_text()
+          page = page.replace(
+            "import { activateHostProfile, supportsPooledRoomInventory } from '../../../entities/host/hostProfileStore.js'",
+            "import { activateHostProfile } from '../../../entities/host/hostProfileStore.js'",
+          )
+          old_model_import = """import {\n  HOST_AMENITIES,\n  HOST_AMENITY_GROUPS,\n  HOST_GUEST_ACCESS,\n  HOST_HIGHLIGHTS,\n  HOST_HOTEL_HIGHLIGHT_GROUPS,\n  HOST_HOTEL_HIGHLIGHTS,\n  HOST_ONBOARDING_SCREENS,\n  HOST_PROMOTIONS,\n  HOST_PROPERTY_TYPES,\n  phaseProgress,\n  screenId,\n  screenPhase,\n} from './hostOnboardingModel.js'"""
+          new_model_import = """import {\n  HOST_ONBOARDING_SCREENS,\n  HOST_PROMOTIONS,\n  HOST_PROPERTY_TYPES,\n  phaseProgress,\n  screenId,\n  screenPhase,\n} from './hostOnboardingModel.js'\nimport { getOfferFlow } from './offer-flows/offerFlowRegistry.js'\nimport { HOTEL_AMENITY_SYMBOLS, HotelHighlightIcon } from './offer-flows/hotel/hotelOfferVisuals.jsx'"""
+          assert old_model_import in page
+          page = page.replace(old_model_import, new_model_import)
+
+          visual_pattern = re.compile(r"const HOTEL_AMENITY_SYMBOLS = Object\.freeze\(\{.*?\n\}\)\n\nfunction HotelHighlightIcon\(\{ id \}\) \{.*?\n\}\n\nfunction CounterRow", re.S)
+          page, count = visual_pattern.subn('function CounterRow', page, count=1)
+          assert count == 1
+
+          old_flow = """  const visualStage = visualStageFor(id)\n  const isHotel = draft.propertyType === 'Hôtel'"""
+          new_flow = """  const visualStage = visualStageFor(id)\n  const offerFlow = useMemo(() => getOfferFlow(draft.propertyType), [draft.propertyType])\n  const isHotel = offerFlow.id === 'hotel'"""
+          assert old_flow in page
+          page = page.replace(old_flow, new_flow)
+
+          page = page.replace("if (id === 'highlights') return isHotel ? draft.highlights.length >= 1 : draft.highlights.length >= 1 && draft.highlights.length <= 2", "if (id === 'highlights') return draft.highlights.length >= offerFlow.minHighlights && draft.highlights.length <= offerFlow.maxHighlights")
+          page = page.replace('}, [id, draft, isHotel])', '}, [id, draft, offerFlow])')
+          page = page.replace('const roomConfig = supportsPooledRoomInventory(draft.propertyType)', 'const roomConfig = offerFlow.supportsRoomInventory')
+          page = page.replace('{HOST_GUEST_ACCESS.map((item) => (', '{offerFlow.guestAccess.map((item) => (')
+
+          page = page.replace("<h1>{isHotel ? 'Quels équipements et services propose votre établissement ?' : 'Choisissez les équipements qui font la différence'}</h1>", '<h1>{offerFlow.copy.amenitiesTitle}</h1>')
+          page = page.replace("<p>{isHotel ? 'Sélectionnez tout ce qui est réellement disponible dans votre hôtel ou hostel.' : 'Sélectionnez uniquement ce qui est réellement disponible.'}</p>", '<p>{offerFlow.copy.amenitiesText}</p>')
+          page = page.replace("{HOST_AMENITY_GROUPS.filter((group) => isHotel || !group.id.startsWith('hotel-')).map((group) => (", '{offerFlow.amenityGroups.map((group) => (')
+          page = page.replace('{HOST_AMENITIES.filter((item) => item.group === group.id).map((item) => {', '{offerFlow.amenities.filter((item) => item.group === group.id).map((item) => {')
+
+          page = page.replace("<h1>{isHotel ? 'Les points forts de votre hôtel' : 'Décrivez votre logement'}</h1>", '<h1>{offerFlow.copy.highlightsTitle}</h1>')
+          page = page.replace("<p>{isHotel ? 'Cochez tout ce qui décrit réellement votre établissement. Tous vos choix seront visibles sur l’offre.' : 'Choisissez jusqu’à 2 points forts pour commencer.'}</p>", '<p>{offerFlow.copy.highlightsText}</p>')
+          page = page.replace("{isHotel ? (\n            <div className=\"host-hotel-highlights\">", "{offerFlow.highlightGroups.length ? (\n            <div className=\"host-hotel-highlights\">")
+          page = page.replace('{HOST_HOTEL_HIGHLIGHT_GROUPS.map((group) => (', '{offerFlow.highlightGroups.map((group) => (')
+          page = page.replace('{HOST_HOTEL_HIGHLIGHTS.filter((item) => item.group === group.id).map((item) => {', '{offerFlow.highlights.filter((item) => item.group === group.id).map((item) => {')
+          page = page.replace('{HOST_HIGHLIGHTS.map((item) => {', '{offerFlow.highlights.map((item) => {')
+          page = page.replace("toggleArrayValue('highlights', item.id, 2)", "toggleArrayValue('highlights', item.id, offerFlow.maxHighlights)")
+          page = page.replace("<small className=\"host-onboarding__selection-count\">{draft.highlights.length}/2 sélectionné{draft.highlights.length > 1 ? 's' : ''}</small>", "<small className=\"host-onboarding__selection-count\">{draft.highlights.length}/{Number.isFinite(offerFlow.maxHighlights) ? offerFlow.maxHighlights : '∞'} sélectionné{draft.highlights.length > 1 ? 's' : ''}</small>")
+
+          required_markers = [
+            "getOfferFlow(draft.propertyType)",
+            'offerFlow.amenityGroups',
+            'offerFlow.amenities',
+            'offerFlow.highlightGroups',
+            'offerFlow.highlights',
+            'offerFlow.supportsRoomInventory',
+          ]
+          for marker in required_markers:
+            assert marker in page, marker
+          assert 'supportsPooledRoomInventory' not in page
+          assert 'HOST_HOTEL_HIGHLIGHTS' not in page
+          assert 'HOST_HOTEL_HIGHLIGHT_GROUPS' not in page
+          page_path.write_text(page)
+          PY
+
+      - name: Add architecture contract and unit coverage
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > tests/unit/hostOfferFlowRegistry.test.js <<'EOF'
+          import { describe, expect, it } from 'vitest'
+          import { HOST_PROPERTY_TYPES } from '../../src/features/host/onboarding/hostOnboardingModel.js'
+          import { HOST_OFFER_FLOWS, getOfferFlow } from '../../src/features/host/onboarding/offer-flows/offerFlowRegistry.js'
+
+          describe('host offer flow registry', () => {
+            it('gives every offer category its own flow', () => {
+              expect(HOST_OFFER_FLOWS.map((flow) => flow.propertyType)).toEqual(HOST_PROPERTY_TYPES)
+              expect(new Set(HOST_OFFER_FLOWS.map((flow) => flow.id)).size).toBe(HOST_OFFER_FLOWS.length)
+              for (const type of HOST_PROPERTY_TYPES) expect(getOfferFlow(type).propertyType).toBe(type)
+            })
+
+            it('isolates hotel-only business rules', () => {
+              const hotel = getOfferFlow('Hôtel')
+              const apartment = getOfferFlow('Appartement')
+              const villa = getOfferFlow('Villa')
+              expect(hotel.supportsRoomInventory).toBe(true)
+              expect(hotel.maxHighlights).toBe(Infinity)
+              expect(hotel.amenityGroups.some((group) => group.id.startsWith('hotel-'))).toBe(true)
+              expect(apartment.amenityGroups.some((group) => group.id.startsWith('hotel-'))).toBe(false)
+              expect(villa.amenityGroups.some((group) => group.id.startsWith('hotel-'))).toBe(false)
+            })
+
+            it('keeps hospitality room inventory separate from single-property offers', () => {
+              expect(getOfferFlow('Maison d’hôte').supportsRoomInventory).toBe(true)
+              expect(getOfferFlow('Hôtel').supportsRoomInventory).toBe(true)
+              expect(getOfferFlow('Appartement').supportsRoomInventory).toBe(false)
+              expect(getOfferFlow('Villa').supportsRoomInventory).toBe(false)
+            })
+
+            it('keeps the hotel photo contract at 5 to 20 photos per room category', () => {
+              expect(getOfferFlow('Hôtel').photoPolicy).toEqual({ min: 5, max: 20, scope: 'room-category' })
+            })
+          })
+          EOF
+
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('scripts/check-architecture.mjs')
+          text = p.read_text()
+          anchor = "  'src/features/host/onboarding/hostPinReactEngineEnhancer.jsx',\n"
+          additions = """  'src/features/host/onboarding/offer-flows/offerFlowRegistry.js',\n  'src/features/host/onboarding/offer-flows/shared/commonOfferFlow.js',\n  'src/features/host/onboarding/offer-flows/apartment/apartmentOfferFlow.js',\n  'src/features/host/onboarding/offer-flows/villa/villaOfferFlow.js',\n  'src/features/host/onboarding/offer-flows/guesthouse/guestHouseOfferFlow.js',\n  'src/features/host/onboarding/offer-flows/hotel/hotelOfferFlow.js',\n  'src/features/host/onboarding/offer-flows/hotel/hotelOfferVisuals.jsx',\n"""
+          assert anchor in text
+          text = text.replace(anchor, anchor + additions)
+          guard_anchor = "const indexHtml = await readFile(new URL('../index.html', import.meta.url), 'utf8');"
+          guard = """const onboardingModel = await readFile(new URL('../src/features/host/onboarding/hostOnboardingModel.js', import.meta.url), 'utf8');\nif (onboardingModel.includes('hostHotelAmenitiesModel') || onboardingModel.includes('HOTEL_LISTING_HIGHLIGHTS')) {\n  violations.push('hostOnboardingModel.js: category-specific Hotel rules must live in offer-flows/hotel');\n}\n\nconst onboardingPage = await readFile(new URL('../src/features/host/onboarding/HostOnboardingPage.jsx', import.meta.url), 'utf8');\nif (!onboardingPage.includes('getOfferFlow(draft.propertyType)')) {\n  violations.push('HostOnboardingPage.jsx: common orchestrator must resolve category rules through offerFlowRegistry');\n}\nif (onboardingPage.includes('supportsPooledRoomInventory') || onboardingPage.includes('HOST_HOTEL_HIGHLIGHTS')) {\n  violations.push('HostOnboardingPage.jsx: category business rules leaked back into the common orchestrator');\n}\n\n"""
+          assert guard_anchor in text
+          text = text.replace(guard_anchor, guard + guard_anchor)
+          p.write_text(text)
+          PY
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Validate refactor
+        run: |
+          npm ci
+          npm run lint
+          npm run quality:architecture
+          npm run test:unit
+          npm run build
+          npm run quality:bundle
+
+      - name: Targeted Hotel E2E
+        run: |
+          npx playwright install --with-deps chromium webkit
+          npx playwright test tests/e2e/host-hotel-highlights.spec.js tests/e2e/host-hotel-room-categories.spec.js tests/e2e/host-hotel-guesthouse-offers.spec.js --project=mobile-chromium
+          cat > playwright.webkit.config.mjs <<'EOF'
+          import { defineConfig, devices } from '@playwright/test'
+          import baseConfig from './playwright.config.mjs'
+          export default defineConfig({
+            ...baseConfig,
+            projects: [{ name: 'mobile-webkit', use: { ...devices['iPhone 14'], browserName: 'webkit', viewport: { width: 390, height: 844 } } }],
+          })
+          EOF
+          npx playwright test tests/e2e/host-hotel-highlights.spec.js tests/e2e/host-hotel-room-categories.spec.js tests/e2e/host-hotel-guesthouse-offers.spec.js --config=playwright.webkit.config.mjs --project=mobile-webkit
+          rm -f playwright.webkit.config.mjs
+
+      - name: Commit validated architecture
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f docs/ci/offer-flow-architecture.trigger
+          rm -f .github/workflows/refactor-offer-flow-architecture.yml
+          git config user.name "Movera Architecture Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -m "Split host offer creation by property category"
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            sleep 2
+          done
+          exit 1
