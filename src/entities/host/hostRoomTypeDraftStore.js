@@ -25,7 +25,7 @@ function cleanString(value) {
 
 function normalizePhotos(value) {
   return Array.isArray(value)
-    ? value.filter((item) => typeof item === 'string' && item.trim()).map((item) => item.trim()).slice(0, 8)
+    ? value.filter((item) => typeof item === 'string' && item.trim()).map((item) => item.trim()).slice(0, 20)
     : []
 }
 
