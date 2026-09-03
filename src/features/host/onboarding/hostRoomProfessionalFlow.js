@@ -10,7 +10,9 @@ import './host-room-professional-flow.css'
 
 const BASIC = '.host-onboarding[data-screen="basics"]'
 const PHOTOS = '.host-onboarding[data-screen="photos"]'
-const MAX_PHOTOS = 8
+const DEFAULT_MAX_PHOTOS = 8
+const HOTEL_CATEGORY_MIN_PHOTOS = 5
+const HOTEL_CATEGORY_MAX_PHOTOS = 20
 let observer
 let frame = 0
 let busy = false
@@ -47,6 +49,36 @@ function read(ctx) { return readHostRoomConfigurationDraft(ctx.userId, ctx.fallb
 function write(ctx, value) { return writeHostRoomConfigurationDraft(ctx.userId, value, ctx.fallback) }
 function units(room) { return Math.max(1, Math.round(Number(room?.totalUnits) || 1)) }
 function price(room) { return Math.max(1, Math.round(Number(room?.basePrice) || 1)) }
+
+function hotelCategoryPhotoRules(ctx, configuration) {
+  const enforced = ctx?.draft?.propertyType === 'Hôtel' && configuration?.mode === HOST_ROOM_SETUP_MODES.CATEGORIES
+  return enforced
+    ? { enforced: true, min: HOTEL_CATEGORY_MIN_PHOTOS, max: HOTEL_CATEGORY_MAX_PHOTOS }
+    : { enforced: false, min: 0, max: DEFAULT_MAX_PHOTOS }
+}
+
+function hotelCategoryPhotosValid(ctx, configuration) {
+  const rules = hotelCategoryPhotoRules(ctx, configuration)
+  if (!rules.enforced) return true
+  const rooms = Array.isArray(configuration?.roomTypes) ? configuration.roomTypes : []
+  return rooms.length > 0 && rooms.every((room) => {
+    const count = Array.isArray(room?.photos) ? room.photos.length : 0
+    return count >= rules.min && count <= rules.max
+  })
+}
+
+function syncPhotoContinueButton(page, ctx, configuration) {
+  const button = page?.querySelector('.host-onboarding__primary')
+  if (!button) return
+  const rules = hotelCategoryPhotoRules(ctx, configuration)
+  if (!rules.enforced) {
+    delete button.dataset.roomPhotosValid
+    return
+  }
+  const valid = hotelCategoryPhotosValid(ctx, configuration)
+  button.dataset.roomPhotosValid = valid ? 'true' : 'false'
+  button.disabled = !valid
+}
 
 function allocation(configuration) {
   const assigned = configuration.roomTypes.reduce((sum, room) => sum + units(room), 0)
@@ -124,6 +156,7 @@ function dataUrl(file) {
 
 function gallery(ctx, configuration, room, roomIndex) {
   const section = el('section', 'host-room-pro-gallery')
+  const rules = hotelCategoryPhotoRules(ctx, configuration)
   const head = el('header')
   head.append(
     el('strong', '', configuration.mode === HOST_ROOM_SETUP_MODES.CATEGORIES ? room.name : 'Votre chambre'),
@@ -135,6 +168,17 @@ function gallery(ctx, configuration, room, roomIndex) {
   )
   section.append(head)
   const photos = Array.isArray(room.photos) ? room.photos : []
+
+  if (rules.enforced) {
+    const missing = Math.max(0, rules.min - photos.length)
+    const requirement = el('div', 'host-room-pro-gallery__requirement')
+    requirement.dataset.valid = missing === 0 ? 'true' : 'false'
+    requirement.append(
+      el('strong', '', `Minimum ${rules.min} photos · maximum ${rules.max}`),
+      el('span', '', missing === 0 ? `${photos.length}/${rules.max} · catégorie complète` : `${missing} photo${missing > 1 ? 's' : ''} à ajouter · ${photos.length}/${rules.max}`),
+    )
+    section.append(requirement)
+  }
 
   if (photos.length) {
     const hero = el('div', 'host-room-pro-gallery__hero')
@@ -168,19 +212,21 @@ function gallery(ctx, configuration, room, roomIndex) {
   }
 
   const upload = el('label', 'host-room-pro-gallery__upload')
-  upload.append(el('strong', '', photos.length ? 'Ajouter d’autres photos' : 'Ajouter des photos'), el('span', '', `${photos.length}/${MAX_PHOTOS}`))
+  upload.append(el('strong', '', photos.length ? 'Ajouter d’autres photos' : 'Ajouter des photos'), el('span', '', `${photos.length}/${rules.max}`))
   const input = document.createElement('input')
   input.type = 'file'
   input.accept = 'image/*'
   input.multiple = true
-  input.disabled = photos.length >= MAX_PHOTOS
+  input.disabled = photos.length >= rules.max
+  input.dataset.minPhotos = String(rules.min)
+  input.dataset.maxPhotos = String(rules.max)
   input.addEventListener('change', async () => {
-    const files = Array.from(input.files || []).slice(0, MAX_PHOTOS - photos.length)
+    const files = Array.from(input.files || []).slice(0, rules.max - photos.length)
     if (!files.length) return
     try {
       const urls = (await Promise.all(files.map(dataUrl))).filter(Boolean)
       const next = read(ctx)
-      next.roomTypes[roomIndex].photos = [...photos, ...urls].slice(0, MAX_PHOTOS)
+      next.roomTypes[roomIndex].photos = [...photos, ...urls].slice(0, rules.max)
       write(ctx, next)
       schedule()
     } catch { input.value = '' }
@@ -196,6 +242,7 @@ function enhancePhotos(ctx) {
   if (!step) return
   const configuration = read(ctx)
   if (configuration.mode === HOST_ROOM_SETUP_MODES.MULTIPLE_UNSET) return
+  const rules = hotelCategoryPhotoRules(ctx, configuration)
   step.dataset.roomProfessionalPhotos = 'true'
   let flow = step.querySelector('.host-room-pro-photos')
   if (!flow) { flow = el('section', 'host-room-pro-photos'); step.append(flow) }
@@ -206,7 +253,9 @@ function enhancePhotos(ctx) {
     el('span', '', 'Photos'),
     el('h1', '', configuration.mode === HOST_ROOM_SETUP_MODES.CATEGORIES ? 'Photos de vos catégories' : 'Photos de votre chambre'),
     el('p', '', configuration.mode === HOST_ROOM_SETUP_MODES.CATEGORIES
-      ? 'Chaque catégorie possède sa propre galerie. Sélectionnez une catégorie pour gérer uniquement ses photos.'
+      ? rules.enforced
+        ? `Ajoutez entre ${rules.min} et ${rules.max} photos pour chaque catégorie. Toutes les catégories doivent atteindre le minimum avant de continuer.`
+        : 'Chaque catégorie possède sa propre galerie. Sélectionnez une catégorie pour gérer uniquement ses photos.'
       : 'Ces photos représentent la chambre proposée. Le nombre de chambres reste géré séparément par le système.'),
   )
   flow.append(head)
@@ -221,7 +270,12 @@ function enhancePhotos(ctx) {
     configuration.roomTypes.forEach((item) => {
       const tab = btn('', '', () => { photoTab.set(ctx.userId, item.id); schedule() })
       tab.dataset.active = item.id === room?.id ? 'true' : 'false'
-      tab.append(el('strong', '', item.name), el('small', '', `${item.photos?.length || 0} photo${(item.photos?.length || 0) === 1 ? '' : 's'}`))
+      const count = item.photos?.length || 0
+      tab.dataset.photosValid = !rules.enforced || count >= rules.min ? 'true' : 'false'
+      tab.append(
+        el('strong', '', item.name),
+        el('small', '', rules.enforced ? `${count}/${rules.max} photos · min. ${rules.min}` : `${count} photo${count === 1 ? '' : 's'}`),
+      )
       tabs.append(tab)
     })
     flow.append(tabs)
@@ -235,6 +289,7 @@ function enhancePhotos(ctx) {
   }
   const room = configuration.roomTypes[index] || configuration.roomTypes[0]
   if (room) flow.append(gallery(ctx, configuration, room, index))
+  syncPhotoContinueButton(page, ctx, configuration)
 }
 
 function cleanup() {
