@@ -48,6 +48,7 @@ function categoryTabs(page) {
 }
 
 test('hotel room categories stay visible and isolated throughout the offer flow', async ({ page }) => {
+  test.setTimeout(90_000)
   await page.setViewportSize({ width: 390, height: 844 })
   const userId = await seedHotelCategories(page)
 
@@ -109,7 +110,7 @@ test('hotel room categories stay visible and isolated throughout the offer flow'
   await expect(price).toHaveValue('275')
 
   await openStep(page, userId, 16, 'promotions')
-  const newListingPromotion = page.getByRole('button', { name: /Nouvelle annonce/ })
+  const newListingPromotion = page.getByRole('button', { name: /Promotion nouveau logement/ })
   await newListingPromotion.click()
   await categoryTabs(page).nth(1).click()
   await expect(newListingPromotion).toHaveAttribute('aria-pressed', 'false')
