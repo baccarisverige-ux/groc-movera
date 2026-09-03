@@ -1,0 +1,1 @@
+verified structural repair trigger 2026-09-03
