@@ -110,14 +110,16 @@ test('sheet attachment uses one Motion translation with a stable structural head
   expect(await numberAttribute(surface, 'data-zoom')).toBeGreaterThan(zoomAt84 + 0.02)
 
   await page.mouse.up()
-  await expect(sheet).toHaveAttribute('data-expanded', 'true')
-  await expect(sheet).toHaveAttribute('data-snap-state', 'expanded')
-  await expect(panel).toHaveAttribute('data-attachment-state', 'attached')
-  await expect(list).toHaveAttribute('data-scroll-enabled', 'true')
+  const releasedProgress = await numberAttribute(sheet, 'data-progress')
+  expect(releasedProgress).toBeGreaterThan(0.9)
+  expect(releasedProgress).toBeLessThan(0.98)
+  await expect(sheet).toHaveAttribute('data-snap-state', 'moving')
+  await expect(panel).toHaveAttribute('data-attachment-state', 'moving')
+  await expect(list).toHaveAttribute('data-scroll-enabled', 'false')
 
-  const attachedPanelBox = await panel.boundingBox()
-  expect(attachedPanelBox).not.toBeNull()
-  expect(Math.abs(attachedPanelBox.y - mapBox.y)).toBeLessThanOrEqual(2)
+  const releasedPanelBox = await panel.boundingBox()
+  expect(releasedPanelBox).not.toBeNull()
+  expect(releasedPanelBox.y).toBeGreaterThan(mapBox.y)
 })
 
 test('offer sheet camera preserves a manual zoom as its collapsed base', async ({ page }) => {
@@ -162,6 +164,41 @@ test('offer map button focuses its exact marker and moves the list to the middle
   await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeLessThan(0.55)
   await expect(sheet).toHaveAttribute('data-snap-state', 'moving')
   await expect.poll(() => numberAttribute(surface, 'data-zoom')).toBeGreaterThan(zoomBefore + 0.5)
+})
+
+test('midway offers do not drag the sheet and their map buttons remain reliable', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/groc-movera/map?destination=la-marsa')
+
+  const sheet = page.getByTestId('map-offer-sheet')
+  const firstOffer = sheet.locator('[data-listing-id="maison-jasmin"]')
+  const focusButton = page.getByTestId('map-focus-maison-jasmin')
+
+  await page.getByRole('button', { name: 'Afficher la liste des offres' }).click()
+  await expect(sheet).toHaveAttribute('data-snap-state', 'expanded')
+  await focusButton.click()
+  await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeGreaterThan(0.45)
+  await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeLessThan(0.55)
+  const progressBeforeOfferGesture = await numberAttribute(sheet, 'data-progress')
+
+  await firstOffer.evaluate((node) => {
+    const fireTouch = (type, clientY, cancelable = true) => {
+      const event = new Event(type, { bubbles: true, cancelable })
+      Object.defineProperty(event, 'touches', {
+        configurable: true,
+        value: type === 'touchend' ? [] : [{ clientX: 170, clientY }],
+      })
+      node.dispatchEvent(event)
+    }
+    fireTouch('touchstart', 360, false)
+    fireTouch('touchmove', 430)
+    fireTouch('touchend', 430, false)
+  })
+
+  await page.waitForTimeout(120)
+  expect(await numberAttribute(sheet, 'data-progress')).toBeCloseTo(progressBeforeOfferGesture, 2)
+  await focusButton.click()
+  await expect(page.getByTestId('map-engine')).toHaveAttribute('data-selected-listing-id', 'maison-jasmin')
 })
 
 test('Grand Tunis fully expanded covers the header and keeps 16 offers visible', async ({ page }) => {
