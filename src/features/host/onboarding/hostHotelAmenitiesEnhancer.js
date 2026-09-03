@@ -31,8 +31,12 @@ function hotelContext() {
 
 function decorateHotelSections(step) {
   step.querySelectorAll(HOTEL_GROUP_SELECTOR).forEach((section) => {
+    const symbol = GROUP_SYMBOLS[section.dataset.group] || '◇'
     const heading = section.querySelector('h2')
-    if (heading) heading.dataset.hotelSymbol = GROUP_SYMBOLS[section.dataset.group] || '◇'
+    if (heading) heading.dataset.hotelSymbol = symbol
+    section.querySelectorAll('.host-onboarding__amenity-grid > button').forEach((button) => {
+      button.dataset.hotelSymbol = symbol
+    })
   })
 }
 
