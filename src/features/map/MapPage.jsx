@@ -13,6 +13,7 @@ import { panToKeepMarkerAbovePopup, parseMapSurfaceViewport, uncoveredMapBottom 
 import { MapOfferPopup } from './MapOfferPopup.jsx'
 import { MapOfferSheet } from './MapOfferSheet.jsx'
 import { MapSearchFilters } from './MapSearchFilters.jsx'
+import '../../styles/map-page-cleanup.css'
 
 const MAP_GESTURE_SETTLE_MS = 500
 const GRAND_TUNIS_LOCATIONS = Object.freeze(['La Marsa', 'Sidi Bou Saïd', 'Gammarth', 'Carthage', 'Tunis'])
