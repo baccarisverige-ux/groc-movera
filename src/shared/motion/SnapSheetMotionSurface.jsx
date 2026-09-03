@@ -48,6 +48,7 @@ export function SnapSheetMotionSurface({
   collapsedVisiblePx = 62,
   expandedThreshold = 0.86,
   fastSwipeVelocity = 680,
+  freeDrag = false,
   onProgressChange,
   snapRatios = [0, 0.5, 1],
   spring = DEFAULT_SPRING,
@@ -176,6 +177,10 @@ export function SnapSheetMotionSurface({
     const distance = collapsedYRef.current
     const currentY = clamp(y.get(), 0, distance)
     const velocityY = cancel ? 0 : state.velocityY
+    if (freeDrag && !cancel) {
+      y.set(currentY)
+      return true
+    }
     animateTo(resolveSnapTarget({
       distance,
       currentY,
@@ -218,6 +223,10 @@ export function SnapSheetMotionSurface({
       onDragEnd={(_, info) => {
         const distance = collapsedYRef.current
         const currentY = clamp(y.get(), 0, distance)
+        if (freeDrag) {
+          y.set(currentY)
+          return
+        }
         animateTo(resolveSnapTarget({
           distance,
           currentY,

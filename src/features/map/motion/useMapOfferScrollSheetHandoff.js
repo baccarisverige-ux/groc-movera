@@ -2,12 +2,18 @@ import { useEffect, useRef } from 'react'
 
 const EDGE_EPSILON_PX = 1
 const DIRECTION_EPSILON_PX = 2
+const CLICK_SUPPRESSION_MS = 420
+
+function isInteractiveTarget(target) {
+  return target instanceof Element
+    && Boolean(target.closest('button, a, input, select, textarea, [role="button"], [role="link"]'))
+}
 
 /**
  * Keeps native list scrolling when the sheet is fully open, while allowing
- * the sheet itself to be dragged directly from an offer/card image whenever
- * it is not fully open. At the top of an expanded list, a downward gesture is
- * handed back to the sheet so it can close from the card as well.
+ * the sheet itself to be dragged from the first offer only when the sheet is
+ * fully open and the list is already at its top edge. Midway/collapsed sheets
+ * remain draggable only from their dedicated header/filter handles.
  *
  * This hook is intentionally isolated from the map engine.
  */
@@ -16,7 +22,7 @@ export function useMapOfferScrollSheetHandoff({ expanded, externalDrag }) {
   const gestureRef = useRef(null)
   const externalDragRef = useRef(externalDrag)
   const expandedRef = useRef(expanded)
-  const suppressNextClickRef = useRef(false)
+  const suppressedClickRef = useRef(null)
 
   useEffect(() => { externalDragRef.current = externalDrag }, [externalDrag])
   useEffect(() => { expandedRef.current = expanded }, [expanded])
@@ -29,7 +35,7 @@ export function useMapOfferScrollSheetHandoff({ expanded, externalDrag }) {
       const started = externalDragRef.current?.start(state.lastClientY)
       if (!started) return false
       state.handedOff = true
-      suppressNextClickRef.current = true
+      suppressedClickRef.current = { card: state.originCard, until: performance.now() + CLICK_SUPPRESSION_MS }
       event.preventDefault()
       event.stopPropagation()
       externalDragRef.current?.move(clientY)
@@ -37,9 +43,16 @@ export function useMapOfferScrollSheetHandoff({ expanded, externalDrag }) {
     }
 
     const onTouchStart = (event) => {
+      const target = event.target
+      if (isInteractiveTarget(target)) {
+        gestureRef.current = null
+        return
+      }
       const clientY = event.touches?.[0]?.clientY
+      const originCard = target instanceof Element ? target.closest('[data-listing-id]') : null
+      const firstCard = node.querySelector('[data-listing-id]')
       gestureRef.current = Number.isFinite(clientY)
-        ? { lastClientY: clientY, handedOff: false }
+        ? { lastClientY: clientY, handedOff: false, originCard, fromFirstOffer: Boolean(originCard && originCard === firstCard) }
         : null
     }
 
@@ -61,13 +74,9 @@ export function useMapOfferScrollSheetHandoff({ expanded, externalDrag }) {
       const movingFingerDown = deltaY > DIRECTION_EPSILON_PX
       const atTop = node.scrollTop <= EDGE_EPSILON_PX
 
-      // While collapsed or midway, the list is not a scrolling surface: any
-      // deliberate vertical gesture from a card/image owns the whole sheet.
-      if (!expandedRef.current && movedEnough) {
-        beginHandoff(state, clientY, event)
-      // Once fully open, keep native scrolling. Only a downward gesture at the
-      // top edge hands control back to the sheet so the user can close it.
-      } else if (expandedRef.current && atTop && movingFingerDown) {
+      // Once fully open, keep native scrolling. Only a downward gesture that
+      // starts on the first offer at the top edge can pull the whole sheet.
+      if (expandedRef.current && state.fromFirstOffer && atTop && movingFingerDown && movedEnough) {
         beginHandoff(state, clientY, event)
       }
 
@@ -83,8 +92,10 @@ export function useMapOfferScrollSheetHandoff({ expanded, externalDrag }) {
     }
 
     const onClickCapture = (event) => {
-      if (!suppressNextClickRef.current) return
-      suppressNextClickRef.current = false
+      const suppressed = suppressedClickRef.current
+      suppressedClickRef.current = null
+      if (!suppressed || performance.now() > suppressed.until) return
+      if (suppressed.card && event.target instanceof Node && !suppressed.card.contains(event.target)) return
       event.preventDefault()
       event.stopPropagation()
     }

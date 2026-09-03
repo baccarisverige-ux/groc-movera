@@ -239,6 +239,11 @@
 
 .map-offer-sheet__list::-webkit-scrollbar{display:none}
 
+.map-offer-sheet__list[data-scroll-enabled=false]{
+  overflow-y:hidden;
+  overscroll-behavior:none;
+}
+
 .map-offer-sheet__list-content{
   display:grid;
   grid-auto-rows:max-content;
