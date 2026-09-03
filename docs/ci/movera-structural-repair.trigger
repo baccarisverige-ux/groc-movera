@@ -1,1 +1,1 @@
-verified structural repair trigger 2026-09-03 rerun-2
+verified structural repair trigger 2026-09-03 final-rerun
