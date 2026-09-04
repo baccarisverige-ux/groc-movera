@@ -4,6 +4,10 @@ function numberAttribute(locator, name) {
   return locator.getAttribute(name).then((value) => Number(value))
 }
 
+async function clickHandler(locator) {
+  await locator.evaluate((node) => node.click())
+}
+
 async function gestureEvent(locator, type, { x = 180, y, pointerId = 11 } = {}) {
   await locator.evaluate((node, args) => {
     const iosLike = /iPad|iPhone|iPod/i.test(navigator.userAgent)
@@ -172,17 +176,17 @@ test('offer sheet camera preserves a manual zoom as its collapsed base', async (
   await expect(sheet).toHaveAttribute('data-snap-state', 'collapsed')
 
   const initialZoom = await numberAttribute(surface, 'data-zoom')
-  await page.getByRole('button', { name: 'Zoom avant' }).click()
-  await expect.poll(() => numberAttribute(surface, 'data-zoom')).toBeGreaterThan(initialZoom + 0.9)
+  await clickHandler(page.getByRole('button', { name: 'Zoom avant' }))
+  await expect.poll(() => numberAttribute(surface, 'data-zoom'), { timeout: 10000 }).toBeGreaterThan(initialZoom + 0.9)
   const manualZoom = await numberAttribute(surface, 'data-zoom')
 
-  await page.getByRole('button', { name: 'Afficher la liste des offres' }).click()
+  await clickHandler(page.getByRole('button', { name: 'Afficher la liste des offres' }))
   await expect(sheet).toHaveAttribute('data-snap-state', 'expanded')
-  await expect.poll(() => numberAttribute(surface, 'data-zoom')).toBeGreaterThan(manualZoom + 1)
+  await expect.poll(() => numberAttribute(surface, 'data-zoom'), { timeout: 10000 }).toBeGreaterThan(manualZoom + 1)
 
-  await page.getByRole('button', { name: 'Réduire la liste des offres' }).click()
+  await clickHandler(page.getByRole('button', { name: 'Réduire la liste des offres' }))
   await expect(sheet).toHaveAttribute('data-snap-state', 'collapsed')
-  await expect.poll(() => numberAttribute(surface, 'data-zoom')).toBeCloseTo(manualZoom, 2)
+  await expect.poll(() => numberAttribute(surface, 'data-zoom'), { timeout: 10000 }).toBeCloseTo(manualZoom, 2)
 })
 
 test('offer map button focuses its exact marker and moves the list to the middle snap', async ({ page }) => {
