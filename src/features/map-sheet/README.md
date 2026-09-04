@@ -10,7 +10,7 @@ This module is the isolated interaction system for the Movera map offer sheet.
 - `adapters/browser/` — Pointer/iOS event translation and iOS scroll normalization.
 - `adapters/motion|map|state/` — outbound adapters around external runtimes; no Map DOM ownership.
 - `adapters/react/` — the inbound composition boundary that connects React to the application controller and ports.
-- `ui/` — presentation-only destination for the final view boundary. No low-level touch/pointer ownership.
+- `ui/` — presentation-only destination for view components. No low-level touch/pointer ownership.
 - `index.js` — the only public import boundary for code outside this feature.
 
 ## Migration status
@@ -19,9 +19,10 @@ This module is the isolated interaction system for the Movera map offer sheet.
 - Phase 2: headless state machine, events, commands, gesture policy, snap engine and selectors.
 - Phase 3: pure gesture ownership + scroll handoff, Gesture/Scroll ports, Pointer adapter, iOS touch adapter and rubber-band normalization.
 - Phase 4: Motion/Map/selection ports and adapters, application controller, command executor and atomic `focusListingOnMap` use-case.
-- Phase 5: production Map offer sheet bridge is wired to the V2 controller/runtime while preserving the existing markup, CSS classes and public `MapPage` contract. Programmatic open/close, manual drag, list handoff and map focus now use the same semantic state machine.
+- Phase 5: production Map offer sheet bridge wired to the V2 controller/runtime while preserving the existing markup, CSS classes and public `MapPage` contract. Programmatic open/close, manual drag, list handoff and map focus use the same semantic state machine.
+- Phase 6: retired Map gesture/motion runtime removed, offer-card animation detached from the retired sheet runtime, shared `SnapSheetMotionSurface` returned to a Map-agnostic snap contract, and CI permanently rejects reintroduction of the retired implementation.
 
-Legacy Map gesture/motion files remain in the repository only as rollback material during Phase 5. They are no longer imported by `MapOfferSheet` and are scheduled for deletion in Phase 6 after the migrated UI passes the complete browser/WebKit gate.
+The V2 runtime is now the only production interaction engine for the Map offer sheet. The old `src/features/map/motion/` implementation is intentionally absent and is protected by CI from being recreated.
 
 ## Runtime contract
 
@@ -44,4 +45,6 @@ The migration adapter preserves the current Map intent: center horizontally, pla
 
 ## Future safety
 
-Architecture CI rejects inward dependency leaks, React/DOM/Motion in the headless layers, application imports of adapters/UI, legacy Map CSS coupling inside adapters, direct legacy Map feature imports from V2, and imports of private `map-sheet` internals from outside the feature. During Phase 5 it also verifies that the production `MapOfferSheet` enters V2 only through the public `features/map-sheet/index.js` boundary and no longer imports the retired Map gesture/motion runtime.
+Architecture CI rejects inward dependency leaks, React/DOM/Motion in the headless layers, application imports of adapters/UI, legacy Map CSS coupling inside adapters, direct legacy Map feature imports from V2, and imports of private `map-sheet` internals from outside the feature.
+
+The retired-runtime guard additionally rejects the old Map Sheet files or symbols, `MAP_OFFER_SHEET_MOTION`, the former free-release switch in shared `SnapSheetMotionSurface`, and any attempt to reconnect the production bridge to the retired `src/features/map/motion/` runtime.
