@@ -14,6 +14,7 @@ export function MapOfferSheetMotionSurface({
       className={className}
       ariaLabel={ariaLabel}
       collapsedVisiblePx={collapsedVisiblePx ?? MAP_OFFER_SHEET_MOTION.collapsedVisiblePx}
+      manualReleaseBehavior="free"
       onProgressChange={onProgressChange}
       testId="map-offer-sheet"
     >
