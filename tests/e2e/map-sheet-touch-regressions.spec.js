@@ -15,7 +15,7 @@ async function touchDrag(locator, { x = 180, fromY, toY, duration = 360 }) {
       node.dispatchEvent(event)
     }
     const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
-    const steps = 4
+    const steps = 5
     fireTouch('touchstart', args.x, args.fromY, false)
     for (let index = 1; index <= steps; index += 1) {
       await sleep(args.duration / steps)
@@ -27,21 +27,59 @@ async function touchDrag(locator, { x = 180, fromY, toY, duration = 360 }) {
   }, { x, fromY, toY, duration })
 }
 
-test('property category dock drags the sheet at any height and settles on a real snap', async ({ page }) => {
+async function tinyTouchMove(locator, { x = 180, fromY, toY }) {
+  await locator.evaluate((node, args) => {
+    const fireTouch = (type, clientX, clientY, cancelable = true) => {
+      const event = new Event(type, { bubbles: true, cancelable })
+      Object.defineProperty(event, 'touches', {
+        configurable: true,
+        value: type === 'touchend' ? [] : [{ clientX, clientY }],
+      })
+      node.dispatchEvent(event)
+    }
+    fireTouch('touchstart', args.x, args.fromY, false)
+    fireTouch('touchmove', args.x, args.toY)
+    fireTouch('touchend', args.x, args.toY, false)
+  }, { x, fromY, toY })
+}
+
+test('one panel gesture router owns header categories and offer list', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/groc-movera/map?destination=la-marsa')
+
+  const sheet = page.getByTestId('map-offer-sheet')
+  const panel = sheet.locator('.map-offer-sheet__panel')
+  const dock = page.getByTestId('map-sheet-property-filters')
+  const list = sheet.locator('.map-offer-sheet__list')
+
+  await expect(panel).toHaveAttribute('data-gesture-router', 'panel')
+  await expect(sheet).toHaveAttribute('data-snap-state', 'collapsed')
+  await expect(list).toHaveAttribute('data-scroll-enabled', 'false')
+  await expect(list).toHaveCSS('touch-action', 'none')
+
+  await touchDrag(dock, { fromY: 785, toY: 535, duration: 520 })
+  await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeGreaterThan(0.47)
+  await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeLessThan(0.53)
+})
+
+test('offer card can move a mid sheet to another exact snap', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/groc-movera/map?destination=la-marsa')
 
   const sheet = page.getByTestId('map-offer-sheet')
   const dock = page.getByTestId('map-sheet-property-filters')
+  const firstImage = sheet.locator('[data-listing-id="maison-jasmin"] .map-offer-sheet__media')
 
-  await expect(sheet).toHaveAttribute('data-snap-state', 'collapsed')
   await touchDrag(dock, { fromY: 785, toY: 535, duration: 520 })
+  await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeGreaterThan(0.47)
+  await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeLessThan(0.53)
 
-  await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeGreaterThan(0.45)
-  await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeLessThan(0.55)
+  await touchDrag(firstImage, { fromY: 590, toY: 315, duration: 520 })
+  await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeGreaterThan(0.985)
+  await expect(sheet).toHaveAttribute('data-snap-state', 'expanded')
 })
 
-test('offer cards own vertical sheet drag while the sheet is not fully attached', async ({ page }) => {
+test('expanded first offer pulls whole sheet down and settles exactly in the middle', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/groc-movera/map?destination=la-marsa')
 
@@ -49,17 +87,39 @@ test('offer cards own vertical sheet drag while the sheet is not fully attached'
   const list = sheet.locator('.map-offer-sheet__list')
   const firstImage = sheet.locator('[data-listing-id="maison-jasmin"] .map-offer-sheet__media')
 
-  await expect(list).toHaveAttribute('data-scroll-enabled', 'false')
-  await expect(list).toHaveCSS('touch-action', 'none')
+  await page.getByRole('button', { name: 'Afficher la liste des offres' }).click()
+  await expect(sheet).toHaveAttribute('data-snap-state', 'expanded')
+  await expect(list).toHaveAttribute('data-scroll-enabled', 'true')
+  await expect(list).toHaveCSS('touch-action', 'pan-y')
+  await list.evaluate((node) => { node.scrollTop = 0 })
 
-  await touchDrag(firstImage, { fromY: 790, toY: 535, duration: 520 })
-
-  await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeGreaterThan(0.45)
-  await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeLessThan(0.55)
-  await expect(list).toHaveAttribute('data-scroll-enabled', 'false')
+  await touchDrag(firstImage, { fromY: 260, toY: 500, duration: 520 })
+  await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeGreaterThan(0.47)
+  await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeLessThan(0.53)
 })
 
-test('first offer can pull an expanded sheet down and a following map-focus tap is not swallowed', async ({ page }) => {
+test('small finger jitter on Voir sur la carte remains a tap and exact focus still works', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/groc-movera/map?destination=la-marsa')
+
+  const sheet = page.getByTestId('map-offer-sheet')
+  const focusButton = page.getByTestId('map-focus-maison-jasmin')
+  const engine = page.getByTestId('map-engine')
+
+  await page.getByRole('button', { name: 'Afficher la liste des offres' }).click()
+  await expect(sheet).toHaveAttribute('data-snap-state', 'expanded')
+
+  // Six pixels is normal finger jitter and must stay below drag activation.
+  await tinyTouchMove(focusButton, { fromY: 610, toY: 616 })
+  await expect(sheet).toHaveAttribute('data-snap-state', 'expanded')
+
+  await focusButton.click()
+  await expect(engine).toHaveAttribute('data-selected-listing-id', 'maison-jasmin')
+  await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeGreaterThan(0.47)
+  await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeLessThan(0.53)
+})
+
+test('fresh map-focus tap after a real sheet drag is never swallowed', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/groc-movera/map?destination=la-marsa')
 
@@ -71,19 +131,16 @@ test('first offer can pull an expanded sheet down and a following map-focus tap 
 
   await page.getByRole('button', { name: 'Afficher la liste des offres' }).click()
   await expect(sheet).toHaveAttribute('data-snap-state', 'expanded')
-  await expect(list).toHaveAttribute('data-scroll-enabled', 'true')
-  await expect(list).toHaveCSS('touch-action', 'pan-y')
   await list.evaluate((node) => { node.scrollTop = 0 })
 
   await touchDrag(firstImage, { fromY: 260, toY: 500, duration: 520 })
-  await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeGreaterThan(0.45)
-  await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeLessThan(0.55)
+  await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeGreaterThan(0.47)
+  await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeLessThan(0.53)
 
-  // A drag must not leave a stale "eat the next click" flag. Triggering the
-  // adjacent map action immediately after the drag must still select the exact
-  // listing and keep the sheet on the deterministic middle snap.
-  await focusButton.evaluate((node) => node.click())
+  // This is a real Playwright click, not node.click(), so it exercises the
+  // browser event path and the panel click guard.
+  await focusButton.click()
   await expect(engine).toHaveAttribute('data-selected-listing-id', 'maison-jasmin')
-  await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeGreaterThan(0.45)
-  await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeLessThan(0.55)
+  await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeGreaterThan(0.47)
+  await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeLessThan(0.53)
 })
