@@ -1,3 +1,3 @@
 // Public boundary for Map Sheet V2.
-// Exports are intentionally empty during Phase 1 so the current Map behavior is untouched.
-export {}
+// External consumers must import from this file, never from private internals.
+export * from './core/index.js'
