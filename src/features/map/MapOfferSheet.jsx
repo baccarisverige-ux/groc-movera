@@ -39,7 +39,7 @@ function roomPhoto(room, fallback) { return room?.photos?.[0]?.src || fallback }
 
 function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListingId, propertyFilter, onPropertyFilterChange, onSelectedListingChange, onFocusListing, onNavigate, progress, progressMotion, toggleExpanded, snapToProgress, externalDrag }) {
   const attached = useStableAttached(progress)
-  const { panelRef, listRef } = useMapOfferSheetGestureRouter({ expanded: attached, externalDrag })
+  const { panelRef, listRef } = useMapOfferSheetGestureRouter({ expanded: attached, progress, externalDrag })
   const progressRef = useRef(progress)
   const idleHintResetRef = useRef(null)
   const [idleHintActive, setIdleHintActive] = useState(false)
