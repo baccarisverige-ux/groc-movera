@@ -193,10 +193,10 @@ test('offer map button focuses its exact marker and moves the list to the middle
   const surface = page.getByTestId('map-surface')
   const engine = page.getByTestId('map-engine')
   const focusButton = page.getByTestId('map-focus-maison-jasmin')
+  const baseZoom = await numberAttribute(surface, 'data-zoom')
 
   await page.getByRole('button', { name: 'Afficher la liste des offres' }).click()
   await expect(sheet).toHaveAttribute('data-snap-state', 'expanded')
-  const zoomBefore = await numberAttribute(surface, 'data-zoom')
 
   await focusButton.click()
 
@@ -204,7 +204,8 @@ test('offer map button focuses its exact marker and moves the list to the middle
   await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeGreaterThan(0.47)
   await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeLessThan(0.53)
   await expect(sheet).toHaveAttribute('data-snap-state', 'middle')
-  await expect.poll(() => numberAttribute(surface, 'data-zoom')).toBeGreaterThan(zoomBefore + 0.5)
+  await expect.poll(() => numberAttribute(surface, 'data-zoom')).toBeGreaterThan(baseZoom + 1.2)
+  expect(await numberAttribute(surface, 'data-zoom')).toBeLessThanOrEqual(17)
 })
 
 test('Grand Tunis fully expanded covers the header and keeps 16 offers visible', async ({ page }) => {
