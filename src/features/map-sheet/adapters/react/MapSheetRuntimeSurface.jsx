@@ -15,6 +15,7 @@ import { createMotionSheetAdapter } from '../motion/MotionSheetAdapter.js'
 import { createListingSelectionAdapter } from '../state/ListingSelectionAdapter.js'
 
 const CLICK_SUPPRESSION_MS = 280
+const SEMANTIC_SNAP_EPSILON = 0.015
 const DEFAULT_SPRING = Object.freeze({
   stiffness: 185,
   damping: 30,
@@ -25,6 +26,13 @@ const DEFAULT_SPRING = Object.freeze({
 
 function clamp(value) {
   return Math.min(1, Math.max(0, Number(value) || 0))
+}
+
+function semanticSnapState(progress) {
+  if (progress >= 1 - SEMANTIC_SNAP_EPSILON) return MAP_SHEET_POSITION.EXPANDED
+  if (progress <= SEMANTIC_SNAP_EPSILON) return MAP_SHEET_POSITION.COLLAPSED
+  if (Math.abs(progress - 0.5) <= SEMANTIC_SNAP_EPSILON) return MAP_SHEET_POSITION.MIDDLE
+  return 'moving'
 }
 
 function describeOrigin(target) {
@@ -92,7 +100,7 @@ export function MapSheetRuntimeSurface({
 
   const reportProgress = (value) => {
     const next = clamp(value)
-    const critical = next <= 0.015 || next >= 0.985 || Math.abs(next - 0.5) <= 0.008
+    const critical = semanticSnapState(next) !== 'moving'
     setProgress((current) => (Math.abs(current - next) < 0.008 && !critical ? current : next))
     if (Math.abs(lastReportedProgressRef.current - next) >= 0.018 || critical) {
       lastReportedProgressRef.current = next
@@ -188,7 +196,7 @@ export function MapSheetRuntimeSurface({
 
   const focusListingOnMap = (listingId, options) => controller.focusListingOnMap(listingId, options)
   const roundedProgress = Math.round(progress * 100) / 100
-  const snapState = progress >= 0.985 ? 'expanded' : progress <= 0.015 ? 'collapsed' : 'moving'
+  const snapState = semanticSnapState(progress)
 
   return (
     <motion.section
@@ -197,7 +205,7 @@ export function MapSheetRuntimeSurface({
       aria-label={ariaLabel}
       data-testid={testId}
       data-progress={roundedProgress}
-      data-expanded={progress >= 0.985 ? 'true' : 'false'}
+      data-expanded={snapState === MAP_SHEET_POSITION.EXPANDED ? 'true' : 'false'}
       data-snap-state={snapState}
       data-motion-engine="motion"
       data-motion-boundary="map-sheet-v2"
