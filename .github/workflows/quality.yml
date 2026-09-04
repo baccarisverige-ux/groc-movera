@@ -55,10 +55,12 @@ jobs:
       - run: npm ci
       - name: Install browser quality tools
         run: npm install --no-save --package-lock=false @playwright/test@1.55.0 @axe-core/playwright@4.10.2
-      - name: Install Chromium
-        run: npx playwright install chromium
+      - name: Install Chromium and WebKit
+        run: npx playwright install chromium webkit
       - name: E2E, responsive baseline and accessibility
         run: npx playwright test tests/e2e tests/accessibility --project=mobile-chromium --project=desktop-chromium
+      - name: Map sheet gestures on iPhone WebKit
+        run: npx playwright test tests/e2e/map-city-offer-sheet.spec.js tests/e2e/map-sheet-touch-regressions.spec.js --project=mobile-webkit
       - name: Capture visual references
         run: npx playwright test tests/visual --project=mobile-chromium
       - name: Upload Playwright report
