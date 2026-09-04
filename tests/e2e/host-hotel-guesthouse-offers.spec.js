@@ -20,6 +20,16 @@ async function next(page) {
   await page.getByRole('button', { name: 'Continuer' }).click()
 }
 
+async function chooseGuestAccess(page, id = 'private') {
+  const choices = page.locator(`[role="radio"][data-guest-access-id="${id}"]`)
+  await expect.poll(() => choices.count(), { timeout: 10_000 }).toBeGreaterThan(0)
+  await choices.first().dispatchEvent('click')
+  await expect.poll(
+    () => choices.evaluateAll((nodes) => nodes.some((node) => node.getAttribute('aria-checked') === 'true')),
+    { timeout: 10_000 },
+  ).toBe(true)
+}
+
 async function completeHostOnboarding(page, { type, title, city }) {
   const onboarding = page.getByTestId('host-onboarding')
   await page.getByRole('button', { name: 'Commencer' }).click()
@@ -28,9 +38,7 @@ async function completeHostOnboarding(page, { type, title, city }) {
   await next(page)
 
   await expect(onboarding).toHaveAttribute('data-screen', 'guest-access')
-  const privateRoomAccess = page.locator('[role="radio"][data-guest-access-id="private"]:visible')
-  await expect(privateRoomAccess).toHaveCount(1)
-  await privateRoomAccess.click()
+  await chooseGuestAccess(page, 'private')
   await next(page)
 
   await page.getByLabel('Adresse du logement').fill('10 avenue de la Mer')
