@@ -96,7 +96,9 @@ test('expanded first offer pulls the whole sheet down and free-stops at release 
 
   const sheet = page.getByTestId('map-offer-sheet')
   const list = sheet.locator('.map-offer-sheet__list')
-  const firstImage = sheet.locator('[data-listing-id="maison-jasmin"] .map-offer-sheet__media')
+  const firstCard = sheet.locator('.map-offer-sheet__card').first()
+  await expect(firstCard).toHaveAttribute('data-listing-id', 'sea-breeze-marsa')
+  const firstImage = firstCard.locator('.map-offer-sheet__media')
 
   await page.getByRole('button', { name: 'Afficher la liste des offres' }).click()
   await expect(sheet).toHaveAttribute('data-snap-state', 'expanded')
@@ -160,8 +162,10 @@ test('fresh map-focus tap after a real sheet drag is never swallowed', async ({ 
 
   const sheet = page.getByTestId('map-offer-sheet')
   const list = sheet.locator('.map-offer-sheet__list')
-  const firstImage = sheet.locator('[data-listing-id="maison-jasmin"] .map-offer-sheet__media')
-  const focusButton = page.getByTestId('map-focus-maison-jasmin')
+  const firstCard = sheet.locator('.map-offer-sheet__card').first()
+  await expect(firstCard).toHaveAttribute('data-listing-id', 'sea-breeze-marsa')
+  const firstImage = firstCard.locator('.map-offer-sheet__media')
+  const focusButton = page.getByTestId('map-focus-sea-breeze-marsa')
   const engine = page.getByTestId('map-engine')
 
   await page.getByRole('button', { name: 'Afficher la liste des offres' }).click()
@@ -178,7 +182,7 @@ test('fresh map-focus tap after a real sheet drag is never swallowed', async ({ 
   // browser event path and the panel click guard. Programmatic map focus still
   // intentionally moves the sheet to its exact middle target.
   await focusButton.click()
-  await expect(engine).toHaveAttribute('data-selected-listing-id', 'maison-jasmin')
+  await expect(engine).toHaveAttribute('data-selected-listing-id', 'sea-breeze-marsa')
   await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeGreaterThan(0.47)
   await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeLessThan(0.53)
 })
