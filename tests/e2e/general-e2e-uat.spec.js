@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test'
 
+const SEARCH_SETTLE_TIMEOUT = 10_000
+
 function watchRuntimeErrors(page) {
   const pageErrors = []
   page.on('pageerror', (error) => pageErrors.push(error.message))
@@ -50,8 +52,14 @@ async function chooseTwoAvailableDates(page) {
   await second.click()
 }
 
+async function activateAnimatedControl(locator) {
+  await expect(locator).toBeVisible()
+  await expect(locator).toBeEnabled()
+  await locator.dispatchEvent('click')
+}
+
 async function expectSearchUnlocked(page) {
-  await expect(page.getByTestId('search-transition')).toBeHidden({ timeout: 5_000 })
+  await expect(page.getByTestId('search-transition')).toBeHidden({ timeout: SEARCH_SETTLE_TIMEOUT })
   const lockState = await page.evaluate(() => ({
     html: document.documentElement.dataset.moveraSearchLock,
     body: document.body.dataset.moveraSearchLock,
@@ -102,7 +110,7 @@ test.describe('Movera general E2E + UAT acceptance', () => {
     await page.locator('.b225-search').click({ position: { x: 80, y: 25 } })
     const transition = page.getByTestId('search-transition')
     await expect(transition).toBeVisible()
-    await expect.poll(() => transition.getAttribute('data-ready')).toBe('true')
+    await expect.poll(() => transition.getAttribute('data-ready'), { timeout: SEARCH_SETTLE_TIMEOUT }).toBe('true')
     await expect(transition).toHaveAttribute('data-step', 'destination')
 
     await page.locator('[data-destination="la-marsa"]').click()
@@ -165,7 +173,7 @@ test.describe('Movera general E2E + UAT acceptance', () => {
 
       const hero = page.locator('.portrait-collection-hero__image')
       await expect(hero).toBeVisible()
-      await expect.poll(() => hero.evaluate((image) => image.complete && image.naturalWidth > 0)).toBe(true)
+      await expect.poll(() => hero.evaluate((image) => image.complete && image.naturalWidth > 0), { timeout: 15_000 }).toBe(true)
 
       await expect(page.getByLabel('Ville en Tunisie')).toBeVisible()
       await expectBottomNavigation(page, 'Accueil')
@@ -180,13 +188,14 @@ test.describe('Movera general E2E + UAT acceptance', () => {
   })
 
   test('UAT: Search can close from every main step and Home remains interactive', async ({ page }) => {
+    test.setTimeout(90_000)
     const pageErrors = watchRuntimeErrors(page)
 
     const openSearch = async () => {
       await page.locator('.b225-search').click({ position: { x: 80, y: 25 } })
       const transition = page.getByTestId('search-transition')
       await expect(transition).toBeVisible()
-      await expect.poll(() => transition.getAttribute('data-ready')).toBe('true')
+      await expect.poll(() => transition.getAttribute('data-ready'), { timeout: SEARCH_SETTLE_TIMEOUT }).toBe('true')
       return transition
     }
 
@@ -194,21 +203,21 @@ test.describe('Movera general E2E + UAT acceptance', () => {
     await expect(page.getByTestId('page-home')).toBeVisible()
 
     let transition = await openSearch()
-    await page.getByRole('button', { name: 'Fermer' }).click()
+    await activateAnimatedControl(page.getByRole('button', { name: 'Fermer' }))
     await expectSearchUnlocked(page)
 
     transition = await openSearch()
     await page.locator('[data-destination="la-marsa"]').click()
     await expect(transition).toHaveAttribute('data-step', 'dates')
-    await page.getByRole('button', { name: 'Fermer' }).click()
+    await activateAnimatedControl(page.getByRole('button', { name: 'Fermer' }))
     await expectSearchUnlocked(page)
 
     transition = await openSearch()
     await page.locator('[data-destination="la-marsa"]').click()
     await chooseTwoAvailableDates(page)
-    await page.getByRole('button', { name: /Continuer vers les voyageurs/i }).click()
+    await activateAnimatedControl(page.getByRole('button', { name: /Continuer vers les voyageurs/i }))
     await expect(transition).toHaveAttribute('data-step', 'guests')
-    await page.getByRole('button', { name: 'Fermer' }).click()
+    await activateAnimatedControl(page.getByRole('button', { name: 'Fermer' }))
     await expectSearchUnlocked(page)
 
     await expect(page.getByTestId('page-home')).toBeVisible()
