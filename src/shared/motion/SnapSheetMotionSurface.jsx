@@ -26,7 +26,7 @@ function nearestIndex(values, value) {
   return bestIndex
 }
 
-function resolveSnapTarget({ distance, currentY, fastSwipeVelocity, snapRatios, velocityProjectionSeconds, velocityY }) {
+function resolveSnapProgress({ distance, currentY, fastSwipeVelocity, snapRatios, velocityProjectionSeconds, velocityY }) {
   const points = snapRatios.map((ratio) => distance * ratio)
   const projected = clamp(currentY + velocityY * velocityProjectionSeconds, 0, distance)
   let index = nearestIndex(points, projected)
@@ -38,7 +38,7 @@ function resolveSnapTarget({ distance, currentY, fastSwipeVelocity, snapRatios, 
       : Math.max(0, Math.min(index, currentIndex - 1))
   }
 
-  return points[index]
+  return clamp(1 - snapRatios[index])
 }
 
 export function SnapSheetMotionSurface({
@@ -59,7 +59,10 @@ export function SnapSheetMotionSurface({
   const collapsedYRef = useRef(0)
   const progressRef = useRef(0)
   const progressCallbackRef = useRef(onProgressChange)
+  const lastReportedProgressRef = useRef(0)
   const animationRef = useRef(null)
+  const snapProgressTargetRef = useRef(null)
+  const snapVelocityRef = useRef(0)
   const suppressClickRef = useRef(false)
   const externalDragRef = useRef(null)
   const y = useMotionValue(0)
@@ -76,13 +79,41 @@ export function SnapSheetMotionSurface({
   useEffect(() => { progressCallbackRef.current = onProgressChange }, [onProgressChange])
   useEffect(() => () => animationRef.current?.stop?.(), [])
 
+  const animateToProgress = (nextProgress, velocity = 0) => {
+    const boundedProgress = clamp(Number(nextProgress) || 0)
+    const distance = collapsedYRef.current
+    const target = (1 - boundedProgress) * distance
+
+    snapProgressTargetRef.current = boundedProgress
+    snapVelocityRef.current = velocity
+    animationRef.current?.stop?.()
+
+    if (reduceMotion) {
+      y.set(target)
+      return
+    }
+
+    animationRef.current = animate(y, target, {
+      type: 'spring',
+      ...DEFAULT_SPRING,
+      ...spring,
+      velocity,
+    })
+  }
+
   useMotionValueEvent(y, 'change', (latest) => {
     const distance = collapsedYRef.current
     if (distance <= 0) return
     const next = clamp(1 - clamp(latest, 0, distance) / distance)
     progressRef.current = next
-    setProgress((current) => Math.abs(current - next) < 0.002 ? current : next)
-    progressCallbackRef.current?.(next)
+
+    const critical = next <= 0.015 || next >= 0.985 || Math.abs(next - 0.5) <= 0.008
+    setProgress((current) => (Math.abs(current - next) < 0.008 && !critical ? current : next))
+
+    if (Math.abs(lastReportedProgressRef.current - next) >= 0.018 || critical) {
+      lastReportedProgressRef.current = next
+      progressCallbackRef.current?.(next)
+    }
   })
 
   useLayoutEffect(() => {
@@ -94,33 +125,37 @@ export function SnapSheetMotionSurface({
       const nextDistance = Math.max(1, height - collapsedVisiblePx)
       const previousDistance = collapsedYRef.current
       const preservedProgress = previousDistance > 0 ? progressRef.current : 0
+      const distanceChanged = Math.abs(nextDistance - previousDistance) > 0.5
 
       collapsedYRef.current = nextDistance
       setCollapsedY(nextDistance)
       y.set((1 - preservedProgress) * nextDistance)
+
+      const snapProgress = snapProgressTargetRef.current
+      if (!distanceChanged || snapProgress === null || externalDragRef.current) return
+
+      const target = (1 - snapProgress) * nextDistance
+      animationRef.current?.stop?.()
+      if (reduceMotion || Math.abs(snapProgress - preservedProgress) <= 0.002) {
+        y.set(target)
+        return
+      }
+      animationRef.current = animate(y, target, {
+        type: 'spring',
+        ...DEFAULT_SPRING,
+        ...spring,
+        velocity: snapVelocityRef.current,
+      })
     }
 
     measure()
     const observer = new ResizeObserver(measure)
     observer.observe(surface)
     return () => observer.disconnect()
-  }, [collapsedVisiblePx, y])
-
-  const animateTo = (target, velocity = 0) => {
-    animationRef.current?.stop?.()
-    if (reduceMotion) {
-      y.set(target)
-      return
-    }
-    animationRef.current = animate(y, target, {
-      type: 'spring',
-      ...DEFAULT_SPRING,
-      ...spring,
-      velocity,
-    })
-  }
+  }, [collapsedVisiblePx, reduceMotion, spring, y])
 
   const startDrag = (event) => {
+    snapProgressTargetRef.current = null
     animationRef.current?.stop?.()
     suppressClickRef.current = false
     dragControls.start(event)
@@ -132,18 +167,16 @@ export function SnapSheetMotionSurface({
       suppressClickRef.current = false
       return
     }
-    const distance = collapsedYRef.current
-    animateTo(progressRef.current > toggleThreshold ? distance : 0)
+    animateToProgress(progressRef.current > toggleThreshold ? 0 : 1)
   }
 
   const snapToProgress = (nextProgress) => {
-    const distance = collapsedYRef.current
-    const boundedProgress = clamp(Number(nextProgress) || 0)
-    animateTo((1 - boundedProgress) * distance)
+    animateToProgress(nextProgress)
   }
 
   const startExternalDrag = (clientY) => {
     if (!Number.isFinite(clientY)) return false
+    snapProgressTargetRef.current = null
     animationRef.current?.stop?.()
     suppressClickRef.current = true
     const now = performance.now()
@@ -176,7 +209,7 @@ export function SnapSheetMotionSurface({
     const distance = collapsedYRef.current
     const currentY = clamp(y.get(), 0, distance)
     const velocityY = cancel ? 0 : state.velocityY
-    animateTo(resolveSnapTarget({
+    animateToProgress(resolveSnapProgress({
       distance,
       currentY,
       fastSwipeVelocity,
@@ -214,11 +247,14 @@ export function SnapSheetMotionSurface({
       dragConstraints={{ top: 0, bottom: collapsedY }}
       dragElastic={{ top: 0.035, bottom: 0.035 }}
       dragMomentum={false}
-      onDragStart={() => { suppressClickRef.current = true }}
+      onDragStart={() => {
+        snapProgressTargetRef.current = null
+        suppressClickRef.current = true
+      }}
       onDragEnd={(_, info) => {
         const distance = collapsedYRef.current
         const currentY = clamp(y.get(), 0, distance)
-        animateTo(resolveSnapTarget({
+        animateToProgress(resolveSnapProgress({
           distance,
           currentY,
           fastSwipeVelocity,
