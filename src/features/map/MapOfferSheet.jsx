@@ -14,7 +14,8 @@ const COLLAPSED_PANEL_VISIBLE_PX = 74
 const TOP_BAR_SEAM_OVERLAP_PX = 2
 const ATTACHED_ENTER_PROGRESS = 0.995
 const ATTACHED_EXIT_PROGRESS = 0.92
-const TOP_HANDLE_TOUCH_THRESHOLD_PX = 2
+const TOP_DRAG_ACTIVATION_PX = 5
+const TOP_CLICK_SUPPRESSION_MS = 320
 const IDLE_HINT_INTERVAL_MS = 12000
 const IDLE_HINT_DURATION_MS = 720
 
@@ -46,6 +47,7 @@ function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListi
   const externalDragRef = useRef(externalDrag)
   const progressRef = useRef(progress)
   const idleHintResetRef = useRef(null)
+  const topClickGuardRef = useRef({ until: 0, origin: null })
   const [idleHintActive, setIdleHintActive] = useState(false)
   const [roomSelection, setRoomSelection] = useState({})
   const safeHeaderHeight = Math.max(0, headerHeight || 0)
@@ -68,20 +70,39 @@ function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListi
     const cleanups = nodes.map((node) => {
       let gesture = null
       const onTouchStart = (event) => {
-        if (event.touches.length !== 1) return
+        if (event.touches.length !== 1) {
+          gesture = null
+          return
+        }
         const touch = event.touches[0]
-        gesture = Number.isFinite(touch?.clientY) ? { startClientX: touch.clientX, startClientY: touch.clientY, active: false, horizontal: false } : null
+        const startClientY = Number(touch?.clientY)
+        if (!Number.isFinite(startClientY)) {
+          gesture = null
+          return
+        }
+        const startClientX = Number.isFinite(Number(touch?.clientX)) ? Number(touch.clientX) : 0
+        gesture = {
+          startClientX,
+          startClientY,
+          active: false,
+          horizontal: false,
+          origin: event.target instanceof Element ? event.target : null,
+        }
       }
       const onTouchMove = (event) => {
         const touch = event.touches?.[0]
-        const clientY = touch?.clientY
+        const clientY = Number(touch?.clientY)
         if (!gesture || !Number.isFinite(clientY)) return
-        const deltaX = Math.abs((touch?.clientX ?? gesture.startClientX) - gesture.startClientX)
+        const clientX = Number.isFinite(Number(touch?.clientX)) ? Number(touch.clientX) : gesture.startClientX
+        const deltaX = Math.abs(clientX - gesture.startClientX)
         const deltaY = Math.abs(clientY - gesture.startClientY)
         if (!gesture.active) {
           if (gesture.horizontal) return
-          if (node === propertyDockRef.current && deltaX > deltaY) { gesture.horizontal = true; return }
-          if (deltaY < TOP_HANDLE_TOUCH_THRESHOLD_PX) return
+          if (node === propertyDockRef.current && deltaX > TOP_DRAG_ACTIVATION_PX && deltaX > deltaY * 1.08) {
+            gesture.horizontal = true
+            return
+          }
+          if (deltaY < TOP_DRAG_ACTIVATION_PX || deltaY <= deltaX) return
           const started = externalDragRef.current?.start(gesture.startClientY)
           if (!started) { gesture = null; return }
           gesture.active = true
@@ -92,10 +113,28 @@ function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListi
       }
       const finishTouch = (cancel = false) => {
         if (gesture?.active) {
+          topClickGuardRef.current = {
+            until: performance.now() + TOP_CLICK_SUPPRESSION_MS,
+            origin: gesture.origin,
+          }
           if (cancel) externalDragRef.current?.cancel()
           else externalDragRef.current?.end()
         }
         gesture = null
+      }
+      const onClickCapture = (event) => {
+        const guard = topClickGuardRef.current
+        if (!guard.origin || performance.now() > guard.until) {
+          topClickGuardRef.current = { until: 0, origin: null }
+          return
+        }
+        const target = event.target instanceof Element ? event.target : null
+        const sameGestureTarget = target
+          && (guard.origin === target || guard.origin.contains(target) || target.contains(guard.origin))
+        if (!sameGestureTarget) return
+        topClickGuardRef.current = { until: 0, origin: null }
+        event.preventDefault()
+        event.stopPropagation()
       }
       const onTouchEnd = () => finishTouch(false)
       const onTouchCancel = () => finishTouch(true)
@@ -103,11 +142,13 @@ function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListi
       node.addEventListener('touchmove', onTouchMove, { passive: false })
       node.addEventListener('touchend', onTouchEnd, { passive: true })
       node.addEventListener('touchcancel', onTouchCancel, { passive: true })
+      node.addEventListener('click', onClickCapture, true)
       return () => {
         node.removeEventListener('touchstart', onTouchStart)
         node.removeEventListener('touchmove', onTouchMove)
         node.removeEventListener('touchend', onTouchEnd)
         node.removeEventListener('touchcancel', onTouchCancel)
+        node.removeEventListener('click', onClickCapture, true)
       }
     })
     return () => cleanups.forEach((cleanup) => cleanup())
@@ -123,8 +164,10 @@ function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListi
   const focusListingOnMap = (event, listingId) => {
     event.preventDefault()
     event.stopPropagation()
-    onFocusListing?.(listingId)
+    // Start the deterministic middle snap first, then issue the exact marker
+    // camera command last so sheet camera updates cannot win the same frame.
     snapToProgress?.(0.5)
+    onFocusListing?.(listingId)
   }
 
   return <>
@@ -134,7 +177,7 @@ function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListi
         <button type="button" className="map-offer-sheet__handle-button" onClick={toggleExpanded} aria-label={progress > 0.72 ? 'Réduire la liste des offres' : 'Afficher la liste des offres'}><span className="map-offer-sheet__grabber"/><span className="map-offer-sheet__heading"><strong>{displayedListings.length ? `${displayedListings.length} offre${displayedListings.length > 1 ? 's' : ''}` : 'Aucune offre'}</strong><span className="map-offer-sheet__city-label">{cityLabel}</span><span className="map-offer-sheet__brand-badge">Movera Host</span></span><span className="map-offer-sheet__chevron" data-open={progress > 0.72 ? 'true' : 'false'}><ChevronIcon/></span></button>
       </div>
       <div ref={propertyDockRef} className="map-offer-sheet__property-dock" data-testid="map-sheet-property-filters" aria-label="Type de logement"><div className="map-offer-sheet__property-rail">{MAP_PROPERTY_FILTERS.map((filter) => { const active = propertyFilter === filter.id; return <button key={filter.id} type="button" className="map-offer-sheet__property-chip" data-property-filter={filter.id} data-active={active ? 'true' : 'false'} aria-pressed={active} onClick={() => onPropertyFilterChange?.(filter.id)}><span>{filter.label}</span></button> })}</div></div>
-      {displayedListings.length ? <MotionList nodeRef={listRef} className="map-offer-sheet__list" data-scroll-enabled={attached ? 'true' : 'false'} data-motion-list="map-offers" data-map-scroll="independent" data-sheet-handoff="drag-from-offer"><div className="map-offer-sheet__list-content" data-testid="map-offer-sheet-list-content">{displayedListings.map((listing, index) => {
+      {displayedListings.length ? <MotionList nodeRef={listRef} className="map-offer-sheet__list" data-scroll-enabled={attached ? 'true' : 'false'} data-motion-list="map-offers" data-map-scroll="independent" data-sheet-handoff="drag-from-offer" style={{ touchAction: attached ? 'pan-y' : 'none', overflowY: attached ? 'auto' : 'hidden' }}><div className="map-offer-sheet__list-content" data-testid="map-offer-sheet-list-content">{displayedListings.map((listing, index) => {
         const selected = listing.id === selectedListingId || (!selectedListingId && index === 0 && progress > 0.12)
         const categories = Array.isArray(listing.roomTypes) ? listing.roomTypes : []
         const categorized = categories.length > 1
