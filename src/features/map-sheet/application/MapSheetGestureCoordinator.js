@@ -1,5 +1,6 @@
 import {
   MAP_SHEET_GESTURE_OWNER,
+  MAP_SHEET_MODE,
   beginMapSheetDrag,
   beginMapSheetInteraction,
   beginMapSheetListScroll,
@@ -120,14 +121,14 @@ export function createMapSheetGestureCoordinator({
     }, policy)
 
     if (owner === MAP_SHEET_GESTURE_OWNER.LIST) {
-      if (machineState.mode === 'tap-pending') controller.dispatch(beginMapSheetListScroll())
+      if (machineState.mode === MAP_SHEET_MODE.TAP_PENDING) controller.dispatch(beginMapSheetListScroll())
       return
     }
 
     if (owner !== MAP_SHEET_GESTURE_OWNER.SHEET) return
 
     if (!session.sheetClaimed) {
-      const handoffFromList = machineState.mode === 'list-scrolling'
+      const handoffFromList = machineState.mode === MAP_SHEET_MODE.LIST_SCROLLING
       session.dragBaselineProgress = handoffFromList
         ? clampMapSheetProgress(getVisualProgress())
         : session.startProgress
