@@ -108,10 +108,8 @@ for (const file of moduleFiles) {
     }
   }
 
-  if (isReactAdapter) {
-    if (/from\s+['"][^'"]*ui\//.test(text)) {
-      violations.push(`${repoPath}: React inbound adapter cannot depend on presentation UI internals`)
-    }
+  if (isReactAdapter && /from\s+['"][^'"]*ui\//.test(text)) {
+    violations.push(`${repoPath}: React inbound adapter cannot depend on presentation UI internals`)
   }
 
   if (isAdapters && /\.map-offer-sheet|map-offer-sheet__/.test(text)) {
@@ -159,9 +157,22 @@ for (const file of allSrcFiles) {
   }
 }
 
+const productionBridge = await readFile(new URL('../src/features/map/MapOfferSheet.jsx', import.meta.url), 'utf8')
+if (!productionBridge.includes("from '../map-sheet/index.js'")) {
+  violations.push('MapOfferSheet.jsx: production bridge must enter Map Sheet V2 through its public index boundary')
+}
+for (const retiredImport of ['MapOfferSheetMotionSurface', 'useMapOfferSheetGestureRouter', 'useMapOfferScrollSheetHandoff']) {
+  if (productionBridge.includes(retiredImport)) {
+    violations.push(`MapOfferSheet.jsx: retired Map runtime leaked back into production bridge: ${retiredImport}`)
+  }
+}
+if (!productionBridge.includes('data-map-sheet-area="list"') || !productionBridge.includes('data-map-sheet-first-offer')) {
+  violations.push('MapOfferSheet.jsx: semantic gesture origin descriptors are required for V2 ownership routing')
+}
+
 if (violations.length) {
   console.error('Map Sheet V2 architecture guard failed:\n' + violations.map((violation) => `- ${violation}`).join('\n'))
   process.exit(1)
 }
 
-console.log(`Map Sheet V2 architecture guard passed: ${required.length} boundaries present; headless core isolated; browser/iOS gestures isolated; outbound adapters injected; React inbound adapter is the composition boundary; application stays adapter-free; UI gesture-free; private internals encapsulated.`)
+console.log(`Map Sheet V2 architecture guard passed: ${required.length} boundaries present; headless core isolated; browser/iOS gestures isolated; outbound adapters injected; React inbound adapter is the composition boundary; production Map bridge uses only the public V2 runtime; application stays adapter-free; private internals encapsulated.`)
