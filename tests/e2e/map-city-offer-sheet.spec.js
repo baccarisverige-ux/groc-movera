@@ -109,6 +109,10 @@ test('sheet attachment uses one Motion translation with a stable structural head
   expect(Math.abs((panelBoxAt94.y - sheetBoxAt94.y) - structuralOffset * (1 - softenedProgressAt94))).toBeLessThanOrEqual(2.5)
   expect(await numberAttribute(surface, 'data-zoom')).toBeGreaterThan(zoomAt84 + 0.02)
 
+  // Manual release no longer auto-snaps. Move all the way to the physical top
+  // boundary before releasing when this structural test needs the attached state.
+  await page.mouse.move(x, y - travel * 1.02, { steps: 6 })
+  await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeGreaterThan(0.985)
   await page.mouse.up()
   await expect(sheet).toHaveAttribute('data-expanded', 'true')
   await expect(sheet).toHaveAttribute('data-snap-state', 'expanded')
