@@ -1,21 +1,50 @@
 import { useEffect, useRef } from 'react'
 
 const EDGE_EPSILON_PX = 2
-const DRAG_ACTIVATION_PX = 5
-const CLICK_SUPPRESSION_MS = 320
+const DRAG_ACTIVATION_PX = 10
+const HORIZONTAL_BIAS = 1.08
+const CLICK_SUPPRESSION_MS = 280
+const INTERACTIVE_SELECTOR = 'button,a,[role="button"],input,select,textarea'
+const HORIZONTAL_RAIL_SELECTOR = '.map-offer-sheet__property-rail,.map-offer-sheet__room-categories'
+
+function asElement(value) {
+  return value instanceof Element ? value : null
+}
+
+function interactiveOrigin(target, panel) {
+  const element = asElement(target)
+  if (!element) return null
+  return element.closest(INTERACTIVE_SELECTOR) || (panel?.contains(element) ? element : null)
+}
+
+function startedInside(target, node) {
+  const element = asElement(target)
+  return Boolean(element && node?.contains(element))
+}
+
+function startedInHorizontalRail(target) {
+  return Boolean(asElement(target)?.closest(HORIZONTAL_RAIL_SELECTOR))
+}
 
 /**
- * Keeps native list scrolling only while the sheet is fully attached.
- * Everywhere else a deliberate vertical gesture started from an offer owns
- * the sheet. When the expanded list is already at its top edge, a downward
- * gesture is handed back to the sheet so the first offer can close it.
+ * One gesture router owns the complete Map offer panel.
  *
- * Click suppression is scoped to the element where the drag started and is
- * short-lived, so a later tap on "Voir sur la carte" is never swallowed.
+ * Touch rules:
+ * - collapsed/mid sheet: any deliberate vertical gesture in the panel drags it;
+ * - expanded list: native vertical scrolling wins, except a downward pull at
+ *   scrollTop=0, which hands control back to the sheet;
+ * - horizontal property/room rails keep their native horizontal gesture.
+ *
+ * Mouse/pen rules:
+ * - a deliberate vertical drag anywhere in the panel moves the sheet;
+ * - normal clicks remain clicks until the activation threshold is crossed.
+ *
+ * Starting a new gesture clears the previous click guard, so a fresh tap on
+ * "Voir sur la carte" can never be swallowed by an older drag.
  */
-export function useMapOfferScrollSheetHandoff({ expanded, externalDrag }) {
-  const nodeRef = useRef(null)
-  const gestureRef = useRef(null)
+export function useMapOfferSheetGestureRouter({ expanded, externalDrag }) {
+  const panelRef = useRef(null)
+  const listRef = useRef(null)
   const externalDragRef = useRef(externalDrag)
   const expandedRef = useRef(expanded)
   const clickGuardRef = useRef({ until: 0, origin: null })
@@ -24,97 +53,173 @@ export function useMapOfferScrollSheetHandoff({ expanded, externalDrag }) {
   useEffect(() => { expandedRef.current = expanded }, [expanded])
 
   useEffect(() => {
-    const node = nodeRef.current
-    if (!node) return undefined
+    const panel = panelRef.current
+    if (!panel) return undefined
 
-    const beginHandoff = (state, clientY, event) => {
-      const started = externalDragRef.current?.start(state.startClientY)
+    let touchGesture = null
+    let pointerGesture = null
+
+    const createGesture = (target, clientX, clientY, pointerId = null) => ({
+      startClientX: clientX,
+      startClientY: clientY,
+      lastClientY: clientY,
+      origin: interactiveOrigin(target, panel),
+      startedInList: startedInside(target, listRef.current),
+      horizontalRail: startedInHorizontalRail(target),
+      horizontal: false,
+      handedOff: false,
+      pointerId,
+    })
+
+    const beginHandoff = (state, clientY, event, startFromLast = false) => {
+      const dragStartY = startFromLast ? state.lastClientY : state.startClientY
+      const started = externalDragRef.current?.start(dragStartY)
       if (!started) return false
       state.handedOff = true
-      event.preventDefault()
+      if (event.cancelable) event.preventDefault()
       event.stopPropagation()
       externalDragRef.current?.move(clientY)
       return true
     }
 
+    const classifyVerticalGesture = (state, clientX, clientY) => {
+      const totalX = clientX - state.startClientX
+      const totalY = clientY - state.startClientY
+      const absX = Math.abs(totalX)
+      const absY = Math.abs(totalY)
+
+      if (state.horizontal) return { vertical: false, totalY }
+      if (state.horizontalRail && absX >= DRAG_ACTIVATION_PX && absX > absY * HORIZONTAL_BIAS) {
+        state.horizontal = true
+        return { vertical: false, totalY }
+      }
+      if (absY < DRAG_ACTIVATION_PX || absY <= absX) return { vertical: false, totalY }
+      return { vertical: true, totalY }
+    }
+
     const onTouchStart = (event) => {
+      // A fresh finger contact is a new intent. Never carry click suppression
+      // from a previous completed drag into this tap.
+      clickGuardRef.current = { until: 0, origin: null }
       if (event.touches?.length !== 1) {
-        gestureRef.current = null
+        touchGesture = null
         return
       }
       const touch = event.touches[0]
       const clientY = Number(touch?.clientY)
       if (!Number.isFinite(clientY)) {
-        gestureRef.current = null
+        touchGesture = null
         return
       }
       const clientX = Number.isFinite(Number(touch?.clientX)) ? Number(touch.clientX) : 0
-      gestureRef.current = {
-        startClientX: clientX,
-        startClientY: clientY,
-        lastClientY: clientY,
-        startTarget: event.target instanceof Element ? event.target : null,
-        handedOff: false,
-        horizontal: false,
-      }
+      touchGesture = createGesture(event.target, clientX, clientY)
     }
 
     const onTouchMove = (event) => {
-      const state = gestureRef.current
+      const state = touchGesture
       const touch = event.touches?.[0]
       const clientY = Number(touch?.clientY)
       if (!state || !Number.isFinite(clientY)) return
       const clientX = Number.isFinite(Number(touch?.clientX)) ? Number(touch.clientX) : state.startClientX
 
       if (state.handedOff) {
-        event.preventDefault()
+        if (event.cancelable) event.preventDefault()
         event.stopPropagation()
         externalDragRef.current?.move(clientY)
         state.lastClientY = clientY
         return
       }
 
-      const totalX = clientX - state.startClientX
-      const totalY = clientY - state.startClientY
-      const absX = Math.abs(totalX)
-      const absY = Math.abs(totalY)
-
-      if (state.horizontal) return
-      if (absX > DRAG_ACTIVATION_PX && absX > absY * 1.08) {
-        state.horizontal = true
+      const { vertical, totalY } = classifyVerticalGesture(state, clientX, clientY)
+      if (!vertical) {
+        state.lastClientY = clientY
         return
       }
-      if (absY < DRAG_ACTIVATION_PX || absY <= absX) return
 
-      const atTop = node.scrollTop <= EDGE_EPSILON_PX
-      const movingFingerDown = totalY > DRAG_ACTIVATION_PX
-
-      // Midway/collapsed: the list is not allowed to become a competing
-      // native scroll surface. A vertical gesture anywhere on an offer moves
-      // the entire sheet.
       if (!expandedRef.current) {
         beginHandoff(state, clientY, event)
-      // Fully expanded: preserve native scrolling, except at the top edge when
-      // the user pulls downward from the first visible offer.
-      } else if (atTop && movingFingerDown) {
-        beginHandoff(state, clientY, event)
+        state.lastClientY = clientY
+        return
       }
 
+      if (state.startedInList) {
+        const list = listRef.current
+        const atTop = !list || list.scrollTop <= EDGE_EPSILON_PX
+        const pullingDown = totalY > DRAG_ACTIVATION_PX
+
+        // While the open list can still scroll, native scrolling remains in
+        // control. Refresh lastClientY so handing off after reaching the top
+        // never makes the sheet jump by the distance already consumed by list
+        // scrolling.
+        if (!atTop || !pullingDown) {
+          state.lastClientY = clientY
+          return
+        }
+
+        beginHandoff(state, clientY, event, true)
+        state.lastClientY = clientY
+        return
+      }
+
+      // Header + category dock remain direct drag surfaces even when expanded.
+      beginHandoff(state, clientY, event)
       state.lastClientY = clientY
     }
 
-    const finish = (cancel = false) => {
-      const state = gestureRef.current
-      gestureRef.current = null
+    const finishTouch = (cancel = false) => {
+      const state = touchGesture
+      touchGesture = null
       if (!state?.handedOff) return
-
       clickGuardRef.current = {
         until: performance.now() + CLICK_SUPPRESSION_MS,
-        origin: state.startTarget,
+        origin: state.origin,
       }
-
       if (cancel) externalDragRef.current?.cancel()
       else externalDragRef.current?.end()
+    }
+
+    const onPointerDown = (event) => {
+      if (event.pointerType === 'touch' || event.button !== 0) return
+      clickGuardRef.current = { until: 0, origin: null }
+      pointerGesture = createGesture(event.target, event.clientX, event.clientY, event.pointerId)
+    }
+
+    const onPointerMove = (event) => {
+      const state = pointerGesture
+      if (!state || event.pointerId !== state.pointerId) return
+
+      if (state.handedOff) {
+        event.preventDefault()
+        event.stopPropagation()
+        externalDragRef.current?.move(event.clientY)
+        state.lastClientY = event.clientY
+        return
+      }
+
+      const { vertical } = classifyVerticalGesture(state, event.clientX, event.clientY)
+      if (!vertical) {
+        state.lastClientY = event.clientY
+        return
+      }
+
+      if (beginHandoff(state, event.clientY, event)) {
+        try { panel.setPointerCapture(event.pointerId) } catch { /* no-op */ }
+      }
+      state.lastClientY = event.clientY
+    }
+
+    const finishPointer = (event, cancel = false) => {
+      const state = pointerGesture
+      if (!state || event.pointerId !== state.pointerId) return
+      pointerGesture = null
+      if (!state.handedOff) return
+      clickGuardRef.current = {
+        until: performance.now() + CLICK_SUPPRESSION_MS,
+        origin: state.origin,
+      }
+      if (cancel) externalDragRef.current?.cancel()
+      else externalDragRef.current?.end()
+      try { panel.releasePointerCapture(event.pointerId) } catch { /* no-op */ }
     }
 
     const onClickCapture = (event) => {
@@ -124,33 +229,41 @@ export function useMapOfferScrollSheetHandoff({ expanded, externalDrag }) {
         return
       }
 
-      const target = event.target instanceof Element ? event.target : null
-      const sameGestureTarget = target
-        && (guard.origin === target || guard.origin.contains(target) || target.contains(guard.origin))
+      const targetOrigin = interactiveOrigin(event.target, panel)
+      if (!targetOrigin || targetOrigin !== guard.origin) return
 
-      if (!sameGestureTarget) return
       clickGuardRef.current = { until: 0, origin: null }
       event.preventDefault()
       event.stopPropagation()
     }
 
-    const onTouchEnd = () => finish(false)
-    const onTouchCancel = () => finish(true)
+    const onTouchEnd = () => finishTouch(false)
+    const onTouchCancel = () => finishTouch(true)
+    const onPointerUp = (event) => finishPointer(event, false)
+    const onPointerCancel = (event) => finishPointer(event, true)
 
-    node.addEventListener('touchstart', onTouchStart, { passive: true })
-    node.addEventListener('touchmove', onTouchMove, { passive: false })
-    node.addEventListener('touchend', onTouchEnd, { passive: true })
-    node.addEventListener('touchcancel', onTouchCancel, { passive: true })
-    node.addEventListener('click', onClickCapture, true)
+    panel.addEventListener('touchstart', onTouchStart, { passive: true })
+    panel.addEventListener('touchmove', onTouchMove, { passive: false })
+    panel.addEventListener('touchend', onTouchEnd, { passive: true })
+    panel.addEventListener('touchcancel', onTouchCancel, { passive: true })
+    panel.addEventListener('pointerdown', onPointerDown)
+    panel.addEventListener('pointermove', onPointerMove)
+    panel.addEventListener('pointerup', onPointerUp)
+    panel.addEventListener('pointercancel', onPointerCancel)
+    panel.addEventListener('click', onClickCapture, true)
 
     return () => {
-      node.removeEventListener('touchstart', onTouchStart)
-      node.removeEventListener('touchmove', onTouchMove)
-      node.removeEventListener('touchend', onTouchEnd)
-      node.removeEventListener('touchcancel', onTouchCancel)
-      node.removeEventListener('click', onClickCapture, true)
+      panel.removeEventListener('touchstart', onTouchStart)
+      panel.removeEventListener('touchmove', onTouchMove)
+      panel.removeEventListener('touchend', onTouchEnd)
+      panel.removeEventListener('touchcancel', onTouchCancel)
+      panel.removeEventListener('pointerdown', onPointerDown)
+      panel.removeEventListener('pointermove', onPointerMove)
+      panel.removeEventListener('pointerup', onPointerUp)
+      panel.removeEventListener('pointercancel', onPointerCancel)
+      panel.removeEventListener('click', onClickCapture, true)
     }
   }, [])
 
-  return nodeRef
+  return { panelRef, listRef }
 }
