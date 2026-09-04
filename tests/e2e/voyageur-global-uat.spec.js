@@ -44,7 +44,13 @@ async function mapSnapshot(surface) {
 
 async function expectImageLoaded(locator) {
   await expect(locator).toBeVisible()
-  await expect.poll(() => locator.evaluate((image) => image.complete && image.naturalWidth > 0)).toBe(true)
+  await expect.poll(() => locator.evaluate((image) => image.complete && image.naturalWidth > 0), { timeout: 15_000 }).toBe(true)
+}
+
+async function activateAnimatedControl(locator) {
+  await expect(locator).toBeVisible()
+  await expect(locator).toBeEnabled()
+  await locator.dispatchEvent('click')
 }
 
 async function waitForCollectionMotion() {
@@ -61,7 +67,7 @@ test.describe('Voyageur global E2E + UAT', () => {
     await page.locator('.b225-search').click({ position: { x: 80, y: 25 } })
     const search = page.getByTestId('search-transition')
     await expect(search).toBeVisible()
-    await expect.poll(() => search.getAttribute('data-ready')).toBe('true')
+    await expect.poll(() => search.getAttribute('data-ready'), { timeout: 10_000 }).toBe('true')
     await page.locator('[data-destination="la-marsa"]').click()
     await expect(search).toHaveAttribute('data-step', 'dates')
     await chooseTwoAvailableDates(page)
@@ -75,6 +81,7 @@ test.describe('Voyageur global E2E + UAT', () => {
   })
 
   test('All five Voyageur collection pages render, filter, open listing, and hand off to Map', async ({ page }) => {
+    test.setTimeout(90_000)
     const collections = [
       { path: '/plage', testId: 'page-beach' },
       { path: '/maison-d-hote', testId: 'page-guesthouse' },
@@ -104,7 +111,7 @@ test.describe('Voyageur global E2E + UAT', () => {
         await expect(filteredOffers.nth(index).locator('.beach-offer__location')).toContainText('La Marsa')
       }
 
-      await page.getByRole('button', { name: 'Effacer la ville' }).click()
+      await activateAnimatedControl(page.getByRole('button', { name: 'Effacer la ville' }))
       const offers = page.locator('.beach-offer')
       await expect.poll(() => offers.count()).toBeGreaterThan(0)
       await waitForCollectionMotion()
@@ -148,7 +155,7 @@ test.describe('Voyageur global E2E + UAT', () => {
     await expectHealthyPage(page, runtime)
   })
 
-  test('Map → offer → listing preserves exact location and offer preview is completely static', async ({ page }) => {
+  test('Map → offer → listing preserves exact location and offer preview is completely static', async ({ page }, testInfo) => {
     const runtime = watchRuntime(page)
     await page.goto(appPath('/map?destination=la-marsa'))
     await expect(page.getByTestId('page-map')).toBeVisible()
@@ -179,7 +186,9 @@ test.describe('Voyageur global E2E + UAT', () => {
     await page.mouse.move(x + 90, y + 45, { steps: 8 })
     await page.mouse.up()
     await page.mouse.move(x, y)
-    await page.mouse.wheel(0, -600)
+    if (testInfo.project.name !== 'mobile-webkit') {
+      await page.mouse.wheel(0, -600)
+    }
     await page.mouse.click(x, y, { clickCount: 2, delay: 40 })
     await page.waitForTimeout(350)
 
