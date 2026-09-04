@@ -68,9 +68,6 @@ function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListi
   const focusListingOnMap = (event, listingId) => {
     event.preventDefault()
     event.stopPropagation()
-    // Select/focus first, then make the logical 50% snap the final sheet
-    // command. The snap engine keeps this progress target even if geometry
-    // changes while the map camera reacts.
     onFocusListing?.(listingId)
     snapToProgress?.(0.5)
   }
@@ -82,7 +79,7 @@ function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListi
         <button type="button" className="map-offer-sheet__handle-button" onClick={toggleExpanded} aria-label={progress > 0.72 ? 'Réduire la liste des offres' : 'Afficher la liste des offres'}><span className="map-offer-sheet__grabber"/><span className="map-offer-sheet__heading"><strong>{displayedListings.length ? `${displayedListings.length} offre${displayedListings.length > 1 ? 's' : ''}` : 'Aucune offre'}</strong><span className="map-offer-sheet__city-label">{cityLabel}</span><span className="map-offer-sheet__brand-badge">Movera Host</span></span><span className="map-offer-sheet__chevron" data-open={progress > 0.72 ? 'true' : 'false'}><ChevronIcon/></span></button>
       </div>
       <div className="map-offer-sheet__property-dock" data-testid="map-sheet-property-filters" aria-label="Type de logement"><div className="map-offer-sheet__property-rail">{MAP_PROPERTY_FILTERS.map((filter) => { const active = propertyFilter === filter.id; return <button key={filter.id} type="button" className="map-offer-sheet__property-chip" data-property-filter={filter.id} data-active={active ? 'true' : 'false'} aria-pressed={active} onClick={() => onPropertyFilterChange?.(filter.id)}><span>{filter.label}</span></button> })}</div></div>
-      {displayedListings.length ? <MotionList nodeRef={listRef} className="map-offer-sheet__list" data-scroll-enabled={attached ? 'true' : 'false'} data-motion-list="map-offers" data-map-scroll="independent" data-sheet-handoff="panel-router" style={{ touchAction: attached ? 'pan-y' : 'none', overflowY: attached ? 'auto' : 'hidden' }}><div className="map-offer-sheet__list-content" data-testid="map-offer-sheet-list-content">{displayedListings.map((listing, index) => {
+      {displayedListings.length ? <MotionList nodeRef={listRef} className="map-offer-sheet__list" data-scroll-enabled={attached ? 'true' : 'false'} data-motion-list="map-offers" data-map-scroll="independent" data-sheet-handoff="drag-from-offer" style={{ touchAction: attached ? 'pan-y' : 'none', overflowY: attached ? 'auto' : 'hidden' }}><div className="map-offer-sheet__list-content" data-testid="map-offer-sheet-list-content">{displayedListings.map((listing, index) => {
         const selected = listing.id === selectedListingId || (!selectedListingId && index === 0 && progress > 0.12)
         const categories = Array.isArray(listing.roomTypes) ? listing.roomTypes : []
         const categorized = categories.length > 1
