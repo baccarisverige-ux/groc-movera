@@ -136,26 +136,43 @@ test.describe('Movera critical permanent regressions', () => {
 
   test('finger pinch zoom is gradual instead of jumping a full level', async ({ page }) => {
     await page.goto('/map')
+    const engine = page.getByTestId('map-engine')
     const surface = page.getByTestId('map-surface')
+
+    // The fallback renderer owns PointerEvent pinch math. Google Maps owns native
+    // gestures when it is available, so wait for a deterministic fallback state
+    // before exercising Movera's pointer pipeline in every Playwright engine.
+    await expect(engine).toHaveAttribute('data-map-provider', 'fallback')
+    await expect(engine).toHaveAttribute('data-native-gestures', 'false')
     const before = Number(await surface.getAttribute('data-zoom'))
 
     await surface.evaluate((element) => {
-      const pointer = (type, pointerId, clientX) => element.dispatchEvent(new PointerEvent(type, {
-        bubbles: true,
-        cancelable: true,
-        pointerId,
-        pointerType: 'touch',
-        clientX,
-        clientY: 220,
-      }))
-      pointer('pointerdown', 1, 100)
-      pointer('pointerdown', 2, 200)
-      pointer('pointermove', 2, 210)
-      pointer('pointerup', 1, 100)
-      pointer('pointerup', 2, 210)
+      const pointer = (type, pointerId, clientX, isPrimary) => {
+        // WebKit headless does not preserve every PointerEvent constructor field
+        // for synthetic multi-touch. A bubbling DOM event with explicit pointer
+        // properties exercises React's real pointer handlers consistently while
+        // keeping the production gesture code unchanged.
+        const event = new Event(type, { bubbles: true, cancelable: true })
+        Object.defineProperties(event, {
+          pointerId: { value: pointerId },
+          pointerType: { value: 'touch' },
+          clientX: { value: clientX },
+          clientY: { value: 220 },
+          isPrimary: { value: isPrimary },
+          button: { value: 0 },
+          buttons: { value: type === 'pointerup' ? 0 : 1 },
+          pressure: { value: type === 'pointerup' ? 0 : 0.5 },
+        })
+        element.dispatchEvent(event)
+      }
+      pointer('pointerdown', 1, 100, true)
+      pointer('pointerdown', 2, 200, false)
+      pointer('pointermove', 2, 210, false)
+      pointer('pointerup', 1, 100, true)
+      pointer('pointerup', 2, 210, false)
     })
 
-    await page.waitForTimeout(80)
+    await expect.poll(async () => Number(await surface.getAttribute('data-update-count'))).toBeGreaterThan(0)
     const after = Number(await surface.getAttribute('data-zoom'))
     expect(after).toBeGreaterThan(before)
     expect(after - before).toBeLessThan(0.2)
