@@ -6,6 +6,7 @@ const HORIZONTAL_BIAS = 1.08
 const CLICK_SUPPRESSION_MS = 280
 const INTERACTIVE_SELECTOR = 'button,a,[role="button"],input,select,textarea'
 const HORIZONTAL_RAIL_SELECTOR = '.map-offer-sheet__property-rail,.map-offer-sheet__room-categories'
+const OFFER_SELECTOR = '.map-offer-sheet__card'
 
 function asElement(value) {
   return value instanceof Element ? value : null
@@ -26,16 +27,29 @@ function startedInHorizontalRail(target) {
   return Boolean(asElement(target)?.closest(HORIZONTAL_RAIL_SELECTOR))
 }
 
+function startedOnFirstOffer(target, list) {
+  const element = asElement(target)
+  if (!element || !list) return false
+  const card = element.closest(OFFER_SELECTOR)
+  const firstCard = list.querySelector(OFFER_SELECTOR)
+  return Boolean(card && firstCard && card === firstCard)
+}
+
 /**
- * One gesture router owns the complete Map offer panel.
+ * One gesture router owns the complete Map offer panel while preserving the
+ * requested drag surfaces.
  *
  * Touch + mouse rules:
- * - collapsed/mid sheet: any deliberate vertical gesture in the panel drags it;
- * - expanded list: native vertical scrolling wins, except a downward pull at
- *   scrollTop=0, which hands control back to the sheet;
+ * - collapsed/mid sheet: only the header and property dock drag the sheet;
+ * - offer cards never drag a collapsed/mid sheet;
+ * - expanded list: native vertical scrolling wins;
+ * - only a downward pull that starts on the first offer while scrollTop=0
+ *   hands control back to the whole sheet;
  * - horizontal property/room rails keep their horizontal gesture;
+ * - manual release is delegated to the sheet motion surface, which keeps the
+ *   exact release position for Map instead of forcing a snap point;
  * - a fresh gesture clears stale click suppression, while the synthetic click
- *   produced by the drag that just ended is still suppressed for a short time.
+ *   produced by the drag that just ended is still suppressed briefly.
  */
 export function useMapOfferSheetGestureRouter({ expanded, externalDrag }) {
   const panelRef = useRef(null)
@@ -60,6 +74,7 @@ export function useMapOfferSheetGestureRouter({ expanded, externalDrag }) {
       lastClientY: clientY,
       origin: interactiveOrigin(target, panel),
       startedInList: startedInside(target, listRef.current),
+      startedOnFirstOffer: startedOnFirstOffer(target, listRef.current),
       horizontalRail: startedInHorizontalRail(target),
       horizontal: false,
       handedOff: false,
@@ -108,8 +123,11 @@ export function useMapOfferSheetGestureRouter({ expanded, externalDrag }) {
         return
       }
 
+      // At collapsed/mid positions, offer cards are deliberately NOT sheet
+      // handles. Only the structural upper panel (header + property dock) moves
+      // the whole sheet.
       if (!expandedRef.current) {
-        beginHandoff(state, clientY, event)
+        if (!state.startedInList) beginHandoff(state, clientY, event)
         state.lastClientY = clientY
         return
       }
@@ -119,10 +137,10 @@ export function useMapOfferSheetGestureRouter({ expanded, externalDrag }) {
         const atTop = !list || list.scrollTop <= EDGE_EPSILON_PX
         const pullingDown = totalY > DRAG_ACTIVATION_PX
 
-        // While the open list can still scroll, native scrolling remains in
-        // control. Refresh lastClientY so handing off after reaching the top
-        // never makes the sheet jump by distance already consumed by scrolling.
-        if (!atTop || !pullingDown) {
+        // In the fully open state, the offer list keeps normal native scroll.
+        // The only list-to-sheet handoff is a downward pull that began on the
+        // first offer while the list is already at its top edge.
+        if (!state.startedOnFirstOffer || !atTop || !pullingDown) {
           state.lastClientY = clientY
           return
         }
@@ -132,7 +150,7 @@ export function useMapOfferSheetGestureRouter({ expanded, externalDrag }) {
         return
       }
 
-      // Header + category dock remain direct drag surfaces when expanded.
+      // Header + property dock remain direct drag surfaces when expanded.
       beginHandoff(state, clientY, event)
       state.lastClientY = clientY
     }
