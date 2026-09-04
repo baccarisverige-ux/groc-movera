@@ -76,7 +76,7 @@ export function MapContainer({
     pinchGestureRef.current = null
     onInteractionChange?.(false)
   }, [onInteractionChange])
-  useEffect(() => { onViewportChange?.(viewport) }, [viewport, onViewportChange])
+  useEffect(() => { onViewportChange?.(viewport, { source: viewportSourceRef.current }) }, [viewport, onViewportChange])
 
   const setSelected = useCallback((next) => {
     if (controlledSelectedId === undefined) setInternalSelectedId(next)
@@ -145,7 +145,7 @@ export function MapContainer({
 
   useEffect(() => {
     if (![commandedLat, commandedLng, commandedZoom].every(Number.isFinite)) return
-    commitViewport((current) => ({ ...current, lat: commandedLat, lng: commandedLng, zoom: commandedZoom }), 'app')
+    commitViewport((current) => ({ ...current, lat: commandedLat, lng: commandedLng, zoom: commandedZoom }), 'command')
   }, [commandedLat, commandedLng, commandedZoom, commandRevision, commitViewport])
 
   const onPointerDown = (event) => {
