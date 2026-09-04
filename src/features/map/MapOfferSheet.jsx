@@ -4,7 +4,7 @@ import { ListingHighlightBadges } from '../../shared/listing/ListingHighlightBad
 import { MotionList, MotionListItem } from '../../shared/motion/MotionList.jsx'
 import { motion, useTransform } from '../../shared/motion/runtime.js'
 import { MapSheetRuntimeSurface } from '../map-sheet/index.js'
-import { MAP_OFFER_ITEM_MOTION } from './motion/mapOfferSheetMotion.config.js'
+import { MAP_OFFER_ITEM_MOTION } from './mapOfferItemMotion.config.js'
 import './map-offer-sheet.css'
 import './map-room-categories.css'
 import '../../styles/map-offer-sheet-premium.css'
