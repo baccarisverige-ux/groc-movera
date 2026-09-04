@@ -26,10 +26,15 @@ async function waitForCategoryTravelToSettle(page) {
   let previous = null
   let stableSamples = 0
   await expect.poll(async () => {
-    const current = await page.evaluate(() => ({
-      travel: Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--movera-category-upward-travel')) || 0,
-      scrollY: window.scrollY || 0,
-    }))
+    const current = await page.evaluate(() => {
+      const categoriesShell = document.querySelector('.b225-categories-shell')
+      return {
+        travel: categoriesShell
+          ? Number.parseFloat(getComputedStyle(categoriesShell).getPropertyValue('--movera-category-upward-travel')) || 0
+          : 0,
+        scrollY: window.scrollY || 0,
+      }
+    })
     const stable = previous
       && Math.abs(current.travel - previous.travel) <= 0.15
       && Math.abs(current.scrollY - previous.scrollY) <= 0.5
@@ -37,7 +42,7 @@ async function waitForCategoryTravelToSettle(page) {
     previous = current
     return stableSamples
   }, {
-    timeout: 5_000,
+    timeout: SEARCH_SETTLE_TIMEOUT,
     intervals: [50, 75, 100, 125, 150, 200],
   }).toBeGreaterThanOrEqual(3)
 }
@@ -53,7 +58,9 @@ async function readHomeBarLayout(page) {
       categoriesLayoutTop: categoriesShell?.offsetTop || 0,
       categoriesShellHeight: categoriesShell?.offsetHeight || 0,
       categoriesHeight: categories?.offsetHeight || 0,
-      travel: Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--movera-category-upward-travel')) || 0,
+      travel: categoriesShell
+        ? Number.parseFloat(getComputedStyle(categoriesShell).getPropertyValue('--movera-category-upward-travel')) || 0
+        : 0,
     }
   })
 }
