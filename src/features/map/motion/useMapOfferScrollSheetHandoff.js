@@ -4,6 +4,7 @@ const EDGE_EPSILON_PX = 2
 const DRAG_ACTIVATION_PX = 10
 const HORIZONTAL_BIAS = 1.08
 const CLICK_SUPPRESSION_MS = 280
+const FULLY_OPEN_PROGRESS = 0.985
 const INTERACTIVE_SELECTOR = 'button,a,[role="button"],input,select,textarea'
 const HORIZONTAL_RAIL_SELECTOR = '.map-offer-sheet__property-rail,.map-offer-sheet__room-categories'
 const OFFER_SELECTOR = '.map-offer-sheet__card'
@@ -51,15 +52,17 @@ function startedOnFirstOffer(target, list) {
  * - a fresh gesture clears stale click suppression, while the synthetic click
  *   produced by the drag that just ended is still suppressed briefly.
  */
-export function useMapOfferSheetGestureRouter({ expanded, externalDrag }) {
+export function useMapOfferSheetGestureRouter({ expanded, progress, externalDrag }) {
   const panelRef = useRef(null)
   const listRef = useRef(null)
   const externalDragRef = useRef(externalDrag)
   const expandedRef = useRef(expanded)
+  const progressRef = useRef(progress)
   const clickGuardRef = useRef({ until: 0, origin: null })
 
   useEffect(() => { externalDragRef.current = externalDrag }, [externalDrag])
   useEffect(() => { expandedRef.current = expanded }, [expanded])
+  useEffect(() => { progressRef.current = progress }, [progress])
 
   useEffect(() => {
     const panel = panelRef.current
@@ -123,10 +126,12 @@ export function useMapOfferSheetGestureRouter({ expanded, externalDrag }) {
         return
       }
 
+      const fullyOpen = expandedRef.current || progressRef.current >= FULLY_OPEN_PROGRESS
+
       // At collapsed/mid positions, offer cards are deliberately NOT sheet
       // handles. Only the structural upper panel (header + property dock) moves
       // the whole sheet.
-      if (!expandedRef.current) {
+      if (!fullyOpen) {
         if (!state.startedInList) beginHandoff(state, clientY, event)
         state.lastClientY = clientY
         return
