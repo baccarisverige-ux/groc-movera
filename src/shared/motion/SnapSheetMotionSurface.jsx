@@ -48,7 +48,6 @@ export function SnapSheetMotionSurface({
   collapsedVisiblePx = 62,
   expandedThreshold = 0.86,
   fastSwipeVelocity = 680,
-  manualReleaseBehavior = 'snap',
   onProgressChange,
   snapRatios = [0, 0.5, 1],
   spring = DEFAULT_SPRING,
@@ -76,7 +75,6 @@ export function SnapSheetMotionSurface({
   const reduceMotion = useReducedMotion()
   const [collapsedY, setCollapsedY] = useState(1)
   const [progress, setProgress] = useState(0)
-  const freeManualRelease = manualReleaseBehavior === 'free'
 
   useEffect(() => { progressCallbackRef.current = onProgressChange }, [onProgressChange])
   useEffect(() => () => animationRef.current?.stop?.(), [])
@@ -210,15 +208,6 @@ export function SnapSheetMotionSurface({
     externalDragRef.current = null
     suppressClickRef.current = false
 
-    if (freeManualRelease) {
-      // Map sheet manual drag is intentionally positional: no inertia and no
-      // forced snap. Programmatic actions such as "Voir sur la carte" still
-      // use snapToProgress and therefore keep their exact target.
-      snapProgressTargetRef.current = null
-      snapVelocityRef.current = 0
-      return true
-    }
-
     const distance = collapsedYRef.current
     const currentY = clamp(y.get(), 0, distance)
     const velocityY = cancel ? 0 : state.velocityY
@@ -266,11 +255,6 @@ export function SnapSheetMotionSurface({
       }}
       onDragEnd={(_, info) => {
         suppressClickRef.current = false
-        if (freeManualRelease) {
-          snapProgressTargetRef.current = null
-          snapVelocityRef.current = 0
-          return
-        }
         const distance = collapsedYRef.current
         const currentY = clamp(y.get(), 0, distance)
         animateToProgress(resolveSnapProgress({
