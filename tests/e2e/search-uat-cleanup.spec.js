@@ -125,12 +125,16 @@ test.describe('Search live E2E / UAT / cleanup safety', () => {
     await page.evaluate(() => window.scrollTo(0, Math.min(900, Math.max(500, document.documentElement.scrollHeight * 0.35))))
     await expect.poll(async () => page.evaluate(() => window.scrollY)).toBeGreaterThan(300)
     await waitForCategoryTravelToSettle(page)
-    const beforeOpen = await page.evaluate(() => ({
-      scrollY: Math.round(window.scrollY),
-      headerHeight: document.querySelector('.b225-home-header')?.getBoundingClientRect().height || 0,
-      categoriesTop: document.querySelector('.b225-categories')?.getBoundingClientRect().top || 0,
-      travel: Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--movera-category-upward-travel')) || 0,
-    }))
+    const beforeOpen = await page.evaluate(() => {
+      const headerRect = document.querySelector('.b225-home-header')?.getBoundingClientRect()
+      const categoriesRect = document.querySelector('.b225-categories')?.getBoundingClientRect()
+      return {
+        scrollY: Math.round(window.scrollY),
+        headerHeight: headerRect?.height || 0,
+        categoriesOffsetFromHeader: headerRect && categoriesRect ? categoriesRect.top - headerRect.bottom : 0,
+        travel: Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--movera-category-upward-travel')) || 0,
+      }
+    })
 
     await openSearchOnCurrentPage(page)
     const destinationInput = page.locator('.movera-st__persistent-search input')
@@ -143,13 +147,17 @@ test.describe('Search live E2E / UAT / cleanup safety', () => {
     await expect.poll(async () => page.evaluate(() => Math.round(window.scrollY)), { timeout: SEARCH_SETTLE_TIMEOUT }).toBe(beforeOpen.scrollY)
     await waitForCategoryTravelToSettle(page)
 
-    const afterClose = await page.evaluate(() => ({
-      headerHeight: document.querySelector('.b225-home-header')?.getBoundingClientRect().height || 0,
-      categoriesTop: document.querySelector('.b225-categories')?.getBoundingClientRect().top || 0,
-      travel: Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--movera-category-upward-travel')) || 0,
-    }))
+    const afterClose = await page.evaluate(() => {
+      const headerRect = document.querySelector('.b225-home-header')?.getBoundingClientRect()
+      const categoriesRect = document.querySelector('.b225-categories')?.getBoundingClientRect()
+      return {
+        headerHeight: headerRect?.height || 0,
+        categoriesOffsetFromHeader: headerRect && categoriesRect ? categoriesRect.top - headerRect.bottom : 0,
+        travel: Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--movera-category-upward-travel')) || 0,
+      }
+    })
     expect(Math.abs(afterClose.headerHeight - beforeOpen.headerHeight)).toBeLessThanOrEqual(1)
-    expect(Math.abs(afterClose.categoriesTop - beforeOpen.categoriesTop)).toBeLessThanOrEqual(2)
+    expect(Math.abs(afterClose.categoriesOffsetFromHeader - beforeOpen.categoriesOffsetFromHeader)).toBeLessThanOrEqual(2)
     expect(Math.abs(afterClose.travel - beforeOpen.travel)).toBeLessThanOrEqual(2)
   })
 
