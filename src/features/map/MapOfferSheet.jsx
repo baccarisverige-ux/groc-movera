@@ -5,7 +5,7 @@ import { MotionList, MotionListItem } from '../../shared/motion/MotionList.jsx'
 import { motion, useTransform } from '../../shared/motion/runtime.js'
 import { MapOfferSheetMotionSurface } from './motion/MapOfferSheetMotionSurface.jsx'
 import { MAP_OFFER_ITEM_MOTION } from './motion/mapOfferSheetMotion.config.js'
-import { useMapOfferScrollSheetHandoff } from './motion/useMapOfferScrollSheetHandoff.js'
+import { useMapOfferSheetGestureRouter } from './motion/useMapOfferScrollSheetHandoff.js'
 import './map-offer-sheet.css'
 import './map-room-categories.css'
 import '../../styles/map-offer-sheet-premium.css'
@@ -14,8 +14,6 @@ const COLLAPSED_PANEL_VISIBLE_PX = 74
 const TOP_BAR_SEAM_OVERLAP_PX = 2
 const ATTACHED_ENTER_PROGRESS = 0.995
 const ATTACHED_EXIT_PROGRESS = 0.92
-const TOP_DRAG_ACTIVATION_PX = 5
-const TOP_CLICK_SUPPRESSION_MS = 320
 const IDLE_HINT_INTERVAL_MS = 12000
 const IDLE_HINT_DURATION_MS = 720
 
@@ -39,15 +37,11 @@ function MapPinIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path
 function listingPriceCopy(listing) { if (listing.priceLabel) return listing.priceLabel; if (listing.priceTotal) return listing.priceTotal; if (listing.nightlyRate != null) return `${listing.nightlyRate} ${listing.currency || 'TND'}`; if (listing.price != null) return `${listing.price} ${listing.currency || 'TND'}`; return '' }
 function roomPhoto(room, fallback) { return room?.photos?.[0]?.src || fallback }
 
-function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListingId, propertyFilter, onPropertyFilterChange, onSelectedListingChange, onFocusListing, onNavigate, progress, progressMotion, startDrag, toggleExpanded, snapToProgress, externalDrag }) {
+function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListingId, propertyFilter, onPropertyFilterChange, onSelectedListingChange, onFocusListing, onNavigate, progress, progressMotion, toggleExpanded, snapToProgress, externalDrag }) {
   const attached = useStableAttached(progress)
-  const listRef = useMapOfferScrollSheetHandoff({ expanded: attached, externalDrag })
-  const dragZoneRef = useRef(null)
-  const propertyDockRef = useRef(null)
-  const externalDragRef = useRef(externalDrag)
+  const { panelRef, listRef } = useMapOfferSheetGestureRouter({ expanded: attached, externalDrag })
   const progressRef = useRef(progress)
   const idleHintResetRef = useRef(null)
-  const topClickGuardRef = useRef({ until: 0, origin: null })
   const [idleHintActive, setIdleHintActive] = useState(false)
   const [roomSelection, setRoomSelection] = useState({})
   const safeHeaderHeight = Math.max(0, headerHeight || 0)
@@ -58,100 +52,10 @@ function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListi
   })
   const displayedListings = listings
 
-  useEffect(() => { externalDragRef.current = externalDrag }, [externalDrag])
   useEffect(() => { progressRef.current = progress; if (progress > 0.03) setIdleHintActive(false) }, [progress])
   useEffect(() => {
     const intervalId = window.setInterval(() => { if (document.hidden || progressRef.current > 0.03) return; window.clearTimeout(idleHintResetRef.current); setIdleHintActive(true); idleHintResetRef.current = window.setTimeout(() => setIdleHintActive(false), IDLE_HINT_DURATION_MS) }, IDLE_HINT_INTERVAL_MS)
     return () => { window.clearInterval(intervalId); window.clearTimeout(idleHintResetRef.current) }
-  }, [])
-  useEffect(() => {
-    const nodes = [dragZoneRef.current, propertyDockRef.current].filter(Boolean)
-    if (!nodes.length) return undefined
-    const cleanups = nodes.map((node) => {
-      let gesture = null
-      const onTouchStart = (event) => {
-        if (event.touches.length !== 1) {
-          gesture = null
-          return
-        }
-        const touch = event.touches[0]
-        const startClientY = Number(touch?.clientY)
-        if (!Number.isFinite(startClientY)) {
-          gesture = null
-          return
-        }
-        const startClientX = Number.isFinite(Number(touch?.clientX)) ? Number(touch.clientX) : 0
-        gesture = {
-          startClientX,
-          startClientY,
-          active: false,
-          horizontal: false,
-          origin: event.target instanceof Element ? event.target : null,
-        }
-      }
-      const onTouchMove = (event) => {
-        const touch = event.touches?.[0]
-        const clientY = Number(touch?.clientY)
-        if (!gesture || !Number.isFinite(clientY)) return
-        const clientX = Number.isFinite(Number(touch?.clientX)) ? Number(touch.clientX) : gesture.startClientX
-        const deltaX = Math.abs(clientX - gesture.startClientX)
-        const deltaY = Math.abs(clientY - gesture.startClientY)
-        if (!gesture.active) {
-          if (gesture.horizontal) return
-          if (node === propertyDockRef.current && deltaX > TOP_DRAG_ACTIVATION_PX && deltaX > deltaY * 1.08) {
-            gesture.horizontal = true
-            return
-          }
-          if (deltaY < TOP_DRAG_ACTIVATION_PX || deltaY <= deltaX) return
-          const started = externalDragRef.current?.start(gesture.startClientY)
-          if (!started) { gesture = null; return }
-          gesture.active = true
-        }
-        if (event.cancelable) event.preventDefault()
-        event.stopPropagation()
-        externalDragRef.current?.move(clientY)
-      }
-      const finishTouch = (cancel = false) => {
-        if (gesture?.active) {
-          topClickGuardRef.current = {
-            until: performance.now() + TOP_CLICK_SUPPRESSION_MS,
-            origin: gesture.origin,
-          }
-          if (cancel) externalDragRef.current?.cancel()
-          else externalDragRef.current?.end()
-        }
-        gesture = null
-      }
-      const onClickCapture = (event) => {
-        const guard = topClickGuardRef.current
-        if (!guard.origin || performance.now() > guard.until) {
-          topClickGuardRef.current = { until: 0, origin: null }
-          return
-        }
-        const target = event.target instanceof Element ? event.target : null
-        const sameGestureTarget = target
-          && (guard.origin === target || guard.origin.contains(target) || target.contains(guard.origin))
-        if (!sameGestureTarget) return
-        topClickGuardRef.current = { until: 0, origin: null }
-        event.preventDefault()
-        event.stopPropagation()
-      }
-      const onTouchEnd = () => finishTouch(false)
-      const onTouchCancel = () => finishTouch(true)
-      node.addEventListener('touchstart', onTouchStart, { passive: true })
-      node.addEventListener('touchmove', onTouchMove, { passive: false })
-      node.addEventListener('touchend', onTouchEnd, { passive: true })
-      node.addEventListener('touchcancel', onTouchCancel, { passive: true })
-      node.addEventListener('click', onClickCapture, true)
-      return () => {
-        node.removeEventListener('touchstart', onTouchStart)
-        node.removeEventListener('touchmove', onTouchMove)
-        node.removeEventListener('touchend', onTouchEnd)
-        node.removeEventListener('touchcancel', onTouchCancel)
-        node.removeEventListener('click', onClickCapture, true)
-      }
-    })
-    return () => cleanups.forEach((cleanup) => cleanup())
   }, [])
 
   const openListing = (listing) => {
@@ -164,20 +68,21 @@ function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListi
   const focusListingOnMap = (event, listingId) => {
     event.preventDefault()
     event.stopPropagation()
-    // Start the deterministic middle snap first, then issue the exact marker
-    // camera command last so sheet camera updates cannot win the same frame.
-    snapToProgress?.(0.5)
+    // Select/focus first, then make the logical 50% snap the final sheet
+    // command. The snap engine keeps this progress target even if geometry
+    // changes while the map camera reacts.
     onFocusListing?.(listingId)
+    snapToProgress?.(0.5)
   }
 
   return <>
     <div className="map-offer-sheet__header-spacer" aria-hidden="true" data-testid="map-offer-sheet-header-spacer" data-attachment-state={attached ? 'attached' : 'moving'} style={{ height: `${safeHeaderHeight}px` }}/>
-    <motion.div className="map-offer-sheet__panel" data-attachment-state={attached ? 'attached' : 'moving'} data-idle-hint={idleHintActive ? 'true' : 'false'} style={{ y: panelOffsetY, marginBottom: -safeHeaderHeight }}>
-      <div ref={dragZoneRef} className="map-offer-sheet__drag-zone" data-testid="map-offer-sheet-handle" data-attachment-state={attached ? 'attached' : 'moving'} data-header-offset={Math.round(safeHeaderHeight)} onPointerDown={(event) => { if (event.pointerType !== 'touch') startDrag(event) }}>
+    <motion.div ref={panelRef} className="map-offer-sheet__panel" data-attachment-state={attached ? 'attached' : 'moving'} data-idle-hint={idleHintActive ? 'true' : 'false'} data-gesture-router="panel" style={{ y: panelOffsetY, marginBottom: -safeHeaderHeight }}>
+      <div className="map-offer-sheet__drag-zone" data-testid="map-offer-sheet-handle" data-attachment-state={attached ? 'attached' : 'moving'} data-header-offset={Math.round(safeHeaderHeight)}>
         <button type="button" className="map-offer-sheet__handle-button" onClick={toggleExpanded} aria-label={progress > 0.72 ? 'Réduire la liste des offres' : 'Afficher la liste des offres'}><span className="map-offer-sheet__grabber"/><span className="map-offer-sheet__heading"><strong>{displayedListings.length ? `${displayedListings.length} offre${displayedListings.length > 1 ? 's' : ''}` : 'Aucune offre'}</strong><span className="map-offer-sheet__city-label">{cityLabel}</span><span className="map-offer-sheet__brand-badge">Movera Host</span></span><span className="map-offer-sheet__chevron" data-open={progress > 0.72 ? 'true' : 'false'}><ChevronIcon/></span></button>
       </div>
-      <div ref={propertyDockRef} className="map-offer-sheet__property-dock" data-testid="map-sheet-property-filters" aria-label="Type de logement"><div className="map-offer-sheet__property-rail">{MAP_PROPERTY_FILTERS.map((filter) => { const active = propertyFilter === filter.id; return <button key={filter.id} type="button" className="map-offer-sheet__property-chip" data-property-filter={filter.id} data-active={active ? 'true' : 'false'} aria-pressed={active} onClick={() => onPropertyFilterChange?.(filter.id)}><span>{filter.label}</span></button> })}</div></div>
-      {displayedListings.length ? <MotionList nodeRef={listRef} className="map-offer-sheet__list" data-scroll-enabled={attached ? 'true' : 'false'} data-motion-list="map-offers" data-map-scroll="independent" data-sheet-handoff="drag-from-offer" style={{ touchAction: attached ? 'pan-y' : 'none', overflowY: attached ? 'auto' : 'hidden' }}><div className="map-offer-sheet__list-content" data-testid="map-offer-sheet-list-content">{displayedListings.map((listing, index) => {
+      <div className="map-offer-sheet__property-dock" data-testid="map-sheet-property-filters" aria-label="Type de logement"><div className="map-offer-sheet__property-rail">{MAP_PROPERTY_FILTERS.map((filter) => { const active = propertyFilter === filter.id; return <button key={filter.id} type="button" className="map-offer-sheet__property-chip" data-property-filter={filter.id} data-active={active ? 'true' : 'false'} aria-pressed={active} onClick={() => onPropertyFilterChange?.(filter.id)}><span>{filter.label}</span></button> })}</div></div>
+      {displayedListings.length ? <MotionList nodeRef={listRef} className="map-offer-sheet__list" data-scroll-enabled={attached ? 'true' : 'false'} data-motion-list="map-offers" data-map-scroll="independent" data-sheet-handoff="panel-router" style={{ touchAction: attached ? 'pan-y' : 'none', overflowY: attached ? 'auto' : 'hidden' }}><div className="map-offer-sheet__list-content" data-testid="map-offer-sheet-list-content">{displayedListings.map((listing, index) => {
         const selected = listing.id === selectedListingId || (!selectedListingId && index === 0 && progress > 0.12)
         const categories = Array.isArray(listing.roomTypes) ? listing.roomTypes : []
         const categorized = categories.length > 1
@@ -192,5 +97,5 @@ function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListi
 
 export function MapOfferSheet({ listings, cityLabel, headerHeight = 0, selectedListingId, propertyFilter = 'all', onPropertyFilterChange, onSelectedListingChange, onFocusListing, onProgressChange, onNavigate, hidden = false }) {
   const safeHeaderHeight = Math.max(0, (headerHeight || 0) - TOP_BAR_SEAM_OVERLAP_PX)
-  return <MapOfferSheetMotionSurface className={`map-offer-sheet${hidden ? ' map-offer-sheet--popup-hidden' : ''}`} ariaLabel={`Offres ${cityLabel}`} collapsedVisiblePx={COLLAPSED_PANEL_VISIBLE_PX + safeHeaderHeight} onProgressChange={onProgressChange}>{({ progress, progressMotion, startDrag, toggleExpanded, snapToProgress, externalDrag }) => <MapOfferSheetContent listings={listings} cityLabel={cityLabel} headerHeight={safeHeaderHeight} selectedListingId={selectedListingId} propertyFilter={propertyFilter} onPropertyFilterChange={onPropertyFilterChange} onSelectedListingChange={onSelectedListingChange} onFocusListing={onFocusListing} onNavigate={onNavigate} progress={progress} progressMotion={progressMotion} startDrag={startDrag} toggleExpanded={toggleExpanded} snapToProgress={snapToProgress} externalDrag={externalDrag}/>}</MapOfferSheetMotionSurface>
+  return <MapOfferSheetMotionSurface className={`map-offer-sheet${hidden ? ' map-offer-sheet--popup-hidden' : ''}`} ariaLabel={`Offres ${cityLabel}`} collapsedVisiblePx={COLLAPSED_PANEL_VISIBLE_PX + safeHeaderHeight} onProgressChange={onProgressChange}>{({ progress, progressMotion, toggleExpanded, snapToProgress, externalDrag }) => <MapOfferSheetContent listings={listings} cityLabel={cityLabel} headerHeight={safeHeaderHeight} selectedListingId={selectedListingId} propertyFilter={propertyFilter} onPropertyFilterChange={onPropertyFilterChange} onSelectedListingChange={onSelectedListingChange} onFocusListing={onFocusListing} onNavigate={onNavigate} progress={progress} progressMotion={progressMotion} toggleExpanded={toggleExpanded} snapToProgress={snapToProgress} externalDrag={externalDrag}/>}</MapOfferSheetMotionSurface>
 }
