@@ -29,6 +29,14 @@ export default defineConfig({
         viewport: { width: 390, height: 844 },
       },
     },
+    {
+      name: 'mobile-webkit',
+      use: {
+        ...devices['iPhone 14'],
+        browserName: 'webkit',
+        viewport: { width: 390, height: 844 },
+      },
+    },
   ],
   webServer: {
     command: 'MOVERA_TEST_BASE=root npm run build && MOVERA_TEST_BASE=root npm run preview -- --host 127.0.0.1',
