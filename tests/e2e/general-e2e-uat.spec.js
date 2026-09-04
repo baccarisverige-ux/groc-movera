@@ -123,10 +123,11 @@ test.describe('Movera general E2E + UAT acceptance', () => {
     await expect(page.getByTestId('page-map')).toBeVisible({ timeout: 10_000 })
     await expect(page.getByTestId('map-engine')).toBeVisible()
     await expect(page.locator('.app-shell__nav')).toHaveCount(0)
-    await expect(page.getByRole('button', { name: 'Retour à l’accueil' })).toBeVisible()
+    const returnHomeButton = page.getByRole('button', { name: 'Retour à l’accueil' })
+    await expect(returnHomeButton).toBeVisible()
     await expectNoDocumentOverflow(page)
 
-    await page.getByRole('button', { name: 'Retour à l’accueil' }).click()
+    await activateAnimatedControl(returnHomeButton)
     await expect(page.getByTestId('page-home')).toBeVisible()
     await expectSearchUnlocked(page)
     await expectBottomNavigation(page, 'Accueil')
