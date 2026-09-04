@@ -122,6 +122,24 @@ export function reduceMapSheet(state, event, { policy = DEFAULT_MAP_SHEET_GESTUR
       return noChange(state)
     }
 
+    case MAP_SHEET_EVENT.SNAP_REQUEST: {
+      if (!isMapSheetPosition(event.position)) return noChange(state)
+      const target = getMapSheetSnapPoint(event.position, policy)
+      const commands = []
+      if (state.mode === MAP_SHEET_MODE.SNAPPING) commands.push(mapSheetCommand(MAP_SHEET_COMMAND.INTERRUPT_SNAP))
+      if (state.mode === MAP_SHEET_MODE.SHEET_DRAGGING) commands.push(mapSheetCommand(MAP_SHEET_COMMAND.END_SHEET_DRAG))
+      commands.push(mapSheetCommand(MAP_SHEET_COMMAND.SNAP_TO_POSITION, { ...target, reason: event.reason }))
+      return {
+        state: {
+          ...state,
+          mode: MAP_SHEET_MODE.SNAPPING,
+          targetPosition: target.position,
+          interaction: null,
+        },
+        commands,
+      }
+    }
+
     case MAP_SHEET_EVENT.MAP_FOCUS_BEGIN: {
       const commands = []
       if (state.mode === MAP_SHEET_MODE.SNAPPING) commands.push(mapSheetCommand(MAP_SHEET_COMMAND.INTERRUPT_SNAP))
