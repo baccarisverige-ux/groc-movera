@@ -55,6 +55,20 @@ describe('Map Sheet V2 application controller', () => {
     expect(controller.getState().progress).toBe(0.5)
   })
 
+  it('routes button-driven open/close through the same semantic snap state machine', async () => {
+    const log = []
+    const runtime = createRuntime(log)
+    const controller = createMapSheetController({ ...runtime })
+
+    await controller.snapToPosition(MAP_SHEET_POSITION.EXPANDED, { reason: 'toggle' })
+    expect(log).toContain('motion.snap:expanded')
+    expect(controller.getState()).toMatchObject({ mode: MAP_SHEET_MODE.IDLE, position: MAP_SHEET_POSITION.EXPANDED, progress: 1 })
+
+    await controller.snapToPosition(MAP_SHEET_POSITION.COLLAPSED, { reason: 'toggle' })
+    expect(log).toContain('motion.snap:collapsed')
+    expect(controller.getState()).toMatchObject({ mode: MAP_SHEET_MODE.IDLE, position: MAP_SHEET_POSITION.COLLAPSED, progress: 0 })
+  })
+
   it('runs Voir sur la carte as one ordered select → middle snap → exact camera focus transaction', async () => {
     const log = []
     const runtime = createRuntime(log)
