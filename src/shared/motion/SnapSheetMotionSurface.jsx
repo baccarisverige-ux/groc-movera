@@ -206,6 +206,7 @@ export function SnapSheetMotionSurface({
     const state = externalDragRef.current
     if (!state) return false
     externalDragRef.current = null
+    suppressClickRef.current = false
     const distance = collapsedYRef.current
     const currentY = clamp(y.get(), 0, distance)
     const velocityY = cancel ? 0 : state.velocityY
