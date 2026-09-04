@@ -1,22 +1,24 @@
 import { useEffect, useRef } from 'react'
 
-const EDGE_EPSILON_PX = 1
-const DIRECTION_EPSILON_PX = 2
+const EDGE_EPSILON_PX = 2
+const DRAG_ACTIVATION_PX = 5
+const CLICK_SUPPRESSION_MS = 320
 
 /**
- * Keeps native list scrolling when the sheet is fully open, while allowing
- * the sheet itself to be dragged directly from an offer/card image whenever
- * it is not fully open. At the top of an expanded list, a downward gesture is
- * handed back to the sheet so it can close from the card as well.
+ * Keeps native list scrolling only while the sheet is fully attached.
+ * Everywhere else a deliberate vertical gesture started from an offer owns
+ * the sheet. When the expanded list is already at its top edge, a downward
+ * gesture is handed back to the sheet so the first offer can close it.
  *
- * This hook is intentionally isolated from the map engine.
+ * Click suppression is scoped to the element where the drag started and is
+ * short-lived, so a later tap on "Voir sur la carte" is never swallowed.
  */
 export function useMapOfferScrollSheetHandoff({ expanded, externalDrag }) {
   const nodeRef = useRef(null)
   const gestureRef = useRef(null)
   const externalDragRef = useRef(externalDrag)
   const expandedRef = useRef(expanded)
-  const suppressNextClickRef = useRef(false)
+  const clickGuardRef = useRef({ until: 0, origin: null })
 
   useEffect(() => { externalDragRef.current = externalDrag }, [externalDrag])
   useEffect(() => { expandedRef.current = expanded }, [expanded])
@@ -26,10 +28,9 @@ export function useMapOfferScrollSheetHandoff({ expanded, externalDrag }) {
     if (!node) return undefined
 
     const beginHandoff = (state, clientY, event) => {
-      const started = externalDragRef.current?.start(state.lastClientY)
+      const started = externalDragRef.current?.start(state.startClientY)
       if (!started) return false
       state.handedOff = true
-      suppressNextClickRef.current = true
       event.preventDefault()
       event.stopPropagation()
       externalDragRef.current?.move(clientY)
@@ -37,16 +38,33 @@ export function useMapOfferScrollSheetHandoff({ expanded, externalDrag }) {
     }
 
     const onTouchStart = (event) => {
-      const clientY = event.touches?.[0]?.clientY
-      gestureRef.current = Number.isFinite(clientY)
-        ? { lastClientY: clientY, handedOff: false }
-        : null
+      if (event.touches?.length !== 1) {
+        gestureRef.current = null
+        return
+      }
+      const touch = event.touches[0]
+      const clientY = Number(touch?.clientY)
+      if (!Number.isFinite(clientY)) {
+        gestureRef.current = null
+        return
+      }
+      const clientX = Number.isFinite(Number(touch?.clientX)) ? Number(touch.clientX) : 0
+      gestureRef.current = {
+        startClientX: clientX,
+        startClientY: clientY,
+        lastClientY: clientY,
+        startTarget: event.target instanceof Element ? event.target : null,
+        handedOff: false,
+        horizontal: false,
+      }
     }
 
     const onTouchMove = (event) => {
       const state = gestureRef.current
-      const clientY = event.touches?.[0]?.clientY
+      const touch = event.touches?.[0]
+      const clientY = Number(touch?.clientY)
       if (!state || !Number.isFinite(clientY)) return
+      const clientX = Number.isFinite(Number(touch?.clientX)) ? Number(touch.clientX) : state.startClientX
 
       if (state.handedOff) {
         event.preventDefault()
@@ -56,18 +74,29 @@ export function useMapOfferScrollSheetHandoff({ expanded, externalDrag }) {
         return
       }
 
-      const deltaY = clientY - state.lastClientY
-      const movedEnough = Math.abs(deltaY) > DIRECTION_EPSILON_PX
-      const movingFingerDown = deltaY > DIRECTION_EPSILON_PX
-      const atTop = node.scrollTop <= EDGE_EPSILON_PX
+      const totalX = clientX - state.startClientX
+      const totalY = clientY - state.startClientY
+      const absX = Math.abs(totalX)
+      const absY = Math.abs(totalY)
 
-      // While collapsed or midway, the list is not a scrolling surface: any
-      // deliberate vertical gesture from a card/image owns the whole sheet.
-      if (!expandedRef.current && movedEnough) {
+      if (state.horizontal) return
+      if (absX > DRAG_ACTIVATION_PX && absX > absY * 1.08) {
+        state.horizontal = true
+        return
+      }
+      if (absY < DRAG_ACTIVATION_PX || absY <= absX) return
+
+      const atTop = node.scrollTop <= EDGE_EPSILON_PX
+      const movingFingerDown = totalY > DRAG_ACTIVATION_PX
+
+      // Midway/collapsed: the list is not allowed to become a competing
+      // native scroll surface. A vertical gesture anywhere on an offer moves
+      // the entire sheet.
+      if (!expandedRef.current) {
         beginHandoff(state, clientY, event)
-      // Once fully open, keep native scrolling. Only a downward gesture at the
-      // top edge hands control back to the sheet so the user can close it.
-      } else if (expandedRef.current && atTop && movingFingerDown) {
+      // Fully expanded: preserve native scrolling, except at the top edge when
+      // the user pulls downward from the first visible offer.
+      } else if (atTop && movingFingerDown) {
         beginHandoff(state, clientY, event)
       }
 
@@ -78,13 +107,29 @@ export function useMapOfferScrollSheetHandoff({ expanded, externalDrag }) {
       const state = gestureRef.current
       gestureRef.current = null
       if (!state?.handedOff) return
+
+      clickGuardRef.current = {
+        until: performance.now() + CLICK_SUPPRESSION_MS,
+        origin: state.startTarget,
+      }
+
       if (cancel) externalDragRef.current?.cancel()
       else externalDragRef.current?.end()
     }
 
     const onClickCapture = (event) => {
-      if (!suppressNextClickRef.current) return
-      suppressNextClickRef.current = false
+      const guard = clickGuardRef.current
+      if (!guard.origin || performance.now() > guard.until) {
+        clickGuardRef.current = { until: 0, origin: null }
+        return
+      }
+
+      const target = event.target instanceof Element ? event.target : null
+      const sameGestureTarget = target
+        && (guard.origin === target || guard.origin.contains(target) || target.contains(guard.origin))
+
+      if (!sameGestureTarget) return
+      clickGuardRef.current = { until: 0, origin: null }
       event.preventDefault()
       event.stopPropagation()
     }
