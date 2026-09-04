@@ -42,6 +42,22 @@ async function waitForCategoryTravelToSettle(page) {
   }).toBeGreaterThanOrEqual(3)
 }
 
+async function readHomeBarLayout(page) {
+  return page.evaluate(() => {
+    const header = document.querySelector('.b225-home-header')
+    const categoriesShell = document.querySelector('.b225-categories-shell')
+    const categories = document.querySelector('.b225-categories')
+    return {
+      scrollY: Math.round(window.scrollY),
+      headerHeight: header?.offsetHeight || 0,
+      categoriesLayoutTop: categoriesShell?.offsetTop || 0,
+      categoriesShellHeight: categoriesShell?.offsetHeight || 0,
+      categoriesHeight: categories?.offsetHeight || 0,
+      travel: Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--movera-category-upward-travel')) || 0,
+    }
+  })
+}
+
 async function chooseTwoAvailableDates(page) {
   const available = page.locator('.movera-st__calendar-grid button.movera-st__day:not(:disabled)')
   const count = await available.count()
@@ -117,7 +133,7 @@ test.describe('Search live E2E / UAT / cleanup safety', () => {
     await expectSearchClosedCleanly(page)
   })
 
-  test('regression: close after Home scroll dismisses focus, restores position and keeps top bar geometry stable', async ({ page }) => {
+  test('regression: close after Home scroll dismisses focus, restores position and keeps top bar layout geometry stable', async ({ page }) => {
     test.setTimeout(60_000)
     await page.goto('/')
     await expect(page.getByTestId('page-home')).toBeVisible()
@@ -125,16 +141,7 @@ test.describe('Search live E2E / UAT / cleanup safety', () => {
     await page.evaluate(() => window.scrollTo(0, Math.min(900, Math.max(500, document.documentElement.scrollHeight * 0.35))))
     await expect.poll(async () => page.evaluate(() => window.scrollY)).toBeGreaterThan(300)
     await waitForCategoryTravelToSettle(page)
-    const beforeOpen = await page.evaluate(() => {
-      const headerRect = document.querySelector('.b225-home-header')?.getBoundingClientRect()
-      const categoriesRect = document.querySelector('.b225-categories-shell')?.getBoundingClientRect()
-      return {
-        scrollY: Math.round(window.scrollY),
-        headerHeight: headerRect?.height || 0,
-        categoriesOffsetFromHeader: headerRect && categoriesRect ? categoriesRect.top - headerRect.bottom : 0,
-        travel: Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--movera-category-upward-travel')) || 0,
-      }
-    })
+    const beforeOpen = await readHomeBarLayout(page)
 
     await openSearchOnCurrentPage(page)
     const destinationInput = page.locator('.movera-st__persistent-search input')
@@ -147,17 +154,11 @@ test.describe('Search live E2E / UAT / cleanup safety', () => {
     await expect.poll(async () => page.evaluate(() => Math.round(window.scrollY)), { timeout: SEARCH_SETTLE_TIMEOUT }).toBe(beforeOpen.scrollY)
     await waitForCategoryTravelToSettle(page)
 
-    const afterClose = await page.evaluate(() => {
-      const headerRect = document.querySelector('.b225-home-header')?.getBoundingClientRect()
-      const categoriesRect = document.querySelector('.b225-categories-shell')?.getBoundingClientRect()
-      return {
-        headerHeight: headerRect?.height || 0,
-        categoriesOffsetFromHeader: headerRect && categoriesRect ? categoriesRect.top - headerRect.bottom : 0,
-        travel: Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--movera-category-upward-travel')) || 0,
-      }
-    })
+    const afterClose = await readHomeBarLayout(page)
     expect(Math.abs(afterClose.headerHeight - beforeOpen.headerHeight)).toBeLessThanOrEqual(1)
-    expect(Math.abs(afterClose.categoriesOffsetFromHeader - beforeOpen.categoriesOffsetFromHeader)).toBeLessThanOrEqual(2)
+    expect(Math.abs(afterClose.categoriesLayoutTop - beforeOpen.categoriesLayoutTop)).toBeLessThanOrEqual(1)
+    expect(Math.abs(afterClose.categoriesShellHeight - beforeOpen.categoriesShellHeight)).toBeLessThanOrEqual(1)
+    expect(Math.abs(afterClose.categoriesHeight - beforeOpen.categoriesHeight)).toBeLessThanOrEqual(1)
     expect(Math.abs(afterClose.travel - beforeOpen.travel)).toBeLessThanOrEqual(2)
   })
 
