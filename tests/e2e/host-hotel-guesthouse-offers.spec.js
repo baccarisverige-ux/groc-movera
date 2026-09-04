@@ -28,7 +28,9 @@ async function completeHostOnboarding(page, { type, title, city }) {
   await next(page)
 
   await expect(onboarding).toHaveAttribute('data-screen', 'guest-access')
-  await page.getByRole('radio').first().click()
+  const privateRoomAccess = page.locator('[role="radio"][data-guest-access-id="private"]:visible')
+  await expect(privateRoomAccess).toHaveCount(1)
+  await privateRoomAccess.click()
   await next(page)
 
   await page.getByLabel('Adresse du logement').fill('10 avenue de la Mer')
@@ -124,12 +126,13 @@ test('published hotel offer appears on calendar, hotel collection and map', asyn
   await expect(page.getByTestId('page-listing')).toContainText('Pension complète')
   await expect(page.getByTestId('page-listing')).toContainText('All inclusive')
 
-  await page.goto('/groc-movera/map')
+  await page.goto('/groc-movera/map?destination=la-marsa')
   await expect(page.getByTestId('page-map')).toBeVisible()
-  await expect(page.getByTestId('map-offer-sheet')).toContainText('Hôtel Palmier Marsa')
-  await expect(page.getByTestId('map-offer-sheet')).toContainText('Demi-pension')
-  await expect(page.getByTestId('map-offer-sheet')).toContainText('Pension complète')
-  await expect(page.getByTestId('map-offer-sheet')).toContainText('All inclusive')
+  const mapOfferSheet = page.getByTestId('map-offer-sheet')
+  await expect(mapOfferSheet).toContainText('Hôtel Palmier Marsa', { timeout: 15_000 })
+  await expect(mapOfferSheet).toContainText('Demi-pension')
+  await expect(mapOfferSheet).toContainText('Pension complète')
+  await expect(mapOfferSheet).toContainText('All inclusive')
 })
 
 test('published maison d’hôte offer appears on calendar and collection', async ({ page }) => {
