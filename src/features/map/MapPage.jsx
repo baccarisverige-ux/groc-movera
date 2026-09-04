@@ -137,11 +137,11 @@ export function MapPage({ onNavigate }) {
 
   const setSelectedListingId = useCallback((id) => { setSelectionState({ contextKey: mapContextKey, id }) }, [mapContextKey])
   const issueViewportCommand = useCallback((command) => { setViewportState({ contextKey: mapContextKey, command: { ...command, revision: performance.now() } }) }, [mapContextKey])
-  const handleViewportChange = useCallback((nextViewport) => {
+  const handleViewportChange = useCallback((nextViewport, meta = {}) => {
     if (!validViewport(nextViewport)) return
     const next = { lat: Number(nextViewport.lat), lng: Number(nextViewport.lng), zoom: Number(nextViewport.zoom) }
     liveViewportRef.current = next
-    if (sheetProgressRef.current <= 0.015) sheetBaseViewportRef.current = next
+    if (sheetProgressRef.current <= 0.015 && meta.source !== 'command') sheetBaseViewportRef.current = next
   }, [])
   const handleMapInteractionChange = useCallback((active) => { const next = Boolean(active); mapInteractionRef.current = next; mapAutoCameraBlockedUntilRef.current = next ? Number.POSITIVE_INFINITY : performance.now() + MAP_GESTURE_SETTLE_MS; setMapInteracting(next) }, [])
 
