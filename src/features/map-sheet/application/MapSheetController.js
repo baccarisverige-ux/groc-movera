@@ -2,6 +2,7 @@ import {
   MAP_SHEET_COMMAND,
   completeMapSheetSnap,
   createMapSheetMachine,
+  requestMapSheetSnap,
 } from '../core/index.js'
 import {
   assertMapSheetListingSelectionPort,
@@ -87,6 +88,15 @@ export function createMapSheetController({
     return () => listeners.delete(listener)
   }
 
+  const snapToPosition = async (position, options = {}) => {
+    if (destroyed) throw new Error('MapSheetController is destroyed')
+    focusRevision += 1
+    mapCamera.cancelFocus()
+    const result = dispatch(requestMapSheetSnap(position, options))
+    await result.done
+    return machine.getState()
+  }
+
   const focusListingOnMap = async (listingId, options = {}) => {
     if (destroyed) throw new Error('MapSheetController is destroyed')
     const revision = ++focusRevision
@@ -119,6 +129,7 @@ export function createMapSheetController({
     dispatch,
     subscribe,
     getState: () => machine.getState(),
+    snapToPosition,
     focusListingOnMap,
     destroy,
   }
