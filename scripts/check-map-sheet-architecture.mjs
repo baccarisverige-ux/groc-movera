@@ -22,11 +22,19 @@ const required = [
   'src/features/map-sheet/ports/index.js',
   'src/features/map-sheet/ports/GesturePort.js',
   'src/features/map-sheet/ports/ScrollPort.js',
+  'src/features/map-sheet/ports/MotionPort.js',
+  'src/features/map-sheet/ports/MapCameraPort.js',
+  'src/features/map-sheet/ports/ListingSelectionPort.js',
   'src/features/map-sheet/adapters/index.js',
   'src/features/map-sheet/adapters/browser/PointerGestureAdapter.js',
   'src/features/map-sheet/adapters/browser/IOSGestureAdapter.js',
   'src/features/map-sheet/adapters/browser/IOSScrollAdapter.js',
+  'src/features/map-sheet/adapters/motion/MotionSheetAdapter.js',
+  'src/features/map-sheet/adapters/map/MoveraMapCameraAdapter.js',
+  'src/features/map-sheet/adapters/state/ListingSelectionAdapter.js',
   'src/features/map-sheet/application/index.js',
+  'src/features/map-sheet/application/MapSheetController.js',
+  'src/features/map-sheet/application/focusListingOnMap.js',
   'src/features/map-sheet/ui/index.js',
 ]
 
@@ -60,6 +68,8 @@ for (const file of moduleFiles) {
   const isCore = repoPath.startsWith('src/features/map-sheet/core/')
   const isPorts = repoPath.startsWith('src/features/map-sheet/ports/')
   const isAdapters = repoPath.startsWith('src/features/map-sheet/adapters/')
+  const isBrowserAdapter = repoPath.startsWith('src/features/map-sheet/adapters/browser/')
+  const isRuntimeAdapter = /^src\/features\/map-sheet\/adapters\/(?:motion|map|state)\//.test(repoPath)
   const isApplication = repoPath.startsWith('src/features/map-sheet/application/')
   const isUi = repoPath.startsWith('src/features/map-sheet/ui/')
 
@@ -92,6 +102,13 @@ for (const file of moduleFiles) {
     if (/\.map-offer-sheet|map-offer-sheet__/.test(text)) {
       violations.push(`${repoPath}: adapter is coupled to legacy Map CSS selectors; use semantic origin descriptors`)
     }
+    if (/shared\/motion\//.test(text) && repoPath !== 'src/features/map-sheet/adapters/motion/MotionSheetAdapter.js') {
+      violations.push(`${repoPath}: only MotionSheetAdapter may use the shared Motion runtime`)
+    }
+  }
+
+  if (isRuntimeAdapter && !isBrowserAdapter && (/\bwindow\b|\bdocument\b|\.addEventListener\s*\(|\.querySelector\s*\(/.test(text))) {
+    violations.push(`${repoPath}: Motion/Map/state adapters must be host-injected, not DOM-coupled`)
   }
 
   if (isApplication) {
@@ -101,7 +118,7 @@ for (const file of moduleFiles) {
     if (/from\s+['"]react(?:\/[^'"]*)?['"]|from\s+['"]motion(?:\/[^'"]*)?['"]|shared\/motion\//.test(text)) {
       violations.push(`${repoPath}: application layer cannot depend on React or Motion`)
     }
-    if (/\bwindow\b|\bdocument\b|\.addEventListener\s*\(/.test(text)) {
+    if (/\bwindow\b|\bdocument\b|\.addEventListener\s*\(|\.querySelector\s*\(/.test(text)) {
       violations.push(`${repoPath}: application layer cannot own browser/DOM behavior`)
     }
   }
@@ -136,4 +153,4 @@ if (violations.length) {
   process.exit(1)
 }
 
-console.log(`Map Sheet V2 architecture guard passed: ${required.length} boundaries present; headless core isolated; gesture/scroll ports protected; browser/iOS adapters decoupled from legacy Map CSS; UI gesture-free; private internals encapsulated.`)
+console.log(`Map Sheet V2 architecture guard passed: ${required.length} boundaries present; headless core isolated; browser/iOS gestures isolated; Motion/Map/state runtime ports injected; application controller adapter-free; UI gesture-free; private internals encapsulated.`)

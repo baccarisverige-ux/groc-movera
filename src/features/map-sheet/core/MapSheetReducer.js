@@ -4,6 +4,7 @@ import { DEFAULT_MAP_SHEET_GESTURE_POLICY } from './MapSheetGesturePolicy.js'
 import { resolveMapSheetSnap, getMapSheetSnapPoint } from './MapSheetSnapEngine.js'
 import {
   MAP_SHEET_MODE,
+  MAP_SHEET_POSITION,
   clampMapSheetProgress,
   getMapSheetPositionProgress,
   isMapSheetPosition,
@@ -121,17 +122,61 @@ export function reduceMapSheet(state, event, { policy = DEFAULT_MAP_SHEET_GESTUR
       return noChange(state)
     }
 
+    case MAP_SHEET_EVENT.MAP_FOCUS_BEGIN: {
+      const commands = []
+      if (state.mode === MAP_SHEET_MODE.SNAPPING) commands.push(mapSheetCommand(MAP_SHEET_COMMAND.INTERRUPT_SNAP))
+      if (state.mode === MAP_SHEET_MODE.SHEET_DRAGGING) commands.push(mapSheetCommand(MAP_SHEET_COMMAND.END_SHEET_DRAG))
+      return {
+        state: {
+          ...state,
+          mode: MAP_SHEET_MODE.MAP_FOCUSING,
+          targetPosition: MAP_SHEET_POSITION.MIDDLE,
+          interaction: null,
+        },
+        commands,
+      }
+    }
+
     case MAP_SHEET_EVENT.SNAP_COMPLETE: {
       const position = isMapSheetPosition(event.position)
         ? event.position
         : state.targetPosition ?? state.position
+      const keepMapFocus = state.mode === MAP_SHEET_MODE.MAP_FOCUSING
 
       return {
         state: {
           ...state,
-          mode: MAP_SHEET_MODE.IDLE,
+          mode: keepMapFocus ? MAP_SHEET_MODE.MAP_FOCUSING : MAP_SHEET_MODE.IDLE,
           position,
           progress: getMapSheetPositionProgress(position),
+          targetPosition: keepMapFocus ? position : null,
+          interaction: null,
+        },
+        commands: [],
+      }
+    }
+
+    case MAP_SHEET_EVENT.MAP_FOCUS_COMPLETE: {
+      if (state.mode !== MAP_SHEET_MODE.MAP_FOCUSING) return noChange(state)
+      return {
+        state: {
+          ...state,
+          mode: MAP_SHEET_MODE.IDLE,
+          position: MAP_SHEET_POSITION.MIDDLE,
+          progress: getMapSheetPositionProgress(MAP_SHEET_POSITION.MIDDLE),
+          targetPosition: null,
+          interaction: null,
+        },
+        commands: [],
+      }
+    }
+
+    case MAP_SHEET_EVENT.MAP_FOCUS_FAILED: {
+      if (state.mode !== MAP_SHEET_MODE.MAP_FOCUSING) return noChange(state)
+      return {
+        state: {
+          ...state,
+          mode: MAP_SHEET_MODE.IDLE,
           targetPosition: null,
           interaction: null,
         },

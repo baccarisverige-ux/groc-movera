@@ -1,2 +1,5 @@
 export * from './GesturePort.js'
 export * from './ScrollPort.js'
+export * from './MotionPort.js'
+export * from './MapCameraPort.js'
+export * from './ListingSelectionPort.js'
