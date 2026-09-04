@@ -17,8 +17,15 @@ const required = [
   'src/features/map-sheet/core/MapSheetReducer.js',
   'src/features/map-sheet/core/MapSheetMachine.js',
   'src/features/map-sheet/core/MapSheetSelectors.js',
+  'src/features/map-sheet/core/MapSheetScrollHandoff.js',
+  'src/features/map-sheet/core/MapSheetGestureOwnership.js',
   'src/features/map-sheet/ports/index.js',
+  'src/features/map-sheet/ports/GesturePort.js',
+  'src/features/map-sheet/ports/ScrollPort.js',
   'src/features/map-sheet/adapters/index.js',
+  'src/features/map-sheet/adapters/browser/PointerGestureAdapter.js',
+  'src/features/map-sheet/adapters/browser/IOSGestureAdapter.js',
+  'src/features/map-sheet/adapters/browser/IOSScrollAdapter.js',
   'src/features/map-sheet/application/index.js',
   'src/features/map-sheet/ui/index.js',
 ]
@@ -52,6 +59,7 @@ for (const file of moduleFiles) {
 
   const isCore = repoPath.startsWith('src/features/map-sheet/core/')
   const isPorts = repoPath.startsWith('src/features/map-sheet/ports/')
+  const isAdapters = repoPath.startsWith('src/features/map-sheet/adapters/')
   const isApplication = repoPath.startsWith('src/features/map-sheet/application/')
   const isUi = repoPath.startsWith('src/features/map-sheet/ui/')
 
@@ -71,6 +79,19 @@ for (const file of moduleFiles) {
 
   if (isCore && /from\s+['"][^'"]*(?:ports|adapters|application|ui)\//.test(text)) {
     violations.push(`${repoPath}: core must not depend outward on ports/adapters/application/ui`)
+  }
+
+  if (isPorts && /from\s+['"][^'"]*(?:adapters|application|ui)\//.test(text)) {
+    violations.push(`${repoPath}: ports must stay implementation-free`)
+  }
+
+  if (isAdapters) {
+    if (/from\s+['"][^'"]*(?:application|ui)\//.test(text)) {
+      violations.push(`${repoPath}: adapters may depend on ports/core, never application or UI`)
+    }
+    if (/\.map-offer-sheet|map-offer-sheet__/.test(text)) {
+      violations.push(`${repoPath}: adapter is coupled to legacy Map CSS selectors; use semantic origin descriptors`)
+    }
   }
 
   if (isApplication) {
@@ -115,4 +136,4 @@ if (violations.length) {
   process.exit(1)
 }
 
-console.log(`Map Sheet V2 architecture guard passed: ${required.length} boundaries present; headless core isolated; UI gesture-free; private internals encapsulated.`)
+console.log(`Map Sheet V2 architecture guard passed: ${required.length} boundaries present; headless core isolated; gesture/scroll ports protected; browser/iOS adapters decoupled from legacy Map CSS; UI gesture-free; private internals encapsulated.`)
