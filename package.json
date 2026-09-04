@@ -15,7 +15,7 @@
     "test:responsive": "npx --yes @playwright/test@1.55.0 test tests/e2e/responsive-baseline.spec.js --project=desktop-chromium",
     "test:a11y": "npx --yes @playwright/test@1.55.0 test tests/accessibility",
     "test:all": "npm run test:unit && npm run test:e2e && npm run test:a11y",
-    "quality:architecture": "node scripts/check-architecture.mjs && node scripts/check-map-sheet-architecture.mjs",
+    "quality:architecture": "node scripts/check-architecture.mjs && node scripts/check-map-sheet-architecture.mjs && node scripts/check-map-sheet-retired-runtime.mjs",
     "quality:fast": "npm run lint && npm run quality:architecture && npm run test:unit && npm run build",
     "quality:bundle": "node scripts/check-bundle-budget.mjs",
     "quality:full": "npm run lint && npm run quality:architecture && npm run test:unit && npm run build && npm run quality:bundle && npm run test:e2e && npm run test:a11y"
