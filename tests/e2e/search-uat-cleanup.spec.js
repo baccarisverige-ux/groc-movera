@@ -127,7 +127,7 @@ test.describe('Search live E2E / UAT / cleanup safety', () => {
     await waitForCategoryTravelToSettle(page)
     const beforeOpen = await page.evaluate(() => {
       const headerRect = document.querySelector('.b225-home-header')?.getBoundingClientRect()
-      const categoriesRect = document.querySelector('.b225-categories')?.getBoundingClientRect()
+      const categoriesRect = document.querySelector('.b225-categories-shell')?.getBoundingClientRect()
       return {
         scrollY: Math.round(window.scrollY),
         headerHeight: headerRect?.height || 0,
@@ -149,7 +149,7 @@ test.describe('Search live E2E / UAT / cleanup safety', () => {
 
     const afterClose = await page.evaluate(() => {
       const headerRect = document.querySelector('.b225-home-header')?.getBoundingClientRect()
-      const categoriesRect = document.querySelector('.b225-categories')?.getBoundingClientRect()
+      const categoriesRect = document.querySelector('.b225-categories-shell')?.getBoundingClientRect()
       return {
         headerHeight: headerRect?.height || 0,
         categoriesOffsetFromHeader: headerRect && categoriesRect ? categoriesRect.top - headerRect.bottom : 0,
