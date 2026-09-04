@@ -74,7 +74,7 @@ test('manual drag releases into one of the three semantic snap positions', async
   await expect(list).toHaveAttribute('data-scroll-enabled', 'false')
   await expect(list).toHaveCSS('touch-action', 'none')
 
-  await dragGesture(dock, { fromY: 785, toY: 612, duration: 520 })
+  await dragGesture(dock, { fromY: 785, toY: 560, duration: 520 })
   await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeGreaterThan(0.47)
   await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeLessThan(0.53)
   await expect(sheet).toHaveAttribute('data-snap-state', 'middle')
@@ -90,7 +90,7 @@ test('offer content itself drags a middle sheet and can expand it', async ({ pag
   await expect(firstCard).toHaveAttribute('data-listing-id', 'sea-breeze-marsa')
   const firstImage = firstCard.locator('.map-offer-sheet__media')
 
-  await dragGesture(dock, { fromY: 785, toY: 612, duration: 520 })
+  await dragGesture(dock, { fromY: 785, toY: 560, duration: 520 })
   await expect(sheet).toHaveAttribute('data-snap-state', 'middle')
 
   await dragGesture(firstImage, { fromY: 590, toY: 300, duration: 520 })
