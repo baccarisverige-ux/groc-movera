@@ -3,8 +3,8 @@ import { motion, useMotionValue, useReducedMotion } from '../../../../shared/mot
 import {
   MAP_SHEET_GESTURE_AREA,
   MAP_SHEET_POSITION,
-  createMapSheetScrollSnapshot,
 } from '../../core/index.js'
+import { createMapSheetScrollSnapshot } from '../../ports/index.js'
 import { createMapSheetController } from '../../application/MapSheetController.js'
 import { createMapSheetGestureCoordinator } from '../../application/MapSheetGestureCoordinator.js'
 import { createIOSGestureAdapter } from '../browser/IOSGestureAdapter.js'
@@ -121,7 +121,7 @@ export function MapSheetRuntimeSurface({
       mapCamera: mapCameraPort,
       selection: selectionPort,
     })
-    runtimeRef.current = { controller, motionPort }
+    runtimeRef.current = { controller }
   }
 
   const controller = runtimeRef.current.controller
