@@ -4,6 +4,49 @@ function numberAttribute(locator, name) {
   return locator.getAttribute(name).then((value) => Number(value))
 }
 
+async function gestureEvent(locator, type, { x = 180, y, pointerId = 11 } = {}) {
+  await locator.evaluate((node, args) => {
+    const iosLike = /iPad|iPhone|iPod/i.test(navigator.userAgent)
+      || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+
+    if (iosLike) {
+      const touchType = args.type === 'start' ? 'touchstart' : args.type === 'move' ? 'touchmove' : args.type === 'cancel' ? 'touchcancel' : 'touchend'
+      const touch = { identifier: args.pointerId, clientX: args.x, clientY: args.y }
+      const event = new Event(touchType, { bubbles: true, cancelable: touchType === 'touchmove' })
+      Object.defineProperty(event, 'touches', {
+        configurable: true,
+        value: touchType === 'touchend' || touchType === 'touchcancel' ? [] : [touch],
+      })
+      Object.defineProperty(event, 'changedTouches', { configurable: true, value: [touch] })
+      node.dispatchEvent(event)
+      return
+    }
+
+    const pointerType = args.type === 'start' ? 'pointerdown' : args.type === 'move' ? 'pointermove' : args.type === 'cancel' ? 'pointercancel' : 'pointerup'
+    node.dispatchEvent(new PointerEvent(pointerType, {
+      bubbles: true,
+      cancelable: pointerType === 'pointermove',
+      pointerId: args.pointerId,
+      pointerType: 'mouse',
+      isPrimary: true,
+      button: 0,
+      buttons: pointerType === 'pointerup' || pointerType === 'pointercancel' ? 0 : 1,
+      clientX: args.x,
+      clientY: args.y,
+    }))
+  }, { type, x, y, pointerId })
+}
+
+async function dragGesture(locator, { x = 180, fromY, toY, duration = 360, steps = 6 } = {}) {
+  await gestureEvent(locator, 'start', { x, y: fromY })
+  for (let index = 1; index <= steps; index += 1) {
+    await new Promise((resolve) => setTimeout(resolve, duration / steps))
+    const ratio = index / steps
+    await gestureEvent(locator, 'move', { x, y: fromY + (toY - fromY) * ratio })
+  }
+  await gestureEvent(locator, 'end', { x, y: toY })
+}
+
 test('La Marsa map exposes only its mapped offers in the full-width Motion bottom sheet', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/groc-movera/map?destination=la-marsa')
@@ -15,7 +58,8 @@ test('La Marsa map exposes only its mapped offers in the full-width Motion botto
   await expect(pageMap).toHaveAttribute('data-city-offer-count', '4')
   await expect(sheet).toBeVisible()
   await expect(sheet).toHaveAttribute('data-motion-engine', 'motion')
-  await expect(sheet).toHaveAttribute('data-motion-boundary', 'shared')
+  await expect(sheet).toHaveAttribute('data-motion-boundary', 'map-sheet-v2')
+  await expect(sheet).toHaveAttribute('data-map-sheet-runtime', 'v2')
   await expect(sheet).toHaveAttribute('data-snap-state', 'collapsed')
   await expect(sheet.locator('[data-motion-list="map-offers"]')).toBeVisible()
   await expect(sheet.locator('[data-listing-id]')).toHaveCount(4)
@@ -39,7 +83,7 @@ test('La Marsa map exposes only its mapped offers in the full-width Motion botto
   expect(visibleCollapsedHeight).toBeLessThanOrEqual(85)
 })
 
-test('sheet attachment uses one Motion translation with a stable structural header offset', async ({ page }) => {
+test('sheet attachment keeps the same structural header offset throughout a V2 drag', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/groc-movera/map?destination=la-marsa')
 
@@ -78,9 +122,8 @@ test('sheet attachment uses one Motion translation with a stable structural head
   const travel = panelBox.y - (headerBox.y + headerBox.height)
   const x = handleBox.x + handleBox.width / 2
   const y = handleBox.y + handleBox.height / 2
-  await page.mouse.move(x, y)
-  await page.mouse.down()
-  await page.mouse.move(x, y - travel * 0.84, { steps: 20 })
+  await gestureEvent(handle, 'start', { x, y })
+  await gestureEvent(handle, 'move', { x, y: y - travel * 0.84 })
 
   await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeGreaterThan(0.8)
   await expect(sheet).toHaveAttribute('data-snap-state', 'moving')
@@ -95,7 +138,7 @@ test('sheet attachment uses one Motion translation with a stable structural head
   expect(Math.abs((panelBoxAt84.y - sheetBoxAt84.y) - structuralOffset * (1 - softenedProgressAt84))).toBeLessThanOrEqual(2.5)
   const zoomAt84 = await numberAttribute(surface, 'data-zoom')
 
-  await page.mouse.move(x, y - travel * 0.94, { steps: 10 })
+  await gestureEvent(handle, 'move', { x, y: y - travel * 0.94 })
   await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeGreaterThan(0.9)
   await expect(list).toHaveAttribute('data-scroll-enabled', 'false')
   await expect(listContent).toHaveCSS('transform', 'none')
@@ -109,11 +152,7 @@ test('sheet attachment uses one Motion translation with a stable structural head
   expect(Math.abs((panelBoxAt94.y - sheetBoxAt94.y) - structuralOffset * (1 - softenedProgressAt94))).toBeLessThanOrEqual(2.5)
   expect(await numberAttribute(surface, 'data-zoom')).toBeGreaterThan(zoomAt84 + 0.02)
 
-  // Manual release no longer auto-snaps. Move all the way to the physical top
-  // boundary before releasing when this structural test needs the attached state.
-  await page.mouse.move(x, y - travel * 1.02, { steps: 6 })
-  await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeGreaterThan(0.985)
-  await page.mouse.up()
+  await gestureEvent(handle, 'end', { x, y: y - travel * 0.94 })
   await expect(sheet).toHaveAttribute('data-expanded', 'true')
   await expect(sheet).toHaveAttribute('data-snap-state', 'expanded')
   await expect(panel).toHaveAttribute('data-attachment-state', 'attached')
@@ -162,9 +201,9 @@ test('offer map button focuses its exact marker and moves the list to the middle
   await focusButton.click()
 
   await expect(engine).toHaveAttribute('data-selected-listing-id', 'maison-jasmin')
-  await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeGreaterThan(0.45)
-  await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeLessThan(0.55)
-  await expect(sheet).toHaveAttribute('data-snap-state', 'moving')
+  await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeGreaterThan(0.47)
+  await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeLessThan(0.53)
+  await expect(sheet).toHaveAttribute('data-snap-state', 'middle')
   await expect.poll(() => numberAttribute(surface, 'data-zoom')).toBeGreaterThan(zoomBefore + 0.5)
 })
 
@@ -246,7 +285,7 @@ test('Grand Tunis fully expanded covers the header and keeps 16 offers visible',
   expect(await engine.getAttribute('data-selected-listing-id')).toBe(selectedBeforeScroll)
 })
 
-test('one remaining offer can close the fully open sheet by swiping directly on its image', async ({ page }) => {
+test('one remaining first offer can pull the fully open sheet down to a semantic snap', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/groc-movera/map?destination=tozeur')
 
@@ -266,27 +305,13 @@ test('one remaining offer can close the fully open sheet by swiping directly on 
   const image = sheet.locator('[data-listing-id="sahara-night"] .map-offer-sheet__media')
   await expect(image).toBeVisible()
 
-  await image.evaluate((node) => {
-    const fireTouch = (type, clientY, cancelable = true) => {
-      const event = new Event(type, { bubbles: true, cancelable })
-      Object.defineProperty(event, 'touches', {
-        configurable: true,
-        value: type === 'touchend' ? [] : [{ clientY }],
-      })
-      node.dispatchEvent(event)
-    }
+  await dragGesture(image, { fromY: 310, toY: 470, duration: 500 })
 
-    fireTouch('touchstart', 310, false)
-    fireTouch('touchmove', 350)
-    fireTouch('touchmove', 430)
-    fireTouch('touchend', 430, false)
-  })
-
-  await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeLessThan(0.86)
   await expect(sheet).toHaveAttribute('data-expanded', 'false')
+  await expect(sheet).not.toHaveAttribute('data-snap-state', 'expanded')
 })
 
-test('downward swipe starting on an offer can close the fully open sheet', async ({ page }) => {
+test('downward swipe starting on the first offer can close the fully open sheet', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/groc-movera/map?destination=gammarth')
 
@@ -300,23 +325,8 @@ test('downward swipe starting on an offer can close the fully open sheet', async
   await list.evaluate((node) => { node.scrollTop = 0 })
   await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeGreaterThan(0.98)
 
-  await firstOffer.evaluate((node) => {
-    const fireTouch = (type, clientY, cancelable = true) => {
-      const event = new Event(type, { bubbles: true, cancelable })
-      Object.defineProperty(event, 'touches', {
-        configurable: true,
-        value: type === 'touchend' ? [] : [{ clientY }],
-      })
-      node.dispatchEvent(event)
-    }
+  await dragGesture(firstOffer, { fromY: 280, toY: 430, duration: 500 })
 
-    fireTouch('touchstart', 280, false)
-    fireTouch('touchmove', 315)
-    fireTouch('touchmove', 390)
-    fireTouch('touchend', 390, false)
-  })
-
-  await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeLessThan(0.86)
   await expect(sheet).toHaveAttribute('data-expanded', 'false')
   await expect(sheet).not.toHaveAttribute('data-snap-state', 'expanded')
 })
@@ -325,9 +335,11 @@ test('a destination with no mapped offers shows an honest empty state', async ({
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/groc-movera/map?destination=tabarka')
 
+  const sheet = page.getByTestId('map-offer-sheet')
   await expect(page.getByTestId('page-map')).toHaveAttribute('data-city-offer-count', '0')
-  await expect(page.getByTestId('map-offer-sheet')).toHaveAttribute('data-motion-engine', 'motion')
-  await expect(page.getByTestId('map-offer-sheet')).toHaveAttribute('data-motion-boundary', 'shared')
-  await expect(page.getByTestId('map-offer-sheet')).toContainText('Aucune offre Movera dans cette ville')
-  await expect(page.getByTestId('map-offer-sheet').locator('[data-listing-id]')).toHaveCount(0)
+  await expect(sheet).toHaveAttribute('data-motion-engine', 'motion')
+  await expect(sheet).toHaveAttribute('data-motion-boundary', 'map-sheet-v2')
+  await expect(sheet).toHaveAttribute('data-map-sheet-runtime', 'v2')
+  await expect(sheet).toContainText('Aucune offre Movera dans cette ville')
+  await expect(sheet.locator('[data-listing-id]')).toHaveCount(0)
 })
