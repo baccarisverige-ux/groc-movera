@@ -30,6 +30,10 @@ export default defineConfig({
       },
     },
     {
+      name: 'desktop-webkit',
+      use: { ...devices['Desktop Safari'], viewport: { width: 1280, height: 800 } },
+    },
+    {
       name: 'mobile-webkit',
       use: {
         ...devices['iPhone 14'],
