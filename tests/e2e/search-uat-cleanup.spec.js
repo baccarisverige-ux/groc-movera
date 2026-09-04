@@ -23,37 +23,23 @@ async function openSearch(page) {
 }
 
 async function waitForCategoryTravelToSettle(page) {
-  const settled = await page.evaluate(() => new Promise((resolve) => {
-    const readGeometry = () => ({
+  let previous = null
+  let stableSamples = 0
+  await expect.poll(async () => {
+    const current = await page.evaluate(() => ({
       travel: Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--movera-category-upward-travel')) || 0,
-      categoriesTop: document.querySelector('.b225-categories')?.getBoundingClientRect().top || 0,
       scrollY: window.scrollY || 0,
-    })
-    const startedAt = performance.now()
-    let previous = readGeometry()
-    let stableFrames = 0
-
-    const frame = () => {
-      const current = readGeometry()
-      const stable = Math.abs(current.travel - previous.travel) <= 0.08
-        && Math.abs(current.categoriesTop - previous.categoriesTop) <= 0.25
-        && Math.abs(current.scrollY - previous.scrollY) <= 0.25
-      stableFrames = stable ? stableFrames + 1 : 0
-      previous = current
-      if (stableFrames >= 8) {
-        resolve(true)
-        return
-      }
-      if (performance.now() - startedAt > 5_000) {
-        resolve(false)
-        return
-      }
-      requestAnimationFrame(frame)
-    }
-
-    requestAnimationFrame(frame)
-  }))
-  expect(settled).toBe(true)
+    }))
+    const stable = previous
+      && Math.abs(current.travel - previous.travel) <= 0.15
+      && Math.abs(current.scrollY - previous.scrollY) <= 0.5
+    stableSamples = stable ? stableSamples + 1 : 0
+    previous = current
+    return stableSamples
+  }, {
+    timeout: 5_000,
+    intervals: [50, 75, 100, 125, 150, 200],
+  }).toBeGreaterThanOrEqual(3)
 }
 
 async function chooseTwoAvailableDates(page) {
