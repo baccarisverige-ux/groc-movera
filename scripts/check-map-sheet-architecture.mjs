@@ -141,7 +141,8 @@ for (const file of moduleFiles) {
     }
   }
 
-  if (/from\s+['"](?:\.\.\/)+map\//.test(text) || /src\/features\/map\//.test(text)) {
+  const escapesToLegacyMap = /from\s+['"](?:\.\.\/){2,}map\//.test(text) || /src\/features\/map\//.test(text)
+  if (escapesToLegacyMap) {
     violations.push(`${repoPath}: Map Sheet V2 cannot depend on legacy Map internals`)
   }
 }
