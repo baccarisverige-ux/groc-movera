@@ -4,6 +4,10 @@ function defaultNow() {
   return typeof performance !== 'undefined' ? performance.now() : Date.now()
 }
 
+function defaultGlobalTarget() {
+  return typeof window !== 'undefined' ? window : null
+}
+
 function firstTouch(event) {
   return event?.touches?.[0] || event?.changedTouches?.[0] || null
 }
@@ -23,6 +27,7 @@ export function createIOSGestureAdapter({
   surface,
   describeOrigin = () => ({}),
   now = defaultNow,
+  globalTarget = defaultGlobalTarget(),
 } = {}) {
   if (!surface?.addEventListener || !surface?.removeEventListener) {
     throw new TypeError('IOSGestureAdapter requires an EventTarget-like surface')
@@ -62,8 +67,40 @@ export function createIOSGestureAdapter({
     })
   }
 
+  const finish = (phase, event, { force = false } = {}) => {
+    if (!active) return false
+
+    const matchedTouch = touchById(event, active.identifier)
+    const hasRemainingTouches = Number(event?.touches?.length) > 0
+    if (!force && !matchedTouch && hasRemainingTouches) return false
+
+    const touch = matchedTouch || {
+      identifier: active.identifier,
+      clientX: active.lastX,
+      clientY: active.lastY,
+    }
+    const frame = makeFrame(phase, event, touch)
+    const identifier = active.identifier
+    emit(frame)
+    claimed.delete(identifier)
+    active = null
+    return true
+  }
+
+  const cancelStaleSession = (event) => finish(
+    MAP_SHEET_GESTURE_PHASE.CANCEL,
+    { timeStamp: event?.timeStamp },
+    { force: true },
+  )
+
   const onTouchStart = (event) => {
-    if (destroyed || active || event?.touches?.length !== 1) return
+    if (destroyed || event?.touches?.length !== 1) return
+
+    // Safari can terminate a scroll/touch sequence outside the sheet while the
+    // transformed surface is moving. A fresh single-touch start proves the old
+    // session is stale, so cancel it before accepting the new interaction.
+    if (active) cancelStaleSession(event)
+
     const touch = firstTouch(event)
     if (!touch) return
     const frame = makeFrame(MAP_SHEET_GESTURE_PHASE.START, event, touch, null)
@@ -96,26 +133,23 @@ export function createIOSGestureAdapter({
     active.lastTime = frame.time
   }
 
-  const finish = (phase, event) => {
-    if (!active) return
-    const touch = touchById(event, active.identifier) || {
-      identifier: active.identifier,
-      clientX: active.lastX,
-      clientY: active.lastY,
-    }
-    const frame = makeFrame(phase, event, touch)
-    emit(frame)
-    claimed.delete(active.identifier)
-    active = null
-  }
-
   const onTouchEnd = (event) => finish(MAP_SHEET_GESTURE_PHASE.END, event)
   const onTouchCancel = (event) => finish(MAP_SHEET_GESTURE_PHASE.CANCEL, event)
+  const onGlobalBlur = (event) => finish(MAP_SHEET_GESTURE_PHASE.CANCEL, event, { force: true })
 
   surface.addEventListener('touchstart', onTouchStart, { passive: true })
   surface.addEventListener('touchmove', onTouchMove, { passive: false })
   surface.addEventListener('touchend', onTouchEnd, { passive: true })
   surface.addEventListener('touchcancel', onTouchCancel, { passive: true })
+
+  // A touch can finish outside the transformed sheet on iOS. Capture the end
+  // at window level so ownership and claimed pointers cannot survive into the
+  // next open → scroll → focus cycle.
+  if (globalTarget && globalTarget !== surface) {
+    globalTarget.addEventListener?.('touchend', onTouchEnd, true)
+    globalTarget.addEventListener?.('touchcancel', onTouchCancel, true)
+    globalTarget.addEventListener?.('blur', onGlobalBlur)
+  }
 
   const subscribe = (listener) => {
     if (typeof listener !== 'function') throw new TypeError('GesturePort subscriber must be a function')
@@ -144,6 +178,11 @@ export function createIOSGestureAdapter({
     surface.removeEventListener('touchmove', onTouchMove)
     surface.removeEventListener('touchend', onTouchEnd)
     surface.removeEventListener('touchcancel', onTouchCancel)
+    if (globalTarget && globalTarget !== surface) {
+      globalTarget.removeEventListener?.('touchend', onTouchEnd, true)
+      globalTarget.removeEventListener?.('touchcancel', onTouchCancel, true)
+      globalTarget.removeEventListener?.('blur', onGlobalBlur)
+    }
   }
 
   return Object.freeze({ subscribe, claim, release, destroy })
