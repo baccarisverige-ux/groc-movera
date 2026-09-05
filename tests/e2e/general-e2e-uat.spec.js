@@ -100,6 +100,11 @@ test.describe('Movera general E2E + UAT acceptance', () => {
   })
 
   test('E2E: Home → Search → Dates → Voyageurs → Map → Home completes cleanly', async ({ page }) => {
+    // This is an intentionally end-to-end navigation journey across Search,
+    // Map handoff and Home restoration. Mobile WebKit can exceed the generic
+    // 30s per-test budget under CI load even when all step assertions succeed.
+    test.setTimeout(60_000)
+
     const pageErrors = watchRuntimeErrors(page)
     await page.goto('/')
     await expect(page.getByTestId('page-home')).toBeVisible()
