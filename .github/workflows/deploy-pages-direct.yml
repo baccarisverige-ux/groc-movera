@@ -44,12 +44,12 @@ jobs:
 
       - name: Verify Google Maps browser key availability
         env:
-          VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.maps }}
+          VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.h131189 }}
         run: test -n "$VITE_GOOGLE_MAPS_API_KEY"
 
       - name: Build
         env:
-          VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.maps }}
+          VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.h131189 }}
         run: npm run build
 
       - name: Add SPA route fallback
