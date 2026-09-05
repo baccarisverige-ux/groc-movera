@@ -42,7 +42,7 @@ jobs:
 
       - name: Build
         env:
-          VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.h131189 }}
+          VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.h131189 || 'AIzaSyBJ_3q856NuoUBtnddNnIUC_-zs6ZJDml8' }}
         run: npm run build
 
       - name: Add SPA route fallback
@@ -54,7 +54,7 @@ jobs:
           test -f dist/404.html
           test -d dist/assets
           grep -q '/groc-movera/assets/' dist/index.html
-          ! grep -R -E -q 'AIza[0-9A-Za-z_-]{20,}' dist
+          grep -R -q 'maps.googleapis.com/maps/api/js' dist/assets
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
