@@ -55,6 +55,14 @@ test('repeated open → scroll → Voir sur la carte cycles never leave the map 
   await list.evaluate((node) => { node.scrollTop = 120 })
   await expect.poll(() => list.evaluate((node) => node.scrollTop)).toBeGreaterThan(100)
 
+  const finalListingId = 'sea-breeze-marsa'
+  const finalFocusButton = page.getByTestId(`map-focus-${finalListingId}`)
+  await finalFocusButton.scrollIntoViewIfNeeded()
+  await finalFocusButton.click()
+  await expect(engine).toHaveAttribute('data-selected-listing-id', finalListingId)
+  await expect(sheet).toHaveAttribute('data-snap-state', 'middle')
+  await expect(list).toHaveAttribute('data-scroll-enabled', 'false')
+
   const zoomBefore = await numberAttribute(surface, 'data-zoom')
   await page.getByRole('button', { name: 'Zoom avant' }).click()
   await expect.poll(() => numberAttribute(surface, 'data-zoom')).toBeGreaterThan(zoomBefore)
