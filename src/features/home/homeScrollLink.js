@@ -18,6 +18,11 @@ function getHomeElements() {
   }
 }
 
+function visualViewportOffsetTop() {
+  const offsetTop = Number(window.visualViewport?.offsetTop)
+  return Number.isFinite(offsetTop) ? Math.max(0, offsetTop) : 0
+}
+
 function observeHomeGeometry(header, shell, welcome) {
   if (
     moveraObservedHeader === header
@@ -65,7 +70,12 @@ function syncCategoryPosition(timestamp = performance.now()) {
   if (!header || !shell || !rail || !welcome) return false
   if ((!moveraHeaderHeight || !moveraShellHeight) && !measureHomeGeometry()) return false
 
-  const welcomeBottom = welcome.getBoundingClientRect().bottom
+  // Mobile WebKit can leave the visual viewport panned after an input is
+  // dismissed while window.scrollY is already restored. Client rects then
+  // carry that visual-viewport offset, which would otherwise pull the sticky
+  // category rail farther under the Home header. Normalize back to layout-
+  // viewport coordinates before deriving the dock travel.
+  const welcomeBottom = welcome.getBoundingClientRect().bottom + visualViewportOffsetTop()
   const dockBottom = moveraHeaderHeight + moveraShellHeight
   const targetTravel = Math.min(
     moveraShellHeight,
@@ -108,6 +118,7 @@ function refreshCategoryLink() {
 window.addEventListener('scroll', requestCategorySync, { passive: true })
 window.addEventListener('resize', refreshCategoryLink, { passive: true })
 window.visualViewport?.addEventListener('resize', refreshCategoryLink, { passive: true })
+window.visualViewport?.addEventListener('scroll', refreshCategoryLink, { passive: true })
 window.addEventListener('popstate', refreshCategoryLink)
 window.addEventListener('movera-search-restored', refreshCategoryLink)
 
