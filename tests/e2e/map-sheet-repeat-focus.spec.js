@@ -22,13 +22,13 @@ test('repeated open → scroll → Voir sur la carte cycles never leave the map 
     await expect(list).toHaveAttribute('data-scroll-enabled', 'true')
     await expect(list).toHaveCSS('touch-action', 'pan-y')
 
-    const beforeScroll = await list.evaluate((node) => node.scrollTop)
     await list.evaluate((node, index) => {
+      node.scrollTop = 0
       const max = Math.max(0, node.scrollHeight - node.clientHeight)
       const target = Math.min(max, 220 + (index % 3) * 120)
       node.scrollTo({ top: target, behavior: 'instant' })
     }, cycle)
-    await expect.poll(() => list.evaluate((node) => node.scrollTop)).toBeGreaterThan(Math.min(beforeScroll, 1))
+    await expect.poll(() => list.evaluate((node) => node.scrollTop)).toBeGreaterThan(100)
 
     const listingId = focusIds[cycle % focusIds.length]
     const focusButton = page.getByTestId(`map-focus-${listingId}`)
@@ -48,13 +48,10 @@ test('repeated open → scroll → Voir sur la carte cycles never leave the map 
   await expect(sheet).toHaveAttribute('data-snap-state', 'expanded')
   await expect(list).toHaveAttribute('data-scroll-enabled', 'true')
 
-  const finalScroll = await list.evaluate((node) => {
-    const before = node.scrollTop
-    const max = Math.max(0, node.scrollHeight - node.clientHeight)
-    node.scrollTop = Math.min(max, before + 90)
-    return { before, after: node.scrollTop }
-  })
-  expect(finalScroll.after).toBeGreaterThanOrEqual(finalScroll.before)
+  await list.evaluate((node) => { node.scrollTop = 0 })
+  await expect.poll(() => list.evaluate((node) => node.scrollTop)).toBe(0)
+  await list.evaluate((node) => { node.scrollTop = 120 })
+  await expect.poll(() => list.evaluate((node) => node.scrollTop)).toBeGreaterThan(100)
 
   const zoomBefore = await numberAttribute(surface, 'data-zoom')
   await page.getByRole('button', { name: 'Zoom avant' }).click()
