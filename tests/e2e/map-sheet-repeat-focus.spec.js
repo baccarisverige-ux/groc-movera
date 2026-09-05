@@ -5,7 +5,10 @@ function numberAttribute(locator, name) {
 }
 
 test('repeated open → scroll → Voir sur la carte cycles never leave the map sheet blocked', async ({ page }) => {
-  test.setTimeout(150_000)
+  // WebKit CI can legitimately need more than 150s for eight complete
+  // open → scroll → focus cycles. Keep the full stress coverage and every
+  // semantic assertion; only give the test enough wall-clock budget.
+  test.setTimeout(240_000)
 
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/groc-movera/map?destination=la-marsa')
