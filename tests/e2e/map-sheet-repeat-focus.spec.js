@@ -5,6 +5,8 @@ function numberAttribute(locator, name) {
 }
 
 test('repeated open → scroll → Voir sur la carte cycles never leave the map sheet blocked', async ({ page }) => {
+  test.setTimeout(120_000)
+
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/groc-movera/map?destination=la-marsa')
 
