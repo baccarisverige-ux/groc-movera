@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { motion, useMotionValue, useReducedMotion } from '../../../../shared/motion/runtime.js'
 import {
+  MAP_SHEET_EXPANDED_PROGRESS_THRESHOLD,
   MAP_SHEET_GESTURE_AREA,
   MAP_SHEET_POSITION,
 } from '../../core/index.js'
@@ -29,7 +30,7 @@ function clamp(value) {
 }
 
 function semanticSnapState(progress) {
-  if (progress >= 1 - SEMANTIC_SNAP_EPSILON) return MAP_SHEET_POSITION.EXPANDED
+  if (progress >= MAP_SHEET_EXPANDED_PROGRESS_THRESHOLD) return MAP_SHEET_POSITION.EXPANDED
   if (progress <= SEMANTIC_SNAP_EPSILON) return MAP_SHEET_POSITION.COLLAPSED
   if (Math.abs(progress - 0.5) <= SEMANTIC_SNAP_EPSILON) return MAP_SHEET_POSITION.MIDDLE
   return 'moving'
