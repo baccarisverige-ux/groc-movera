@@ -6,7 +6,7 @@ const CARTO_SUBDOMAINS = Object.freeze(['a', 'b', 'c', 'd'])
 const CARTO_API_KEY = String(import.meta.env.VITE_CARTO_API_KEY || '').trim()
 
 function googleMapsRuntimeEnabled() {
-  return typeof window !== 'undefined' && window.__MOVERA_GOOGLE_MAPS_ENABLED__ === true
+  return Boolean(String(import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '').trim())
 }
 
 function cartoVoyagerUrl(zoom, x, y) {
