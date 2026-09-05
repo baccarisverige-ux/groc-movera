@@ -5,6 +5,10 @@ import { GoogleMapLayer } from './GoogleMapLayer.jsx'
 const CARTO_SUBDOMAINS = Object.freeze(['a', 'b', 'c', 'd'])
 const CARTO_API_KEY = String(import.meta.env.VITE_CARTO_API_KEY || '').trim()
 
+function googleMapsRuntimeEnabled() {
+  return typeof window !== 'undefined' && window.__MOVERA_GOOGLE_MAPS_ENABLED__ === true
+}
+
 function cartoVoyagerUrl(zoom, x, y) {
   const subdomain = CARTO_SUBDOMAINS[Math.abs(x + y) % CARTO_SUBDOMAINS.length]
   const retina = typeof window !== 'undefined' && window.devicePixelRatio > 1 ? '@2x' : ''
@@ -58,6 +62,7 @@ export function TileLayer({
   onGoogleMarkerSelect,
   onGoogleClusterFocus,
 }) {
+  const useGoogleMaps = googleMapsRuntimeEnabled()
   const fallback = showFallbackTiles ? fallbackTiles(viewport, size) : null
   const fallbackKey = fallback
     ? `${fallback.zoom}:${fallback.tiles.map((tile) => `${tile.wrappedX}-${tile.y}`).join(',')}`
@@ -68,6 +73,10 @@ export function TileLayer({
   useEffect(() => {
     setTileStatus({ key: fallbackKey, loaded: 0, failed: 0 })
   }, [fallbackKey])
+
+  useEffect(() => {
+    if (!useGoogleMaps) onGoogleStatus?.('fallback')
+  }, [useGoogleMaps, onGoogleStatus])
 
   const settleTile = (image, result) => {
     if (image.dataset.tileSettled === 'true') return
@@ -139,17 +148,19 @@ export function TileLayer({
           <span>Les offres restent consultables.</span>
         </div>
       ) : null}
-      <GoogleMapLayer
-        viewport={viewport}
-        viewportSource={viewportSource}
-        markers={markers}
-        interactive={interactive}
-        onStatus={onGoogleStatus}
-        onViewportChange={onGoogleViewportChange}
-        onInteractionChange={onGoogleInteractionChange}
-        onMarkerSelect={onGoogleMarkerSelect}
-        onClusterFocus={onGoogleClusterFocus}
-      />
+      {useGoogleMaps ? (
+        <GoogleMapLayer
+          viewport={viewport}
+          viewportSource={viewportSource}
+          markers={markers}
+          interactive={interactive}
+          onStatus={onGoogleStatus}
+          onViewportChange={onGoogleViewportChange}
+          onInteractionChange={onGoogleInteractionChange}
+          onMarkerSelect={onGoogleMarkerSelect}
+          onClusterFocus={onGoogleClusterFocus}
+        />
+      ) : null}
     </>
   )
 }
