@@ -55,6 +55,56 @@ async function dragGesture(locator, { x = 180, fromY, toY, duration = 360 }) {
   }, { x, fromY, toY, duration })
 }
 
+async function reversingGesture(locator, { x = 180, startY, downY, upY }) {
+  await locator.evaluate(async (node, args) => {
+    const iosLike = /iPad|iPhone|iPod/i.test(navigator.userAgent)
+      || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+    const pointerId = 9
+
+    const fireTouch = (type, clientX, clientY) => {
+      const touch = { identifier: pointerId, clientX, clientY }
+      const event = new Event(type, { bubbles: true, cancelable: type === 'touchmove' })
+      Object.defineProperty(event, 'touches', {
+        configurable: true,
+        value: type === 'touchend' || type === 'touchcancel' ? [] : [touch],
+      })
+      Object.defineProperty(event, 'changedTouches', {
+        configurable: true,
+        value: [touch],
+      })
+      node.dispatchEvent(event)
+    }
+
+    const firePointer = (type, clientX, clientY) => {
+      node.dispatchEvent(new PointerEvent(type, {
+        bubbles: true,
+        cancelable: type === 'pointermove',
+        pointerId,
+        pointerType: 'mouse',
+        isPrimary: true,
+        button: 0,
+        buttons: type === 'pointerup' || type === 'pointercancel' ? 0 : 1,
+        clientX,
+        clientY,
+      }))
+    }
+
+    const fire = iosLike ? fireTouch : firePointer
+    const startType = iosLike ? 'touchstart' : 'pointerdown'
+    const moveType = iosLike ? 'touchmove' : 'pointermove'
+    const endType = iosLike ? 'touchend' : 'pointerup'
+
+    fire(startType, args.x, args.startY)
+    await sleep(90)
+    fire(moveType, args.x, args.downY)
+    await sleep(90)
+    fire(moveType, args.x, args.upY)
+    await sleep(50)
+    fire(endType, args.x, args.upY)
+  }, { x, startY, downY, upY })
+}
+
 async function tinyGesture(locator, { x = 180, fromY, toY }) {
   await dragGesture(locator, { x, fromY, toY, duration: 72 })
 }
@@ -118,6 +168,25 @@ test('expanded first offer hands the list back to the sheet and snaps down clean
   await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeGreaterThan(0.47)
   await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeLessThan(0.53)
   await expect(sheet).toHaveAttribute('data-snap-state', 'middle')
+})
+
+test('a claimed first-offer sheet pull keeps ownership when the finger reverses direction', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/groc-movera/map?destination=la-marsa')
+
+  const sheet = page.getByTestId('map-offer-sheet')
+  const list = sheet.locator('.map-offer-sheet__list')
+  const firstImage = sheet.locator('.map-offer-sheet__card').first().locator('.map-offer-sheet__media')
+
+  await page.getByRole('button', { name: 'Afficher la liste des offres' }).click()
+  await expect(sheet).toHaveAttribute('data-snap-state', 'expanded')
+  await list.evaluate((node) => { node.scrollTop = 0 })
+
+  await reversingGesture(firstImage, { startY: 270, downY: 430, upY: 220 })
+
+  await expect.poll(() => numberAttribute(sheet, 'data-progress')).toBeGreaterThan(0.985)
+  await expect(sheet).toHaveAttribute('data-snap-state', 'expanded')
+  await expect(list).toHaveAttribute('data-scroll-enabled', 'true')
 })
 
 test('expanded non-first offer keeps native list ownership and cannot pull the whole sheet', async ({ page }) => {

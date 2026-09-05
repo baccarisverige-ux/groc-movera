@@ -92,6 +92,112 @@ describe('Map Sheet V2 browser adapters', () => {
     port.destroy()
   })
 
+  it('releases a pointer sheet gesture when pointerup lands outside the transformed surface', () => {
+    const surface = new FakeSurface()
+    const globalTarget = new FakeSurface()
+    const port = assertMapSheetGesturePort(createPointerGestureAdapter({
+      surface,
+      globalTarget,
+      describeOrigin: () => ({ area: 'list', startsOnFirstOffer: true }),
+    }))
+    const frames = []
+
+    port.subscribe((frame) => {
+      frames.push(frame)
+      if (frame.phase === 'move' && frame.deltaY > 10) port.claim(frame.pointerId)
+    })
+
+    surface.dispatch('pointerdown', preventableEvent({
+      pointerId: 7,
+      pointerType: 'touch',
+      isPrimary: true,
+      clientX: 100,
+      clientY: 200,
+      timeStamp: 10,
+    }))
+    surface.dispatch('pointermove', preventableEvent({
+      pointerId: 7,
+      pointerType: 'touch',
+      isPrimary: true,
+      clientX: 100,
+      clientY: 250,
+      timeStamp: 30,
+    }))
+
+    globalTarget.dispatch('pointerup', preventableEvent({
+      pointerId: 7,
+      pointerType: 'touch',
+      isPrimary: true,
+      clientX: 100,
+      clientY: 250,
+      timeStamp: 40,
+    }))
+
+    surface.dispatch('pointerdown', preventableEvent({
+      pointerId: 8,
+      pointerType: 'touch',
+      isPrimary: true,
+      clientX: 120,
+      clientY: 220,
+      timeStamp: 60,
+    }))
+    surface.dispatch('pointerup', preventableEvent({
+      pointerId: 8,
+      pointerType: 'touch',
+      isPrimary: true,
+      clientX: 120,
+      clientY: 220,
+      timeStamp: 70,
+    }))
+
+    expect(frames.map((frame) => frame.phase)).toEqual(['start', 'move', 'end', 'start', 'end'])
+    expect(surface.captured.size).toBe(0)
+    port.destroy()
+  })
+
+  it('self-heals a stale pointer session when a fresh primary interaction begins', () => {
+    const surface = new FakeSurface()
+    const port = assertMapSheetGesturePort(createPointerGestureAdapter({
+      surface,
+      globalTarget: null,
+      describeOrigin: () => ({ area: 'list', startsOnFirstOffer: true }),
+    }))
+    const frames = []
+
+    port.subscribe((frame) => frames.push(frame))
+
+    surface.dispatch('pointerdown', preventableEvent({
+      pointerId: 7,
+      pointerType: 'touch',
+      isPrimary: true,
+      clientX: 100,
+      clientY: 200,
+      timeStamp: 10,
+    }))
+
+    surface.dispatch('pointerdown', preventableEvent({
+      pointerId: 8,
+      pointerType: 'touch',
+      isPrimary: true,
+      clientX: 120,
+      clientY: 220,
+      timeStamp: 60,
+    }))
+    surface.dispatch('pointerup', preventableEvent({
+      pointerId: 8,
+      pointerType: 'touch',
+      isPrimary: true,
+      clientX: 120,
+      clientY: 220,
+      timeStamp: 70,
+    }))
+
+    expect(frames.map((frame) => frame.phase)).toEqual(['start', 'cancel', 'start', 'end'])
+    expect(frames[1].pointerId).toBe(7)
+    expect(frames[2].pointerId).toBe(8)
+    port.destroy()
+  })
+
   it('uses a non-passive iOS move path that can stop Safari native scroll on the same frame', () => {
     const surface = new FakeSurface()
     const port = assertMapSheetGesturePort(createIOSGestureAdapter({

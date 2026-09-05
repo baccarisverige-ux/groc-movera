@@ -111,14 +111,16 @@ export function createMapSheetGestureCoordinator({
     if (frame.phase !== MAP_SHEET_GESTURE_PHASE.MOVE) return
 
     const machineState = controller.getState()
-    const owner = resolveMapSheetGestureOwner({
-      position: machineState.position,
-      progress: getVisualProgress(),
-      deltaX: frame.deltaX,
-      deltaY: frame.deltaY,
-      origin: frame.origin,
-      scroll: scroll.getSnapshot(),
-    }, policy)
+    const owner = session.sheetClaimed
+      ? MAP_SHEET_GESTURE_OWNER.SHEET
+      : resolveMapSheetGestureOwner({
+          position: machineState.position,
+          progress: getVisualProgress(),
+          deltaX: frame.deltaX,
+          deltaY: frame.deltaY,
+          origin: frame.origin,
+          scroll: scroll.getSnapshot(),
+        }, policy)
 
     if (owner === MAP_SHEET_GESTURE_OWNER.LIST) {
       if (machineState.mode === MAP_SHEET_MODE.TAP_PENDING) controller.dispatch(beginMapSheetListScroll())
