@@ -109,6 +109,12 @@ async function startHost(page) {
 }
 
 test('published hotel offer appears on calendar, hotel collection and map', async ({ page }) => {
+  // This intentionally exercises the complete publication journey plus three
+  // traveler surfaces. Mobile WebKit reaches the final Map assertions in ~33s
+  // under CI load, so give the whole business journey a bounded 60s budget
+  // while keeping every individual assertion at the normal strict timeout.
+  test.setTimeout(60_000)
+
   await startHost(page)
   await completeHostOnboarding(page, { type: 'Hôtel', title: 'Hôtel Palmier Marsa', city: 'La Marsa' })
 
