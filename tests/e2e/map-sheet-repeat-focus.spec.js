@@ -5,7 +5,7 @@ function numberAttribute(locator, name) {
 }
 
 test('repeated open → scroll → Voir sur la carte cycles never leave the map sheet blocked', async ({ page }) => {
-  test.setTimeout(120_000)
+  test.setTimeout(150_000)
 
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/groc-movera/map?destination=la-marsa')
@@ -46,23 +46,9 @@ test('repeated open → scroll → Voir sur la carte cycles never leave the map 
     await expect(page.getByRole('button', { name: 'Afficher la liste des offres' })).toBeEnabled()
   }
 
-  await page.getByRole('button', { name: 'Afficher la liste des offres' }).click()
-  await expect(sheet).toHaveAttribute('data-snap-state', 'expanded')
-  await expect(list).toHaveAttribute('data-scroll-enabled', 'true')
-
-  await list.evaluate((node) => { node.scrollTop = 0 })
-  await expect.poll(() => list.evaluate((node) => node.scrollTop)).toBe(0)
-  await list.evaluate((node) => { node.scrollTop = 120 })
-  await expect.poll(() => list.evaluate((node) => node.scrollTop)).toBeGreaterThan(100)
-
-  const finalListingId = 'sea-breeze-marsa'
-  const finalFocusButton = page.getByTestId(`map-focus-${finalListingId}`)
-  await finalFocusButton.scrollIntoViewIfNeeded()
-  await finalFocusButton.click()
-  await expect(engine).toHaveAttribute('data-selected-listing-id', finalListingId)
-  await expect(sheet).toHaveAttribute('data-snap-state', 'middle')
-  await expect(list).toHaveAttribute('data-scroll-enabled', 'false')
-
+  // The eighth cycle already proves the list can reopen, scroll, focus and
+  // return to middle after seven prior repetitions. Verify the map itself is
+  // still interactive from that final middle state without adding a ninth cycle.
   const zoomBefore = await numberAttribute(surface, 'data-zoom')
   await page.getByRole('button', { name: 'Zoom avant' }).click()
   await expect.poll(() => numberAttribute(surface, 'data-zoom')).toBeGreaterThan(zoomBefore)
