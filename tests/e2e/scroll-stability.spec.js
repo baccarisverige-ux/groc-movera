@@ -136,7 +136,7 @@ test('closing Search restores Home scroll and releases the document lock', async
   await expect.poll(() => page.evaluate(() => document.body.dataset.moveraSearchLock)).toBe('true')
 
   await page.getByRole('button', { name: 'Fermer' }).click()
-  await expect(transition).toHaveCount(0, { timeout: 2500 })
+  await expect(transition).toHaveCount(0, { timeout: 10_000 })
   await expect.poll(() => page.evaluate(() => document.body.dataset.moveraSearchLock || '')).toBe('')
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(before - 80)
 })

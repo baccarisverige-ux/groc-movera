@@ -20,6 +20,16 @@ async function next(page) {
   await page.getByRole('button', { name: 'Continuer' }).click()
 }
 
+async function chooseGuestAccess(page, id = 'private') {
+  const choices = page.locator(`[role="radio"][data-guest-access-id="${id}"]`)
+  await expect.poll(() => choices.count(), { timeout: 10_000 }).toBeGreaterThan(0)
+  await choices.first().dispatchEvent('click')
+  await expect.poll(
+    () => choices.evaluateAll((nodes) => nodes.some((node) => node.getAttribute('aria-checked') === 'true')),
+    { timeout: 10_000 },
+  ).toBe(true)
+}
+
 async function completeHostOnboarding(page, { type, title, city }) {
   const onboarding = page.getByTestId('host-onboarding')
   await page.getByRole('button', { name: 'Commencer' }).click()
@@ -28,7 +38,7 @@ async function completeHostOnboarding(page, { type, title, city }) {
   await next(page)
 
   await expect(onboarding).toHaveAttribute('data-screen', 'guest-access')
-  await page.getByRole('radio').first().click()
+  await chooseGuestAccess(page, 'private')
   await next(page)
 
   await page.getByLabel('Adresse du logement').fill('10 avenue de la Mer')
@@ -99,6 +109,12 @@ async function startHost(page) {
 }
 
 test('published hotel offer appears on calendar, hotel collection and map', async ({ page }) => {
+  // This intentionally exercises the complete publication journey plus three
+  // traveler surfaces. Mobile WebKit reaches the final Map assertions in ~33s
+  // under CI load, so give the whole business journey a bounded 60s budget
+  // while keeping every individual assertion at the normal strict timeout.
+  test.setTimeout(60_000)
+
   await startHost(page)
   await completeHostOnboarding(page, { type: 'Hôtel', title: 'Hôtel Palmier Marsa', city: 'La Marsa' })
 
@@ -124,12 +140,13 @@ test('published hotel offer appears on calendar, hotel collection and map', asyn
   await expect(page.getByTestId('page-listing')).toContainText('Pension complète')
   await expect(page.getByTestId('page-listing')).toContainText('All inclusive')
 
-  await page.goto('/groc-movera/map')
+  await page.goto('/groc-movera/map?destination=la-marsa')
   await expect(page.getByTestId('page-map')).toBeVisible()
-  await expect(page.getByTestId('map-offer-sheet')).toContainText('Hôtel Palmier Marsa')
-  await expect(page.getByTestId('map-offer-sheet')).toContainText('Demi-pension')
-  await expect(page.getByTestId('map-offer-sheet')).toContainText('Pension complète')
-  await expect(page.getByTestId('map-offer-sheet')).toContainText('All inclusive')
+  const mapOfferSheet = page.getByTestId('map-offer-sheet')
+  await expect(mapOfferSheet).toContainText('Hôtel Palmier Marsa', { timeout: 15_000 })
+  await expect(mapOfferSheet).toContainText('Demi-pension')
+  await expect(mapOfferSheet).toContainText('Pension complète')
+  await expect(mapOfferSheet).toContainText('All inclusive')
 })
 
 test('published maison d’hôte offer appears on calendar and collection', async ({ page }) => {

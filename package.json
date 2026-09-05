@@ -10,15 +10,19 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "test:unit": "npx --yes vitest@3.2.4 run tests/unit",
+    "test:integration": "npx --yes vitest@3.2.4 run tests/integration",
     "test:e2e": "npx --yes @playwright/test@1.55.0 test tests/e2e",
     "test:e2e:mobile": "npx --yes @playwright/test@1.55.0 test tests/e2e --project=mobile-chromium",
+    "test:e2e:chromium": "npx --yes @playwright/test@1.55.0 test tests/e2e --project=desktop-chromium --project=mobile-chromium",
+    "test:e2e:webkit": "npx --yes @playwright/test@1.55.0 test tests/e2e --project=desktop-webkit --project=mobile-webkit",
     "test:responsive": "npx --yes @playwright/test@1.55.0 test tests/e2e/responsive-baseline.spec.js --project=desktop-chromium",
+    "test:map-regressions": "npx --yes @playwright/test@1.55.0 test tests/e2e/critical-regressions.spec.js tests/e2e/map-city-offer-sheet.spec.js tests/e2e/map-offer-popup.spec.js tests/e2e/map-sheet-touch-regressions.spec.js",
     "test:a11y": "npx --yes @playwright/test@1.55.0 test tests/accessibility",
-    "test:all": "npm run test:unit && npm run test:e2e && npm run test:a11y",
-    "quality:architecture": "node scripts/check-architecture.mjs && node scripts/check-map-sheet-architecture.mjs && node scripts/check-map-sheet-retired-runtime.mjs",
-    "quality:fast": "npm run lint && npm run quality:architecture && npm run test:unit && npm run build",
+    "test:all": "npm run test:unit && npm run test:integration && npm run test:e2e && npm run test:a11y",
+    "quality:architecture": "node scripts/check-architecture.mjs && node scripts/check-map-sheet-architecture.mjs && node scripts/check-map-sheet-retired-runtime.mjs && node scripts/check-release-gates.mjs",
+    "quality:fast": "npm run lint && npm run quality:architecture && npm run test:unit && npm run test:integration && npm run build",
     "quality:bundle": "node scripts/check-bundle-budget.mjs",
-    "quality:full": "npm run lint && npm run quality:architecture && npm run test:unit && npm run build && npm run quality:bundle && npm run test:e2e && npm run test:a11y"
+    "quality:full": "npm run lint && npm run quality:architecture && npm run test:unit && npm run test:integration && npm run build && npm run quality:bundle && npm run test:e2e:chromium && npm run test:e2e:webkit && npm run test:a11y"
   },
   "dependencies": {
     "motion": "^13.1.1",

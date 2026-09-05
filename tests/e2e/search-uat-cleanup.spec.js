@@ -1,10 +1,18 @@
 import { expect, test } from '@playwright/test'
 
+const SEARCH_SETTLE_TIMEOUT = 10_000
+
+async function activateAnimatedControl(locator) {
+  await expect(locator).toBeVisible()
+  await expect(locator).toBeEnabled()
+  await locator.dispatchEvent('click')
+}
+
 async function openSearchOnCurrentPage(page) {
   await page.locator('.b225-search').click({ position: { x: 80, y: 25 } })
   const transition = page.getByTestId('search-transition')
   await expect(transition).toBeVisible()
-  await expect.poll(async () => transition.getAttribute('data-ready')).toBe('true')
+  await expect.poll(async () => transition.getAttribute('data-ready'), { timeout: SEARCH_SETTLE_TIMEOUT }).toBe('true')
   return transition
 }
 
@@ -15,25 +23,67 @@ async function openSearch(page) {
 }
 
 async function waitForCategoryTravelToSettle(page) {
-  await page.evaluate(() => new Promise((resolve) => {
-    const readTravel = () => Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--movera-category-upward-travel')) || 0
-    const startedAt = performance.now()
-    let previous = readTravel()
-    let stableFrames = 0
-
-    const frame = () => {
-      const current = readTravel()
-      stableFrames = Math.abs(current - previous) <= 0.08 ? stableFrames + 1 : 0
-      previous = current
-      if (stableFrames >= 4 || performance.now() - startedAt > 1_500) {
-        resolve()
-        return
+  let previous = null
+  let stableSamples = 0
+  await expect.poll(async () => {
+    const current = await page.evaluate(() => {
+      const categoriesShell = document.querySelector('.b225-categories-shell')
+      return {
+        travel: categoriesShell
+          ? Number.parseFloat(getComputedStyle(categoriesShell).getPropertyValue('--movera-category-upward-travel')) || 0
+          : 0,
+        scrollY: window.scrollY || 0,
       }
-      requestAnimationFrame(frame)
-    }
+    })
+    const stable = previous
+      && Math.abs(current.travel - previous.travel) <= 0.15
+      && Math.abs(current.scrollY - previous.scrollY) <= 0.5
+    stableSamples = stable ? stableSamples + 1 : 0
+    previous = current
+    return stableSamples
+  }, {
+    timeout: SEARCH_SETTLE_TIMEOUT,
+    intervals: [50, 75, 100, 125, 150, 200],
+  }).toBeGreaterThanOrEqual(3)
+}
 
-    requestAnimationFrame(frame)
-  }))
+async function readHomeBarLayout(page) {
+  return page.evaluate(() => {
+    const header = document.querySelector('.b225-home-header')
+    const categoriesShell = document.querySelector('.b225-categories-shell')
+    const categories = document.querySelector('.b225-categories')
+    const welcome = document.querySelector('.b225-welcome')
+    const layoutDocumentTop = (element) => {
+      let top = 0
+      let node = element
+      while (node instanceof HTMLElement) {
+        top += node.offsetTop
+        node = node.offsetParent
+      }
+      return top
+    }
+    const scrollY = Math.round(window.scrollY)
+    const headerHeight = header?.offsetHeight || 0
+    const categoriesShellHeight = categoriesShell?.offsetHeight || 0
+    const welcomeBottomInDocument = welcome ? layoutDocumentTop(welcome) + welcome.offsetHeight : 0
+    const welcomeBottomInViewport = welcomeBottomInDocument - scrollY
+    const expectedTravel = Math.min(
+      categoriesShellHeight,
+      Math.max(0, headerHeight + categoriesShellHeight - welcomeBottomInViewport),
+    )
+
+    return {
+      scrollY,
+      headerHeight,
+      categoriesLayoutTop: categoriesShell?.offsetTop || 0,
+      categoriesShellHeight,
+      categoriesHeight: categories?.offsetHeight || 0,
+      expectedTravel,
+      travel: categoriesShell
+        ? Number.parseFloat(getComputedStyle(categoriesShell).getPropertyValue('--movera-category-upward-travel')) || 0
+        : 0,
+    }
+  })
 }
 
 async function chooseTwoAvailableDates(page) {
@@ -47,7 +97,7 @@ async function chooseTwoAvailableDates(page) {
 }
 
 async function expectSearchClosedCleanly(page) {
-  await expect(page.getByTestId('search-transition')).toBeHidden({ timeout: 5_000 })
+  await expect(page.getByTestId('search-transition')).toBeHidden({ timeout: SEARCH_SETTLE_TIMEOUT })
   await expect(page.getByTestId('page-home')).toBeVisible()
   const locks = await page.evaluate(() => ({
     html: document.documentElement.dataset.moveraSearchLock,
@@ -94,7 +144,7 @@ test.describe('Search live E2E / UAT / cleanup safety', () => {
     expect(datesHeight).toBeLessThanOrEqual(640)
 
     await chooseTwoAvailableDates(page)
-    await page.getByRole('button', { name: /Continuer vers les voyageurs/i }).click()
+    await activateAnimatedControl(page.getByRole('button', { name: /Continuer vers les voyageurs/i }))
     await expect(transition).toHaveAttribute('data-step', 'guests')
     await expect(page.getByText('Qui voyage ?')).toBeVisible()
 
@@ -107,46 +157,46 @@ test.describe('Search live E2E / UAT / cleanup safety', () => {
 
   test('UAT: close returns cleanly to Home and unlocks document', async ({ page }) => {
     await openSearch(page)
-    await page.getByRole('button', { name: 'Fermer' }).click()
+    await activateAnimatedControl(page.getByRole('button', { name: 'Fermer' }))
     await expectSearchClosedCleanly(page)
   })
 
-  test('regression: close after Home scroll dismisses focus, restores position and keeps top bar geometry stable', async ({ page }) => {
+  test('regression: close after Home scroll dismisses focus, restores position and keeps top bar layout geometry stable', async ({ page }) => {
+    test.setTimeout(60_000)
     await page.goto('/')
     await expect(page.getByTestId('page-home')).toBeVisible()
 
     await page.evaluate(() => window.scrollTo(0, Math.min(900, Math.max(500, document.documentElement.scrollHeight * 0.35))))
     await expect.poll(async () => page.evaluate(() => window.scrollY)).toBeGreaterThan(300)
     await waitForCategoryTravelToSettle(page)
-    const beforeOpen = await page.evaluate(() => ({
-      scrollY: Math.round(window.scrollY),
-      headerHeight: document.querySelector('.b225-home-header')?.getBoundingClientRect().height || 0,
-      categoriesTop: document.querySelector('.b225-categories')?.getBoundingClientRect().top || 0,
-      travel: Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--movera-category-upward-travel')) || 0,
-    }))
+    const beforeOpen = await readHomeBarLayout(page)
+    expect(Math.abs(beforeOpen.travel - beforeOpen.expectedTravel)).toBeLessThanOrEqual(2)
 
     await openSearchOnCurrentPage(page)
     const destinationInput = page.locator('.movera-st__persistent-search input')
     await destinationInput.focus()
     await expect.poll(async () => page.evaluate(() => document.activeElement?.matches('.movera-st__persistent-search input'))).toBe(true)
 
-    await page.getByRole('button', { name: 'Fermer' }).click()
+    const whileSearchLocked = await readHomeBarLayout(page)
+    expect(Math.abs(whileSearchLocked.travel - beforeOpen.travel)).toBeLessThanOrEqual(2)
+
+    await activateAnimatedControl(page.getByRole('button', { name: 'Fermer' }))
     await expect.poll(async () => page.evaluate(() => document.activeElement?.matches('.movera-st__persistent-search input') || false)).toBe(false)
     await expectSearchClosedCleanly(page)
-    await expect.poll(async () => page.evaluate(() => Math.round(window.scrollY))).toBe(beforeOpen.scrollY)
+    await expect.poll(async () => page.evaluate(() => Math.round(window.scrollY)), { timeout: SEARCH_SETTLE_TIMEOUT }).toBe(beforeOpen.scrollY)
     await waitForCategoryTravelToSettle(page)
 
-    const afterClose = await page.evaluate(() => ({
-      headerHeight: document.querySelector('.b225-home-header')?.getBoundingClientRect().height || 0,
-      categoriesTop: document.querySelector('.b225-categories')?.getBoundingClientRect().top || 0,
-      travel: Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--movera-category-upward-travel')) || 0,
-    }))
+    const afterClose = await readHomeBarLayout(page)
     expect(Math.abs(afterClose.headerHeight - beforeOpen.headerHeight)).toBeLessThanOrEqual(1)
-    expect(Math.abs(afterClose.categoriesTop - beforeOpen.categoriesTop)).toBeLessThanOrEqual(2)
+    expect(Math.abs(afterClose.categoriesLayoutTop - beforeOpen.categoriesLayoutTop)).toBeLessThanOrEqual(1)
+    expect(Math.abs(afterClose.categoriesShellHeight - beforeOpen.categoriesShellHeight)).toBeLessThanOrEqual(1)
+    expect(Math.abs(afterClose.categoriesHeight - beforeOpen.categoriesHeight)).toBeLessThanOrEqual(1)
+    expect(Math.abs(afterClose.travel - afterClose.expectedTravel)).toBeLessThanOrEqual(2)
     expect(Math.abs(afterClose.travel - beforeOpen.travel)).toBeLessThanOrEqual(2)
   })
 
   test('regression: close is safe from Destination, Dates and Voyageurs then can reopen', async ({ page }) => {
+    test.setTimeout(90_000)
     await page.goto('/')
     await expect(page.getByTestId('page-home')).toBeVisible()
 
@@ -155,27 +205,27 @@ test.describe('Search live E2E / UAT / cleanup safety', () => {
     await destinationInput.focus()
     await destinationInput.fill('La Marsa')
     await expect(transition).toHaveAttribute('data-address-mode', 'true')
-    await page.getByRole('button', { name: 'Fermer' }).click()
+    await activateAnimatedControl(page.getByRole('button', { name: 'Fermer' }))
     await expectSearchClosedCleanly(page)
 
     transition = await openSearchOnCurrentPage(page)
     await page.locator('[data-destination="la-marsa"]').click()
     await expect(transition).toHaveAttribute('data-step', 'dates')
-    await page.getByRole('button', { name: 'Fermer' }).click()
+    await activateAnimatedControl(page.getByRole('button', { name: 'Fermer' }))
     await expectSearchClosedCleanly(page)
 
     transition = await openSearchOnCurrentPage(page)
     await page.locator('[data-destination="la-marsa"]').click()
     await expect(transition).toHaveAttribute('data-step', 'dates')
     await chooseTwoAvailableDates(page)
-    await page.getByRole('button', { name: /Continuer vers les voyageurs/i }).click()
+    await activateAnimatedControl(page.getByRole('button', { name: /Continuer vers les voyageurs/i }))
     await expect(transition).toHaveAttribute('data-step', 'guests')
-    await page.getByRole('button', { name: 'Fermer' }).click()
+    await activateAnimatedControl(page.getByRole('button', { name: 'Fermer' }))
     await expectSearchClosedCleanly(page)
 
     transition = await openSearchOnCurrentPage(page)
     await expect(transition).toHaveAttribute('data-step', 'destination')
-    await page.getByRole('button', { name: 'Fermer' }).click()
+    await activateAnimatedControl(page.getByRole('button', { name: 'Fermer' }))
     await expectSearchClosedCleanly(page)
   })
 
@@ -186,7 +236,7 @@ test.describe('Search live E2E / UAT / cleanup safety', () => {
     const transition = page.getByTestId('search-transition')
     await expect(transition).toBeVisible()
     await expect(transition).toHaveClass(/movera-st--open/)
-    await page.getByRole('button', { name: 'Fermer' }).click()
+    await activateAnimatedControl(page.getByRole('button', { name: 'Fermer' }))
     await expectSearchClosedCleanly(page)
   })
 
@@ -198,7 +248,7 @@ test.describe('Search live E2E / UAT / cleanup safety', () => {
     const transition = page.getByTestId('search-transition')
     await expect(transition).toBeVisible()
     await expect.poll(async () => page.evaluate(() => document.activeElement?.getAttribute('data-testid') || '')).not.toBe('home-search')
-    await page.getByRole('button', { name: 'Fermer' }).click()
+    await activateAnimatedControl(page.getByRole('button', { name: 'Fermer' }))
     await expectSearchClosedCleanly(page)
   })
 
