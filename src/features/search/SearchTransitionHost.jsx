@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { storageAdapter } from '../../services/storage/storageAdapter.js'
+import { parseMapViewport } from '../map/mapUrlViewport.js'
 import { SearchMapPreview } from '../map-engine/SearchMapPreview.jsx'
 import { beginMapHandoff, endMapHandoff, MAP_READY_EVENT } from './mapHandoff.js'
 import { GuestSelector } from './GuestSelector.jsx'
@@ -70,12 +71,7 @@ function mapSearchStateFromLocation() {
   const destination = destinationById(params.get('destination'))
   if (!destination) return null
 
-  const lat = Number(params.get('lat'))
-  const lng = Number(params.get('lng'))
-  const zoom = Number(params.get('zoom'))
-  const viewport = [lat, lng, zoom].every(Number.isFinite)
-    ? { lat, lng, zoom }
-    : destination.viewport
+  const viewport = parseMapViewport(params) || destination.viewport
   const label = params.get('place')?.trim() || destination.label
 
   return {

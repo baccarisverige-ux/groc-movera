@@ -3,7 +3,7 @@ import { OptimizedListingImage } from '../../shared/media/OptimizedListingImage.
 import { ListingHighlightBadges } from '../../shared/listing/ListingHighlightBadges.jsx'
 import { MotionList, MotionListItem } from '../../shared/motion/MotionList.jsx'
 import { motion, useTransform } from '../../shared/motion/runtime.js'
-import { MapSheetRuntimeSurface } from '../map-sheet/index.js'
+import { MAP_SHEET_EXPANDED_PROGRESS_THRESHOLD, MapSheetRuntimeSurface } from '../map-sheet/index.js'
 import { MAP_OFFER_ITEM_MOTION } from './mapOfferItemMotion.config.js'
 import './map-offer-sheet.css'
 import './map-room-categories.css'
@@ -11,7 +11,7 @@ import '../../styles/map-offer-sheet-premium.css'
 
 const COLLAPSED_PANEL_VISIBLE_PX = 74
 const TOP_BAR_SEAM_OVERLAP_PX = 2
-const ATTACHED_ENTER_PROGRESS = 1
+const ATTACHED_ENTER_PROGRESS = MAP_SHEET_EXPANDED_PROGRESS_THRESHOLD
 const ATTACHED_EXIT_PROGRESS = 0.92
 const IDLE_HINT_INTERVAL_MS = 12000
 const IDLE_HINT_DURATION_MS = 720
@@ -36,7 +36,7 @@ function MapPinIcon() { return <svg viewBox="0 0 24 24" aria-hidden="true"><path
 function listingPriceCopy(listing) { if (listing.priceLabel) return listing.priceLabel; if (listing.priceTotal) return listing.priceTotal; if (listing.nightlyRate != null) return `${listing.nightlyRate} ${listing.currency || 'TND'}`; if (listing.price != null) return `${listing.price} ${listing.currency || 'TND'}`; return '' }
 function roomPhoto(room, fallback) { return room?.photos?.[0]?.src || fallback }
 
-function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListingId, propertyFilter, onPropertyFilterChange, onSelectedListingChange, onNavigate, progress, progressMotion, toggleExpanded, focusListingOnMap, setListElement }) {
+function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListingId, propertyFilter, onPropertyFilterChange, onNavigate, progress, progressMotion, toggleExpanded, focusListingOnMap, setListElement }) {
   const attached = useStableAttached(progress)
   const progressRef = useRef(progress)
   const idleHintResetRef = useRef(null)
@@ -57,7 +57,6 @@ function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListi
   }, [])
 
   const openListing = (listing) => {
-    onSelectedListingChange?.(listing.id)
     const categories = Array.isArray(listing.roomTypes) ? listing.roomTypes : []
     const roomId = roomSelection[listing.id] || categories[0]?.id || ''
     onNavigate?.(`/listing/${listing.id}${categories.length > 1 && roomId ? `?roomType=${encodeURIComponent(roomId)}` : ''}`)
@@ -91,5 +90,5 @@ function MapOfferSheetContent({ listings, cityLabel, headerHeight, selectedListi
 
 export function MapOfferSheet({ listings, cityLabel, headerHeight = 0, selectedListingId, propertyFilter = 'all', onPropertyFilterChange, onSelectedListingChange, onFocusListing, onProgressChange, onNavigate, hidden = false }) {
   const safeHeaderHeight = Math.max(0, (headerHeight || 0) - TOP_BAR_SEAM_OVERLAP_PX)
-  return <MapSheetRuntimeSurface className={`map-offer-sheet${hidden ? ' map-offer-sheet--popup-hidden' : ''}`} ariaLabel={`Offres ${cityLabel}`} collapsedVisiblePx={COLLAPSED_PANEL_VISIBLE_PX + safeHeaderHeight} selectedListingId={selectedListingId} onSelectedListingChange={onSelectedListingChange} onFocusListing={onFocusListing} onProgressChange={onProgressChange}>{({ progress, progressMotion, setListElement, toggleExpanded, focusListingOnMap }) => <MapOfferSheetContent listings={listings} cityLabel={cityLabel} headerHeight={safeHeaderHeight} selectedListingId={selectedListingId} propertyFilter={propertyFilter} onPropertyFilterChange={onPropertyFilterChange} onSelectedListingChange={onSelectedListingChange} onNavigate={onNavigate} progress={progress} progressMotion={progressMotion} toggleExpanded={toggleExpanded} focusListingOnMap={focusListingOnMap} setListElement={setListElement}/>}</MapSheetRuntimeSurface>
+  return <MapSheetRuntimeSurface className={`map-offer-sheet${hidden ? ' map-offer-sheet--popup-hidden' : ''}`} ariaLabel={`Offres ${cityLabel}`} collapsedVisiblePx={COLLAPSED_PANEL_VISIBLE_PX + safeHeaderHeight} selectedListingId={selectedListingId} onSelectedListingChange={onSelectedListingChange} onFocusListing={onFocusListing} onProgressChange={onProgressChange}>{({ progress, progressMotion, setListElement, toggleExpanded, focusListingOnMap }) => <MapOfferSheetContent listings={listings} cityLabel={cityLabel} headerHeight={safeHeaderHeight} selectedListingId={selectedListingId} propertyFilter={propertyFilter} onPropertyFilterChange={onPropertyFilterChange} onNavigate={onNavigate} progress={progress} progressMotion={progressMotion} toggleExpanded={toggleExpanded} focusListingOnMap={focusListingOnMap} setListElement={setListElement}/>}</MapSheetRuntimeSurface>
 }

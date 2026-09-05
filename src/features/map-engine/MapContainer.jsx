@@ -114,10 +114,12 @@ export function MapContainer({
   const handleGoogleStatus = useCallback((status) => {
     setMapProvider(status)
     if (status === 'google') {
+      const hadCustomInteraction = pointersRef.current.size > 0 || pinchGestureRef.current !== null
       pointersRef.current.clear()
       pinchGestureRef.current = null
+      if (hadCustomInteraction) onInteractionChange?.(false)
     }
-  }, [])
+  }, [onInteractionChange])
 
   const handleGoogleViewportChange = useCallback((next) => {
     const lat = Number(next?.lat)

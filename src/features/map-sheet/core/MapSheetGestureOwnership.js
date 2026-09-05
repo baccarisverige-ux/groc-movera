@@ -1,5 +1,5 @@
 import { MAP_SHEET_GESTURE_AXIS, classifyMapSheetTravel } from './MapSheetGesturePolicy.js'
-import { MAP_SHEET_POSITION } from './MapSheetState.js'
+import { MAP_SHEET_EXPANDED_PROGRESS_THRESHOLD, MAP_SHEET_POSITION } from './MapSheetState.js'
 import { MAP_SHEET_SCROLL_OWNER, resolveMapSheetScrollHandoff } from './MapSheetScrollHandoff.js'
 
 export const MAP_SHEET_GESTURE_OWNER = Object.freeze({
@@ -17,10 +17,8 @@ export const MAP_SHEET_GESTURE_AREA = Object.freeze({
   LIST: 'list',
 })
 
-const EXPANDED_PROGRESS_EPSILON = 0.985
-
 function isExpanded({ position, progress }) {
-  return position === MAP_SHEET_POSITION.EXPANDED || Number(progress) >= EXPANDED_PROGRESS_EPSILON
+  return position === MAP_SHEET_POSITION.EXPANDED || Number(progress) >= MAP_SHEET_EXPANDED_PROGRESS_THRESHOLD
 }
 
 export function resolveMapSheetGestureOwner({

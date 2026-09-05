@@ -10,6 +10,7 @@ import { announceMapReady } from '../search/mapHandoff.js'
 import { DESTINATION_VIEWPORTS } from './constants/map.constants.js'
 import { listingMatchesMapFilters } from './mapListingFilters.js'
 import { panToKeepMarkerAbovePopup, panViewportToScreenPoint, parseMapSurfaceViewport, uncoveredMapBottom } from './mapPopupCamera.js'
+import { mapCameraContextKey, parseMapViewport } from './mapUrlViewport.js'
 import { MapOfferPopup } from './MapOfferPopup.jsx'
 import { MapOfferSheet } from './MapOfferSheet.jsx'
 import { MapSearchFilters } from './MapSearchFilters.jsx'
@@ -70,8 +71,6 @@ const COLLECTION_ROUTE_BY_CATEGORY = Object.freeze({ beach: '/plage', guesthouse
 const DESTINATION_LISTING_LOCATIONS = Object.freeze({ 'la-marsa': ['La Marsa'], 'sidi-bou-said': ['Sidi Bou Saïd'], gammarth: ['Gammarth'], carthage: ['Carthage'], tunis: ['Tunis'], hammamet: ['Hammamet'], sousse: ['Sousse'], djerba: ['Djerba'], tozeur: ['Tozeur'] })
 const DESTINATION_LABELS = Object.freeze({ 'la-marsa': 'La Marsa', 'sidi-bou-said': 'Sidi Bou Saïd', gammarth: 'Gammarth', carthage: 'Carthage', hammamet: 'Hammamet', tunis: 'Tunis', sousse: 'Sousse', djerba: 'Djerba', tozeur: 'Tozeur', tabarka: 'Tabarka', nabeul: 'Nabeul', bizerte: 'Bizerte' })
 
-function boundedNumber(searchParams, key, min, max) { const value = Number(searchParams.get(key)); return Number.isFinite(value) && value >= min && value <= max ? value : null }
-function viewportFromSearch(searchParams) { const lat = boundedNumber(searchParams, 'lat', -90, 90); const lng = boundedNumber(searchParams, 'lng', -180, 180); const zoom = boundedNumber(searchParams, 'zoom', 1, 20); return lat === null || lng === null || zoom === null ? null : { lat, lng, zoom } }
 function collectionFallbackPath(listingId) { const listing = getGuestListingById(listingId); if (!listing) return '/'; const categories = String(listing.category || '').split(' '); const category = categories.find((item) => COLLECTION_ROUTE_BY_CATEGORY[item]); return category ? COLLECTION_ROUTE_BY_CATEGORY[category] : '/' }
 function listingsForMapContext(offers, requestedDestination, requestedListing) {
   if (requestedDestination) { const locations = DESTINATION_LISTING_LOCATIONS[requestedDestination]; if (!locations) return []; return offers.filter((listing) => locations.includes(listing.location)) }
@@ -87,11 +86,11 @@ export function MapPage({ onNavigate }) {
   const searchTriggered = searchParams.get('search') === '1'
   const requestedPlace = searchParams.get('place')?.trim() || ''
   const requestedDateLabel = formatSearchDateRange(searchParams.get('checkin'), searchParams.get('checkout'))
-  const mapContextKey = requestedDestination || requestedListing || searchString || 'grand-tunis'
+  const mapContextKey = useMemo(() => mapCameraContextKey(searchParams), [searchParams])
   const [homeOffers, setHomeOffers] = useState(() => listMapGuestListings())
   const markers = useMemo(() => homeOffers.map((listing) => { const position = getListingMapPosition(listing.id); if (!position) return null; return { id: listing.id, label: listing.title, price: formatMapPrice(listing), ...position } }).filter(Boolean), [homeOffers])
   const selectedMarker = requestedListing ? markers.find((marker) => marker.id === requestedListing) || null : null
-  const handoffViewport = useMemo(() => viewportFromSearch(searchParams), [searchParams])
+  const handoffViewport = useMemo(() => parseMapViewport(searchParams), [searchParams])
   const destinationViewport = requestedDestination ? DESTINATION_VIEWPORTS[requestedDestination] || null : null
   const listingViewport = useMemo(() => selectedMarker ? { lat: selectedMarker.lat, lng: selectedMarker.lng, zoom: 13.5 } : null, [selectedMarker])
   const initialViewport = handoffViewport || listingViewport || destinationViewport || INITIAL_VIEWPORT
@@ -191,11 +190,7 @@ export function MapPage({ onNavigate }) {
 
   const handleSheetSelectedListingChange = useCallback((listingId) => {
     setSelectedListingId(listingId)
-    const marker = visibleMarkers.find((item) => item.id === listingId)
-    if (!marker) return
-    const current = liveViewportRef.current || initialViewport
-    issueViewportCommand({ lat: marker.lat, lng: marker.lng, zoom: Math.min(17, Math.max(13.6, current.zoom)) })
-  }, [visibleMarkers, initialViewport, setSelectedListingId, issueViewportCommand])
+  }, [setSelectedListingId])
   const focusListingFromSheet = useCallback((listingId) => {
     const marker = visibleMarkers.find((item) => item.id === listingId)
     if (!marker) return
