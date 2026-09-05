@@ -49,15 +49,23 @@ jobs:
   browser-quality:
     name: Browser · ${{ matrix.project }} · E2E · Responsive · A11y
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
-        project:
-          - desktop-chromium
-          - mobile-chromium
-          - desktop-webkit
-          - mobile-webkit
+        include:
+          - project: desktop-chromium
+            browser: chromium
+            workers: 2
+          - project: mobile-chromium
+            browser: chromium
+            workers: 2
+          - project: desktop-webkit
+            browser: webkit
+            workers: 1
+          - project: mobile-webkit
+            browser: webkit
+            workers: 1
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -67,12 +75,12 @@ jobs:
       - run: npm ci
       - name: Install browser quality tools
         run: npm install --no-save --package-lock=false @playwright/test@1.55.0 @axe-core/playwright@4.13.0
-      - name: Install Chromium and WebKit with system dependencies
-        run: npx playwright install --with-deps chromium webkit
+      - name: Install target browser with system dependencies
+        run: npx playwright install --with-deps ${{ matrix.browser }}
       - name: Responsive baseline
         run: npx playwright test tests/e2e/responsive-baseline.spec.js --project=${{ matrix.project }}
       - name: Full E2E and accessibility
-        run: npx playwright test tests/e2e tests/accessibility --project=${{ matrix.project }}
+        run: npx playwright test tests/e2e tests/accessibility --project=${{ matrix.project }} --workers=${{ matrix.workers }}
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
