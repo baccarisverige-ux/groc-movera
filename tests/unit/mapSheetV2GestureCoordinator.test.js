@@ -102,6 +102,29 @@ describe('Map Sheet V2 gesture coordinator', () => {
     expect(harness.machine.getState().progress).toBeLessThan(1)
   })
 
+  it('keeps sheet ownership sticky after claim even if the finger reverses direction', () => {
+    const harness = createCoordinatorHarness({ position: MAP_SHEET_POSITION.EXPANDED, scroll: { atTop: true } })
+    const origin = { area: MAP_SHEET_GESTURE_AREA.LIST, startsOnFirstOffer: true }
+
+    harness.gestures.emit(frame({ phase: MAP_SHEET_GESTURE_PHASE.START, y: 300, startY: 300, origin }))
+    harness.gestures.emit(frame({ phase: MAP_SHEET_GESTURE_PHASE.MOVE, y: 360, startY: 300, velocityY: 350, origin }))
+    expect(harness.machine.getState().progress).toBeCloseTo(0.88, 2)
+    expect(harness.gestures.isClaimed(7)).toBe(true)
+
+    // Reverse above the original start point. Ownership must not jump back to
+    // native list scrolling mid-gesture after the sheet already claimed it.
+    harness.gestures.emit(frame({ phase: MAP_SHEET_GESTURE_PHASE.MOVE, y: 260, startY: 300, velocityY: -420, origin }))
+
+    expect(harness.machine.getState().mode).toBe(MAP_SHEET_MODE.SHEET_DRAGGING)
+    expect(harness.machine.getState().progress).toBe(1)
+    expect(harness.gestures.gesture.claim).toHaveBeenCalledTimes(1)
+    expect(harness.gestures.isClaimed(7)).toBe(true)
+
+    harness.gestures.emit(frame({ phase: MAP_SHEET_GESTURE_PHASE.END, y: 260, startY: 300, velocityY: -420, origin }))
+    expect(harness.gestures.isClaimed(7)).toBe(false)
+    expect(harness.onSheetRelease).toHaveBeenCalledTimes(1)
+  })
+
   it('never steals a horizontal rail gesture', () => {
     const harness = createCoordinatorHarness({ position: MAP_SHEET_POSITION.MIDDLE })
     const origin = { area: MAP_SHEET_GESTURE_AREA.PROPERTY_RAIL, startsOnFirstOffer: false }
