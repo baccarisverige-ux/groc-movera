@@ -1,13 +1,8 @@
-import { useEffect, useState } from 'react'
 import { TILE_SIZE, project } from '../geometry/geometry.js'
 import { GoogleMapLayer } from './GoogleMapLayer.jsx'
 
 const CARTO_SUBDOMAINS = Object.freeze(['a', 'b', 'c', 'd'])
 const CARTO_API_KEY = String(import.meta.env.VITE_CARTO_API_KEY || '').trim()
-
-function googleMapsRuntimeEnabled() {
-  return typeof window !== 'undefined' && window.__MOVERA_GOOGLE_MAPS_ENABLED__ === true
-}
 
 function cartoVoyagerUrl(zoom, x, y) {
   const subdomain = CARTO_SUBDOMAINS[Math.abs(x + y) % CARTO_SUBDOMAINS.length]
@@ -62,35 +57,7 @@ export function TileLayer({
   onGoogleMarkerSelect,
   onGoogleClusterFocus,
 }) {
-  const useGoogleMaps = googleMapsRuntimeEnabled()
   const fallback = showFallbackTiles ? fallbackTiles(viewport, size) : null
-  const fallbackKey = fallback
-    ? `${fallback.zoom}:${fallback.tiles.map((tile) => `${tile.wrappedX}-${tile.y}`).join(',')}`
-    : 'none'
-  const [tileStatus, setTileStatus] = useState({ key: fallbackKey, loaded: 0, failed: 0 })
-  const currentTileStatus = tileStatus.key === fallbackKey ? tileStatus : { key: fallbackKey, loaded: 0, failed: 0 }
-
-  useEffect(() => {
-    setTileStatus({ key: fallbackKey, loaded: 0, failed: 0 })
-  }, [fallbackKey])
-
-  useEffect(() => {
-    if (!useGoogleMaps) onGoogleStatus?.('fallback')
-  }, [useGoogleMaps, onGoogleStatus])
-
-  const settleTile = (image, result) => {
-    if (image.dataset.tileSettled === 'true') return
-    image.dataset.tileSettled = 'true'
-    setTileStatus((current) => {
-      const base = current.key === fallbackKey ? current : { key: fallbackKey, loaded: 0, failed: 0 }
-      return { ...base, [result]: base[result] + 1 }
-    })
-  }
-
-  const tileCount = fallback?.tiles.length || 0
-  const tilesUnavailable = tileCount > 0
-    && currentTileStatus.loaded === 0
-    && currentTileStatus.failed >= tileCount
 
   return (
     <>
@@ -121,10 +88,7 @@ export function TileLayer({
                   loading="eager"
                   src={src}
                   data-fallback-src={fallbackSrc}
-                  onLoad={(event) => {
-                    event.currentTarget.style.visibility = 'visible'
-                    settleTile(event.currentTarget, 'loaded')
-                  }}
+                  onLoad={(event) => { event.currentTarget.style.visibility = 'visible' }}
                   onError={(event) => {
                     const image = event.currentTarget
                     const fallbackSrcValue = image.dataset.fallbackSrc
@@ -134,7 +98,6 @@ export function TileLayer({
                       return
                     }
                     image.style.visibility = 'hidden'
-                    settleTile(image, 'failed')
                   }}
                 />
               </div>
@@ -142,25 +105,17 @@ export function TileLayer({
           })}
         </div>
       ) : null}
-      {tilesUnavailable ? (
-        <div className="map-tile-fallback" data-testid="map-tile-fallback" role="status">
-          <strong>Carte momentanément indisponible</strong>
-          <span>Les offres restent consultables.</span>
-        </div>
-      ) : null}
-      {useGoogleMaps ? (
-        <GoogleMapLayer
-          viewport={viewport}
-          viewportSource={viewportSource}
-          markers={markers}
-          interactive={interactive}
-          onStatus={onGoogleStatus}
-          onViewportChange={onGoogleViewportChange}
-          onInteractionChange={onGoogleInteractionChange}
-          onMarkerSelect={onGoogleMarkerSelect}
-          onClusterFocus={onGoogleClusterFocus}
-        />
-      ) : null}
+      <GoogleMapLayer
+        viewport={viewport}
+        viewportSource={viewportSource}
+        markers={markers}
+        interactive={interactive}
+        onStatus={onGoogleStatus}
+        onViewportChange={onGoogleViewportChange}
+        onInteractionChange={onGoogleInteractionChange}
+        onMarkerSelect={onGoogleMarkerSelect}
+        onClusterFocus={onGoogleClusterFocus}
+      />
     </>
   )
 }
