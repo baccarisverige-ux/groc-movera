@@ -52,12 +52,33 @@ async function readHomeBarLayout(page) {
     const header = document.querySelector('.b225-home-header')
     const categoriesShell = document.querySelector('.b225-categories-shell')
     const categories = document.querySelector('.b225-categories')
+    const welcome = document.querySelector('.b225-welcome')
+    const layoutDocumentTop = (element) => {
+      let top = 0
+      let node = element
+      while (node instanceof HTMLElement) {
+        top += node.offsetTop
+        node = node.offsetParent
+      }
+      return top
+    }
+    const scrollY = Math.round(window.scrollY)
+    const headerHeight = header?.offsetHeight || 0
+    const categoriesShellHeight = categoriesShell?.offsetHeight || 0
+    const welcomeBottomInDocument = welcome ? layoutDocumentTop(welcome) + welcome.offsetHeight : 0
+    const welcomeBottomInViewport = welcomeBottomInDocument - scrollY
+    const expectedTravel = Math.min(
+      categoriesShellHeight,
+      Math.max(0, headerHeight + categoriesShellHeight - welcomeBottomInViewport),
+    )
+
     return {
-      scrollY: Math.round(window.scrollY),
-      headerHeight: header?.offsetHeight || 0,
+      scrollY,
+      headerHeight,
       categoriesLayoutTop: categoriesShell?.offsetTop || 0,
-      categoriesShellHeight: categoriesShell?.offsetHeight || 0,
+      categoriesShellHeight,
       categoriesHeight: categories?.offsetHeight || 0,
+      expectedTravel,
       travel: categoriesShell
         ? Number.parseFloat(getComputedStyle(categoriesShell).getPropertyValue('--movera-category-upward-travel')) || 0
         : 0,
@@ -149,11 +170,15 @@ test.describe('Search live E2E / UAT / cleanup safety', () => {
     await expect.poll(async () => page.evaluate(() => window.scrollY)).toBeGreaterThan(300)
     await waitForCategoryTravelToSettle(page)
     const beforeOpen = await readHomeBarLayout(page)
+    expect(Math.abs(beforeOpen.travel - beforeOpen.expectedTravel)).toBeLessThanOrEqual(2)
 
     await openSearchOnCurrentPage(page)
     const destinationInput = page.locator('.movera-st__persistent-search input')
     await destinationInput.focus()
     await expect.poll(async () => page.evaluate(() => document.activeElement?.matches('.movera-st__persistent-search input'))).toBe(true)
+
+    const whileSearchLocked = await readHomeBarLayout(page)
+    expect(Math.abs(whileSearchLocked.travel - beforeOpen.travel)).toBeLessThanOrEqual(2)
 
     await activateAnimatedControl(page.getByRole('button', { name: 'Fermer' }))
     await expect.poll(async () => page.evaluate(() => document.activeElement?.matches('.movera-st__persistent-search input') || false)).toBe(false)
@@ -166,6 +191,7 @@ test.describe('Search live E2E / UAT / cleanup safety', () => {
     expect(Math.abs(afterClose.categoriesLayoutTop - beforeOpen.categoriesLayoutTop)).toBeLessThanOrEqual(1)
     expect(Math.abs(afterClose.categoriesShellHeight - beforeOpen.categoriesShellHeight)).toBeLessThanOrEqual(1)
     expect(Math.abs(afterClose.categoriesHeight - beforeOpen.categoriesHeight)).toBeLessThanOrEqual(1)
+    expect(Math.abs(afterClose.travel - afterClose.expectedTravel)).toBeLessThanOrEqual(2)
     expect(Math.abs(afterClose.travel - beforeOpen.travel)).toBeLessThanOrEqual(2)
   })
 
