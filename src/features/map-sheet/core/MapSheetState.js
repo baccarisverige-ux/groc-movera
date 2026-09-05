@@ -19,6 +19,8 @@ export const MAP_SHEET_POSITION_PROGRESS = Object.freeze({
   [MAP_SHEET_POSITION.EXPANDED]: 1,
 })
 
+export const MAP_SHEET_EXPANDED_PROGRESS_THRESHOLD = 0.985
+
 const VALID_POSITIONS = new Set(Object.values(MAP_SHEET_POSITION))
 
 export function clampMapSheetProgress(value) {
