@@ -128,6 +128,89 @@ describe('Map Sheet V2 browser adapters', () => {
     port.destroy()
   })
 
+  it('releases an iOS sheet gesture when touchend lands outside the transformed surface', () => {
+    const surface = new FakeSurface()
+    const globalTarget = new FakeSurface()
+    const port = assertMapSheetGesturePort(createIOSGestureAdapter({
+      surface,
+      globalTarget,
+      describeOrigin: () => ({ area: 'list', startsOnFirstOffer: true }),
+    }))
+    const frames = []
+
+    port.subscribe((frame) => {
+      frames.push(frame)
+      if (frame.phase === 'move' && frame.deltaY > 10) port.claim(frame.pointerId)
+    })
+
+    surface.dispatch('touchstart', preventableEvent({
+      touches: [touch(3, 120, 240)],
+      changedTouches: [touch(3, 120, 240)],
+      timeStamp: 10,
+    }))
+    surface.dispatch('touchmove', preventableEvent({
+      touches: [touch(3, 120, 285)],
+      changedTouches: [touch(3, 120, 285)],
+      timeStamp: 30,
+    }))
+
+    globalTarget.dispatch('touchend', preventableEvent({
+      touches: [],
+      changedTouches: [touch(3, 120, 285)],
+      timeStamp: 40,
+    }))
+
+    surface.dispatch('touchstart', preventableEvent({
+      touches: [touch(4, 130, 250)],
+      changedTouches: [touch(4, 130, 250)],
+      timeStamp: 60,
+    }))
+    surface.dispatch('touchend', preventableEvent({
+      touches: [],
+      changedTouches: [touch(4, 130, 250)],
+      timeStamp: 70,
+    }))
+
+    expect(frames.map((frame) => frame.phase)).toEqual(['start', 'move', 'end', 'start', 'end'])
+    port.destroy()
+  })
+
+  it('self-heals a stale iOS session when a fresh single-touch interaction begins', () => {
+    const surface = new FakeSurface()
+    const port = assertMapSheetGesturePort(createIOSGestureAdapter({
+      surface,
+      globalTarget: null,
+      describeOrigin: () => ({ area: 'list', startsOnFirstOffer: true }),
+    }))
+    const frames = []
+
+    port.subscribe((frame) => frames.push(frame))
+
+    surface.dispatch('touchstart', preventableEvent({
+      touches: [touch(3, 120, 240)],
+      changedTouches: [touch(3, 120, 240)],
+      timeStamp: 10,
+    }))
+
+    // Deliberately omit touchend/touchcancel to model Safari losing the end
+    // while the sheet transitions from a native scrolling layer.
+    surface.dispatch('touchstart', preventableEvent({
+      touches: [touch(4, 130, 250)],
+      changedTouches: [touch(4, 130, 250)],
+      timeStamp: 60,
+    }))
+    surface.dispatch('touchend', preventableEvent({
+      touches: [],
+      changedTouches: [touch(4, 130, 250)],
+      timeStamp: 70,
+    }))
+
+    expect(frames.map((frame) => frame.phase)).toEqual(['start', 'cancel', 'start', 'end'])
+    expect(frames[1].pointerId).toBe(3)
+    expect(frames[2].pointerId).toBe(4)
+    port.destroy()
+  })
+
   it('normalizes iOS rubber-band scroll values before ownership decisions', () => {
     const topBounce = normalizeIOSScrollSnapshot({
       scrollTop: -18,
