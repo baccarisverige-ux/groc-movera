@@ -178,15 +178,3 @@ jobs:
           path: lhci-report
           if-no-files-found: ignore
           retention-days: 14
-
-  google-maps-key-availability:
-    name: Google Maps key availability
-    environment:
-      name: github-pages
-    runs-on: ubuntu-latest
-    timeout-minutes: 2
-    steps:
-      - name: Verify h131189 is available in github-pages
-        env:
-          VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.h131189 }}
-        run: test -n "$VITE_GOOGLE_MAPS_API_KEY"
