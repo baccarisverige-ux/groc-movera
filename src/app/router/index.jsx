@@ -3,43 +3,9 @@ import { GuestLayout } from '../layouts/GuestLayout.jsx'
 import { AuthRequiredPage } from '../../features/auth/AuthRequiredPage.jsx'
 import { useAuthSession } from '../../features/auth/authSession.js'
 import { routeDefinitions, NotFoundPage } from './routes.jsx'
+import { toBrowserPath, toInternalPath } from './basePath.js'
 
-const BASE_PATH = import.meta.env.BASE_URL === '/' ? '' : import.meta.env.BASE_URL.replace(/\/$/, '')
-const COMPAT_BASE_PATHS = ['/groc-movera', '/Movera-host1']
 const SCROLL_STATE_KEY = '__moveraScrollY'
-
-function stripBasePath(pathname, basePath) {
-  if (!basePath) return null
-  if (pathname === basePath || pathname === `${basePath}/`) return '/'
-  if (pathname.startsWith(`${basePath}/`)) return pathname.slice(basePath.length) || '/'
-  return null
-}
-
-function toInternalPath(pathname) {
-  const value = pathname || '/'
-  const activeBasePath = stripBasePath(value, BASE_PATH)
-  if (activeBasePath) return activeBasePath
-
-  for (const compatibleBasePath of COMPAT_BASE_PATHS) {
-    const compatiblePath = stripBasePath(value, compatibleBasePath)
-    if (compatiblePath) return compatiblePath
-  }
-
-  return value
-}
-
-function runtimeBasePath() {
-  if (BASE_PATH) return BASE_PATH
-  const pathname = window.location.pathname || '/'
-  return COMPAT_BASE_PATHS.find((basePath) => stripBasePath(pathname, basePath)) || ''
-}
-
-function toBrowserPath(to) {
-  const basePath = runtimeBasePath()
-  if (!basePath) return to
-  if (to === '/') return `${basePath}/`
-  return `${basePath}${to.startsWith('/') ? to : `/${to}`}`
-}
 
 function readDocumentScrollY() {
   const body = document.body
@@ -73,7 +39,12 @@ function resolveRoute(pathname){for(const route of compiledRoutes){const match=p
 
 export function navigate(to){
   const browserPath=toBrowserPath(to)
-  if(`${window.location.pathname}${window.location.search}`===browserPath)return
+  const currentPath=`${window.location.pathname}${window.location.search}${window.location.hash}`
+  if(currentPath===browserPath){
+    const state=currentHistoryState()
+    window.dispatchEvent(new PopStateEvent('popstate',{state}))
+    return
+  }
   saveCurrentScrollPosition()
   const nextState = { [SCROLL_STATE_KEY]: 0 }
   window.history.pushState(nextState,'',browserPath)
