@@ -16,7 +16,7 @@
     "test:e2e:chromium": "npx --yes @playwright/test@1.55.0 test tests/e2e --project=desktop-chromium --project=mobile-chromium",
     "test:e2e:webkit": "npx --yes @playwright/test@1.55.0 test tests/e2e --project=desktop-webkit --project=mobile-webkit",
     "test:responsive": "npx --yes @playwright/test@1.55.0 test tests/e2e/responsive-baseline.spec.js --project=desktop-chromium",
-    "test:map-regressions": "npx --yes @playwright/test@1.55.0 test tests/e2e/critical-regressions.spec.js tests/e2e/map-city-offer-sheet.spec.js tests/e2e/map-offer-popup.spec.js tests/e2e/map-sheet-touch-regressions.spec.js tests/e2e/map-sheet-repeat-focus.spec.js tests/e2e/map-phase1-stability.spec.js",
+    "test:map-regressions": "npx --yes @playwright/test@1.55.0 test tests/e2e/critical-regressions.spec.js tests/e2e/map-city-offer-sheet.spec.js tests/e2e/map-offer-popup.spec.js tests/e2e/map-sheet-touch-regressions.spec.js tests/e2e/map-sheet-repeat-focus.spec.js tests/e2e/map-phase1-stability.spec.js tests/e2e/map-phase3-filters.spec.js",
     "test:a11y": "npx --yes @playwright/test@1.55.0 test tests/accessibility",
     "test:all": "npm run test:unit && npm run test:integration && npm run test:e2e && npm run test:a11y",
     "quality:architecture": "node scripts/check-architecture.mjs && node scripts/check-map-sheet-architecture.mjs && node scripts/check-map-sheet-retired-runtime.mjs && node scripts/check-release-gates.mjs",
