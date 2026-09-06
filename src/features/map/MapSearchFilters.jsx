@@ -41,26 +41,6 @@ export function MapSearchFilters({
     return () => document.removeEventListener('input', syncPopupDraft, true)
   }, [])
 
-  const openSearchPopup = (event) => {
-    const trigger = event.currentTarget
-    if (!trigger || trigger.dataset.searchDispatching === 'true') return
-
-    const homeProxy = document.createElement('span')
-    homeProxy.hidden = true
-    homeProxy.setAttribute('aria-hidden', 'true')
-    homeProxy.setAttribute('data-testid', 'page-home')
-    homeProxy.setAttribute('data-map-search-proxy', 'true')
-    document.body.appendChild(homeProxy)
-
-    trigger.dataset.searchDispatching = 'true'
-    try {
-      trigger.click()
-    } finally {
-      delete trigger.dataset.searchDispatching
-      homeProxy.remove()
-    }
-  }
-
   const revealFilters = () => {
     const rail = filterRailRef.current
     if (!rail) return
@@ -105,7 +85,6 @@ export function MapSearchFilters({
           <button
             type="button"
             className="map-search-filter-stack__search-pill b225-search"
-            onClick={openSearchPopup}
             aria-label="Modifier la recherche"
           >
             <span className="map-search-filter-stack__search-copy">
