@@ -1,16 +1,19 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { HOST_PROFILE_EVENT } from '../../entities/host/hostProfileStore.js'
 import { getListingMapPosition } from '../../entities/listing/listingMapPositions.js'
+import { listingMapPrice } from '../../entities/listing/listingPrice.js'
 import { getGuestListingById, listMapGuestListings } from '../listing/guestListings.js'
 import { ArrowLeftIcon } from '../../shared/icons/AppIcons.jsx'
 import '../../styles/map-b225.css'
 import '../../styles/map-return-offers.css'
+import { MAP_SHEET_EXPANDED_PROGRESS_THRESHOLD } from '../map-sheet/index.js'
 import { INITIAL_VIEWPORT, MapContainer } from '../map-engine/MapContainer.jsx'
 import { announceMapReady } from '../search/mapHandoff.js'
 import { DESTINATION_VIEWPORTS } from './constants/map.constants.js'
 import { listingMatchesMapFilters } from './mapListingFilters.js'
 import { panToKeepMarkerAbovePopup, panViewportToScreenPoint, parseMapSurfaceViewport, uncoveredMapBottom } from './mapPopupCamera.js'
-import { mapCameraContextKey, parseMapViewport } from './mapUrlViewport.js'
+import { mapCameraContextKey, parseMapSearchContext } from './mapUrlViewport.js'
+import { createMapViewportCommand, normalizeMapViewport, viewportCommandForContext } from './mapViewportCommand.js'
 import { MapOfferPopup } from './MapOfferPopup.jsx'
 import { MapOfferSheet } from './MapOfferSheet.jsx'
 import { MapSearchFilters } from './MapSearchFilters.jsx'
@@ -18,15 +21,6 @@ import '../../styles/map-page-cleanup.css'
 
 const MAP_GESTURE_SETTLE_MS = 500
 const GRAND_TUNIS_LOCATIONS = Object.freeze(['La Marsa', 'Sidi Bou Saïd', 'Gammarth', 'Carthage', 'Tunis'])
-
-function formatMapPrice(listing) {
-  const source = `${listing.priceTotal || listing.priceLabel || ''}`
-  const match = source.match(/(\d[\d\s]*)\s*TND/i)
-  if (match) return `${match[1].replace(/\s/g, '')} TND`
-  const rate = listing.nightlyRate ?? listing.price
-  if (rate != null && Number.isFinite(Number(rate))) return `${Number(rate)} ${listing.currency || 'TND'}`
-  return 'TND'
-}
 
 function formatSearchDate(value) {
   if (!value) return ''
@@ -60,13 +54,6 @@ function listingHasDiscount(listing) {
   return Array.isArray(listing?.promotions) && listing.promotions.length > 0
 }
 
-function validViewport(viewport) {
-  return viewport
-    && Number.isFinite(Number(viewport.lat))
-    && Number.isFinite(Number(viewport.lng))
-    && Number.isFinite(Number(viewport.zoom))
-}
-
 const COLLECTION_ROUTE_BY_CATEGORY = Object.freeze({ beach: '/plage', guesthouse: '/maison-d-hote', hotel: '/hotel', family: '/appartement', prestige: '/villa' })
 const DESTINATION_LISTING_LOCATIONS = Object.freeze({ 'la-marsa': ['La Marsa'], 'sidi-bou-said': ['Sidi Bou Saïd'], gammarth: ['Gammarth'], carthage: ['Carthage'], tunis: ['Tunis'], hammamet: ['Hammamet'], sousse: ['Sousse'], djerba: ['Djerba'], tozeur: ['Tozeur'] })
 const DESTINATION_LABELS = Object.freeze({ 'la-marsa': 'La Marsa', 'sidi-bou-said': 'Sidi Bou Saïd', gammarth: 'Gammarth', carthage: 'Carthage', hammamet: 'Hammamet', tunis: 'Tunis', sousse: 'Sousse', djerba: 'Djerba', tozeur: 'Tozeur', tabarka: 'Tabarka', nabeul: 'Nabeul', bizerte: 'Bizerte' })
@@ -81,16 +68,17 @@ function listingsForMapContext(offers, requestedDestination, requestedListing) {
 export function MapPage({ onNavigate }) {
   const searchString = window.location.search
   const searchParams = useMemo(() => new URLSearchParams(searchString), [searchString])
-  const requestedDestination = searchParams.get('destination')
-  const requestedListing = searchParams.get('listing')
-  const searchTriggered = searchParams.get('search') === '1'
-  const requestedPlace = searchParams.get('place')?.trim() || ''
-  const requestedDateLabel = formatSearchDateRange(searchParams.get('checkin'), searchParams.get('checkout'))
+  const searchContext = useMemo(() => parseMapSearchContext(searchParams), [searchParams])
+  const requestedDestination = searchContext.destination
+  const requestedListing = searchContext.listing
+  const searchTriggered = searchContext.searchTriggered
+  const requestedPlace = searchContext.place
+  const requestedDateLabel = formatSearchDateRange(searchContext.checkin, searchContext.checkout)
   const mapContextKey = useMemo(() => mapCameraContextKey(searchParams), [searchParams])
   const [homeOffers, setHomeOffers] = useState(() => listMapGuestListings())
-  const markers = useMemo(() => homeOffers.map((listing) => { const position = getListingMapPosition(listing.id); if (!position) return null; return { id: listing.id, label: listing.title, price: formatMapPrice(listing), ...position } }).filter(Boolean), [homeOffers])
+  const markers = useMemo(() => homeOffers.map((listing) => { const position = getListingMapPosition(listing.id); if (!position) return null; return { id: listing.id, label: listing.title, price: listingMapPrice(listing), ...position } }).filter(Boolean), [homeOffers])
   const selectedMarker = requestedListing ? markers.find((marker) => marker.id === requestedListing) || null : null
-  const handoffViewport = useMemo(() => parseMapViewport(searchParams), [searchParams])
+  const handoffViewport = searchContext.viewport
   const destinationViewport = requestedDestination ? DESTINATION_VIEWPORTS[requestedDestination] || null : null
   const listingViewport = useMemo(() => selectedMarker ? { lat: selectedMarker.lat, lng: selectedMarker.lng, zoom: 13.5 } : null, [selectedMarker])
   const initialViewport = handoffViewport || listingViewport || destinationViewport || INITIAL_VIEWPORT
@@ -111,7 +99,7 @@ export function MapPage({ onNavigate }) {
   const [mapInteracting, setMapInteracting] = useState(false)
   const [popupOpen, setPopupOpen] = useState(false)
   const selectedListingId = selectionState.contextKey === mapContextKey ? selectionState.id : selectedMarker?.id || null
-  const viewportCommand = viewportState.contextKey === mapContextKey ? viewportState.command : null
+  const viewportCommand = viewportCommandForContext(viewportState, mapContextKey)
 
   useEffect(() => {
     liveViewportRef.current = initialViewport
@@ -135,10 +123,14 @@ export function MapPage({ onNavigate }) {
   }, [])
 
   const setSelectedListingId = useCallback((id) => { setSelectionState({ contextKey: mapContextKey, id }) }, [mapContextKey])
-  const issueViewportCommand = useCallback((command) => { setViewportState({ contextKey: mapContextKey, command: { ...command, revision: performance.now() } }) }, [mapContextKey])
+  const issueViewportCommand = useCallback((viewport) => {
+    const command = createMapViewportCommand(viewport)
+    if (!command) return
+    setViewportState({ contextKey: mapContextKey, command })
+  }, [mapContextKey])
   const handleViewportChange = useCallback((nextViewport, meta = {}) => {
-    if (!validViewport(nextViewport)) return
-    const next = { lat: Number(nextViewport.lat), lng: Number(nextViewport.lng), zoom: Number(nextViewport.zoom) }
+    const next = normalizeMapViewport(nextViewport)
+    if (!next) return
     liveViewportRef.current = next
     if (sheetProgressRef.current <= 0.015 && meta.source !== 'command') sheetBaseViewportRef.current = next
   }, [])
@@ -181,7 +173,7 @@ export function MapPage({ onNavigate }) {
 
     if (boundedProgress > 0.14 && !selectedListingId && cityListings[0]) setSelectedListingId(cityListings[0].id)
 
-    const settledSnap = boundedProgress >= 0.985 ? 'expanded' : boundedProgress <= 0.015 ? 'collapsed' : null
+    const settledSnap = boundedProgress >= MAP_SHEET_EXPANDED_PROGRESS_THRESHOLD ? 'expanded' : boundedProgress <= 0.015 ? 'collapsed' : null
     if (settledSnap) sheetSnapRef.current = settledSnap
 
     const autoCameraBlocked = mapInteractionRef.current || performance.now() < mapAutoCameraBlockedUntilRef.current
