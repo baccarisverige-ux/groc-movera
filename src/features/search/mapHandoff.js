@@ -23,9 +23,12 @@ function announceAfterPaint() {
   })
 }
 
+function mountedMapSurface() {
+  return document.querySelector('[data-testid="page-map"] [data-testid="map-surface"]')
+}
+
 function waitForMapSurface() {
-  const page = document.querySelector('[data-testid="page-map"]')
-  const surface = page?.querySelector('[data-testid="map-surface"]') || null
+  const surface = mountedMapSurface()
   if (surface) {
     const rect = surface.getBoundingClientRect()
     const measuredWidth = Number(surface.dataset.width)
@@ -52,6 +55,15 @@ function armNavigationProbe() {
   navigationListener = () => {
     window.removeEventListener('popstate', navigationListener)
     navigationListener = null
+
+    // Map → Search → the same Map camera context keeps the existing Map mounted.
+    // Two paints let the router/search metadata settle without waiting for a
+    // context-key remount that will never happen for guest/date-only changes.
+    if (mountedMapSurface()) {
+      announceAfterPaint()
+      return
+    }
+
     probeStartedAt = performance.now()
     probeFrame = window.requestAnimationFrame(waitForMapSurface)
   }
