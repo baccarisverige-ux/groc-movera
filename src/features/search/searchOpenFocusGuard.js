@@ -4,9 +4,19 @@ const SEARCH_CLOSE_CONTROL = '.movera-st__persistent-toggle, .movera-st__close'
 const KEYBOARD_FREE_STEPS = new Set(['dates', 'guests'])
 let searchWasMounted = false
 
+/* Only text-entry elements summon the mobile soft keyboard, so only those may
+   be blurred here. Blurring anything focusable also swallowed keyboard focus on
+   the dates/guests steps: every Tab landed on a control and was dropped on the
+   next frame, which left those two steps unusable without a pointer. */
+const KEYBOARD_FIELD_SELECTOR = 'input, textarea, [contenteditable=""], [contenteditable="true"]'
+
+function isKeyboardField(element) {
+  return element instanceof HTMLElement && element.matches(KEYBOARD_FIELD_SELECTOR)
+}
+
 function blurCurrentField() {
   const active = document.activeElement
-  if (active instanceof HTMLElement && active !== document.body) active.blur()
+  if (active !== document.body && isKeyboardField(active)) active.blur()
 }
 
 function dismissKeyboardNow() {

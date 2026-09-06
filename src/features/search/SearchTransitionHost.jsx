@@ -108,6 +108,7 @@ export function SearchTransitionHost({ onNavigate }) {
   const closingRef = useRef(false)
   const openedFromMapRef = useRef(false)
   const mapDraftRef = useRef({ key: '', value: null })
+  const dialogRef = useRef(null)
 
   const selectedViewport = state.destination?.viewport || SEARCH_OVERVIEW_VIEWPORT
   const datesValid = isDateRangeValid(state.checkin, state.checkout)
@@ -311,6 +312,64 @@ export function SearchTransitionHost({ onNavigate }) {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [active, complete])
 
+  // The transition is portalled to document.body, so the routed app root is a
+  // sibling and can be made inert wholesale. Without this the page underneath
+  // stayed hit-testable and reachable by assistive tech while Search was open.
+  useEffect(() => {
+    if (!active) return undefined
+    const appRoot = document.getElementById('root')
+    if (!appRoot) return undefined
+    appRoot.setAttribute('inert', '')
+    appRoot.setAttribute('aria-hidden', 'true')
+    return () => {
+      appRoot.removeAttribute('inert')
+      appRoot.removeAttribute('aria-hidden')
+    }
+  }, [active])
+
+  useEffect(() => {
+    if (!active) return undefined
+    const onKeyDown = (event) => {
+      if (event.key !== 'Tab') return
+      const dialog = dialogRef.current
+      if (!dialog) return
+
+      // Text fields are deliberately unfocusable on the dates/guests steps:
+      // searchOpenFocusGuard blurs them there to keep the soft keyboard down.
+      // Offering them as Tab stops would hand focus straight back to the body.
+      const keyboardFreeStep = step === 'dates' || step === 'guests'
+      const candidates = [...dialog.querySelectorAll(
+        'a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])',
+      )].filter((element) => {
+        if (element.getAttribute('aria-hidden') === 'true') return false
+        if (keyboardFreeStep && element.matches('input, textarea')) return false
+        return element.getClientRects().length > 0
+      })
+      if (!candidates.length) return
+
+      const first = candidates[0]
+      const last = candidates[candidates.length - 1]
+      const current = document.activeElement
+
+      if (!dialog.contains(current)) {
+        event.preventDefault()
+        ;(event.shiftKey ? last : first).focus()
+        return
+      }
+      if (!event.shiftKey && current === last) {
+        event.preventDefault()
+        first.focus()
+        return
+      }
+      if (event.shiftKey && current === first) {
+        event.preventDefault()
+        last.focus()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [active, step])
+
   useEffect(() => {
     const onMapReady = () => {
       if (!mapHandoffRef.current) return
@@ -420,7 +479,7 @@ export function SearchTransitionHost({ onNavigate }) {
   const stepIndex = step === 'destination' ? 1 : step === 'dates' ? 2 : 3
 
   return createPortal(
-    <div className={rootClass} style={rootStyle} data-testid="search-transition" data-step={step} data-ready={ready ? 'true' : 'false'} data-address-mode={addressMode ? 'true' : 'false'} data-map-origin={mapOriginSummary ? 'true' : 'false'} data-closing={closing ? 'true' : 'false'} data-exact-fit="true">
+    <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Recherche" className={rootClass} style={rootStyle} data-testid="search-transition" data-step={step} data-ready={ready ? 'true' : 'false'} data-address-mode={addressMode ? 'true' : 'false'} data-map-origin={mapOriginSummary ? 'true' : 'false'} data-closing={closing ? 'true' : 'false'} data-exact-fit="true">
       <div className="movera-st__map-stage" aria-hidden="true">
         <SearchMapPreview viewport={selectedViewport} />
       </div>
