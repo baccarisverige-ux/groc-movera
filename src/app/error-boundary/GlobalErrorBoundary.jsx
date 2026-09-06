@@ -1,4 +1,5 @@
 import { Component } from 'react'
+import { toBrowserPath } from '../router/basePath.js'
 
 export class GlobalErrorBoundary extends Component {
   constructor(props) {
@@ -31,7 +32,7 @@ export class GlobalErrorBoundary extends Component {
           <h1>Une erreur est survenue</h1>
           <p>Aucun écran blanc : une récupération contrôlée reste disponible.</p>
           <button className="route-link-button" type="button" disabled={exhausted} onClick={this.retry}>{exhausted ? 'Retry limité' : 'Réessayer'}</button>
-          <button className="route-link-button" type="button" onClick={() => window.location.assign('/')}>Retour à l’accueil</button>
+          <button className="route-link-button" type="button" onClick={() => window.location.assign(toBrowserPath('/'))}>Retour à l’accueil</button>
         </main>
       )
     }
