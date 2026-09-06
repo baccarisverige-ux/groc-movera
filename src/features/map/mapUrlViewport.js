@@ -48,13 +48,17 @@ export function parseMapSearchContext(searchParams) {
 
 export function mapCameraContextKey(searchParams) {
   const context = parseMapSearchContext(searchParams)
-  const lat = rawParam(searchParams, 'lat')
-  const lng = rawParam(searchParams, 'lng')
-  const zoom = rawParam(searchParams, 'zoom')
+  const viewport = context.viewport
   const scope = context.listing
     ? `listing:${context.listing}`
     : context.destination
       ? `destination:${context.destination}`
       : 'grand-tunis'
+
+  // Camera identity is numeric, not textual. Equivalent URL spellings such as
+  // 36.8782 and 36.878200 must keep the same mounted Map camera context.
+  const lat = viewport?.lat ?? ''
+  const lng = viewport?.lng ?? ''
+  const zoom = viewport?.zoom ?? ''
   return `${scope}|place:${context.place}|lat:${lat}|lng:${lng}|zoom:${zoom}`
 }
