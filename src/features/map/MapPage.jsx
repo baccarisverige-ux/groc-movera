@@ -149,11 +149,20 @@ export function MapPage({ onNavigate }) {
   const visibleMarkers = useMemo(() => { const ids = new Set(cityListings.map((listing) => listing.id)); return markers.filter((marker) => ids.has(marker.id)) }, [cityListings, markers])
   const cityLabel = requestedPlace || (requestedDestination ? DESTINATION_LABELS[requestedDestination] || 'Cette destination' : requestedListing ? homeOffers.find((listing) => listing.id === requestedListing)?.location || 'Cette ville' : 'Grand Tunis')
 
-  const toggleAmenityFilter = useCallback((amenityId) => { setAmenityFilters((current) => { const next = new Set(current); if (next.has(amenityId)) next.delete(amenityId); else next.add(amenityId); return next }) }, [])
-  const toggleDiscountOnly = useCallback(() => { setDiscountOnly((current) => !current); setSelectedListingId(null); setPopupOpen(false) }, [setSelectedListingId])
-  const handlePropertyFilterChange = useCallback((filterId) => { setPropertyFilter(filterId); setSelectedListingId(null); setPopupOpen(false) }, [setSelectedListingId])
-  const resetFilters = useCallback(() => { setAmenityFilters(new Set()); setDiscountOnly(false) }, [])
-  useEffect(() => { setPopupOpen(false); setPropertyFilter('all'); setDiscountOnly(false) }, [mapContextKey])
+  const clearFilterSelection = useCallback(() => { setSelectedListingId(null); setPopupOpen(false) }, [setSelectedListingId])
+  const toggleAmenityFilter = useCallback((amenityId) => {
+    setAmenityFilters((current) => {
+      const next = new Set(current)
+      if (next.has(amenityId)) next.delete(amenityId)
+      else next.add(amenityId)
+      return next
+    })
+    clearFilterSelection()
+  }, [clearFilterSelection])
+  const toggleDiscountOnly = useCallback(() => { setDiscountOnly((current) => !current); clearFilterSelection() }, [clearFilterSelection])
+  const handlePropertyFilterChange = useCallback((filterId) => { setPropertyFilter(filterId); clearFilterSelection() }, [clearFilterSelection])
+  const resetFilters = useCallback(() => { setAmenityFilters(new Set()); setDiscountOnly(false); setPropertyFilter('all') }, [])
+  useEffect(() => { resetFilters(); setPopupOpen(false) }, [mapContextKey, resetFilters])
   useEffect(() => { if (!selectedListingId) return; if (cityListings.some((listing) => listing.id === selectedListingId)) return; setSelectedListingId(null); setPopupOpen(false) }, [cityListings, selectedListingId, setSelectedListingId])
 
   const returnToOffers = () => { if (!requestedListing) return; if (window.history.length > 1) { window.history.back(); return } onNavigate(collectionFallbackPath(requestedListing)) }
@@ -232,7 +241,7 @@ export function MapPage({ onNavigate }) {
   }, [mapContextKey])
 
   return <section className="b225-map-page" data-testid="page-map" data-destination={requestedDestination || ''} data-listing={selectedMarker?.id || ''} data-handoff-viewport={handoffViewport ? 'true' : 'false'} data-city-offer-count={cityListings.length} data-context-offer-count={contextListings.length} data-amenity-filter-count={amenityFilters.size} data-discount-only={discountOnly ? 'true' : 'false'} data-property-filter={propertyFilter} data-map-interacting={mapInteracting ? 'true' : 'false'} data-offer-popup={popupOpen ? 'open' : 'closed'}>
-    <div ref={headerRef} className="b225-map-top"><MapSearchFilters cityLabel={cityLabel} primaryLabel={searchTriggered ? cityLabel : undefined} dateLabel={searchTriggered ? requestedDateLabel : ''} amenityFilters={amenityFilters} discountOnly={discountOnly} compact={popupOpen} onHome={() => onNavigate('/')} onAmenityFilterToggle={toggleAmenityFilter} onDiscountToggle={toggleDiscountOnly} onResetFilters={resetFilters}/></div>
+    <div ref={headerRef} className="b225-map-top"><MapSearchFilters cityLabel={cityLabel} primaryLabel={searchTriggered ? cityLabel : undefined} dateLabel={searchTriggered ? requestedDateLabel : ''} amenityFilters={amenityFilters} discountOnly={discountOnly} propertyFilter={propertyFilter} compact={popupOpen} onHome={() => onNavigate('/')} onAmenityFilterToggle={toggleAmenityFilter} onDiscountToggle={toggleDiscountOnly} onResetFilters={resetFilters}/></div>
     <div className="b225-map-stage">{requestedListing ? <button type="button" className="b225-map-return b225-map-return--floating" onClick={returnToOffers} aria-label="Retour aux offres"><span className="b225-map-return__icon"><ArrowLeftIcon/></span><span>Retour aux offres</span></button> : null}<MapContainer key={`map-${mapContextKey}`} markers={visibleMarkers} selectedListingId={selectedListingId} onSelectedListingChange={handlePinSelectedListingChange} onViewportChange={handleViewportChange} onInteractionChange={handleMapInteractionChange} initialViewport={initialViewport} viewportCommand={viewportCommand} cameraOnSelect="none"/></div>
     {popupOpen && selectedListingId ? <MapOfferPopup listings={cityListings} selectedListingId={selectedListingId} onSelectedListingChange={handlePopupListingChange} onClose={handlePopupClose} onNavigate={onNavigate}/> : null}
     <MapOfferSheet key={`sheet-${mapContextKey}`} listings={cityListings} cityLabel={cityLabel} headerHeight={headerHeight} selectedListingId={selectedListingId} propertyFilter={propertyFilter} onPropertyFilterChange={handlePropertyFilterChange} onSelectedListingChange={handleSheetSelectedListingChange} onFocusListing={focusListingFromSheet} onProgressChange={handleSheetProgress} onNavigate={onNavigate}/>
