@@ -99,17 +99,16 @@ function armNavigationProbe() {
   }
   window.addEventListener('popstate', navigationListener)
 
-  // Some SPA routers intentionally no-op when Search submits the exact Map state,
-  // so there is no popstate and no camera remount to emit MAP_READY_EVENT. After
-  // the Search completion animation has had time to navigate, release only when
-  // the currently mounted Map still has the exact same normalized camera key.
-  // A real destination/camera change cannot pass this guard and remains owned by
-  // MapPage's readiness event.
+  // Search schedules navigation after its 560 ms completion animation. A 650 ms
+  // semantic probe therefore runs after that navigation even when WebKit is busy:
+  // timers due at 560 ms execute before this one. Release only when the mounted
+  // Map still has the exact same normalized camera key. A genuine camera change
+  // cannot pass this guard and remains owned by MapPage's readiness event.
   sameCameraProbeTimer = window.setTimeout(() => {
     if (!startedOnMap || !mountedMapSurface()) return
     const nextCameraKey = currentMapCameraKey()
     if (nextCameraKey && nextCameraKey === startingCameraKey) announceAfterPaint()
-  }, 1000)
+  }, 650)
 }
 
 export function beginMapHandoff() {
