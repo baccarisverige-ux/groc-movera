@@ -4,11 +4,23 @@ const MAP_VIEWPORT_LIMITS = Object.freeze({
   zoom: Object.freeze([1, 20]),
 })
 
-function boundedParam(searchParams, key, min, max) {
+function rawParam(searchParams, key) {
   const raw = searchParams?.get?.(key)
-  if (raw == null || String(raw).trim() === '') return null
+  return raw == null ? '' : String(raw).trim()
+}
+
+function boundedParam(searchParams, key, min, max) {
+  const raw = rawParam(searchParams, key)
+  if (!raw) return null
   const value = Number(raw)
   return Number.isFinite(value) && value >= min && value <= max ? value : null
+}
+
+function integerParam(searchParams, key, fallback, minimum = 0) {
+  const raw = rawParam(searchParams, key)
+  if (!raw) return fallback
+  const value = Number(raw)
+  return Number.isInteger(value) && value >= minimum ? value : fallback
 }
 
 export function parseMapViewport(searchParams) {
@@ -18,13 +30,31 @@ export function parseMapViewport(searchParams) {
   return lat === null || lng === null || zoom === null ? null : { lat, lng, zoom }
 }
 
+export function parseMapSearchContext(searchParams) {
+  return {
+    destination: rawParam(searchParams, 'destination'),
+    listing: rawParam(searchParams, 'listing'),
+    place: rawParam(searchParams, 'place'),
+    searchTriggered: rawParam(searchParams, 'search') === '1',
+    checkin: rawParam(searchParams, 'checkin'),
+    checkout: rawParam(searchParams, 'checkout'),
+    adults: integerParam(searchParams, 'adults', 1, 1),
+    children: integerParam(searchParams, 'children', 0),
+    infants: integerParam(searchParams, 'infants', 0),
+    pets: integerParam(searchParams, 'pets', 0),
+    viewport: parseMapViewport(searchParams),
+  }
+}
+
 export function mapCameraContextKey(searchParams) {
-  const destination = searchParams?.get?.('destination')?.trim() || ''
-  const listing = searchParams?.get?.('listing')?.trim() || ''
-  const place = searchParams?.get?.('place')?.trim() || ''
-  const lat = searchParams?.get?.('lat')?.trim() || ''
-  const lng = searchParams?.get?.('lng')?.trim() || ''
-  const zoom = searchParams?.get?.('zoom')?.trim() || ''
-  const scope = listing ? `listing:${listing}` : destination ? `destination:${destination}` : 'grand-tunis'
-  return `${scope}|place:${place}|lat:${lat}|lng:${lng}|zoom:${zoom}`
+  const context = parseMapSearchContext(searchParams)
+  const lat = rawParam(searchParams, 'lat')
+  const lng = rawParam(searchParams, 'lng')
+  const zoom = rawParam(searchParams, 'zoom')
+  const scope = context.listing
+    ? `listing:${context.listing}`
+    : context.destination
+      ? `destination:${context.destination}`
+      : 'grand-tunis'
+  return `${scope}|place:${context.place}|lat:${lat}|lng:${lng}|zoom:${zoom}`
 }
