@@ -1,4 +1,3 @@
-import { NAVIGATION_COMMIT_EVENT } from '../../app/router/navigationEvents.js'
 import { mapCameraContextKey } from '../map/mapUrlViewport.js'
 
 export const MAP_READY_EVENT = 'movera:map-ready'
@@ -8,7 +7,7 @@ let startedOnMap = false
 let startingCameraKey = ''
 
 function removeNavigationListener() {
-  if (navigationListener) window.removeEventListener(NAVIGATION_COMMIT_EVENT, navigationListener)
+  if (navigationListener) window.removeEventListener('popstate', navigationListener)
   navigationListener = null
 }
 
@@ -27,21 +26,22 @@ function currentMapCameraKey() {
   return mapCameraContextKey(new URLSearchParams(window.location.search))
 }
 
-function armNavigationCommit() {
+function armHistoryNavigation() {
   removeNavigationListener()
   navigationListener = () => {
     removeNavigationListener()
     if (!startedOnMap) return
 
-    const committedCameraKey = currentMapCameraKey()
-    if (!committedCameraKey || committedCameraKey !== startingCameraKey) return
+    const nextCameraKey = currentMapCameraKey()
+    if (!nextCameraKey || nextCameraKey !== startingCameraKey) return
 
-    // Same-camera Search submissions (dates/guests changes or an exact re-submit)
-    // need only the router's real React commit. They must never wait on a DOM probe
-    // or an arbitrary timeout because the existing Map camera is already ready.
-    announceMapReady(committedCameraKey, { source: 'navigation-commit' })
+    // Same-camera Map submissions do not require any Map reload. pushState/
+    // replaceState updates window.location synchronously before popstate is
+    // dispatched, so the semantic camera comparison is authoritative here.
+    // Release Search immediately and reserve MAP_READY for genuine camera changes.
+    announceMapReady(nextCameraKey, { source: 'same-camera-navigation' })
   }
-  window.addEventListener(NAVIGATION_COMMIT_EVENT, navigationListener)
+  window.addEventListener('popstate', navigationListener)
 }
 
 export function beginMapHandoff() {
@@ -50,7 +50,7 @@ export function beginMapHandoff() {
   startingCameraKey = startedOnMap ? currentMapCameraKey() : ''
   document.documentElement.dataset.moveraMapHandoff = 'true'
   document.body.dataset.moveraMapHandoff = 'true'
-  armNavigationCommit()
+  armHistoryNavigation()
 }
 
 export function endMapHandoff() {
