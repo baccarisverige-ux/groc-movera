@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   ArrowLeftIcon,
   SlidersHorizontalIcon,
@@ -12,14 +12,18 @@ export function MapSearchFilters({
   dateLabel,
   amenityFilters,
   discountOnly = false,
+  propertyFilter = 'all',
   compact = false,
   onHome,
   onAmenityFilterToggle,
   onDiscountToggle,
   onResetFilters,
 }) {
-  const activeFilterCount = amenityFilters.size + (discountOnly ? 1 : 0)
+  const activeFilterCount = amenityFilters.size
+    + (discountOnly ? 1 : 0)
+    + (propertyFilter !== 'all' ? 1 : 0)
   const [searchDraft, setSearchDraft] = useState(primaryLabel)
+  const filterRailRef = useRef(null)
 
   useEffect(() => {
     setSearchDraft(primaryLabel)
@@ -57,6 +61,21 @@ export function MapSearchFilters({
     }
   }
 
+  const revealFilters = () => {
+    const rail = filterRailRef.current
+    if (!rail) return
+    rail.scrollTo?.({ left: 0, behavior: 'auto' })
+    rail.querySelector('button[data-filter-id]')?.focus?.({ preventScroll: true })
+  }
+
+  const handleFilterControl = () => {
+    if (activeFilterCount > 0) {
+      onResetFilters?.()
+      return
+    }
+    revealFilters()
+  }
+
   const displayedPrimaryLabel = searchDraft !== undefined
     ? searchDraft
     : `Logements à ${cityLabel}`
@@ -66,6 +85,7 @@ export function MapSearchFilters({
       className="map-search-filter-stack"
       data-testid="map-search-filter-stack"
       data-compact={compact ? 'true' : 'false'}
+      data-active-filter-count={activeFilterCount}
     >
       <div
         className="map-search-filter-stack__toolbar-clip"
@@ -97,7 +117,9 @@ export function MapSearchFilters({
           <button
             type="button"
             className="map-search-filter-stack__side-button map-search-filter-stack__filter-button"
-            onClick={activeFilterCount ? onResetFilters : undefined}
+            data-testid="map-filter-control"
+            onClick={handleFilterControl}
+            aria-controls="map-amenity-filter-rail"
             aria-label={activeFilterCount ? 'Réinitialiser les filtres' : 'Filtres'}
           >
             <SlidersHorizontalIcon />
@@ -111,7 +133,11 @@ export function MapSearchFilters({
         data-testid="map-amenity-filters"
         aria-label="Équipements"
       >
-        <div className="map-offer-sheet__property-rail">
+        <div
+          ref={filterRailRef}
+          id="map-amenity-filter-rail"
+          className="map-offer-sheet__property-rail"
+        >
           <button
             type="button"
             className="map-offer-sheet__property-chip map-offer-sheet__property-chip--discount"
