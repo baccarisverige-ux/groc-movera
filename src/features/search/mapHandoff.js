@@ -72,20 +72,45 @@ function waitForMapSurface() {
   probeFrame = window.requestAnimationFrame(waitForMapSurface)
 }
 
+function waitForExistingMapSurface() {
+  if (mountedMapSurface()) {
+    announceAfterPaint()
+    return
+  }
+
+  // Same-camera navigation can briefly rerender the Map route in WebKit while
+  // canonical query parameters are applied. This is not a new camera load, so
+  // wait only for the already-owned Map surface to return instead of falling
+  // through to the 2.5 s Search handoff timeout.
+  if (performance.now() - probeStartedAt >= 700) {
+    announceAfterPaint()
+    return
+  }
+  probeFrame = window.requestAnimationFrame(waitForExistingMapSurface)
+}
+
+function beginSameCameraProbe() {
+  probeStartedAt = performance.now()
+  window.cancelAnimationFrame(probeFrame)
+  probeFrame = window.requestAnimationFrame(waitForExistingMapSurface)
+}
+
 function armNavigationProbe() {
   clearScheduledProbe()
   navigationListener = () => {
     window.removeEventListener('popstate', navigationListener)
     navigationListener = null
+    window.clearTimeout(sameCameraProbeTimer)
+    sameCameraProbeTimer = 0
 
     const nextCameraKey = currentMapCameraKey()
 
     if (startedOnMap && nextCameraKey) {
       // Reservation metadata (dates/guests) and equivalent numeric URL formatting
-      // do not require a new camera. The existing Map can be revealed after paint.
-      if (nextCameraKey === startingCameraKey && mountedMapSurface()) {
-        announceAfterPaint()
-      }
+      // do not require a new camera. WebKit can briefly rerender the same Map
+      // surface while canonical query parameters are applied, so tolerate that
+      // short gap before revealing the existing Map again.
+      if (nextCameraKey === startingCameraKey) beginSameCameraProbe()
 
       // A genuinely different camera context is owned by MapPage. Its
       // mapContextKey effect will announce readiness after the new camera settles.
@@ -99,15 +124,15 @@ function armNavigationProbe() {
   }
   window.addEventListener('popstate', navigationListener)
 
-  // Search schedules navigation after its 560 ms completion animation. A 650 ms
-  // semantic probe therefore runs after that navigation even when WebKit is busy:
-  // timers due at 560 ms execute before this one. Release only when the mounted
-  // Map still has the exact same normalized camera key. A genuine camera change
-  // cannot pass this guard and remains owned by MapPage's readiness event.
+  // Search schedules navigation after its 560 ms completion animation. This
+  // semantic fallback also covers a true router no-op where no navigation event
+  // arrives. It is safe only when the mounted route still owns the exact same
+  // normalized camera context captured when Search opened.
   sameCameraProbeTimer = window.setTimeout(() => {
-    if (!startedOnMap || !mountedMapSurface()) return
+    if (!startedOnMap) return
     const nextCameraKey = currentMapCameraKey()
-    if (nextCameraKey && nextCameraKey === startingCameraKey) announceAfterPaint()
+    if (!nextCameraKey || nextCameraKey !== startingCameraKey) return
+    beginSameCameraProbe()
   }, 650)
 }
 
