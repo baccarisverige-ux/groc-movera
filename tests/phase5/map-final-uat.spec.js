@@ -38,6 +38,19 @@ async function waitForStableNumberAttribute(locator, name) {
   return latest
 }
 
+async function waitForMapCameraWork(surface, beforeCount) {
+  await expect.poll(
+    () => numberAttribute(surface, 'data-update-count'),
+    {
+      timeout: 15_000,
+      intervals: [50, 75, 100, 150, 200, 300],
+      message: 'map focus must issue camera work after the middle snap completes',
+    },
+  ).toBeGreaterThan(beforeCount)
+
+  return waitForStableNumberAttribute(surface, 'data-update-count')
+}
+
 async function expectCleanMapGeometry(page, viewport) {
   const geometry = await page.evaluate(() => {
     const pageMap = document.querySelector('[data-testid="page-map"]')
@@ -169,7 +182,7 @@ test.describe('Phase 5 · final Map UAT / anti-regression', () => {
 
       await expect(engine).toHaveAttribute('data-selected-listing-id', listingId)
       await expect(sheet).toHaveAttribute('data-snap-state', 'middle', { timeout: 15_000 })
-      const afterFocusUpdates = await waitForStableNumberAttribute(surface, 'data-update-count')
+      const afterFocusUpdates = await waitForMapCameraWork(surface, beforeFocusUpdates)
       const focusUpdateCount = afterFocusUpdates - beforeFocusUpdates
       expect(focusUpdateCount, `focus cycle ${cycle + 1} must issue camera work`).toBeGreaterThan(0)
       expect(focusUpdateCount, `focus cycle ${cycle + 1} exceeded camera update budget`).toBeLessThanOrEqual(FOCUS_UPDATE_BUDGET)
