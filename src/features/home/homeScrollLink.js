@@ -40,10 +40,17 @@ function layoutDocumentTop(element) {
 }
 
 function currentScrollTop() {
+  const windowTop = Number(window.scrollY ?? window.pageYOffset)
+  if (Number.isFinite(windowTop)) return Math.max(0, windowTop)
+
   const scrollingElementTop = Number(document.scrollingElement?.scrollTop)
   if (Number.isFinite(scrollingElementTop)) return Math.max(0, scrollingElementTop)
-  const windowTop = Number(window.scrollY || window.pageYOffset)
-  return Number.isFinite(windowTop) ? Math.max(0, windowTop) : 0
+
+  const documentTop = Number(document.documentElement?.scrollTop)
+  if (Number.isFinite(documentTop)) return Math.max(0, documentTop)
+
+  const bodyTop = Number(document.body?.scrollTop)
+  return Number.isFinite(bodyTop) ? Math.max(0, bodyTop) : 0
 }
 
 function categoryTargetTravel(welcome) {
