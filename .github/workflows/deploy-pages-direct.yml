@@ -127,6 +127,7 @@ jobs:
       - name: Verify deployed Google Maps runtime
         env:
           MOVERA_LIVE_BASE_URL: ${{ needs.deploy.outputs.page_url }}
+          MOVERA_LIVE_SMOKE: '1'
         run: npx playwright test tests/e2e/google-map-live-smoke.spec.js --config=playwright.live.config.mjs --project=live-chromium --workers=1
       - name: Upload live smoke report
         if: always()
