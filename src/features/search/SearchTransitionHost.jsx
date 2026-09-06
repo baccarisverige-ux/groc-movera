@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { storageAdapter } from '../../services/storage/storageAdapter.js'
-import { parseMapViewport } from '../map/mapUrlViewport.js'
+import { parseMapSearchContext } from '../map/mapUrlViewport.js'
 import { SearchMapPreview } from '../map-engine/SearchMapPreview.jsx'
 import { beginMapHandoff, endMapHandoff, MAP_READY_EVENT } from './mapHandoff.js'
 import { GuestSelector } from './GuestSelector.jsx'
@@ -60,30 +60,25 @@ function destinationById(id) {
   return SEARCH_DESTINATIONS.find((destination) => destination.id === id) || null
 }
 
-function numericParam(params, key, fallback, minimum = 0) {
-  const value = Number(params.get(key))
-  return Number.isFinite(value) && value >= minimum ? value : fallback
-}
-
 function mapSearchStateFromLocation() {
   if (!window.location.pathname.endsWith('/map')) return null
-  const params = new URLSearchParams(window.location.search)
-  const destination = destinationById(params.get('destination'))
+  const context = parseMapSearchContext(new URLSearchParams(window.location.search))
+  const destination = destinationById(context.destination)
   if (!destination) return null
 
-  const viewport = parseMapViewport(params) || destination.viewport
-  const label = params.get('place')?.trim() || destination.label
+  const viewport = context.viewport || destination.viewport
+  const label = context.place || destination.label
 
   return {
     destinationQuery: label,
     state: {
       destination: { ...destination, label, viewport },
-      checkin: params.get('checkin') || '',
-      checkout: params.get('checkout') || '',
-      adults: numericParam(params, 'adults', 1, 1),
-      children: numericParam(params, 'children', 0),
-      infants: numericParam(params, 'infants', 0),
-      pets: numericParam(params, 'pets', 0),
+      checkin: context.checkin,
+      checkout: context.checkout,
+      adults: context.adults,
+      children: context.children,
+      infants: context.infants,
+      pets: context.pets,
     },
   }
 }
@@ -195,7 +190,10 @@ export function SearchTransitionHost({ onNavigate }) {
     const onSearchClick = (event) => {
       if (active) return
       const trigger = event.target.closest('.b225-search')
-      if (!trigger || !document.querySelector('[data-testid="page-home"]')) return
+      if (!trigger) return
+      const openedFromMap = Boolean(trigger.closest('.b225-map-top'))
+      const openedFromHome = Boolean(trigger.closest('[data-testid="page-home"]'))
+      if (!openedFromMap && !openedFromHome) return
       event.preventDefault()
       event.stopPropagation()
       clearTimers()
@@ -207,7 +205,6 @@ export function SearchTransitionHost({ onNavigate }) {
       const rect = trigger.getBoundingClientRect()
       const viewportHeight = Math.round(window.visualViewport?.height || window.innerHeight || 760)
       const restoredSearch = mapSearchStateFromLocation()
-      const openedFromMap = Boolean(trigger.closest('.b225-map-top'))
       openedFromMapRef.current = openedFromMap
       const originPrimary = openedFromMap ? trigger.querySelector('strong')?.textContent?.trim() || '' : ''
       const originMeta = openedFromMap ? trigger.querySelector('small')?.textContent?.trim() || '' : ''
