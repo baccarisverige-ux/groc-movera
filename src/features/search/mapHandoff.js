@@ -6,6 +6,7 @@ let navigationListener = null
 let probeFrame = 0
 let paintFrame = 0
 let finalFrame = 0
+let sameCameraProbeTimer = 0
 let probeStartedAt = 0
 let startedOnMap = false
 let startingCameraKey = ''
@@ -16,9 +17,11 @@ function clearScheduledProbe() {
   window.cancelAnimationFrame(probeFrame)
   window.cancelAnimationFrame(paintFrame)
   window.cancelAnimationFrame(finalFrame)
+  window.clearTimeout(sameCameraProbeTimer)
   probeFrame = 0
   paintFrame = 0
   finalFrame = 0
+  sameCameraProbeTimer = 0
 }
 
 function resetHandoffContext() {
@@ -95,6 +98,18 @@ function armNavigationProbe() {
     probeFrame = window.requestAnimationFrame(waitForMapSurface)
   }
   window.addEventListener('popstate', navigationListener)
+
+  // Some SPA routers intentionally no-op when Search submits the exact Map state,
+  // so there is no popstate and no camera remount to emit MAP_READY_EVENT. After
+  // the Search completion animation has had time to navigate, release only when
+  // the currently mounted Map still has the exact same normalized camera key.
+  // A real destination/camera change cannot pass this guard and remains owned by
+  // MapPage's readiness event.
+  sameCameraProbeTimer = window.setTimeout(() => {
+    if (!startedOnMap || !mountedMapSurface()) return
+    const nextCameraKey = currentMapCameraKey()
+    if (nextCameraKey && nextCameraKey === startingCameraKey) announceAfterPaint()
+  }, 1000)
 }
 
 export function beginMapHandoff() {
