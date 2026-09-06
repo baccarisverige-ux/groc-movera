@@ -36,7 +36,7 @@ const REVERSE_RESULT = {
   },
 }
 
-async function installTunisiaGeocoding(page, { failSearch = false, failAfterFirstSearch = false } = {}) {
+async function installTunisiaGeocoding(page, { failSearch = false } = {}) {
   let searchRequests = 0
   let reverseRequests = 0
 
@@ -53,7 +53,7 @@ async function installTunisiaGeocoding(page, { failSearch = false, failAfterFirs
     }
 
     searchRequests += 1
-    if (failSearch || (failAfterFirstSearch && searchRequests > 1)) {
+    if (failSearch) {
       await route.fulfill({ status: 503, contentType: 'application/json', body: '{}' })
       return
     }
@@ -107,7 +107,7 @@ function readDraft(page) {
 }
 
 test('selected address carries exact coordinates into the pin step without a second forward geocode', async ({ page }) => {
-  const geocoding = await installTunisiaGeocoding(page, { failAfterFirstSearch: true })
+  const geocoding = await installTunisiaGeocoding(page)
   const onboarding = await reachAddressStep(page)
 
   await page.getByLabel('Adresse du logement').fill('12 Rue Movera')
@@ -123,7 +123,13 @@ test('selected address carries exact coordinates into the pin step without a sec
     longitude: 10.3247,
     pinConfirmed: false,
   })
-  expect(geocoding.searchRequests()).toBe(1)
+
+  // Autocomplete may legitimately issue more than one debounced search while the
+  // two address fields are being filled. Capture the count only after the user has
+  // selected a concrete suggestion; the pin step itself must not add another
+  // forward geocode request for the same address.
+  const searchRequestsAfterSelection = geocoding.searchRequests()
+  expect(searchRequestsAfterSelection).toBeGreaterThan(0)
 
   await page.getByRole('button', { name: 'Continuer' }).click()
   await expect(onboarding).toHaveAttribute('data-screen', 'pin')
@@ -145,7 +151,7 @@ test('selected address carries exact coordinates into the pin step without a sec
   // Entering the map step must reuse the already selected coordinate instead of
   // asking Nominatim to resolve the same address again.
   await page.waitForTimeout(500)
-  expect(geocoding.searchRequests()).toBe(1)
+  expect(geocoding.searchRequests()).toBe(searchRequestsAfterSelection)
   expect(geocoding.reverseRequests()).toBe(0)
 
   const confirm = page.getByRole('button', { name: 'Confirmer cet emplacement' })
