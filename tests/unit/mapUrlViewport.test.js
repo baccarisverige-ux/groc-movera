@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { mapCameraContextKey, parseMapViewport } from '../../src/features/map/mapUrlViewport.js'
+import { mapCameraContextKey, parseMapSearchContext, parseMapViewport } from '../../src/features/map/mapUrlViewport.js'
 
 describe('map URL viewport', () => {
   it('accepts a complete bounded viewport', () => {
@@ -18,6 +18,23 @@ describe('map URL viewport', () => {
     expect(parseMapViewport(new URLSearchParams('lat=36&lng=181&zoom=13'))).toBeNull()
     expect(parseMapViewport(new URLSearchParams('lat=36&lng=10&zoom=99'))).toBeNull()
     expect(parseMapViewport(new URLSearchParams('lat=nope&lng=10&zoom=13'))).toBeNull()
+  })
+
+  it('parses one shared search context with safe traveller defaults', () => {
+    const params = new URLSearchParams('destination=la-marsa&listing=offer-1&place=Rue+A&search=1&checkin=2026-09-10&checkout=2026-09-12&adults=2&children=1&infants=nope&pets=-1&lat=36.87&lng=10.32&zoom=14')
+    expect(parseMapSearchContext(params)).toEqual({
+      destination: 'la-marsa',
+      listing: 'offer-1',
+      place: 'Rue A',
+      searchTriggered: true,
+      checkin: '2026-09-10',
+      checkout: '2026-09-12',
+      adults: 2,
+      children: 1,
+      infants: 0,
+      pets: 0,
+      viewport: { lat: 36.87, lng: 10.32, zoom: 14 },
+    })
   })
 
   it('changes camera context for a new place or camera inside the same destination', () => {
