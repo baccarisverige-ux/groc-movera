@@ -21,7 +21,7 @@ function currentHistoryState() {
   return window.history.state && typeof window.history.state === 'object' ? window.history.state : {}
 }
 
-function saveCurrentScrollPosition() {
+export function saveCurrentScrollPosition() {
   const state = { ...currentHistoryState(), [SCROLL_STATE_KEY]: readDocumentScrollY() }
   window.history.replaceState(state, '', window.location.href)
 }
@@ -44,7 +44,7 @@ function compilePattern(pattern){const keys=[];const source=pattern.split('/').m
 const compiledRoutes=routeDefinitions.map(route=>({...route,...compilePattern(route.path)}))
 function resolveRoute(pathname){for(const route of compiledRoutes){const match=pathname.match(route.regex);if(!match)continue;const params=Object.fromEntries(route.keys.map((key,index)=>[key,decodeURIComponent(match[index+1])]));return{route,params}}return null}
 
-export function navigate(to){
+export function navigate(to, { replace = false } = {}){
   const browserPath=toBrowserPath(to)
   const currentPath=`${window.location.pathname}${window.location.search}${window.location.hash}`
   if(currentPath===browserPath){
@@ -53,9 +53,16 @@ export function navigate(to){
     window.dispatchEvent(new PopStateEvent('popstate',{state}))
     return
   }
-  saveCurrentScrollPosition()
   const nextState = { [SCROLL_STATE_KEY]: 0 }
-  window.history.pushState(nextState,'',browserPath)
+  // Replacing is for callers standing on a throwaway entry of their own — the
+  // Search modal entry — so the destination takes its place instead of
+  // stacking behind it and leaving a Back press that appears to do nothing.
+  if(replace){
+    window.history.replaceState(nextState,'',browserPath)
+  } else {
+    saveCurrentScrollPosition()
+    window.history.pushState(nextState,'',browserPath)
+  }
   dispatchNavigationApplied(browserPath)
   window.dispatchEvent(new PopStateEvent('popstate', { state: nextState }))
 }

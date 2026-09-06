@@ -1,6 +1,28 @@
 import { expect, test } from '@playwright/test'
 
 const SEARCH_SETTLE_TIMEOUT = 10_000
+const MAP_SEARCH = '/map?destination=la-marsa&search=1&place=La%20Marsa&checkin=2027-01-10&checkout=2027-01-12&adults=2&children=0&infants=0&pets=0&lat=36.8782&lng=10.3247&zoom=14'
+
+function locationPath(page) {
+  return page.evaluate(() => window.location.pathname + window.location.search)
+}
+
+async function openSearchOnCurrentPage(page) {
+  await page.locator('.b225-search').click({ position: { x: 80, y: 25 } })
+  const transition = page.getByTestId('search-transition')
+  await expect(transition).toBeVisible()
+  await expect.poll(async () => transition.getAttribute('data-ready'), { timeout: SEARCH_SETTLE_TIMEOUT }).toBe('true')
+  return transition
+}
+
+async function expectSearchFullyReleased(page) {
+  const released = await page.evaluate(() => ({
+    lock: document.body.dataset.moveraSearchLock || '',
+    position: document.body.style.position || '',
+    inert: document.getElementById('root')?.hasAttribute('inert') ?? null,
+  }))
+  expect(released).toEqual({ lock: '', position: '', inert: false })
+}
 
 async function openSearchFromHome(page) {
   await page.goto('/')
@@ -157,6 +179,93 @@ test.describe('Search behaves as a real modal', () => {
     })
     expect(afterClose.inert).toBe(false)
     expect(afterClose.ariaHidden).toBeNull()
+  })
+
+  test('browser Back closes Search and stays on Home', async ({ page }) => {
+    // A page behind Home, so leaving Home would be visible in the assertions.
+    await page.goto('/plage')
+    await page.goto('/')
+    await expect(page.getByTestId('page-home')).toBeVisible()
+    await page.evaluate(() => window.scrollTo(0, 600))
+    await expect.poll(async () => page.evaluate(() => Math.round(window.scrollY))).toBe(600)
+
+    const transition = await openSearchOnCurrentPage(page)
+    await page.goBack()
+
+    await expect(transition).toHaveCount(0, { timeout: SEARCH_SETTLE_TIMEOUT })
+    expect(await locationPath(page)).toBe('/')
+    await expect(page.getByTestId('page-home')).toBeVisible()
+    await expectSearchFullyReleased(page)
+    // Back must land where Search would have restored to, not at the top.
+    await expect.poll(async () => page.evaluate(() => Math.round(window.scrollY)), { timeout: SEARCH_SETTLE_TIMEOUT }).toBe(600)
+  })
+
+  test('a second Back after Search closed navigates normally', async ({ page }) => {
+    await page.goto('/plage')
+    await page.goto('/')
+    await expect(page.getByTestId('page-home')).toBeVisible()
+
+    const transition = await openSearchOnCurrentPage(page)
+    await page.goBack()
+    await expect(transition).toHaveCount(0, { timeout: SEARCH_SETTLE_TIMEOUT })
+    expect(await locationPath(page)).toBe('/')
+
+    await page.goBack()
+    await expect.poll(async () => locationPath(page), { timeout: SEARCH_SETTLE_TIMEOUT }).toBe('/plage')
+  })
+
+  test('browser Back closes Search opened from the Map without losing the Map context', async ({ page }) => {
+    await page.goto(MAP_SEARCH)
+    await expect(page.getByTestId('page-map')).toBeVisible()
+    const mapPath = await locationPath(page)
+
+    await page.getByRole('button', { name: 'Modifier la recherche' }).click()
+    const transition = page.getByTestId('search-transition')
+    await expect(transition).toBeVisible()
+    await expect.poll(async () => transition.getAttribute('data-ready'), { timeout: SEARCH_SETTLE_TIMEOUT }).toBe('true')
+
+    await page.goBack()
+
+    await expect(transition).toHaveCount(0, { timeout: SEARCH_SETTLE_TIMEOUT })
+    expect(await locationPath(page)).toBe(mapPath)
+    await expect(page.getByTestId('page-map')).toBeVisible()
+    await expectSearchFullyReleased(page)
+  })
+
+  test('closing Search without Back leaves no stale history entry', async ({ page }) => {
+    await page.goto('/plage')
+    await page.goto('/')
+    await expect(page.getByTestId('page-home')).toBeVisible()
+
+    const transition = await openSearchOnCurrentPage(page)
+    await page.keyboard.press('Escape')
+    await expect(transition).toHaveCount(0, { timeout: SEARCH_SETTLE_TIMEOUT })
+
+    // The entry Search pushed must have been given back, so this Back is a real
+    // navigation rather than a press that appears to do nothing.
+    await page.goBack()
+    await expect.poll(async () => locationPath(page), { timeout: SEARCH_SETTLE_TIMEOUT }).toBe('/plage')
+  })
+
+  test('submitting to the Map replaces the Search entry so one Back returns to the origin', async ({ page }) => {
+    await page.goto(MAP_SEARCH)
+    await expect(page.getByTestId('page-map')).toBeVisible()
+    const originPath = await locationPath(page)
+
+    await page.getByRole('button', { name: 'Modifier la recherche' }).click()
+    const transition = page.getByTestId('search-transition')
+    await expect(transition).toBeVisible()
+    await transition.locator('.movera-st__step').filter({ hasText: 'Voyageurs' }).click()
+    await expect(page.getByTestId('search-step-guests')).toBeVisible()
+    await page.getByRole('button', { name: 'Ajouter adultes' }).click()
+    await expect(page.getByTestId('search-adults-count')).toHaveText('3')
+
+    await page.getByRole('button', { name: 'Rechercher sur la carte' }).click()
+    await expect(page).toHaveURL(/adults=3/)
+    await expect(transition).toHaveCount(0, { timeout: SEARCH_SETTLE_TIMEOUT })
+
+    await page.goBack()
+    await expect.poll(async () => locationPath(page), { timeout: SEARCH_SETTLE_TIMEOUT }).toBe(originPath)
   })
 
   test('repeated open and close leaves no residual lock or inert state', async ({ page }) => {
