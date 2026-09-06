@@ -48,4 +48,10 @@ describe('map URL viewport', () => {
     const second = new URLSearchParams('destination=la-marsa&lat=36.87&lng=10.32&zoom=14&checkin=2026-09-20')
     expect(mapCameraContextKey(first)).toBe(mapCameraContextKey(second))
   })
+
+  it('treats equivalent numeric viewport formatting as the same camera context', () => {
+    const compact = new URLSearchParams('destination=la-marsa&place=La+Marsa&lat=36.8782&lng=10.3247&zoom=14')
+    const padded = new URLSearchParams('destination=la-marsa&place=La+Marsa&lat=36.878200&lng=10.324700&zoom=14.0')
+    expect(mapCameraContextKey(compact)).toBe(mapCameraContextKey(padded))
+  })
 })
