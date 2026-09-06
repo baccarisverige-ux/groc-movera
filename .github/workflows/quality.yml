@@ -128,6 +128,50 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+  final-map-uat:
+    name: Final Map UAT · ${{ matrix.project }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - project: desktop-chromium
+            browser: chromium
+          - project: mobile-chromium
+            browser: chromium
+          - project: desktop-webkit
+            browser: webkit
+          - project: mobile-webkit
+            browser: webkit
+          - project: desktop-firefox
+            browser: firefox
+          - project: mobile-firefox
+            browser: firefox
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Install Playwright
+        run: npm install --no-save --package-lock=false @playwright/test@1.55.0
+      - name: Install target browser with system dependencies
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Run final Map UAT and anti-regression
+        run: npm run test:final-map-uat -- --project=${{ matrix.project }} --workers=1
+      - name: Upload final Map UAT report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: final-map-uat-report-${{ matrix.project }}
+          path: |
+            playwright-report
+            test-results
+          if-no-files-found: ignore
+          retention-days: 14
+
   visual-quality:
     name: Mobile Chromium visual references
     runs-on: ubuntu-latest
