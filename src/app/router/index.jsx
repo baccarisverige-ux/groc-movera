@@ -4,6 +4,7 @@ import { AuthRequiredPage } from '../../features/auth/AuthRequiredPage.jsx'
 import { useAuthSession } from '../../features/auth/authSession.js'
 import { routeDefinitions, NotFoundPage } from './routes.jsx'
 import { toBrowserPath, toInternalPath } from './basePath.js'
+import { NAVIGATION_APPLIED_EVENT } from './navigationEvents.js'
 
 const SCROLL_STATE_KEY = '__moveraScrollY'
 
@@ -33,6 +34,12 @@ function restoreScrollPosition(state, fallback = 0) {
   }))
 }
 
+function dispatchNavigationApplied(path) {
+  window.dispatchEvent(new CustomEvent(NAVIGATION_APPLIED_EVENT, {
+    detail: { path },
+  }))
+}
+
 function compilePattern(pattern){const keys=[];const source=pattern.split('/').map(segment=>{if(!segment)return'';if(segment.startsWith(':')){keys.push(segment.slice(1));return'([^/]+)'}return segment.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}).join('/');return{regex:new RegExp(`^${source||'/'}$`),keys}}
 const compiledRoutes=routeDefinitions.map(route=>({...route,...compilePattern(route.path)}))
 function resolveRoute(pathname){for(const route of compiledRoutes){const match=pathname.match(route.regex);if(!match)continue;const params=Object.fromEntries(route.keys.map((key,index)=>[key,decodeURIComponent(match[index+1])]));return{route,params}}return null}
@@ -42,12 +49,14 @@ export function navigate(to){
   const currentPath=`${window.location.pathname}${window.location.search}${window.location.hash}`
   if(currentPath===browserPath){
     const state=currentHistoryState()
+    dispatchNavigationApplied(browserPath)
     window.dispatchEvent(new PopStateEvent('popstate',{state}))
     return
   }
   saveCurrentScrollPosition()
   const nextState = { [SCROLL_STATE_KEY]: 0 }
   window.history.pushState(nextState,'',browserPath)
+  dispatchNavigationApplied(browserPath)
   window.dispatchEvent(new PopStateEvent('popstate', { state: nextState }))
 }
 
