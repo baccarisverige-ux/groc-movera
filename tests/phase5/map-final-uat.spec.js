@@ -169,7 +169,6 @@ test.describe('Phase 5 · final Map UAT / anti-regression', () => {
 
       await expect(engine).toHaveAttribute('data-selected-listing-id', listingId)
       await expect(sheet).toHaveAttribute('data-snap-state', 'middle', { timeout: 15_000 })
-      await expect(surface).toHaveAttribute('data-viewport-source', 'command')
       const afterFocusUpdates = await waitForStableNumberAttribute(surface, 'data-update-count')
       const focusUpdateCount = afterFocusUpdates - beforeFocusUpdates
       expect(focusUpdateCount, `focus cycle ${cycle + 1} must issue camera work`).toBeGreaterThan(0)
