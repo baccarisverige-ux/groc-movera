@@ -17,13 +17,13 @@
     "test:e2e:webkit": "npx --yes @playwright/test@1.55.0 test tests/e2e --project=desktop-webkit --project=mobile-webkit",
     "test:responsive": "npx --yes @playwright/test@1.55.0 test tests/e2e/responsive-baseline.spec.js --project=desktop-chromium",
     "test:map-regressions": "npx --yes @playwright/test@1.55.0 test tests/e2e/critical-regressions.spec.js tests/e2e/map-city-offer-sheet.spec.js tests/e2e/map-offer-popup.spec.js tests/e2e/map-sheet-touch-regressions.spec.js tests/e2e/map-sheet-repeat-focus.spec.js tests/e2e/map-phase1-stability.spec.js tests/e2e/map-phase3-filters.spec.js tests/e2e/map-phase4-architecture.spec.js",
-    "test:phase5-uat": "npx --yes @playwright/test@1.55.0 test --config=playwright.phase5.config.mjs",
+    "test:final-map-uat": "npx --yes @playwright/test@1.55.0 test --config=playwright.phase5.config.mjs",
     "test:a11y": "npx --yes @playwright/test@1.55.0 test tests/accessibility",
     "test:all": "npm run test:unit && npm run test:integration && npm run test:e2e && npm run test:a11y",
     "quality:architecture": "node scripts/check-architecture.mjs && node scripts/check-map-sheet-architecture.mjs && node scripts/check-map-sheet-retired-runtime.mjs && node scripts/check-release-gates.mjs",
     "quality:fast": "npm run lint && npm run quality:architecture && npm run test:unit && npm run test:integration && npm run build",
     "quality:bundle": "node scripts/check-bundle-budget.mjs",
-    "quality:full": "npm run lint && npm run quality:architecture && npm run test:unit && npm run test:integration && npm run build && npm run quality:bundle && npm run test:e2e:chromium && npm run test:e2e:webkit && npm run test:phase5-uat && npm run test:a11y"
+    "quality:full": "npm run lint && npm run quality:architecture && npm run test:unit && npm run test:integration && npm run build && npm run quality:bundle && npm run test:e2e:chromium && npm run test:e2e:webkit && npm run test:final-map-uat && npm run test:a11y"
   },
   "dependencies": {
     "motion": "^13.1.1",
