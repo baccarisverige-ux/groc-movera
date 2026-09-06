@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { MAP_SHEET_EXPANDED_PROGRESS_THRESHOLD } from '../../src/features/map-sheet/core/MapSheetState.js'
-import { MAP_SHEET_ATTACHED_EXIT_PROGRESS, nextMapSheetAttached } from '../../src/features/map-sheet/application/useMapSheetAttachment.js'
+import { MAP_SHEET_ATTACHED_EXIT_PROGRESS, MAP_SHEET_EXPANDED_PROGRESS_THRESHOLD, nextMapSheetAttached } from '../../src/features/map-sheet/index.js'
 
 describe('map sheet attachment state', () => {
   it('enters attachment at the shared expanded threshold', () => {
