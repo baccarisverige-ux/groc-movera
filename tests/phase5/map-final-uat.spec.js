@@ -130,23 +130,29 @@ test.describe('Phase 5 · final Map UAT / anti-regression', () => {
       const tv = page.getByRole('button', { name: 'TV', exact: true })
       await tv.click()
       await expect(tv).toHaveAttribute('aria-pressed', 'true')
-
-      const apartment = page.getByRole('button', { name: 'Appartement', exact: true })
-      await apartment.click()
-      await expect(apartment).toHaveAttribute('aria-pressed', 'true')
-      await expect(filterStack).toHaveAttribute('data-active-filter-count', '2')
+      await expect(filterStack).toHaveAttribute('data-active-filter-count', '1')
 
       const reset = page.getByTestId('map-filter-control')
       await expect(reset).toHaveAttribute('aria-label', 'Réinitialiser les filtres')
       await reset.click()
       await expect(filterStack).toHaveAttribute('data-active-filter-count', '0')
-      await expect(mapPage).toHaveAttribute('data-property-filter', 'all')
       await expect(mapPage).toHaveAttribute('data-city-offer-count', '4')
 
       await page.getByRole('button', { name: 'Afficher la liste des offres' }).click()
       await expect(sheet).toHaveAttribute('data-snap-state', 'expanded', { timeout: 15_000 })
       const list = sheet.locator('.map-offer-sheet__list')
       await expect(list).toHaveAttribute('data-scroll-enabled', 'true')
+
+      const apartment = page.getByRole('button', { name: 'Appartement', exact: true })
+      const allProperties = page.getByRole('button', { name: 'Tout', exact: true })
+      await apartment.click()
+      await expect(apartment).toHaveAttribute('aria-pressed', 'true')
+      await expect(mapPage).toHaveAttribute('data-property-filter', 'apartment')
+      await allProperties.click()
+      await expect(allProperties).toHaveAttribute('aria-pressed', 'true')
+      await expect(mapPage).toHaveAttribute('data-property-filter', 'all')
+      await expect(mapPage).toHaveAttribute('data-city-offer-count', '4')
+
       await list.evaluate((node, index) => {
         node.scrollTop = 0
         const max = Math.max(0, node.scrollHeight - node.clientHeight)
