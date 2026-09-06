@@ -23,28 +23,27 @@ async function openSearch(page) {
 }
 
 async function waitForCategoryTravelToSettle(page) {
-  let previous = null
-  let stableSamples = 0
+  let previousScrollY = null
+  let stableScrollSamples = 0
+
   await expect.poll(async () => {
-    const current = await page.evaluate(() => {
-      const categoriesShell = document.querySelector('.b225-categories-shell')
-      return {
-        travel: categoriesShell
-          ? Number.parseFloat(getComputedStyle(categoriesShell).getPropertyValue('--movera-category-upward-travel')) || 0
-          : 0,
-        scrollY: window.scrollY || 0,
-      }
-    })
-    const stable = previous
-      && Math.abs(current.travel - previous.travel) <= 0.15
-      && Math.abs(current.scrollY - previous.scrollY) <= 0.5
-    stableSamples = stable ? stableSamples + 1 : 0
-    previous = current
-    return stableSamples
+    const currentScrollY = await page.evaluate(() => window.scrollY || 0)
+    const stable = previousScrollY !== null && Math.abs(currentScrollY - previousScrollY) <= 0.5
+    stableScrollSamples = stable ? stableScrollSamples + 1 : 0
+    previousScrollY = currentScrollY
+    return stableScrollSamples
   }, {
     timeout: SEARCH_SETTLE_TIMEOUT,
     intervals: [50, 75, 100, 125, 150, 200],
-  }).toBeGreaterThanOrEqual(3)
+  }).toBeGreaterThanOrEqual(2)
+
+  await expect.poll(async () => {
+    const layout = await readHomeBarLayout(page)
+    return Math.abs(layout.travel - layout.expectedTravel)
+  }, {
+    timeout: SEARCH_SETTLE_TIMEOUT,
+    intervals: [50, 75, 100, 125, 150, 200, 250, 300],
+  }).toBeLessThanOrEqual(2)
 }
 
 async function readHomeBarLayout(page) {
