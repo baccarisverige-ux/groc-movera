@@ -1,0 +1,37 @@
+name: Meta Ads MCP Quality Gate
+
+on:
+  pull_request:
+    paths:
+      - 'meta-ads-mcp/**'
+      - '.github/workflows/meta-ads-mcp.yml'
+  push:
+    branches:
+      - meta-ads-mcp-backend
+    paths:
+      - 'meta-ads-mcp/**'
+      - '.github/workflows/meta-ads-mcp.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Install · Typecheck · Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: meta-ads-mcp
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Typecheck
+        run: npx tsc --noEmit
+      - name: Build
+        run: npm run build
