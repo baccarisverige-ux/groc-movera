@@ -91,12 +91,30 @@ test('Home', async ({ page }) => {
   await expect(page).toHaveScreenshot('home.png', { fullPage: true, animations: 'disabled', scale: 'css' })
 })
 
+/* The three Search states compare the panel, not the whole viewport.
+
+   Measured on two runs of the same commit in the same container: the guests
+   panel rendered pixel-identically but the whole overlay landed 2px left and
+   1px up. Realigning the actual by (-2, -1) brought the difference to exactly
+   0% of sampled pixels, so the panel's own rendering is deterministic and only
+   its placement in the viewport is not. Against a full-viewport golden that
+   2px shift moves ~70% of pixels, which would have made this suite flaky
+   forever while telling us nothing about the design.
+
+   Clipping to .movera-st__panel keeps every pixel Phase 8b can actually change
+   — panel geometry, the step chips, the counter rows, the calendar, the
+   tripline, the action button — and drops only where the overlay sits in the
+   viewport. That placement is not unprotected: search-uat-cleanup.spec.js
+   already bounds the panel height per step and asserts the Home bar geometry
+   is unchanged while Search is open and after it closes. */
+const SEARCH_PANEL = '.movera-st__panel'
+
 test('Search · destination step', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByTestId('page-home')).toBeVisible()
   await openSearch(page)
   await expect(page.getByTestId('search-step-destination')).toBeVisible()
-  await expect(page).toHaveScreenshot('search-destination.png', { animations: 'disabled', scale: 'css' })
+  await expect(page.locator(SEARCH_PANEL)).toHaveScreenshot('search-destination.png', { animations: 'disabled', scale: 'css' })
 })
 
 test('Search · dates step', async ({ page }) => {
@@ -106,7 +124,7 @@ test('Search · dates step', async ({ page }) => {
   await page.getByTestId('search-step-destination').getByRole('button').first().click()
   await expect(page.getByTestId('search-step-dates')).toBeVisible()
   await settle(page)
-  await expect(page).toHaveScreenshot('search-dates.png', { animations: 'disabled', scale: 'css' })
+  await expect(page.locator(SEARCH_PANEL)).toHaveScreenshot('search-dates.png', { animations: 'disabled', scale: 'css' })
 })
 
 /* Guests shares searchTransition.css and searchTransition-stability.css with
@@ -117,7 +135,7 @@ test('Search · guests step', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByTestId('page-home')).toBeVisible()
   await reachGuestsStep(page)
-  await expect(page).toHaveScreenshot('search-guests.png', { animations: 'disabled', scale: 'css' })
+  await expect(page.locator(SEARCH_PANEL)).toHaveScreenshot('search-guests.png', { animations: 'disabled', scale: 'css' })
 })
 
 test('Collection · Plage', async ({ page }) => {
