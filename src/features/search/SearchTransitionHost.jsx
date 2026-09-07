@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { saveCurrentScrollPosition } from '../../app/router/index.jsx'
 import { storageAdapter } from '../../services/storage/storageAdapter.js'
 import { parseMapSearchContext } from '../map/mapUrlViewport.js'
 import { SearchMapPreview } from '../map-engine/SearchMapPreview.jsx'
@@ -18,6 +19,7 @@ import './searchStepFit.css'
 import './searchAddressMode.css'
 import './searchExactFit.css'
 
+const SEARCH_MODAL_STATE_KEY = '__moveraSearchModal'
 const OPEN_MS = 980
 const CLOSE_MS = 1200
 const COMPLETE_MS = 560
@@ -58,6 +60,14 @@ function readRecents() {
 
 function destinationById(id) {
   return SEARCH_DESTINATIONS.find((destination) => destination.id === id) || null
+}
+
+function currentHistoryState() {
+  return window.history.state && typeof window.history.state === 'object' ? window.history.state : {}
+}
+
+function currentHref() {
+  return `${window.location.pathname}${window.location.search}${window.location.hash}`
 }
 
 function mapSearchStateFromLocation() {
@@ -108,6 +118,8 @@ export function SearchTransitionHost({ onNavigate }) {
   const closingRef = useRef(false)
   const openedFromMapRef = useRef(false)
   const mapDraftRef = useRef({ key: '', value: null })
+  const dialogRef = useRef(null)
+  const modalHistoryRef = useRef(false)
 
   const selectedViewport = state.destination?.viewport || SEARCH_OVERVIEW_VIEWPORT
   const datesValid = isDateRangeValid(state.checkin, state.checkout)
@@ -135,6 +147,37 @@ export function SearchTransitionHost({ onNavigate }) {
     targetHeight: fittedPanelHeight,
     fallbackHeight: fallbackPanelHeight,
   })
+
+  /* Search is a modal state, so the first Back must dismiss it rather than
+     leave the page underneath. Opening pushes one history entry carrying a
+     marker; whoever ends the session gives that entry back. Ownership is
+     tracked strictly, because calling history.back() without owning an entry
+     would navigate the user off the page. */
+  const pushModalHistoryEntry = () => {
+    if (modalHistoryRef.current) return
+    // Record where the page actually is first, so the entry Back returns to
+    // agrees with the scroll position Search restores itself.
+    saveCurrentScrollPosition()
+    window.history.pushState({ ...currentHistoryState(), [SEARCH_MODAL_STATE_KEY]: true }, '', currentHref())
+    modalHistoryRef.current = true
+  }
+
+  const consumeModalHistoryEntry = () => {
+    if (!modalHistoryRef.current) return
+    modalHistoryRef.current = false
+    window.history.back()
+  }
+
+  // Used when Search hands off to the Map: the destination replaces the modal
+  // entry instead of stacking behind it, so Back from the Map goes to the page
+  // Search was opened from rather than to an entry that looks identical.
+  const releaseModalHistoryEntry = () => {
+    if (!modalHistoryRef.current) return false
+    modalHistoryRef.current = false
+    const { [SEARCH_MODAL_STATE_KEY]: _consumed, ...rest } = currentHistoryState()
+    window.history.replaceState(rest, '', currentHref())
+    return true
+  }
 
   const clearTimers = () => {
     window.clearTimeout(closeTimerRef.current)
@@ -165,6 +208,7 @@ export function SearchTransitionHost({ onNavigate }) {
   const closeTransition = () => {
     if (!active || complete || closingRef.current) return
     closingRef.current = true
+    consumeModalHistoryEntry()
     setClosing(true)
     clearTimers()
     setReady(false)
@@ -230,6 +274,7 @@ export function SearchTransitionHost({ onNavigate }) {
       setStep('destination')
       setComplete(false)
       setReady(false)
+      pushModalHistoryEntry()
       setActive(true)
       requestAnimationFrame(() => requestAnimationFrame(() => {
         setOpen(true)
@@ -310,6 +355,80 @@ export function SearchTransitionHost({ onNavigate }) {
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [active, complete])
+
+  useEffect(() => {
+    if (!active) return undefined
+    const onPopState = () => {
+      if (!modalHistoryRef.current) return
+      // Still standing on our own entry (a Forward press) — nothing to dismiss.
+      if (currentHistoryState()[SEARCH_MODAL_STATE_KEY]) return
+      // The browser already popped the entry, so close without giving it back.
+      modalHistoryRef.current = false
+      // A submitted search owns its own close through the Map handoff.
+      if (mapHandoffRef.current) return
+      closeTransition()
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [active, complete])
+
+  // The transition is portalled to document.body, so the routed app root is a
+  // sibling and can be made inert wholesale. Without this the page underneath
+  // stayed hit-testable and reachable by assistive tech while Search was open.
+  useEffect(() => {
+    if (!active) return undefined
+    const appRoot = document.getElementById('root')
+    if (!appRoot) return undefined
+    appRoot.setAttribute('inert', '')
+    appRoot.setAttribute('aria-hidden', 'true')
+    return () => {
+      appRoot.removeAttribute('inert')
+      appRoot.removeAttribute('aria-hidden')
+    }
+  }, [active])
+
+  useEffect(() => {
+    if (!active) return undefined
+    const onKeyDown = (event) => {
+      if (event.key !== 'Tab') return
+      const dialog = dialogRef.current
+      if (!dialog) return
+
+      // Text fields are deliberately unfocusable on the dates/guests steps:
+      // searchOpenFocusGuard blurs them there to keep the soft keyboard down.
+      // Offering them as Tab stops would hand focus straight back to the body.
+      const keyboardFreeStep = step === 'dates' || step === 'guests'
+      const candidates = [...dialog.querySelectorAll(
+        'a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])',
+      )].filter((element) => {
+        if (element.getAttribute('aria-hidden') === 'true') return false
+        if (keyboardFreeStep && element.matches('input, textarea')) return false
+        return element.getClientRects().length > 0
+      })
+      if (!candidates.length) return
+
+      const first = candidates[0]
+      const last = candidates[candidates.length - 1]
+      const current = document.activeElement
+
+      if (!dialog.contains(current)) {
+        event.preventDefault()
+        ;(event.shiftKey ? last : first).focus()
+        return
+      }
+      if (!event.shiftKey && current === last) {
+        event.preventDefault()
+        first.focus()
+        return
+      }
+      if (event.shiftKey && current === first) {
+        event.preventDefault()
+        last.focus()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [active, step])
 
   useEffect(() => {
     const onMapReady = () => {
@@ -399,7 +518,7 @@ export function SearchTransitionHost({ onNavigate }) {
     setOpen(false)
     const path = buildMapSearchPath(state)
     completeTimerRef.current = window.setTimeout(() => {
-      onNavigate(path)
+      onNavigate(path, { replace: releaseModalHistoryEntry() })
       handoffFallbackTimerRef.current = window.setTimeout(finalizeMapHandoff, 2500)
     }, COMPLETE_MS)
   }
@@ -420,7 +539,7 @@ export function SearchTransitionHost({ onNavigate }) {
   const stepIndex = step === 'destination' ? 1 : step === 'dates' ? 2 : 3
 
   return createPortal(
-    <div className={rootClass} style={rootStyle} data-testid="search-transition" data-step={step} data-ready={ready ? 'true' : 'false'} data-address-mode={addressMode ? 'true' : 'false'} data-map-origin={mapOriginSummary ? 'true' : 'false'} data-closing={closing ? 'true' : 'false'} data-exact-fit="true">
+    <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Recherche" className={rootClass} style={rootStyle} data-testid="search-transition" data-step={step} data-ready={ready ? 'true' : 'false'} data-address-mode={addressMode ? 'true' : 'false'} data-map-origin={mapOriginSummary ? 'true' : 'false'} data-closing={closing ? 'true' : 'false'} data-exact-fit="true">
       <div className="movera-st__map-stage" aria-hidden="true">
         <SearchMapPreview viewport={selectedViewport} />
       </div>
