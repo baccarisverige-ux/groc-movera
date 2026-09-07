@@ -50,7 +50,37 @@ async function openSearch(page) {
   await settle(page)
 }
 
+/* The dates step reaches for new Date() to decide which month to render, and
+   the guests step prints the chosen check-in and check-out in its tripline. A
+   golden of either would therefore bake in the day it was recorded and start
+   failing the moment the month rolled over — a baseline with a timer on it.
+
+   setFixedTime pins Date.now() and new Date() without faking timers, so the
+   calendar always opens on the same month while CSS transitions and animation
+   frames keep running normally. Nothing in src/features/search reads Date.now()
+   or performance.now(), so this changes what the calendar displays and nothing
+   else about how Search behaves. */
+const FIXED_NOW = new Date('2027-03-15T12:00:00Z')
+
+/* Both Search steps below need a destination and a date range first. Picking
+   the first two selectable days is deterministic under the fixed clock. */
+async function reachGuestsStep(page) {
+  await openSearch(page)
+  await page.getByTestId('search-step-destination').getByRole('button').first().click()
+  await expect(page.getByTestId('search-step-dates')).toBeVisible()
+
+  const days = page.locator('.movera-st__calendar-grid button.movera-st__day:not(:disabled)')
+  await expect.poll(async () => days.count()).toBeGreaterThanOrEqual(2)
+  await days.nth(0).click()
+  await days.nth(3).click()
+
+  await page.getByTestId('search-transition').locator('.movera-st__step').filter({ hasText: 'Voyageurs' }).click()
+  await expect(page.getByTestId('search-step-guests')).toBeVisible()
+  await settle(page)
+}
+
 test.beforeEach(async ({ page }) => {
+  await page.clock.setFixedTime(FIXED_NOW)
   await isolateFromNetwork(page)
 })
 
@@ -77,6 +107,17 @@ test('Search · dates step', async ({ page }) => {
   await expect(page.getByTestId('search-step-dates')).toBeVisible()
   await settle(page)
   await expect(page).toHaveScreenshot('search-dates.png', { animations: 'disabled', scale: 'css' })
+})
+
+/* Guests shares searchTransition.css and searchTransition-stability.css with
+   the other two steps, so leaving it out would have left the panel resize, the
+   counter rows and the tripline unprotected while Phase 8b edits exactly those
+   layers. */
+test('Search · guests step', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.getByTestId('page-home')).toBeVisible()
+  await reachGuestsStep(page)
+  await expect(page).toHaveScreenshot('search-guests.png', { animations: 'disabled', scale: 'css' })
 })
 
 test('Collection · Plage', async ({ page }) => {

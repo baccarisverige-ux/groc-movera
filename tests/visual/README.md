@@ -19,6 +19,7 @@ agree on what an approved target is:
 | Home | `/` | category rail, Welcome, collection sections |
 | Search · destination | `/` + open | the approved Search transition at rest |
 | Search · dates | `/` + open + pick | calendar layout inside the panel |
+| Search · guests | `/` + open + pick + Voyageurs | counter rows, panel resize, tripline |
 | Collection · Plage | `/plage` | the shared premium hero |
 | Map · offer sheet | `/map` | map chrome, header offset, sheet at its collapsed snap |
 | Profile | `/profile` | auth entry layout |
@@ -45,6 +46,19 @@ change:
 
 Step 3 is deliberately manual. There is no job that overwrites baselines on its
 own — that would turn every regression into a silently accepted new normal.
+
+## Why the clock is pinned
+
+The calendar opens on `new Date()`'s month and the guests tripline prints the
+chosen check-in and check-out. A golden of either would bake in the day it was
+recorded and start failing when the month rolled over — a baseline with a timer
+on it. Measured: on the real clock the calendar renders "Septembre 2026"; under
+the pinned clock, "Mars 2027".
+
+`page.clock.setFixedTime` pins `Date.now()` and `new Date()` **without** faking
+timers, so CSS transitions and animation frames keep running normally. Nothing
+in `src/features/search` reads `Date.now()` or `performance.now()`, so this
+changes what the calendar displays and nothing else about how Search behaves.
 
 ## Why the network is blocked
 
