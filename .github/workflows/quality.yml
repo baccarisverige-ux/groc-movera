@@ -128,6 +128,34 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+  android-quality:
+    name: Android Chrome · Voyageur · Search · Map
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Install Playwright
+        run: npm install --no-save --package-lock=false @playwright/test@1.55.0
+      - name: Install Chromium with system dependencies
+        run: npx playwright install --with-deps chromium
+      - name: Critical Voyageur, Search and Map flows on Android
+        run: npm run test:android -- --workers=2
+      - name: Upload Android report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-report
+          path: |
+            playwright-report
+            test-results
+          if-no-files-found: ignore
+          retention-days: 14
+
   final-map-uat:
     name: Final Map UAT · ${{ matrix.project }}
     runs-on: ubuntu-latest
