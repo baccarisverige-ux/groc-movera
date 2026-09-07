@@ -28,7 +28,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run build && npm run preview -- --host 127.0.0.1',
+    command: 'VITE_GOOGLE_PLACES_API_KEY=e2e-places-key npm run build && npm run preview -- --host 127.0.0.1',
     url: baseURL,
     timeout: 120_000,
     reuseExistingServer: !process.env.CI,

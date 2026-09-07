@@ -1,4 +1,10 @@
-import { reverseGeocode, searchAddress } from '../../../services/geocoding/index.js'
+import {
+  createAddressSearchSession,
+  isRemoteAddressSearchAvailable,
+  resolveAddressSuggestion,
+  reverseGeocode,
+  suggestAddresses,
+} from '../../../services/geocoding/index.js'
 
 const PAGE_SELECTOR = '.host-onboarding[data-screen="address"]'
 const PANEL_CLASS = 'host-address-smart-panel'
@@ -157,6 +163,9 @@ function mountSmartAddress(page) {
   let searchTimer = 0
   let searchController = null
   let revision = 0
+  // One Places session spans the keystrokes of a lookup and the details call
+  // that ends it, so a typed address is billed once rather than per keystroke.
+  let searchSession = null
 
   const clearSuggestions = () => {
     list.replaceChildren()
@@ -168,10 +177,25 @@ function mountSmartAddress(page) {
     list.replaceChildren()
     const suggestions = Array.isArray(results) ? results.slice(0, 6) : []
     suggestions.forEach((result) => {
-      list.append(createSuggestionButton(result, (selected) => {
-        if (!selectDetectedAddress(selected, addressInput, cityInput, status)) return
+      list.append(createSuggestionButton(result, async (selected) => {
         window.clearTimeout(searchTimer)
         searchController?.abort()
+        // Coordinates are fetched now, for the one address the user picked,
+        // instead of for every prefix they typed on the way here.
+        let resolved = selected
+        if (!selected?.viewport) {
+          setStatus(status, 'Localisation de l’adresse choisie…', 'loading')
+          try {
+            resolved = await resolveAddressSuggestion(selected, { session: searchSession })
+          } catch {
+            resolved = null
+          }
+          searchSession = null
+        }
+        if (!resolved?.viewport || !selectDetectedAddress(resolved, addressInput, cityInput, status)) {
+          setStatus(status, 'Impossible de localiser cette adresse. Choisissez-en une autre ou placez le point à l’étape suivante.', 'error')
+          return
+        }
         clearSuggestions()
         addressInput.blur()
       }))
@@ -190,16 +214,25 @@ function mountSmartAddress(page) {
       return
     }
 
+    // Typing never reaches a public geocoder: suggestions come from Places API
+    // (New) when the Movera key is configured, and otherwise not at all. The
+    // pin step remains the way to place a property without them.
+    if (!isRemoteAddressSearchAvailable()) {
+      clearSuggestions()
+      setStatus(status, 'Saisissez l’adresse puis placez le point exact à l’étape suivante.', 'idle')
+      return
+    }
+
     const localRevision = ++revision
     searchTimer = window.setTimeout(async () => {
       searchController = new AbortController()
+      if (!searchSession || searchSession.closed) searchSession = createAddressSearchSession()
       panel.dataset.searching = 'true'
       setStatus(status, 'Recherche des adresses correspondantes…', 'loading')
       try {
-        const results = await searchAddress(query, {
+        const results = await suggestAddresses(query, {
+          session: searchSession,
           signal: searchController.signal,
-          countryCode: 'tn',
-          language: 'fr',
           limit: 6,
         })
         if (localRevision !== revision || searchController.signal.aborted) return
