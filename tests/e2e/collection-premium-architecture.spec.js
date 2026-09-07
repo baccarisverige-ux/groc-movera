@@ -10,7 +10,7 @@ const collections = [
 
 for (const collection of collections) {
   test(`${collection.badge} keeps the refined shared premium hero`, async ({ page }) => {
-    await page.goto(`/Movera-host1${collection.route}`)
+    await page.goto(`/groc-movera${collection.route}`)
     const root = page.getByTestId(collection.testId)
     await expect(root).toBeVisible()
 

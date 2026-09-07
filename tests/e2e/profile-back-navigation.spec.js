@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 
 test('standard email and phone auth always exposes a clear return arrow', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/Movera-host1/profile')
+  await page.goto('/groc-movera/profile')
 
   await page.getByRole('button', { name: 'Continuer avec une adresse e-mail' }).click()
 
