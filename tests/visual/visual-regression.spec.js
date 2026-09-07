@@ -1,0 +1,161 @@
+import { expect, test } from '@playwright/test'
+
+/* Real visual regression, as opposed to what tests/visual used to do.
+
+   The old capture spec called page.screenshot() and wrote PNGs into the test
+   output directory. Nothing ever read them back, so the job could not fail on
+   a visual change — it only failed if the app crashed. That made "Mobile
+   Chromium visual references" a screenshot archive, not a gate, and it meant
+   the approved Search/Map design had no automated protection at all.
+
+   These comparisons are the gate. Every state below is committed as a golden
+   PNG and diffed pixel by pixel on each run.
+
+   Determinism is bought in three ways:
+
+   1. Everything outside the preview server is blocked. Unsplash photos, OSM
+      tiles and Google's runtime all vary between runs, and the proxy in front
+      of CI can stall or reset them. Blocked, the app renders its bundled
+      fallbacks — the same code path tests/e2e/critical-regressions.spec.js
+      already pins — so the pixels depend only on Movera's own CSS and assets.
+   2. Animations are frozen by Playwright and the screenshot is taken at CSS
+      scale, so device pixel ratio cannot leak into the baseline.
+   3. Fonts and browser build are pinned by running this suite inside the
+      official Playwright container in CI. Baselines are generated in that same
+      container, which is why they must not be regenerated on a developer
+      machine — see .github/workflows/visual-baseline.yml. */
+
+/* Local Movera data only. Any other origin is non-deterministic here. */
+async function isolateFromNetwork(page) {
+  await page.route('**/*', (route) => {
+    const { hostname } = new URL(route.request().url())
+    return hostname === '127.0.0.1' || hostname === 'localhost'
+      ? route.continue()
+      : route.abort()
+  })
+}
+
+/* A screenshot taken mid font swap is a coin flip, so wait for that much
+   explicitly. Deliberately nothing else: toHaveScreenshot already re-captures
+   until two consecutive frames are identical, which is what settles images.
+   An explicit wait on every <img> instead hangs forever here, because blocking
+   the network leaves lazy images below the fold permanently incomplete. */
+async function settle(page) {
+  await page.evaluate(() => document.fonts.ready)
+}
+
+async function openSearch(page) {
+  await page.getByTestId('home-search').click()
+  await expect.poll(async () => page.getByTestId('search-transition').getAttribute('data-ready')).toBe('true')
+  await settle(page)
+}
+
+/* The dates step reaches for new Date() to decide which month to render, and
+   the guests step prints the chosen check-in and check-out in its tripline. A
+   golden of either would therefore bake in the day it was recorded and start
+   failing the moment the month rolled over — a baseline with a timer on it.
+
+   setFixedTime pins Date.now() and new Date() without faking timers, so the
+   calendar always opens on the same month while CSS transitions and animation
+   frames keep running normally. Nothing in src/features/search reads Date.now()
+   or performance.now(), so this changes what the calendar displays and nothing
+   else about how Search behaves. */
+const FIXED_NOW = new Date('2027-03-15T12:00:00Z')
+
+/* Both Search steps below need a destination and a date range first. Picking
+   the first two selectable days is deterministic under the fixed clock. */
+async function reachGuestsStep(page) {
+  await openSearch(page)
+  await page.getByTestId('search-step-destination').getByRole('button').first().click()
+  await expect(page.getByTestId('search-step-dates')).toBeVisible()
+
+  const days = page.locator('.movera-st__calendar-grid button.movera-st__day:not(:disabled)')
+  await expect.poll(async () => days.count()).toBeGreaterThanOrEqual(2)
+  await days.nth(0).click()
+  await days.nth(3).click()
+
+  await page.getByTestId('search-transition').locator('.movera-st__step').filter({ hasText: 'Voyageurs' }).click()
+  await expect(page.getByTestId('search-step-guests')).toBeVisible()
+  await settle(page)
+}
+
+test.beforeEach(async ({ page }) => {
+  await page.clock.setFixedTime(FIXED_NOW)
+  await isolateFromNetwork(page)
+})
+
+test('Home', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.getByTestId('page-home')).toBeVisible()
+  await settle(page)
+  await expect(page).toHaveScreenshot('home.png', { fullPage: true, animations: 'disabled', scale: 'css' })
+})
+
+/* The three Search states compare the panel, not the whole viewport.
+
+   Measured on two runs of the same commit in the same container: the guests
+   panel rendered pixel-identically but the whole overlay landed 2px left and
+   1px up. Realigning the actual by (-2, -1) brought the difference to exactly
+   0% of sampled pixels, so the panel's own rendering is deterministic and only
+   its placement in the viewport is not. Against a full-viewport golden that
+   2px shift moves ~70% of pixels, which would have made this suite flaky
+   forever while telling us nothing about the design.
+
+   Clipping to .movera-st__panel keeps every pixel Phase 8b can actually change
+   — panel geometry, the step chips, the counter rows, the calendar, the
+   tripline, the action button — and drops only where the overlay sits in the
+   viewport. That placement is not unprotected: search-uat-cleanup.spec.js
+   already bounds the panel height per step and asserts the Home bar geometry
+   is unchanged while Search is open and after it closes. */
+const SEARCH_PANEL = '.movera-st__panel'
+
+test('Search · destination step', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.getByTestId('page-home')).toBeVisible()
+  await openSearch(page)
+  await expect(page.getByTestId('search-step-destination')).toBeVisible()
+  await expect(page.locator(SEARCH_PANEL)).toHaveScreenshot('search-destination.png', { animations: 'disabled', scale: 'css' })
+})
+
+test('Search · dates step', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.getByTestId('page-home')).toBeVisible()
+  await openSearch(page)
+  await page.getByTestId('search-step-destination').getByRole('button').first().click()
+  await expect(page.getByTestId('search-step-dates')).toBeVisible()
+  await settle(page)
+  await expect(page.locator(SEARCH_PANEL)).toHaveScreenshot('search-dates.png', { animations: 'disabled', scale: 'css' })
+})
+
+/* Guests shares searchTransition.css and searchTransition-stability.css with
+   the other two steps, so leaving it out would have left the panel resize, the
+   counter rows and the tripline unprotected while Phase 8b edits exactly those
+   layers. */
+test('Search · guests step', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.getByTestId('page-home')).toBeVisible()
+  await reachGuestsStep(page)
+  await expect(page.locator(SEARCH_PANEL)).toHaveScreenshot('search-guests.png', { animations: 'disabled', scale: 'css' })
+})
+
+test('Collection · Plage', async ({ page }) => {
+  await page.goto('/plage')
+  await expect(page.getByTestId('page-beach')).toBeVisible()
+  await settle(page)
+  await expect(page).toHaveScreenshot('collection-plage.png', { fullPage: true, animations: 'disabled', scale: 'css' })
+})
+
+test('Map · offer sheet', async ({ page }) => {
+  await page.goto('/map')
+  await expect(page.getByTestId('page-map')).toBeVisible()
+  await expect(page.getByTestId('map-surface')).toBeVisible()
+  await settle(page)
+  await expect(page).toHaveScreenshot('map-offer-sheet.png', { animations: 'disabled', scale: 'css' })
+})
+
+test('Profile', async ({ page }) => {
+  await page.goto('/profile')
+  await expect(page.getByTestId('page-profile')).toBeVisible()
+  await settle(page)
+  await expect(page).toHaveScreenshot('profile.png', { fullPage: true, animations: 'disabled', scale: 'css' })
+})
