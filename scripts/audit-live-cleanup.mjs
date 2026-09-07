@@ -41,7 +41,13 @@ const mountedSearchV2 = (app.match(/<SearchExperience\b/g) || []).length
 
 const addressAutocomplete = read('src/features/search/useAddressAutocomplete.js')
 const popupUsesSharedGeocoding = /from\s+['"]\.\.\/\.\.\/services\/geocoding\/index\.js['"]/.test(addressAutocomplete)
-const popupKeepsLegacyFallback = /from\s+['"]\.\/tunisiaPinScannerLegacy\.js['"]/.test(addressAutocomplete)
+/* The popup used to call the public Nominatim scanner on every keystroke, which
+   that provider's usage policy prohibits. Phase 4 replaced it with Places API
+   (New) behind the shared address service, so the guard now enforces the
+   absence of the typing-path geocoders rather than the presence of the old
+   fallback it was written to protect. */
+const popupAvoidsLegacyTypingGeocoder = !/tunisiaPinScannerLegacy|scanTunisia/.test(addressAutocomplete)
+const popupResolvesOnSelection = /suggestAddresses/.test(addressAutocomplete) && /resolveAddressSuggestion/.test(addressAutocomplete)
 
 const cssLayers = searchFiles.filter((file) => /^searchTransition.*\.css$/.test(file))
 const transitionCss = read('src/features/search/searchTransition.css')
@@ -81,7 +87,8 @@ const report = {
   missingSearchFiles,
   reintroducedRetiredSearchFiles,
   popupUsesSharedGeocoding,
-  popupKeepsLegacyFallback,
+  popupAvoidsLegacyTypingGeocoder,
+  popupResolvesOnSelection,
   cssLayers,
   importantCount,
   deployWorkflows,
@@ -101,7 +108,8 @@ if (unexpectedSearchFiles.length) report.findings.push(`Unexpected Search files 
 if (missingSearchFiles.length) report.findings.push(`Expected Search files missing: ${missingSearchFiles.join(', ')}`)
 if (reintroducedRetiredSearchFiles.length) report.findings.push(`Retired Search files reintroduced: ${reintroducedRetiredSearchFiles.join(', ')}`)
 if (!popupUsesSharedGeocoding) report.findings.push('Search popup must use the shared services/geocoding boundary')
-if (!popupKeepsLegacyFallback) report.findings.push('Search popup legacy geocoding fallback was removed before migration cleanup approval')
+if (!popupAvoidsLegacyTypingGeocoder) report.findings.push('Search popup must not geocode through the public Nominatim scanner while the user types')
+if (!popupResolvesOnSelection) report.findings.push('Search popup must suggest through the shared address service and resolve coordinates on selection')
 if (cssLayers.length !== 2) report.findings.push(`Expected exactly 2 Search CSS layers, found ${cssLayers.length}: ${cssLayers.join(', ')}`)
 if (importantCount > 35) report.findings.push(`High CSS override debt: ${importantCount} !important declarations across Search CSS layers`)
 if (deployWorkflows.length !== 1) report.findings.push(`Expected exactly one deployment workflow, found ${deployWorkflows.length}: ${deployWorkflows.map((x) => x.file).join(', ')}`)
@@ -122,7 +130,8 @@ if (
   missingSearchFiles.length ||
   reintroducedRetiredSearchFiles.length ||
   !popupUsesSharedGeocoding ||
-  !popupKeepsLegacyFallback ||
+  !popupAvoidsLegacyTypingGeocoder ||
+  !popupResolvesOnSelection ||
   cssLayers.length !== 2 ||
   deployWorkflows.length !== 1 ||
   !directDeploy?.directPages ||

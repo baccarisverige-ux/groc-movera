@@ -43,7 +43,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'MOVERA_TEST_BASE=root npm run build && MOVERA_TEST_BASE=root npm run preview -- --host 127.0.0.1',
+    command: 'MOVERA_TEST_BASE=root VITE_GOOGLE_PLACES_API_KEY=e2e-places-key npm run build && MOVERA_TEST_BASE=root npm run preview -- --host 127.0.0.1',
     url: `${baseURL}/`,
     timeout: 120_000,
     reuseExistingServer: !process.env.CI,

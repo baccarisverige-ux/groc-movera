@@ -125,7 +125,7 @@ export function SearchTransitionHost({ onNavigate }) {
       : SEARCH_DESTINATIONS
     return matches.slice(0, 4)
   }, [destinationQuery])
-  const { suggestions: addressSuggestions, loading: addressLoading } = useAddressAutocomplete(destinationQuery, addressMode)
+  const { suggestions: addressSuggestions, loading: addressLoading, resolveSuggestion } = useAddressAutocomplete(destinationQuery, addressMode)
   const { contentRef, panelHeight: fittedPanelHeight } = useSearchPanelFit({ active, step, addressMode, lockedViewportHeight })
   const fallbackPanelHeight = Math.min(570, Math.max(455, Math.round(lockedViewportHeight * 0.64)))
   const animatedPanelHeight = useSearchPanelHeightMotion({
@@ -336,16 +336,21 @@ export function SearchTransitionHost({ onNavigate }) {
     stepTimerRef.current = window.setTimeout(() => setStep('dates'), 220)
   }
 
-  const chooseAddressSuggestion = (address) => {
-    const destination = destinationById(address.destinationId)
+  /* Coordinates are resolved here, on selection, rather than while typing: a
+     local Movera address already carries its viewport, and a Places suggestion
+     costs exactly one details call that closes its billing session. */
+  const chooseAddressSuggestion = async (address) => {
+    const resolved = await resolveSuggestion(address)
+    if (!resolved) return
+    const destination = destinationById(resolved.destinationId)
     if (!destination) return
     clearTimers()
     setMapOriginSummary(null)
     setState((current) => ({
       ...current,
-      destination: { ...destination, label: address.label, subtitle: address.subtitle, viewport: address.viewport },
+      destination: { ...destination, label: resolved.label, subtitle: resolved.subtitle, viewport: resolved.viewport },
     }))
-    const nextQuery = `${address.label}, ${address.subtitle}`
+    const nextQuery = `${resolved.label}, ${resolved.subtitle}`
     setDestinationQuery(nextQuery)
     if (openedFromMapRef.current) {
       mapDraftRef.current = { ...mapDraftRef.current, value: nextQuery }
