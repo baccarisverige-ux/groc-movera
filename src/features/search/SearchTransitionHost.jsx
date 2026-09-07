@@ -8,7 +8,7 @@ import { GuestSelector } from './GuestSelector.jsx'
 import { SearchCalendar } from './SearchCalendar.jsx'
 import { SearchStepMotion } from './SearchStepMotion.jsx'
 import { SEARCH_DESTINATIONS } from './searchData.js'
-import { buildMapSearchPath, createSearchState, isDateRangeValid, totalTravellers } from './searchState.js'
+import { buildMapSearchPath, createSearchState, isDateRangeValid, isUsableViewport, totalTravellers } from './searchState.js'
 import { useAddressAutocomplete } from './useAddressAutocomplete.js'
 import { useSearchPanelFit } from './useSearchPanelFit.js'
 import { useSearchPanelHeightMotion } from './useSearchPanelHeightMotion.js'
@@ -357,8 +357,18 @@ export function SearchTransitionHost({ onNavigate }) {
   const applyRecent = (recent) => {
     const destination = destinationById(recent.destinationId)
     if (!destination) return
+    /* Reuse the camera the search was actually made with. The chip shows the
+       precise label the user picked, so restoring the destination's generic
+       framing would quietly send them somewhere else. Records saved before
+       viewports were persisted have none, and still fall back to it. */
+    const restoredViewport = isUsableViewport(recent.viewport) ? recent.viewport : destination.viewport
     setState({
-      destination,
+      destination: {
+        ...destination,
+        label: recent.label || destination.label,
+        subtitle: recent.subtitle || destination.subtitle,
+        viewport: restoredViewport,
+      },
       checkin: recent.checkin || '',
       checkout: recent.checkout || '',
       adults: Math.max(1, Number(recent.adults) || 1),
@@ -375,6 +385,10 @@ export function SearchTransitionHost({ onNavigate }) {
     const entry = {
       destinationId: state.destination.id,
       label: state.destination.label,
+      subtitle: state.destination.subtitle || '',
+      // Persist the camera, not just the destination it belongs to, so the
+      // search can be reproduced exactly rather than approximated.
+      viewport: isUsableViewport(state.destination.viewport) ? state.destination.viewport : null,
       checkin: state.checkin,
       checkout: state.checkout,
       adults: state.adults,
