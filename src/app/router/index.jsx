@@ -3,43 +3,10 @@ import { GuestLayout } from '../layouts/GuestLayout.jsx'
 import { AuthRequiredPage } from '../../features/auth/AuthRequiredPage.jsx'
 import { useAuthSession } from '../../features/auth/authSession.js'
 import { routeDefinitions, NotFoundPage } from './routes.jsx'
+import { toBrowserPath, toInternalPath } from './basePath.js'
+import { NAVIGATION_APPLIED_EVENT } from './navigationEvents.js'
 
-const BASE_PATH = import.meta.env.BASE_URL === '/' ? '' : import.meta.env.BASE_URL.replace(/\/$/, '')
-const COMPAT_BASE_PATHS = ['/groc-movera', '/Movera-host1']
 const SCROLL_STATE_KEY = '__moveraScrollY'
-
-function stripBasePath(pathname, basePath) {
-  if (!basePath) return null
-  if (pathname === basePath || pathname === `${basePath}/`) return '/'
-  if (pathname.startsWith(`${basePath}/`)) return pathname.slice(basePath.length) || '/'
-  return null
-}
-
-function toInternalPath(pathname) {
-  const value = pathname || '/'
-  const activeBasePath = stripBasePath(value, BASE_PATH)
-  if (activeBasePath) return activeBasePath
-
-  for (const compatibleBasePath of COMPAT_BASE_PATHS) {
-    const compatiblePath = stripBasePath(value, compatibleBasePath)
-    if (compatiblePath) return compatiblePath
-  }
-
-  return value
-}
-
-function runtimeBasePath() {
-  if (BASE_PATH) return BASE_PATH
-  const pathname = window.location.pathname || '/'
-  return COMPAT_BASE_PATHS.find((basePath) => stripBasePath(pathname, basePath)) || ''
-}
-
-function toBrowserPath(to) {
-  const basePath = runtimeBasePath()
-  if (!basePath) return to
-  if (to === '/') return `${basePath}/`
-  return `${basePath}${to.startsWith('/') ? to : `/${to}`}`
-}
 
 function readDocumentScrollY() {
   const body = document.body
@@ -67,16 +34,29 @@ function restoreScrollPosition(state, fallback = 0) {
   }))
 }
 
+function dispatchNavigationApplied(path) {
+  window.dispatchEvent(new CustomEvent(NAVIGATION_APPLIED_EVENT, {
+    detail: { path },
+  }))
+}
+
 function compilePattern(pattern){const keys=[];const source=pattern.split('/').map(segment=>{if(!segment)return'';if(segment.startsWith(':')){keys.push(segment.slice(1));return'([^/]+)'}return segment.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}).join('/');return{regex:new RegExp(`^${source||'/'}$`),keys}}
 const compiledRoutes=routeDefinitions.map(route=>({...route,...compilePattern(route.path)}))
 function resolveRoute(pathname){for(const route of compiledRoutes){const match=pathname.match(route.regex);if(!match)continue;const params=Object.fromEntries(route.keys.map((key,index)=>[key,decodeURIComponent(match[index+1])]));return{route,params}}return null}
 
 export function navigate(to){
   const browserPath=toBrowserPath(to)
-  if(`${window.location.pathname}${window.location.search}`===browserPath)return
+  const currentPath=`${window.location.pathname}${window.location.search}${window.location.hash}`
+  if(currentPath===browserPath){
+    const state=currentHistoryState()
+    dispatchNavigationApplied(browserPath)
+    window.dispatchEvent(new PopStateEvent('popstate',{state}))
+    return
+  }
   saveCurrentScrollPosition()
   const nextState = { [SCROLL_STATE_KEY]: 0 }
   window.history.pushState(nextState,'',browserPath)
+  dispatchNavigationApplied(browserPath)
   window.dispatchEvent(new PopStateEvent('popstate', { state: nextState }))
 }
 

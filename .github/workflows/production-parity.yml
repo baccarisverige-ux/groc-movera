@@ -1,0 +1,55 @@
+name: Movera Production Parity
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: movera-production-parity-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pages-base-path:
+    name: Pages base path · ${{ matrix.project }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - project: pages-chromium
+            browser: chromium
+          - project: pages-webkit
+            browser: webkit
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Install target browser
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Verify real GitHub Pages base path and native navigation
+        env:
+          MOVERA_PAGES_BASE_TEST: '1'
+        run: npx playwright test tests/e2e/pages-base-path.spec.js --config=playwright.pages.config.mjs --project=${{ matrix.project }} --workers=1
+      - name: Upload production-parity report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pages-base-path-report-${{ matrix.project }}
+          path: |
+            playwright-report-pages
+            test-results
+          if-no-files-found: ignore
+          retention-days: 14

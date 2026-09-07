@@ -149,15 +149,17 @@ export function SearchTransitionHost({ onNavigate }) {
     window.clearTimeout(handoffFallbackTimerRef.current)
     mapHandoffRef.current = false
     endMapHandoff()
-    window.requestAnimationFrame(() => {
-      setActive(false)
-      setComplete(false)
-      window.requestAnimationFrame(() => {
-        setDestinationQuery('')
-        setAddressMode(false)
-        setMapOriginSummary(null)
-      })
-    })
+    // MAP_READY already fires off a deterministic router/camera signal (see
+    // mapHandoff.js). Gating the actual release behind requestAnimationFrame
+    // used to reintroduce the exact non-determinism that signal was built to
+    // avoid: headless WebKit can stall a single rAF callback for multiple
+    // seconds, well past the release budget, even though nothing else in the
+    // chain is slow. Flip the state synchronously instead.
+    setActive(false)
+    setComplete(false)
+    setDestinationQuery('')
+    setAddressMode(false)
+    setMapOriginSummary(null)
   }, [])
 
   const closeTransition = () => {
@@ -312,7 +314,7 @@ export function SearchTransitionHost({ onNavigate }) {
   useEffect(() => {
     const onMapReady = () => {
       if (!mapHandoffRef.current) return
-      window.requestAnimationFrame(finalizeMapHandoff)
+      finalizeMapHandoff()
     }
     window.addEventListener(MAP_READY_EVENT, onMapReady)
     return () => window.removeEventListener(MAP_READY_EVENT, onMapReady)
