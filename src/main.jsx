@@ -29,6 +29,7 @@ import './features/host/onboarding/hostAddressLocationEnhancer.js'
 import './features/host/onboarding/host-address-location.css'
 import { installPropertyArtworkRuntime } from './features/host/onboarding/propertyArtworkRuntime.js'
 import { installGeocodingBrowserBridge } from './services/geocoding/browserBridge.js'
+import { toInternalPath } from './app/router/basePath.js'
 import App from './app/App.jsx'
 
 installPropertyArtworkRuntime()
@@ -40,7 +41,25 @@ import('./features/host/onboarding/hostPinReactEngineEnhancer.jsx')
   .then(({ installHostPinReactEngine }) => installHostPinReactEngine())
   .catch(() => {})
 
-for (const src of [BEACH_HERO_IMAGE, GUESTHOUSE_HERO_IMAGE, HOTEL_HERO_IMAGE]) {
+/* These are the collection pages' LCP images. Preloading them at high priority
+   pays off on Home, where a collection card is the likely next tap, and on a
+   collection route itself. Everywhere else — Map, Profile, listings, Host
+   onboarding — all three were still being fetched and decoded at high priority
+   without ever being shown: 147 kB per load spent on images the route cannot
+   display, competing with the assets it actually needs. */
+const COLLECTION_HERO_PRELOADS = {
+  '/plage': [BEACH_HERO_IMAGE],
+  '/maison-d-hote': [GUESTHOUSE_HERO_IMAGE],
+  '/hotel': [HOTEL_HERO_IMAGE],
+}
+
+function collectionHeroesToPreload(pathname) {
+  const route = toInternalPath(pathname)
+  if (route === '/') return [BEACH_HERO_IMAGE, GUESTHOUSE_HERO_IMAGE, HOTEL_HERO_IMAGE]
+  return COLLECTION_HERO_PRELOADS[route] || []
+}
+
+for (const src of collectionHeroesToPreload(window.location.pathname)) {
   const link = document.createElement('link')
   link.rel = 'preload'
   link.as = 'image'
