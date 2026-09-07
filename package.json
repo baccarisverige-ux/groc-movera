@@ -16,6 +16,7 @@
     "test:e2e:chromium": "npx --yes @playwright/test@1.55.0 test tests/e2e --project=desktop-chromium --project=mobile-chromium",
     "test:e2e:webkit": "npx --yes @playwright/test@1.55.0 test tests/e2e --project=desktop-webkit --project=mobile-webkit",
     "test:responsive": "npx --yes @playwright/test@1.55.0 test tests/e2e/responsive-baseline.spec.js --project=desktop-chromium",
+    "test:visual": "npx --yes @playwright/test@1.55.0 test --config=playwright.visual.config.mjs",
     "test:map-regressions": "npx --yes @playwright/test@1.55.0 test tests/e2e/critical-regressions.spec.js tests/e2e/map-city-offer-sheet.spec.js tests/e2e/map-offer-popup.spec.js tests/e2e/map-sheet-touch-regressions.spec.js tests/e2e/map-sheet-repeat-focus.spec.js tests/e2e/map-phase1-stability.spec.js tests/e2e/map-phase3-filters.spec.js tests/e2e/map-phase4-architecture.spec.js",
     "test:final-map-uat": "npx --yes @playwright/test@1.55.0 test --config=playwright.phase5.config.mjs",
     "test:a11y": "npx --yes @playwright/test@1.55.0 test tests/accessibility",

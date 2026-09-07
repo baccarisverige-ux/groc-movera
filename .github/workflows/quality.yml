@@ -173,9 +173,16 @@ jobs:
           retention-days: 14
 
   visual-quality:
-    name: Mobile Chromium visual references
+    name: Visual regression · 320 / 390 / 1280
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Golden PNGs are only comparable against the exact fonts, browser build and
+    # rasteriser that produced them. The runner image updates on its own
+    # schedule, so pinning the Playwright container is what keeps a font
+    # revision from reading as a Movera regression. Baselines in
+    # tests/visual/*-snapshots are recorded in this same image.
+    container:
+      image: mcr.microsoft.com/playwright:v1.55.0-noble
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -183,10 +190,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
-      - name: Capture visual references
-        run: npx playwright test tests/visual --project=mobile-chromium
+      - name: Compare against the golden baseline
+        run: npm run test:visual
       - name: Upload visual report
         if: always()
         uses: actions/upload-artifact@v4
