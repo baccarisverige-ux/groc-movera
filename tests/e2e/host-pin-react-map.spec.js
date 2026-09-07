@@ -36,9 +36,62 @@ const REVERSE_RESULT = {
   },
 }
 
+const PLACES_AUTOCOMPLETE_RESULT = {
+  suggestions: [{
+    placePrediction: {
+      placeId: 'place-rue-movera',
+      text: { text: '12 Rue Movera, La Marsa' },
+      structuredFormat: {
+        mainText: { text: '12 Rue Movera' },
+        secondaryText: { text: 'La Marsa, Tunisie' },
+      },
+    },
+  }],
+}
+
+const PLACES_DETAILS_RESULT = {
+  id: 'place-rue-movera',
+  location: { latitude: 36.8782, longitude: 10.3247 },
+  displayName: { text: '12 Rue Movera' },
+  formattedAddress: '12 Rue Movera, La Marsa, Tunisie',
+  shortFormattedAddress: '12 Rue Movera, La Marsa',
+}
+
 async function installTunisiaGeocoding(page, { failSearch = false } = {}) {
   let searchRequests = 0
   let reverseRequests = 0
+  let autocompleteRequests = 0
+  let detailsRequests = 0
+
+  // Address suggestions come from Places API (New); coordinates are fetched
+  // only by the details call that a selection triggers.
+  await page.route(/places\.googleapis\.com/, async (route) => {
+    const url = route.request().url()
+    if (url.includes('places:autocomplete')) {
+      autocompleteRequests += 1
+      if (failSearch) {
+        await route.fulfill({ status: 503, contentType: 'application/json', body: '{}' })
+        return
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(PLACES_AUTOCOMPLETE_RESULT),
+      })
+      return
+    }
+
+    detailsRequests += 1
+    if (failSearch) {
+      await route.fulfill({ status: 503, contentType: 'application/json', body: '{}' })
+      return
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(PLACES_DETAILS_RESULT),
+    })
+  })
 
   await page.route('https://nominatim.openstreetmap.org/**', async (route) => {
     const url = new URL(route.request().url())
@@ -68,6 +121,8 @@ async function installTunisiaGeocoding(page, { failSearch = false } = {}) {
   return {
     searchRequests: () => searchRequests,
     reverseRequests: () => reverseRequests,
+    autocompleteRequests: () => autocompleteRequests,
+    detailsRequests: () => detailsRequests,
   }
 }
 
@@ -124,12 +179,13 @@ test('selected address carries exact coordinates into the pin step without a sec
     pinConfirmed: false,
   })
 
-  // Autocomplete may legitimately issue more than one debounced search while the
-  // two address fields are being filled. Capture the count only after the user has
-  // selected a concrete suggestion; the pin step itself must not add another
-  // forward geocode request for the same address.
-  const searchRequestsAfterSelection = geocoding.searchRequests()
-  expect(searchRequestsAfterSelection).toBeGreaterThan(0)
+  // Typing may legitimately issue more than one debounced autocomplete while the
+  // two address fields are filled, but it must never geocode: coordinates come
+  // from exactly one details call, made when the suggestion is selected.
+  const autocompleteAfterSelection = geocoding.autocompleteRequests()
+  expect(autocompleteAfterSelection).toBeGreaterThan(0)
+  expect(geocoding.detailsRequests()).toBe(1)
+  expect(geocoding.searchRequests()).toBe(0)
 
   await page.getByRole('button', { name: 'Continuer' }).click()
   await expect(onboarding).toHaveAttribute('data-screen', 'pin')
@@ -149,9 +205,11 @@ test('selected address carries exact coordinates into the pin step without a sec
   await expect(reactRoot.getByLabel('Rechercher ou modifier l’adresse')).toHaveValue('12 Rue Movera')
 
   // Entering the map step must reuse the already selected coordinate instead of
-  // asking Nominatim to resolve the same address again.
+  // resolving the same address a second time through any provider.
   await page.waitForTimeout(500)
-  expect(geocoding.searchRequests()).toBe(searchRequestsAfterSelection)
+  expect(geocoding.autocompleteRequests()).toBe(autocompleteAfterSelection)
+  expect(geocoding.detailsRequests()).toBe(1)
+  expect(geocoding.searchRequests()).toBe(0)
   expect(geocoding.reverseRequests()).toBe(0)
 
   const confirm = page.getByRole('button', { name: 'Confirmer cet emplacement' })
