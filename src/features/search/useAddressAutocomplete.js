@@ -1,9 +1,15 @@
-import { useEffect, useMemo, useState } from 'react'
-import { scanTunisia } from '../../services/geocoding/index.js'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  createAddressSearchSession,
+  isRemoteAddressSearchAvailable,
+  resolveAddressSuggestion,
+  suggestAddresses,
+} from '../../services/geocoding/index.js'
 import { SEARCH_ADDRESS_SUGGESTIONS, SEARCH_DESTINATIONS } from './searchData.js'
-import { scanTunisiaByVirtualPinLegacy } from './tunisiaPinScannerLegacy.js'
 
 export const SEARCH_ADDRESS_PREVIEW_EVENT = 'movera:search-address-preview'
+
+const REMOTE_DEBOUNCE_MS = 460
 
 function normalize(value) {
   return String(value || '').trim().toLocaleLowerCase('fr')
@@ -64,57 +70,44 @@ function publishPreview(address, stage = 'idle') {
   }))
 }
 
-async function scanWithSafeFallback(query, options) {
-  try {
-    return await scanTunisia(query, options)
-  } catch (error) {
-    if (error?.name === 'AbortError') throw error
-    return scanTunisiaByVirtualPinLegacy(query, options)
-  }
-}
-
+/* Suggestions while typing come from local Movera addresses immediately and,
+   when the Movera browser key is configured, from Places API (New). Neither
+   path geocodes per keystroke: a remote suggestion carries no coordinates
+   until the user picks it, which is what resolveSuggestion is for. */
 export function useAddressAutocomplete(query, active) {
   const local = useMemo(() => localMatches(query), [query])
   const [remote, setRemote] = useState([])
   const [loading, setLoading] = useState(false)
+  const sessionRef = useRef(null)
 
   useEffect(() => {
     const normalized = normalize(query)
-    if (!active || normalized.length < 3) {
+    if (!active || normalized.length < 3 || !isRemoteAddressSearchAvailable()) {
       setRemote([])
       setLoading(false)
-      publishPreview(null)
       return undefined
     }
+
+    // One session spans the keystrokes of this lookup and the details call that
+    // ends it, so the whole lookup is billed once.
+    if (!sessionRef.current || sessionRef.current.closed) sessionRef.current = createAddressSearchSession()
 
     const controller = new AbortController()
     const timer = window.setTimeout(async () => {
       setLoading(true)
       try {
-        const scan = await scanWithSafeFallback(query, {
+        const suggestions = await suggestAddresses(query, {
+          session: sessionRef.current,
           signal: controller.signal,
-          onCandidate: (candidate) => {
-            if (controller.signal.aborted) return
-            publishPreview(attachDestination(candidate), 'candidate')
-          },
         })
-
         if (controller.signal.aborted) return
-
-        const next = dedupe((scan.suggestions || []).map(attachDestination)).slice(0, 10)
-        const detected = attachDestination(scan.detected)
-        setRemote(next)
-
-        publishPreview(detected || next[0] || null, detected ? 'detected' : 'candidate')
+        setRemote(suggestions)
       } catch (error) {
-        if (error?.name !== 'AbortError') {
-          setRemote([])
-          publishPreview(null)
-        }
+        if (error?.name !== 'AbortError') setRemote([])
       } finally {
         if (!controller.signal.aborted) setLoading(false)
       }
-    }, 460)
+    }, REMOTE_DEBOUNCE_MS)
 
     return () => {
       window.clearTimeout(timer)
@@ -122,11 +115,30 @@ export function useAddressAutocomplete(query, active) {
     }
   }, [query, active])
 
+  useEffect(() => {
+    if (active) return
+    sessionRef.current = null
+    publishPreview(null)
+  }, [active])
+
   const suggestions = useMemo(() => {
+    const localWithDestination = dedupe(local).map(attachDestination)
     const hasQuery = normalize(query).length >= 3
-    if (hasQuery) return remote.slice(0, 10)
-    return dedupe(local).slice(0, 5)
+    if (!hasQuery) return localWithDestination.slice(0, 5)
+    // Local Movera addresses stay on top: they are instant and already framed.
+    return [...localWithDestination, ...remote].slice(0, 10)
   }, [local, remote, query])
 
-  return { suggestions, loading }
+  /* Called when the user picks a suggestion. Local entries resolve instantly
+     from their own viewport; a Places entry costs exactly one details call. */
+  const resolveSuggestion = useCallback(async (suggestion) => {
+    const resolved = await resolveAddressSuggestion(suggestion, { session: sessionRef.current })
+    if (sessionRef.current?.closed) sessionRef.current = null
+    if (!resolved?.viewport) return null
+    const withDestination = attachDestination(resolved)
+    publishPreview(withDestination, 'detected')
+    return withDestination
+  }, [])
+
+  return { suggestions, loading, resolveSuggestion }
 }
