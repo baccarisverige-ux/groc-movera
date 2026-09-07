@@ -173,7 +173,7 @@ jobs:
           retention-days: 14
 
   visual-quality:
-    name: Visual regression · 320 / 390 / 1280
+    name: Visual regression · approved responsive widths
     runs-on: ubuntu-latest
     # Golden PNGs are only comparable against the exact fonts, browser build and
     # rasteriser that produced them. The runner image updates on its own

@@ -9,9 +9,12 @@ import { defineConfig, devices } from '@playwright/test'
      a passing comparison, it is a flaky baseline that needs fixing
    - one worker, so no two pages compete for the preview server mid-paint
 
-   The widths are the ones Movera's layout actually branches on: 320 is the
-   narrow floor the responsive baseline suite defends, 390 is the primary
-   mobile target, 1280 is desktop. */
+   The widths are Movera's approved responsive targets — 320, 375, 390, 430,
+   768 and 1024 — with the exact heights tests/e2e/critical-regressions.spec.js
+   already uses for its overflow sweep, so "approved responsive target" means
+   one thing across the suites rather than two. 1280 is added on top as the
+   desktop case the E2E projects cover, so the golden set is a superset of the
+   approved list, never a narrowing of it. */
 
 const baseURL = 'http://127.0.0.1:4173'
 
@@ -31,19 +34,17 @@ export default defineConfig({
   reporter: process.env.CI ? [['list'], ['html', { outputFolder: 'playwright-report', open: 'never' }]] : 'list',
   use: { baseURL, trace: 'retain-on-failure', video: 'off' },
   projects: [
-    {
-      name: 'narrow-320',
-      use: { ...devices['Desktop Chrome'], viewport: { width: 320, height: 640 }, deviceScaleFactor: 1, isMobile: false },
-    },
-    {
-      name: 'mobile-390',
-      use: { ...devices['Desktop Chrome'], viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, isMobile: false },
-    },
-    {
-      name: 'desktop-1280',
-      use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1, isMobile: false },
-    },
-  ],
+    [320, 568],
+    [375, 812],
+    [390, 844],
+    [430, 932],
+    [768, 1024],
+    [1024, 768],
+    [1280, 800],
+  ].map(([width, height]) => ({
+    name: `w${width}`,
+    use: { ...devices['Desktop Chrome'], viewport: { width, height }, deviceScaleFactor: 1, isMobile: false },
+  })),
   webServer: {
     command: 'MOVERA_TEST_BASE=root VITE_GOOGLE_PLACES_API_KEY=e2e-places-key npm run build && MOVERA_TEST_BASE=root npm run preview -- --host 127.0.0.1',
     url: `${baseURL}/`,

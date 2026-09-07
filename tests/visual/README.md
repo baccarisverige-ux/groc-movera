@@ -9,7 +9,10 @@ the job could not fail on a visual change — only on a crash.
 
 ## What is covered
 
-Six states × three widths (320, 390, 1280):
+Six states × seven widths — the six approved responsive targets (320, 375, 390,
+430, 768, 1024) plus 1280 for desktop. The width/height pairs are the same ones
+`tests/e2e/critical-regressions.spec.js` sweeps for overflow, so the two suites
+agree on what an approved target is:
 
 | State | Route | Why |
 | --- | --- | --- |
