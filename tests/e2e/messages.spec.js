@@ -14,7 +14,7 @@ test('messages stays locked for guests including direct route access', async ({ 
   await messagesNav.evaluate((node) => node.click())
   await expect(page).toHaveURL(beforeClick)
 
-  await page.goto('/Movera-host1/messages')
+  await page.goto('/groc-movera/messages')
   await expect(page.getByTestId('page-auth-required')).toBeVisible()
   await expect(page.getByRole('heading', { level: 1, name: 'Connexion requise' })).toBeVisible()
   await expect(page.getByTestId('page-messages')).toHaveCount(0)

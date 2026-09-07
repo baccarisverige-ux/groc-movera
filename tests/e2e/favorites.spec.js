@@ -46,7 +46,7 @@ test('home heart saves an offer and favorites page can remove it', async ({ page
 test('collection heart uses the same persistent favorites store', async ({ page }) => {
   await page.goto('/')
   await page.evaluate(() => localStorage.removeItem('movera:favorites:v1'))
-  await page.goto('/Movera-host1/plage')
+  await page.goto('/groc-movera/plage')
 
   await expect(page.locator('[data-motion-list="collection-offers"]')).toBeVisible()
 
