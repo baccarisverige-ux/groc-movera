@@ -39,7 +39,7 @@ async function createPhoneAccount(page, { name, phone, password }) {
 
 test('profile starts with Apple Google and email as three equal entry options', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/Movera-host1/profile')
+  await page.goto('/groc-movera/profile')
 
   await expect(page.getByTestId('page-profile')).toHaveAttribute('data-auth-flow', 'entry')
   await expect(page.getByRole('button', { name: 'Continuer avec Apple' })).toBeVisible()
@@ -54,7 +54,7 @@ test('profile starts with Apple Google and email as three equal entry options', 
 
 test('guest must create and verify an account before signing in to protected messages', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/Movera-host1/messages')
+  await page.goto('/groc-movera/messages')
   await expect(page.getByTestId('page-auth-required')).toBeVisible()
   await page.getByRole('button', { name: 'Se connecter' }).click()
 
@@ -96,7 +96,7 @@ test('guest must create and verify an account before signing in to protected mes
 
 test('phone account remains available inside standard account flow and supports password recovery', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/Movera-host1/profile')
+  await page.goto('/groc-movera/profile')
   await openEmailAuth(page)
 
   await createPhoneAccount(page, { name: 'Client Movera', phone: '+216 20 123 456', password: 'Oldpass7' })
@@ -133,7 +133,7 @@ test('phone account remains available inside standard account flow and supports 
 })
 
 test('Apple and Google remain explicit until OAuth endpoints are configured', async ({ page }) => {
-  await page.goto('/Movera-host1/profile')
+  await page.goto('/groc-movera/profile')
   await page.getByRole('button', { name: 'Continuer avec Apple' }).click()
   await expect(page.getByRole('status')).toContainText('Apple non configurée')
   await page.getByRole('button', { name: 'Continuer avec Google' }).click()

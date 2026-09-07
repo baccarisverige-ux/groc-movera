@@ -59,6 +59,13 @@ for (const file of workflowFiles) {
   if (matches.length) legacyPhaseBranchTargets.push({ file, targets: [...new Set(matches)] })
 }
 
+/* Movera moved off /Movera-host1/ to /groc-movera/. Two workflows still drove
+   the app through the retired prefix while triggering on a branch that no
+   longer exists, so they could never run and could never catch a production
+   base-path break. Keep CI pointed at the base path that actually ships. */
+const RETIRED_BASE_PATH = '/Movera-host1'
+const workflowsUsingRetiredBase = workflowFiles.filter((file) => read(`.github/workflows/${file}`).includes(RETIRED_BASE_PATH))
+
 const expectedDeployWorkflow = 'deploy-pages-direct.yml'
 const directDeploy = deployWorkflows.find((item) => item.file === expectedDeployWorkflow)
 const legacyBranchPublish = deployWorkflows.filter((item) => item.branchPublish)
@@ -92,6 +99,7 @@ const report = {
   permanentCriticalRegression,
   hasPermanentCriticalRegression,
   qualityHasCleanupAudit,
+  workflowsUsingRetiredBase,
   findings: [],
 }
 
@@ -112,6 +120,7 @@ if (legacyPhaseBranchTargets.length) report.findings.push(`Legacy phase branch t
 if (redundantPermanentWorkflows.length) report.findings.push(`Redundant permanent workflows detected: ${redundantPermanentWorkflows.join(', ')}`)
 if (!hasPermanentCriticalRegression) report.findings.push(`Permanent critical regression suite missing: ${permanentCriticalRegression}`)
 if (!qualityHasCleanupAudit) report.findings.push('Movera Quality Gate is missing the permanent cleanup audit')
+if (workflowsUsingRetiredBase.length) report.findings.push(`Workflows still driving the retired ${RETIRED_BASE_PATH} base path: ${workflowsUsingRetiredBase.join(', ')}`)
 
 console.log(JSON.stringify(report, null, 2))
 
@@ -131,5 +140,6 @@ if (
   legacyPhaseBranchTargets.length ||
   redundantPermanentWorkflows.length ||
   !hasPermanentCriticalRegression ||
-  !qualityHasCleanupAudit
+  !qualityHasCleanupAudit ||
+  workflowsUsingRetiredBase.length
 ) process.exit(1)
