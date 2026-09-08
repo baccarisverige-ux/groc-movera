@@ -65,7 +65,16 @@
     0 2px 8px rgba(28,35,31,.035)!important;
 }
 
-.app-shell--guest > .app-shell__content{
+/* Reserves room for the fixed bottom nav.
+
+   Scoped away from the Map, which renders no nav at all (GuestLayout only
+   mounts it for routes other than map/host/stacked) and is a fixed
+   full-screen page that must not scroll. Without the exclusion this
+   !important beat all three places that already zero the padding there --
+   the inline mapContentStyle, the map-b225.css rule, and the shell's own
+   overflow:hidden -- leaving /map exactly 84px taller than the viewport at
+   every width, so the map header could be scrolled off screen. */
+.app-shell--guest:not(.app-shell--map) > .app-shell__content{
   padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))!important;
 }
 
