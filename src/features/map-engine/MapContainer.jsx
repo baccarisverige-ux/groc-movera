@@ -1,16 +1,18 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ClusterLayer } from './layers/ClusterLayer.jsx'
 import { MapControls } from './controls/MapControls.jsx'
 import { MarkerLayer } from './layers/MarkerLayer.jsx'
 import { ResizeManager } from './lifecycle/ResizeManager.jsx'
 import { TileLayer } from './layers/TileLayer.jsx'
 import { ViewportController } from './lifecycle/ViewportController.jsx'
-import { panViewport, zoomViewport, zoomViewportAtPoint } from './geometry/geometry.js'
+import { MAX_ZOOM, panViewport, zoomViewport, zoomViewportAtPoint } from './geometry/geometry.js'
+import { resolveMarkerCollisions } from './model/markerCollision.js'
 import '../../styles/map-engine.css'
 
 export const INITIAL_VIEWPORT = Object.freeze({ lat: 36.8065, lng: 10.1815, zoom: 11 })
 const MARKER_MIN_FOCUS_ZOOM = 13.5
 const CLUSTER_FOCUS_ZOOM = 11
+const MARKER_SEPARATE_ZOOM_STEP = 2
 const PINCH_ZOOM_SENSITIVITY = 0.65
 const PINCH_ZOOM_THRESHOLD = 0.003
 const PINCH_PAN_THRESHOLD = 0.8
@@ -133,6 +135,24 @@ export function MapContainer({
     if (cameraOnSelect !== 'none') focusMarker(marker)
   }, [cameraOnSelect, focusMarker, setSelected])
   const focusCluster = useCallback((point) => focusPoint(point, CLUSTER_FOCUS_ZOOM), [focusPoint])
+  /* Tapping a pin that stands in for others zooms toward it until they come
+     apart, rather than selecting an arbitrary member of the group.
+
+     Listings can share a coordinate, and those never come apart at any zoom.
+     Zooming there would be a dead end, so at the limit the tap selects the pin
+     instead and the sheet keeps listing the rest. */
+  const separateMarkers = useCallback((marker) => {
+    if (viewport.zoom >= MAX_ZOOM) {
+      setSelected(marker.id)
+      return
+    }
+    commitViewport((current) => ({
+      ...current,
+      lat: marker.lat,
+      lng: marker.lng,
+      zoom: Math.min(MAX_ZOOM, current.zoom + MARKER_SEPARATE_ZOOM_STEP),
+    }), 'app')
+  }, [viewport.zoom, commitViewport, setSelected])
 
   const handleGoogleStatus = useCallback((status) => {
     setMapProvider(status)
@@ -236,6 +256,17 @@ export function MapContainer({
     try { if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId) } catch { /* no capture */ }
   }
 
+  /* Pins do not know about each other, so overlap has to be resolved before
+     they are drawn -- see model/markerCollision.js. */
+  const markerCollisions = useMemo(
+    () => resolveMarkerCollisions({ markers, viewport, size, selectedListingId }),
+    [markers, viewport, size, selectedListingId],
+  )
+  const absorbedCounts = useMemo(
+    () => new Map(markerCollisions.visible.map(({ marker, absorbed }) => [marker.id, absorbed.length])),
+    [markerCollisions],
+  )
+
   return <section className="map-engine" data-testid="map-engine" data-selected-listing-id={selectedListingId || ''} data-map-provider={mapProvider} data-native-gestures={googleNativeGestures ? 'true' : 'false'} data-viewport-source={viewportSourceRef.current} data-camera-on-select={cameraOnSelect}>
     <div ref={surfaceRef} className="map-surface" data-testid="map-surface" data-lat={viewport.lat.toFixed(6)} data-lng={viewport.lng.toFixed(6)} data-zoom={viewport.zoom}
       data-width={size.width} data-height={size.height} data-update-count={updateCountRef.current} data-render-count={renderCountRef.current} data-listener-count="7" data-lifecycle-events={lifecycleEvents}
@@ -255,7 +286,7 @@ export function MapContainer({
         onGoogleClusterFocus={focusCluster}
       />
       <ClusterLayer markers={markers} viewport={viewport} size={size} onFocus={focusCluster} interactive={!googleNativeGestures} />
-      {viewport.zoom > 10 ? <MarkerLayer markers={markers} viewport={viewport} size={size} selectedListingId={selectedListingId} onSelect={selectMarker} interactive /> : null}
+      {viewport.zoom > 10 ? <MarkerLayer markers={markers} viewport={viewport} size={size} selectedListingId={selectedListingId} onSelect={selectMarker} onSeparate={separateMarkers} clusteredIds={markerCollisions.clusteredIds} absorbedCounts={absorbedCounts} interactive /> : null}
       <MapControls onZoomIn={() => zoomBy(1)} onZoomOut={() => zoomBy(-1)} />
       <div className="map-attribution">© OpenStreetMap contributors · © CARTO</div>
       <ResizeManager targetRef={surfaceRef} onSize={setSize} />
