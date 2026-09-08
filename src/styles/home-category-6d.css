@@ -151,47 +151,44 @@
   transition:transform .12s cubic-bezier(.2,.8,.2,1),opacity .12s ease!important;
 }
 
-/* OFF = clean raised capsule: crisp white highlight above, compact dark contact shadow below. */
+/* OFF = a plain button: flat white, one hairline border, no shadow.
+
+   This used to be a moulded capsule -- a vertical gradient plus five stacked
+   shadows, two of them inset, one a hard 2px contact edge -- which read as an
+   object pressed into the page rather than a control. The contour is now a
+   single 1px line and nothing else. Height, padding, radius, font and the
+   icons are untouched, so the pills keep their exact size. */
 .b225-home .b225-categories-track>button:not([data-active='true']){
-  color:#2d302d!important;
-  border:1px solid rgba(91,96,91,.145)!important;
-  background:linear-gradient(180deg,#ffffff 0%,#fdfdfc 58%,#f4f5f2 100%)!important;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,1),
-    inset 0 -1px 0 rgba(90,95,90,.04),
-    0 -1px 0 rgba(255,255,255,.98),
-    0 2px 0 rgba(88,94,88,.20),
-    0 3.5px 4px rgba(34,39,34,.105)!important;
+  color:#222222!important;
+  border:1px solid #dddddd!important;
+  background:#ffffff!important;
+  box-shadow:none!important;
 }
 
-/* ON = visibly seated deeper into the surface, while keeping the same premium capsule. */
+/* ON = the same button, marked selected by its contour rather than by being
+   shoved into the page. A dark hairline and a light fill, in place of four
+   inset shadows and a 3.35px downward plunge that left the selected pill
+   sitting lower than its neighbours. */
 .b225-home .b225-categories-track>button[data-active='true']{
-  color:#202320!important;
-  border:1px solid rgba(68,74,68,.30)!important;
-  background:linear-gradient(180deg,#d4d8d1 0%,#dee2da 42%,#e8ebe5 72%,#eef0eb 100%)!important;
-  box-shadow:
-    inset 0 5px 9px rgba(30,35,30,.245),
-    inset 0 2px 2px rgba(27,32,27,.13),
-    inset 0 -1.5px 0 rgba(255,255,255,.50),
-    0 .35px 0 rgba(255,255,255,.68)!important;
-  transform:translateY(3.35px) scale(.992)!important;
-  font-weight:620!important;
+  color:#222222!important;
+  border:1px solid #222222!important;
+  background:#f7f7f7!important;
+  box-shadow:none!important;
+  transform:none!important;
+  font-weight:700!important;
 }
 
 .b225-home .b225-categories-track>button[data-active='true'] .b225-category-icon{
   opacity:1!important;
-  transform:translateY(.9px) scale(.99)!important;
+  transform:none!important;
 }
 
-/* Actual finger press: one final small step deeper before release. */
+/* Press feedback a real button gives: it dips slightly and darkens. No
+   travel down the page, and no shadow stack to animate. */
 .b225-home .b225-categories-track>button:active{
-  transform:translateY(3.7px) scale(.978)!important;
-  background:linear-gradient(180deg,#d0d5cd 0%,#dde1d9 48%,#e8ebe5 100%)!important;
-  box-shadow:
-    inset 0 5.8px 10px rgba(28,33,28,.27),
-    inset 0 2px 2px rgba(25,30,25,.15),
-    inset 0 -1px 0 rgba(255,255,255,.45),
-    0 .25px 0 rgba(255,255,255,.62)!important;
+  transform:scale(.97)!important;
+  background:#ebebeb!important;
+  box-shadow:none!important;
 }
 
 .b225-home .b225-categories-track>button::before,
