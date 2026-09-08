@@ -69,8 +69,23 @@ and treated as informational rather than as a merge blocker.
 **This is a proposal, not a decision.** It adds an external dependency to CI
 and needs approval before anyone builds it.
 
-Note for anyone running a live check from a dev container: the agent proxy can
-reset browser connections to `github.io` while allowing `curl` to the same URL.
-A browser failure there is an environment artefact and says nothing about the
-deployment — check `curl -sS "$HTTPS_PROXY/__agentproxy/status"` before
-believing it.
+### Status at the close of stabilization: unverified
+
+A live browser smoke against the deployed origin **was attempted and did not
+complete**. It is recorded here as **unverified — not passed, and not failed**.
+
+All cases aborted at navigation with `ERR_CONNECTION_RESET`, and the cause was
+the sandbox rather than the site: `curl` reached the same URL and returned 200,
+and the agent proxy's own `recentRelayFailures` listed
+`baccarisverige-ux.github.io:443` with tunnels closing mid-exchange. No
+conclusion about the deployment can be drawn from that run in either
+direction.
+
+What *is* verified about the deployment is listed above — asset reachability
+over HTTP, CSS byte-identity with the tested commit, and the `404.html`
+fallback — none of which required a browser.
+
+Anyone running a live check from a dev container will hit the same wall. Check
+`curl -sS "$HTTPS_PROXY/__agentproxy/status"` before believing a browser
+failure against `github.io`; it is an environment artefact and says nothing
+about the deployment.
