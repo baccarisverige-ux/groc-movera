@@ -15,25 +15,35 @@ const requiredScripts = [
   'test:e2e:webkit',
   'test:responsive',
   'test:map-regressions',
+  'test:android',
   'quality:architecture',
 ]
+/* Each project must exist in the Playwright config and be reached by CI. The
+   four matrix projects are named directly in quality.yml; android-chrome is
+   reached through its npm script instead, so that is what quality.yml must
+   still contain. */
 const requiredProjects = [
-  'desktop-chromium',
-  'mobile-chromium',
-  'desktop-webkit',
-  'mobile-webkit',
+  { name: 'desktop-chromium', ciToken: 'desktop-chromium' },
+  { name: 'mobile-chromium', ciToken: 'mobile-chromium' },
+  { name: 'desktop-webkit', ciToken: 'desktop-webkit' },
+  { name: 'mobile-webkit', ciToken: 'mobile-webkit' },
+  /* Not a fifth flavour of the same thing. mobile-chromium is the iPhone 14
+     descriptor, so before android-chrome existed every touch project sent an
+     iOS user agent and the pointer gesture adapter was never exercised on a
+     touch device. Dropping this project would silently reopen that gap. */
+  { name: 'android-chrome', ciToken: 'test:android' },
 ]
 
 for (const script of requiredScripts) {
   if (!pkg.scripts?.[script]) violations.push(`package.json: required release script missing: ${script}`)
 }
 
-for (const project of requiredProjects) {
-  if (!playwright.includes(`name: '${project}'`)) {
-    violations.push(`playwright.config.mjs: required browser project missing: ${project}`)
+for (const { name, ciToken } of requiredProjects) {
+  if (!playwright.includes(`name: '${name}'`)) {
+    violations.push(`playwright.config.mjs: required browser project missing: ${name}`)
   }
-  if (!quality.includes(project)) {
-    violations.push(`quality.yml: release matrix no longer covers ${project}`)
+  if (!quality.includes(ciToken)) {
+    violations.push(`quality.yml: release matrix no longer covers ${name}`)
   }
 }
 
