@@ -97,6 +97,29 @@ export function MapContainer({
   }, [])
 
   const zoomBy = useCallback((delta) => commitViewport((current) => zoomViewport(current, delta), 'app'), [commitViewport])
+
+  /* Wheel has to be bound natively, not through onWheel.
+
+     React attaches wheel at the root as a passive listener, so preventDefault
+     inside a React handler is silently ignored: the event arrives with
+     cancelable already false. The map therefore zoomed and let the page scroll
+     at the same time. Binding it here with passive:false is what makes
+     preventDefault actually hold, so a wheel over the map zooms and does
+     nothing else.
+
+     Only for the fallback renderer. When Google owns the surface it installs
+     its own non-passive handling and this must stay out of the way. */
+  useEffect(() => {
+    const surface = surfaceRef.current
+    if (!surface || googleNativeGestures) return undefined
+    const onWheel = (event) => {
+      event.preventDefault()
+      zoomBy(event.deltaY < 0 ? 1 : -1)
+    }
+    surface.addEventListener('wheel', onWheel, { passive: false })
+    return () => surface.removeEventListener('wheel', onWheel)
+  }, [googleNativeGestures, zoomBy])
+
   const handleLifecycle = useCallback(() => setLifecycleEvents((count) => count + 1), [])
   const focusPoint = useCallback((point, targetZoom) => commitViewport((current) => ({ ...current, lat: point.lat, lng: point.lng, zoom: targetZoom }), 'app'), [commitViewport])
   const focusMarker = useCallback((marker) => commitViewport((current) => ({
@@ -217,7 +240,7 @@ export function MapContainer({
     <div ref={surfaceRef} className="map-surface" data-testid="map-surface" data-lat={viewport.lat.toFixed(6)} data-lng={viewport.lng.toFixed(6)} data-zoom={viewport.zoom}
       data-width={size.width} data-height={size.height} data-update-count={updateCountRef.current} data-render-count={renderCountRef.current} data-listener-count="7" data-lifecycle-events={lifecycleEvents}
       onDoubleClick={googleNativeGestures ? undefined : (event) => { if (!event.target.closest('button')) zoomBy(1) }} onPointerCancel={releasePointer} onPointerDown={onPointerDown} onPointerMove={onPointerMove}
-      onPointerUp={releasePointer} onWheel={googleNativeGestures ? undefined : (event) => { event.preventDefault(); zoomBy(event.deltaY < 0 ? 1 : -1) }}>
+      onPointerUp={releasePointer}>
       <TileLayer
         viewport={viewport}
         viewportSource={viewportSourceRef.current}
