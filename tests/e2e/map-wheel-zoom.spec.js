@@ -18,7 +18,14 @@ import { expect, test } from '@playwright/test'
    -- once the Map fits its viewport there is nothing to scroll, so a
    scroll-position check would pass whether or not preventDefault works. */
 
-test('a wheel over the map is cancelled, and still zooms', async ({ page }) => {
+test('a wheel over the map is cancelled, and still zooms', async ({ page, isMobile, browserName }) => {
+  /* Mobile WebKit has no mouse wheel at all -- Playwright refuses the input
+     with "Mouse wheel is not supported in mobile WebKit" -- so there is no
+     event here to cancel. This is a missing platform capability, not a product
+     exclusion, and it costs no engine coverage: desktop WebKit runs this spec
+     and exercises exactly the same listener. */
+  test.skip(isMobile && browserName === 'webkit', 'mobile WebKit has no mouse wheel')
+
   await page.goto('/map')
   await expect(page.getByTestId('page-map')).toBeVisible()
 
