@@ -69,23 +69,53 @@ and treated as informational rather than as a merge blocker.
 **This is a proposal, not a decision.** It adds an external dependency to CI
 and needs approval before anyone builds it.
 
-### Status at the close of stabilization: unverified
+### Status: verified once, manually, on 2026-09-09
 
-A live browser smoke against the deployed origin **was attempted and did not
-complete**. It is recorded here as **unverified — not passed, and not failed**.
+A live browser smoke against the deployed origin has now **completed and
+passed**, against `4f2abb6`. This supersedes the earlier *unverified* status.
 
-All cases aborted at navigation with `ERR_CONNECTION_RESET`, and the cause was
-the sandbox rather than the site: `curl` reached the same URL and returned 200,
-and the agent proxy's own `recentRelayFailures` listed
-`baccarisverige-ux.github.io:443` with tunnels closing mid-exchange. No
-conclusion about the deployment can be drawn from that run in either
-direction.
+It was run by hand, not by CI. The proposal above is still a proposal.
 
-What *is* verified about the deployment is listed above — asset reachability
-over HTTP, CSS byte-identity with the tested commit, and the `404.html`
-fallback — none of which required a browser.
+What the run covered, in WebKit at 390×844 against
+`https://baccarisverige-ux.github.io/groc-movera/`:
 
-Anyone running a live check from a dev container will hit the same wall. Check
-`curl -sS "$HTTPS_PROXY/__agentproxy/status"` before believing a browser
-failure against `github.io`; it is an environment artefact and says nothing
+| check | result |
+|---|---|
+| navigation | HTTP 200, `page-home` mounted |
+| deep routes under the base path | `/map`, `/favorites`, `/profile` all mounted |
+| console errors / page errors / failed requests | 0 / 0 / 0 |
+
+It also confirmed the origin serves the *current* styles rather than a cached
+build: the selected category pill computed to 11 box-shadow layers and
+`linear-gradient(rgb(228,228,228), rgb(227,227,227) 55%, rgb(226,226,226))`,
+which is the rule introduced in that commit and exists in no earlier one.
+
+#### The earlier failure was Chromium, not the site
+
+The original attempt aborted at navigation with `ERR_CONNECTION_RESET`. That
+reproduces exactly, and the cause is now identified: **the agent proxy's relay
+cannot carry a Chromium TLS tunnel**, in this sandbox, to any host.
+`recentRelayFailures` shows `ws_closed_mid_exchange` — "tunnel closed (code
+1006) after 6s; ~1.8 kB sent, 39 B received" — not only for
+`baccarisverige-ux.github.io:443` but simultaneously for `www.google.com`,
+`accounts.google.com`, `redirector.gvt1.com` and `android.clients.google.com`,
+i.e. Chromium's own background requests. Nothing about this repository is
+involved.
+
+**WebKit through the same proxy works.** That is the whole fix, and it is why
+this check can be run at all now.
+
+So: if a live browser check fails here, try WebKit before believing it, and
+read `curl -sS "$HTTPS_PROXY/__agentproxy/status"`. A Chromium reset against
+`github.io` from a dev container is an environment artefact and says nothing
 about the deployment.
+
+#### What this does and does not establish
+
+It establishes that the published origin boots, routes under the base path, and
+serves the tested styles, in a real browser, at one point in time.
+
+It is a single manual run on one engine at one width. It is **not** a
+substitute for the automated smoke proposed above, and it does not run on
+future deploys. The reachability, byte-identity and `404.html` checks listed
+earlier remain the automated part of this story.
