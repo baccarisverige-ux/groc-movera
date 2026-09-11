@@ -62,6 +62,10 @@ export function GuestLayout({ children, currentPath, onNavigate }) {
   const isStackedGuestRoute = currentPath.startsWith('/listing/') || currentPath.startsWith('/services/')
   const isProfileRoute = currentPath === '/profile'
   const collectionHeaderLabel = COLLECTION_HEADER_LABELS[currentPath] || ''
+  // Single source of truth for "does this route show the bottom nav?". The
+  // shell class and the nav itself both read it, so the class cannot drift
+  // away from what is actually rendered.
+  const hasBottomNav = !isMapRoute && !isHostRoute && !isStackedGuestRoute
   const shellStyle = isMapRoute ? mapShellStyle : isHostRoute ? hostShellStyle : undefined
   const contentStyle = isMapRoute
     ? mapContentStyle
@@ -76,7 +80,7 @@ export function GuestLayout({ children, currentPath, onNavigate }) {
             : undefined
 
   return (
-    <div className={`app-shell app-shell--guest${isMapRoute ? ' app-shell--map' : ''}${isHostRoute ? ' app-shell--host' : ''}${isCollectionRoute ? ' app-shell--collection' : ''}${isBeachRoute ? ' app-shell--beach' : ''}${isStackedGuestRoute ? ' app-shell--stacked' : ''}${isProfileRoute ? ' app-shell--profile' : ''}`} style={shellStyle}>
+    <div className={`app-shell app-shell--guest${isMapRoute ? ' app-shell--map' : ''}${isHostRoute ? ' app-shell--host' : ''}${isCollectionRoute ? ' app-shell--collection' : ''}${isBeachRoute ? ' app-shell--beach' : ''}${isStackedGuestRoute ? ' app-shell--stacked' : ''}${isProfileRoute ? ' app-shell--profile' : ''}${hasBottomNav ? ' app-shell--has-nav' : ''}`} style={shellStyle}>
       <header className="app-shell__header" style={isMapRoute || isHostRoute || isStackedGuestRoute || isProfileRoute ? { display: 'none' } : undefined}>
         <strong>Movera Host</strong>
         {collectionHeaderLabel ? <span className="app-shell__collection-badge">{collectionHeaderLabel}</span> : null}
@@ -89,7 +93,7 @@ export function GuestLayout({ children, currentPath, onNavigate }) {
       >
         {children}
       </main>
-      {!isMapRoute && !isHostRoute && !isStackedGuestRoute ? (
+      {hasBottomNav ? (
         <nav className="app-shell__nav" aria-label="Navigation principale">
           {guestNav.map(({ label, path, tone, icon, disabled: permanentlyDisabled, requiresAuth }) => {
             const disabled = Boolean(permanentlyDisabled || (requiresAuth && !isAuthenticated))

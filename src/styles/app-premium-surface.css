@@ -65,16 +65,25 @@
     0 2px 8px rgba(28,35,31,.035)!important;
 }
 
-/* Reserves room for the fixed bottom nav.
+/* Reserves room for the fixed bottom nav, on the routes that actually have one.
 
-   Scoped away from the Map, which renders no nav at all (GuestLayout only
-   mounts it for routes other than map/host/stacked) and is a fixed
-   full-screen page that must not scroll. Without the exclusion this
-   !important beat all three places that already zero the padding there --
-   the inline mapContentStyle, the map-b225.css rule, and the shell's own
-   overflow:hidden -- leaving /map exactly 84px taller than the viewport at
-   every width, so the map header could be scrolled off screen. */
-.app-shell--guest:not(.app-shell--map) > .app-shell__content{
+   Keyed to app-shell--has-nav, which GuestLayout sets from the same condition
+   that decides whether to render the nav, so the reservation cannot outlive
+   the thing it reserves for.
+
+   This used to be scoped the other way round -- `:not(.app-shell--map)` --
+   which was a fix for /map alone and carried two problems. It reserved 84px
+   on every other nav-less route (/host and its seven children, and
+   /services/*), which have no bottom furniture at all: /host scrolled 14px
+   when its content fits the viewport, /services/* carried 84px of dead space.
+   And `:not()` contributes a class's worth of specificity, so at (0,3,0) it
+   silently beat the (0,2,0) `.app-shell--stacked > .app-shell__content{
+   padding-bottom:0 }` that listing-detail-page.css already authored -- the
+   listing page states its own 90px footer clearance and had no need of this.
+   Matching on a positive fact instead of an exclusion list removes that
+   conflict rather than re-ranking it, and stops the selector growing a new
+   :not() every time a nav-less route is added. */
+.app-shell--guest.app-shell--has-nav > .app-shell__content{
   padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))!important;
 }
 
