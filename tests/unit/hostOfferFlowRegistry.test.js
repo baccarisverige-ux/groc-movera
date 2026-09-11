@@ -20,8 +20,33 @@ describe('host offer flow registry', () => {
     expect(villa.amenityGroups.some((group) => group.id.startsWith('hotel-'))).toBe(false)
     expect(hotel.presentation.variant).toBe('hotel')
     expect(typeof hotel.presentation.HighlightIcon).toBe('function')
-    expect(apartment.presentation.variant).toBe('default')
-    expect(apartment.presentation.HighlightIcon).toBeNull()
+
+    // Each category owns its own variant, so the shell can style them apart —
+    // but none of them borrows hotel's.
+    expect(apartment.presentation.variant).toBe('apartment')
+    expect(villa.presentation.variant).toBe('villa')
+    expect(getOfferFlow('Maison d’hôte').presentation.variant).toBe('guesthouse')
+  })
+
+  /* This used to assert the opposite — that Appartement had no HighlightIcon —
+     which recorded a gap rather than a rule: with no icon renderer and no
+     highlight groups, three of the four categories fell back to plain text
+     chips while Hotel showed grouped cards with colour icons. Same catalogue,
+     two different products depending on the property type picked. */
+  it('gives every category grouped highlights with icons', () => {
+    for (const flow of HOST_OFFER_FLOWS) {
+      expect(typeof flow.presentation.AmenityIcon).toBe('function')
+      expect(typeof flow.presentation.HighlightIcon).toBe('function')
+      expect(flow.highlightGroups.length).toBeGreaterThan(0)
+      expect(flow.highlights.length).toBeGreaterThan(0)
+
+      // every declared highlight belongs to a declared group, or it renders
+      // into a section that never appears
+      const groupIds = new Set(flow.highlightGroups.map((group) => group.id))
+      for (const highlight of flow.highlights) {
+        expect(groupIds.has(highlight.group)).toBe(true)
+      }
+    }
   })
 
   it('keeps hospitality room inventory separate from single-property offers', () => {

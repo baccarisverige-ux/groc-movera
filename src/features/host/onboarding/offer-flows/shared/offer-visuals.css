@@ -1,0 +1,26 @@
+/* Colour icon presentation, shared by every offer flow.
+
+   These rules used to live in hotel-amenities.css / hotel-highlights.css gated
+   on [data-offer-variant="hotel"], which is why only the Hotel flow showed
+   colour icons. They are keyed on the image class and on the presence of any
+   variant now, so Appartement, Villa and Maison d'hôte render identically. */
+
+.host-onboarding__step[data-offer-variant] .host-onboarding__amenity-grid > button > .host-offer-amenity-image:first-child{
+  display:block;
+  width:42px;
+  height:42px;
+  flex:0 0 42px;
+  justify-self:center;
+  padding:5px;
+  border-radius:13px;
+  background:linear-gradient(145deg,#fff,#f6f8f7);
+  object-fit:contain;
+  filter:drop-shadow(0 3px 5px rgba(36,54,42,.12));
+}
+
+.host-offer-grouped-highlight__icon .host-offer-highlight-image{
+  width:28px;
+  height:28px;
+  object-fit:contain;
+  filter:drop-shadow(0 2px 3px rgba(35,46,39,.13));
+}

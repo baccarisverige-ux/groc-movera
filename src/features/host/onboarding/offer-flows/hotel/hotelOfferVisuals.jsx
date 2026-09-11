@@ -1,16 +1,18 @@
 import './hotel-amenities.css'
 import './hotel-highlights.css'
+import {
+  COMMON_AMENITY_IMAGE_CODES,
+  COMMON_HIGHLIGHT_IMAGE_CODES,
+  createOfferVisuals,
+} from '../shared/offerVisuals.jsx'
 
-const HOTEL_ICON_BASE = `${import.meta.env.BASE_URL}assets/hotel-icons/`
+/* Hotel-specific iconography. Everything generic — the colour image element,
+   the asset path, the common catalogue codepoints, the resolution order —
+   lives in shared/offerVisuals.jsx and is used by all four flows. What stays
+   here is only what is true of hotels: the hotel-* amenity ids, the board and
+   facility highlights, and the group symbols for the hotel section headers. */
 
-const HOTEL_AMENITY_IMAGE_CODES = Object.freeze({
-  ac: '2744',
-  essentials: '1F6CF',
-  heating: '1F525',
-  'hot-water': '1F4A7',
-  tv: '1F4FA',
-  wifi: '1F4F6',
-  parking: '1F17F',
+const HOTEL_ONLY_AMENITY_IMAGE_CODES = Object.freeze({
   'hotel-minibar': '1F964',
   'hotel-room-safe': '1F512',
   'hotel-soundproofing': '1F508',
@@ -33,31 +35,24 @@ const HOTEL_AMENITY_IMAGE_CODES = Object.freeze({
 })
 
 const HOTEL_HIGHLIGHT_IMAGE_CODES = Object.freeze({
+  ...COMMON_HIGHLIGHT_IMAGE_CODES,
   breakfast: '1F95E',
   'half-board': '1F35B',
   'full-board': '1F374',
   'all-inclusive': '1F3AB',
   'sea-view': '1F30A',
   beachfront: '1F3D6',
-  central: '1F3AF',
   airport: '2708',
   luxury: '1F451',
-  stylish: '2728',
-  peaceful: '1F54A',
   eco: '1F33F',
   spa: '1FAB7',
   'pool-highlight': '1F3CA',
   fitness: '1F3CB',
   'private-beach': '1F3DD',
-  family: '1F46A',
   'adults-only': '1F51E',
   business: '1F4BC',
   accessible: '267F',
 })
-
-function HotelColorImage({ code, className }) {
-  return <img className={className} src={`${HOTEL_ICON_BASE}${code}.svg`} alt="" aria-hidden="true" draggable="false" />
-}
 
 export const HOTEL_AMENITY_SYMBOLS = Object.freeze({
   essentials: '✦',
@@ -72,11 +67,8 @@ export const HOTEL_AMENITY_SYMBOLS = Object.freeze({
   'hotel-security': '🛡️',
 })
 
-export function HotelAmenityIcon({ id, fallback = null }) {
-  const imageCode = HOTEL_AMENITY_IMAGE_CODES[id]
-  if (imageCode) return <HotelColorImage code={imageCode} className="host-hotel-amenity-image" />
-  if (!id.startsWith('hotel-')) return fallback
-  const icons = {
+function hotelAmenityLineIcons() {
+  return {
     'hotel-minibar': <><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M7 11h10M10 7h.01M10 15h.01"/></>,
     'hotel-room-safe': <><rect x="4" y="5" width="16" height="15" rx="2"/><circle cx="13" cy="12" r="3"/><path d="M13 9v3l2 1M7 8h2"/></>,
     'hotel-soundproofing': <><path d="M5 10v4h3l4 4V6L8 10H5ZM16 9c2 2 2 4 0 6M19 6c4 4 4 8 0 12"/></>,
@@ -97,13 +89,10 @@ export function HotelAmenityIcon({ id, fallback = null }) {
     'hotel-security-24h': <><path d="M12 3 5 6v5c0 5 3 8 7 10 4-2 7-5 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-5"/></>,
     'hotel-smoke-detectors': <><circle cx="12" cy="12" r="8"/><path d="M8 12h8M9 8c2 1 4 1 6 0M9 16c2-1 4-1 6 0"/></>,
   }
-  return <svg className="host-hotel-amenity-icon" viewBox="0 0 24 24" aria-hidden="true">{icons[id] || <path d="M6 6h12v12H6z"/>}</svg>
 }
 
-export function HotelHighlightIcon({ id }) {
-  const imageCode = HOTEL_HIGHLIGHT_IMAGE_CODES[id]
-  if (imageCode) return <HotelColorImage code={imageCode} className="host-hotel-highlight-image" />
-  const icons = {
+function hotelHighlightLineIcons() {
+  return {
     breakfast: <><path d="M5 11h14a7 7 0 0 1-14 0Z"/><path d="M8 7c0-2 2-2 2-4M13 7c0-2 2-2 2-4M4 19h16"/></>,
     'half-board': <><path d="M4 4v7M7 4v7M4 8h3M18 4v16M15 4c0 4 3 5 3 5"/><path d="M10 16h4"/></>,
     'full-board': <><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="3"/><path d="M3 5v14M21 5v14"/></>,
@@ -125,12 +114,19 @@ export function HotelHighlightIcon({ id }) {
     business: <><rect x="4" y="7" width="16" height="13" rx="2"/><path d="M9 7V4h6v3M4 12h16M10 12v2h4v-2"/></>,
     accessible: <><circle cx="11" cy="4" r="2"/><path d="M10 7v6h5l3 6M8 10a6 6 0 1 0 7 9M10 10h5"/></>,
   }
-  return <svg viewBox="0 0 24 24" aria-hidden="true">{icons[id] || <path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9Z"/>}</svg>
 }
 
-export const HOTEL_OFFER_PRESENTATION = Object.freeze({
+export const HOTEL_OFFER_PRESENTATION = createOfferVisuals({
   variant: 'hotel',
-  amenitySymbols: HOTEL_AMENITY_SYMBOLS,
-  AmenityIcon: HotelAmenityIcon,
-  HighlightIcon: HotelHighlightIcon,
+  amenityImageCodes: { ...COMMON_AMENITY_IMAGE_CODES, ...HOTEL_ONLY_AMENITY_IMAGE_CODES },
+  highlightImageCodes: HOTEL_HIGHLIGHT_IMAGE_CODES,
+  groupSymbols: HOTEL_AMENITY_SYMBOLS,
+  renderAmenityLineIcon: (id) => (
+    id.startsWith('hotel-')
+      ? <svg className="host-hotel-amenity-icon" viewBox="0 0 24 24" aria-hidden="true">{hotelAmenityLineIcons()[id] || <path d="M6 6h12v12H6z"/>}</svg>
+      : null
+  ),
+  renderHighlightLineIcon: (id) => (
+    <svg viewBox="0 0 24 24" aria-hidden="true">{hotelHighlightLineIcons()[id] || <path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9Z"/>}</svg>
+  ),
 })
