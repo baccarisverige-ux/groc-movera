@@ -23,8 +23,13 @@ export const villaOfferFlow = createCommonOfferFlow({
   maxHighlights: Infinity,
   presentation: { ...createStayOfferVisuals('villa'), propertyIcon: 'house' },
   copy: {
+    presentationTitle: 'Mettez votre villa en valeur',
+    presentationText: 'Choisissez les équipements, préparez les photos et rédigez une présentation claire de votre villa.',
     amenitiesTitle: 'Quels équipements propose votre villa ?',
     amenitiesText: 'Sélectionnez les équipements intérieurs et extérieurs réellement disponibles.',
+    photosTitle: 'Ajoutez quelques photos de votre villa',
+    titleTitle: 'Donnez un titre mémorable à votre villa',
+    descriptionTitle: 'Présentez ce qui rend votre villa spéciale',
     highlightsTitle: 'Les points forts de votre villa',
     highlightsText: 'Mettez en avant les extérieurs, la vue et le type de séjour que votre villa permet.',
     highlightsSummaryTitle: 'Affichage sur votre offre',

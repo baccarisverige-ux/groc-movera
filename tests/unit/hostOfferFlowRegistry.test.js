@@ -76,4 +76,49 @@ describe('host offer flow registry', () => {
   it('keeps the hotel photo contract at 5 to 20 photos per room category', () => {
     expect(getOfferFlow('Hôtel').photoPolicy).toEqual({ min: 5, max: 20, scope: 'room-category' })
   })
+
+  /* The guesthouse carried scope 'room-category-when-pooled', a value no
+     consumer matched: roomCategoryPhotoRules compares against 'room-category'
+     exactly. So it was the one room-inventory category whose photo minimum
+     never fired, however its rooms were configured. Both room-inventory flows
+     must now name the same scope, or the enforcement silently splits again. */
+  it('enforces the same photo scope for every room-inventory category', () => {
+    for (const flow of HOST_OFFER_FLOWS) {
+      expect(flow.photoPolicy.scope).toBe(flow.supportsRoomInventory ? 'room-category' : 'listing')
+    }
+  })
+
+  /* The flow owns every sentence that names the property. Before this, only
+     the amenities and highlights screens read from copy: a hotel host was
+     asked for "les points forts de votre hôtel" and then, one screen later,
+     to "donner un titre mémorable à votre logement". French also makes this a
+     per-category decision rather than a substitution -- a villa is "spéciale",
+     an hôtel is "spécial" -- so each flow writes its own strings. */
+  it('names the property in its own words on every screen that mentions it', () => {
+    const nouns = {
+      Appartement: 'appartement',
+      Villa: 'villa',
+      'Maison d’hôte': 'maison d’hôte',
+      Hôtel: 'hôtel',
+    }
+    const keys = ['presentationTitle', 'photosTitle', 'titleTitle', 'descriptionTitle', 'amenitiesTitle', 'highlightsTitle']
+    for (const [type, noun] of Object.entries(nouns)) {
+      const { copy } = getOfferFlow(type)
+      for (const key of keys) {
+        expect(copy[key]).toBeTruthy()
+        expect(copy[key]).not.toContain('votre logement')
+      }
+      // the four screens that address the property by name use this category's
+      for (const key of ['presentationTitle', 'photosTitle', 'titleTitle', 'descriptionTitle']) {
+        expect(copy[key].toLowerCase()).toContain(noun)
+      }
+    }
+  })
+
+  it('agrees the adjective with the gender of each category', () => {
+    expect(getOfferFlow('Appartement').copy.descriptionTitle).toMatch(/spécial$/)
+    expect(getOfferFlow('Hôtel').copy.descriptionTitle).toMatch(/spécial$/)
+    expect(getOfferFlow('Villa').copy.descriptionTitle).toMatch(/spéciale$/)
+    expect(getOfferFlow('Maison d’hôte').copy.descriptionTitle).toMatch(/spéciale$/)
+  })
 })

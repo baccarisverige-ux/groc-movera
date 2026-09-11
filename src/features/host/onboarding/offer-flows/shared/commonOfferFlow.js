@@ -6,9 +6,20 @@ import {
   HOST_ONBOARDING_SCREENS,
 } from '../../hostOnboardingModel.js'
 
+/* The generic wording, used when a flow says nothing more specific.
+
+   Every string here names the property, and French makes that a per-category
+   decision rather than a substitution: a villa is "spéciale", an hôtel is
+   "spécial". So each flow writes its own sentences instead of interpolating a
+   noun into a template — the grammar stays correct and stays readable. */
 const DEFAULT_COPY = Object.freeze({
+  presentationTitle: 'Mettez votre logement en valeur',
+  presentationText: 'Choisissez les équipements, préparez les photos et rédigez une présentation claire de votre logement.',
   amenitiesTitle: 'Choisissez les équipements qui font la différence',
   amenitiesText: 'Sélectionnez uniquement ce qui est réellement disponible.',
+  photosTitle: 'Ajoutez quelques photos de votre logement',
+  titleTitle: 'Donnez un titre mémorable à votre logement',
+  descriptionTitle: 'Présentez ce qui rend votre logement spécial',
   highlightsTitle: 'Décrivez votre logement',
   highlightsText: 'Choisissez jusqu’à 2 points forts pour commencer.',
   highlightsSummaryTitle: 'Affichage sur votre offre',

@@ -64,8 +64,13 @@ export const hotelOfferFlow = createCommonOfferFlow({
     ],
   },
   copy: {
+    presentationTitle: 'Mettez votre hôtel en valeur',
+    presentationText: 'Choisissez les services, préparez les photos et rédigez une présentation claire de votre établissement.',
     amenitiesTitle: 'Quels équipements et services propose votre établissement ?',
     amenitiesText: 'Sélectionnez uniquement les services essentiels réellement disponibles.',
+    photosTitle: 'Ajoutez quelques photos de votre hôtel',
+    titleTitle: 'Donnez un titre mémorable à votre hôtel',
+    descriptionTitle: 'Présentez ce qui rend votre hôtel spécial',
     highlightsTitle: 'Les points forts de votre hôtel',
     highlightsText: 'Choisissez votre formule de séjour et les principaux atouts de l’établissement.',
     highlightsSummaryTitle: 'Affichage sur votre offre',

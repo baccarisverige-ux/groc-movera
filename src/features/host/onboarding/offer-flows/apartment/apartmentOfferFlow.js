@@ -23,8 +23,13 @@ export const apartmentOfferFlow = createCommonOfferFlow({
   maxHighlights: Infinity,
   presentation: { ...createStayOfferVisuals('apartment'), propertyIcon: 'building' },
   copy: {
+    presentationTitle: 'Mettez votre appartement en valeur',
+    presentationText: 'Choisissez les équipements, préparez les photos et rédigez une présentation claire de votre appartement.',
     amenitiesTitle: 'Quels équipements propose votre appartement ?',
     amenitiesText: 'Sélectionnez uniquement ce qui est réellement à disposition du voyageur.',
+    photosTitle: 'Ajoutez quelques photos de votre appartement',
+    titleTitle: 'Donnez un titre mémorable à votre appartement',
+    descriptionTitle: 'Présentez ce qui rend votre appartement spécial',
     highlightsTitle: 'Les points forts de votre appartement',
     highlightsText: 'Choisissez ce qui distingue votre appartement : son emplacement, son style et le type de séjour auquel il convient.',
     highlightsSummaryTitle: 'Affichage sur votre offre',
