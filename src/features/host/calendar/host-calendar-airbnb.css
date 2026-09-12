@@ -1,0 +1,274 @@
+/* The calendar, redesigned.
+
+   Airbnb's host calendar is the reference: a white page, the month name set
+   large and plain, a scroll that runs through the year instead of paging, and
+   a day drawn as a number over a muted price. A stay is a bar carrying the
+   guest's name across the nights it covers -- which is the part the old grid
+   could not do, because it painted bookings one cell at a time.
+
+   The mechanics underneath are the ones the prototype established and the
+   React page already had: tap a free day to select it, tap a booked one to
+   open the stay, price and availability applied to the whole selection.
+
+   Loaded after host-calendar-page.css, and deliberately overriding the dark
+   hero it declares: the two sheets are one screen, not two themes. */
+
+.host-calendar-page {
+  background: #fff;
+  padding-bottom: 0;
+}
+
+.host-calendar-page__hero {
+  padding: calc(10px + env(safe-area-inset-top, 0px)) 18px 6px;
+  background: #fff;
+  color: #111312;
+  border-radius: 0;
+  box-shadow: none;
+}
+.host-calendar-page__topline { justify-content: flex-end }
+.host-calendar-page__brand { display: none }
+.host-calendar-page__hero > p { display: none }
+
+.host-calendar-page__traveler,
+.host-calendar-page__today {
+  height: 44px;
+  min-width: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: #f6f7f5;
+  color: #111312;
+  font: 640 13.5px/1 Inter, sans-serif;
+  letter-spacing: -.015em;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.host-calendar-page__traveler svg,
+.host-calendar-page__today svg { width: 18px; height: 18px; stroke: currentColor; stroke-width: 1.8 }
+.host-calendar-page__today { padding: 0; width: 44px; justify-content: center }
+.host-calendar-page__today span { display: none }
+
+.host-calendar-page__headline { margin-top: 10px; align-items: flex-start }
+.host-calendar-page__headline span { display: none }
+.host-calendar-page__headline h1 {
+  font-size: 34px;
+  line-height: 1.04;
+  letter-spacing: -.045em;
+  font-weight: 760;
+  color: #111312;
+}
+
+.host-calendar-page__content { padding: 12px 18px calc(24px + env(safe-area-inset-bottom, 0px)) }
+
+/* the active-listing bar keeps its role but loses the card chrome */
+.host-calendar-page__listing {
+  min-height: 62px;
+  padding: 9px 12px 9px 9px;
+  border: 1px solid #e7e8e6;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: none;
+}
+.host-calendar-page__listing small { font-size: 9px; color: #8a908c }
+.host-calendar-page__listing strong { font-size: 14px; letter-spacing: -.02em }
+.host-calendar-page__listing em { font-size: 11px; color: #8a908c }
+.host-calendar-page__listing > b { font-size: 13px; font-weight: 700; color: #111312 }
+.host-calendar-page__listing-photo,
+.host-calendar-page__listing-icon { border-radius: 12px }
+
+/* ---------- the scroll ---------- */
+
+.host-calendar-scroll {
+  margin-top: 18px;
+  display: grid;
+  gap: 34px;
+}
+
+.host-calendar-month { display: grid; gap: 10px }
+.host-calendar-month h2 {
+  margin: 0;
+  font-size: 27px;
+  line-height: 1.05;
+  letter-spacing: -.04em;
+  font-weight: 740;
+  color: #111312;
+}
+
+.host-calendar-month__dow {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  padding-bottom: 2px;
+}
+.host-calendar-month__dow span {
+  display: grid;
+  place-items: center;
+  height: 24px;
+  font-size: 12px;
+  font-weight: 560;
+  color: #8a908c;
+}
+
+.host-calendar-month__weeks { display: grid; gap: 6px }
+
+/* Two stacked seven-column grids: the bar layer, then the days. The bar layer
+   only takes height when a stay actually runs through the week, so an empty
+   week does not carry a reserved gap. */
+.host-calendar-week { display: grid; gap: 2px }
+.host-calendar-week__bars {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  align-items: center;
+  min-height: 30px;
+}
+.host-calendar-week__days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.host-calendar-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  min-width: 0;
+  padding: 0 10px;
+  border-radius: 0;
+  background: #d9dbd8;
+  color: #24291f;
+  overflow: hidden;
+}
+.host-calendar-bar[data-opens=true] { border-radius: 999px 0 0 999px; padding-left: 3px }
+.host-calendar-bar[data-closes=true] { border-radius: 0 999px 999px 0 }
+.host-calendar-bar[data-opens=true][data-closes=true] { border-radius: 999px }
+.host-calendar-bar__avatar {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #fff;
+  color: #2d3630;
+  display: grid;
+  place-items: center;
+  font: 800 9.5px/1 Inter, sans-serif;
+  font-style: normal;
+}
+.host-calendar-bar b {
+  min-width: 0;
+  font-size: 12.5px;
+  font-weight: 620;
+  letter-spacing: -.015em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- a day ---------- */
+
+.host-calendar-day {
+  position: relative;
+  min-width: 0;
+  aspect-ratio: 1 / 1.12;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: #f6f7f5;
+  color: #111312;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .14s ease, box-shadow .14s ease;
+}
+.host-calendar-day.is-blank { background: none }
+
+.host-calendar-day__number {
+  position: relative;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -.02em;
+}
+.host-calendar-day__price {
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1;
+  color: #8a908c;
+}
+
+/* Unavailable reads as a struck-through number, the way Airbnb marks a night
+   that cannot be booked -- past, blocked, sold out or already taken. */
+.host-calendar-day[data-unavailable=true] .host-calendar-day__number { text-decoration: line-through }
+.host-calendar-day[data-unavailable=true] { background: #fff }
+.host-calendar-day[data-past=true] { color: #a8aeaa }
+.host-calendar-day[data-past=true] .host-calendar-day__price { color: #b6bbb7 }
+.host-calendar-day[data-blocked=true] .host-calendar-day__price { color: #b6bbb7 }
+
+/* Today is a filled circle behind the number, not a border on the cell. */
+.host-calendar-day[data-today=true] .host-calendar-day__number {
+  width: 27px;
+  height: 27px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #c8102e;
+  color: #fff;
+  font-weight: 680;
+  text-decoration: none;
+}
+
+.host-calendar-day[data-selected=true] {
+  background: #17301f;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(20, 46, 30, .22);
+}
+.host-calendar-day[data-selected=true] .host-calendar-day__price { color: rgba(255, 255, 255, .76) }
+.host-calendar-day[data-selected=true] .host-calendar-day__number { text-decoration: none }
+
+.host-calendar-day__stock {
+  position: absolute;
+  top: 4px;
+  right: 5px;
+  font-size: 8px;
+  font-weight: 700;
+  color: #9aa09c;
+}
+.host-calendar-day__stock[data-sold-out=true] { color: #c8102e }
+.host-calendar-day[data-selected=true] .host-calendar-day__stock { color: rgba(255, 255, 255, .7) }
+
+.host-calendar__hint {
+  margin: 4px 0 0;
+  max-width: none;
+  text-align: left;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: #8a908c;
+}
+
+.host-booking-sheet__message {
+  width: 100%;
+  height: 48px;
+  margin-top: 9px;
+  border: 1px solid #d8dad7;
+  border-radius: 15px;
+  background: #fff;
+  color: #111312;
+  font: 640 14px/1 Inter, sans-serif;
+}
+
+@media (max-width: 350px) {
+  .host-calendar-page__content { padding-left: 13px; padding-right: 13px }
+  .host-calendar-month h2 { font-size: 24px }
+  .host-calendar-day__number { font-size: 13.5px }
+  .host-calendar-day__price { font-size: 10px }
+  .host-calendar-day[data-today=true] .host-calendar-day__number { width: 24px; height: 24px }
+  .host-calendar-bar b { font-size: 11px }
+  .host-calendar-week__days { gap: 3px }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .host-calendar-day { transition: none }
+}

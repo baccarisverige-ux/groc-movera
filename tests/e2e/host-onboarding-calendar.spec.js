@@ -124,7 +124,10 @@ test('first-time traveler completes the full Movera host procedure before reachi
   await expect(calendarPage).toBeVisible()
   await expect(calendarPage).toContainText('Villa Saphir — Front de mer')
   await expect(calendarPage).toContainText('220 TND')
-  await expect(page.locator('.host-calendar__dow')).toHaveCount(7)
+  // Seven weekday headings per month, and the scroll runs forward through the
+  // year rather than paging one month at a time.
+  await expect(page.locator('.host-calendar-month').first().locator('.host-calendar-month__dow span')).toHaveCount(7)
+  expect(await page.locator('.host-calendar-month').count()).toBeGreaterThan(1)
 
   const hostProfile = await page.evaluate((key) => window.localStorage.getItem(key), HOST_PROFILES_KEY)
   expect(hostProfile).toContain('Villa Saphir')
@@ -181,27 +184,37 @@ test('host calendar supports month navigation, day pricing, blocking and booking
   const calendarPage = page.getByTestId('host-calendar-page')
   await expect(calendarPage).toBeVisible()
 
-  const monthTitle = page.locator('.host-calendar__monthbar strong')
-  const before = await monthTitle.innerText()
-  await page.getByRole('button', { name: 'Mois suivant' }).click()
-  await expect(monthTitle).not.toHaveText(before)
+  /* The calendar scrolls through the year instead of paging a month at a time,
+     so there is no month bar to step: the assertion is that a later month is
+     reachable in the same scroll, and that "Aujourd'hui" brings the current
+     one back into view. */
+  const months = page.locator('.host-calendar-month')
+  expect(await months.count()).toBeGreaterThan(6)
+  const firstMonth = await months.first().getAttribute('data-month')
+  const laterMonth = await months.nth(3).getAttribute('data-month')
+  expect(laterMonth).not.toBe(firstMonth)
+  await months.nth(3).scrollIntoViewIfNeeded()
   await page.getByRole('button', { name: 'Aujourd’hui' }).click()
 
-  const freeDay = page.locator('[data-calendar-day="9"]')
-  await freeDay.click()
+  // Every month has a 9th, so the day is addressed inside its own month.
+  const septemberNine = months.first().locator('[data-calendar-day="9"]')
+  await septemberNine.click()
   const editor = page.getByTestId('host-day-editor')
   await expect(editor).toBeVisible()
   await page.getByLabel('Prix des dates sélectionnées').fill('250')
   await editor.getByRole('button', { name: 'Bloqué' }).click()
   await editor.getByRole('button', { name: 'Appliquer' }).click()
-  await expect(freeDay.locator('.host-calendar__price')).toHaveText('—')
+  await expect(septemberNine.locator('.host-calendar-day__price')).toHaveText('—')
+  await expect(septemberNine).toHaveAttribute('data-blocked', 'true')
 
   const persisted = await page.evaluate((key) => window.localStorage.getItem(key), HOST_CALENDAR_KEY)
   expect(persisted).toContain('250')
   expect(persisted).toContain('"blocked":true')
 
   await page.reload()
-  await expect(page.locator('[data-calendar-day="9"] .host-calendar__price')).toHaveText('—')
+  await expect(
+    page.locator('.host-calendar-month').first().locator('[data-calendar-day="9"] .host-calendar-day__price'),
+  ).toHaveText('—')
 
   await expect(page.getByTestId('host-calendar-grid')).toBeVisible()
 })

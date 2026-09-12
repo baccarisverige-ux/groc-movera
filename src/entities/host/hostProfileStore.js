@@ -48,6 +48,41 @@ function normalizeStayRules(value) {
   }
 }
 
+/* Pricing bounds for Smart Pricing. The bounds are stored even when Smart
+   Pricing is off, so turning it on does not silently invent a range -- and a
+   max below the min is corrected here rather than persisted, because that is
+   a window no nightly price can fall into. */
+function normalizePricing(value, basePrice) {
+  const source = value && typeof value === 'object' ? value : {}
+  const base = Math.max(1, Math.round(Number(basePrice) || 0) || 1)
+  const min = clampInt(source.min, 1, 99999, Math.max(1, Math.round(base * 0.7)))
+  const max = clampInt(source.max, min, 99999, Math.max(min, Math.round(base * 1.6)))
+  return { min, max, smart: Boolean(source.smart) }
+}
+
+function normalizeFees(value) {
+  const source = value && typeof value === 'object' ? value : {}
+  return {
+    cleaning: clampInt(source.cleaning, 0, 99999, 0),
+    pet: clampInt(source.pet, 0, 99999, 0),
+    extraGuest: clampInt(source.extraGuest, 0, 99999, 0),
+    extraGuestAfter: clampInt(source.extraGuestAfter, 1, 50, 2),
+  }
+}
+
+const CANCELLATION_POLICY_IDS = new Set(['flexible', 'moderate', 'strict'])
+
+function normalizeArrivalGuide(value) {
+  const source = value && typeof value === 'object' ? value : {}
+  const text = (field, max) => (typeof source[field] === 'string' ? source[field].trim().slice(0, max) : '')
+  return {
+    instructions: text('instructions', 1000),
+    wifiName: text('wifiName', 80),
+    wifiPassword: text('wifiPassword', 80),
+    directions: text('directions', 600),
+  }
+}
+
 function normalizeCoordinate(value) {
   const coordinate = Number(value)
   return Number.isFinite(coordinate) ? coordinate : null
@@ -210,12 +245,22 @@ function normalizeListing(value, fallbackId = 'primary-listing') {
     beds,
     bathrooms,
     amenities: stringArray(value.amenities),
-    highlights: stringArray(value.highlights, foldType(type) === 'hotel' ? Infinity : 2),
+    /* Uncapped for every category. This read `hotel ? Infinity : 2` while all
+       four offer flows declare maxHighlights: Infinity, so a villa host could
+       pick twenty grouped highlights in the procedure and have eighteen of
+       them silently dropped at publish -- the screen said one thing and the
+       store did another. The catalogue each flow declares is the real bound. */
+    highlights: stringArray(value.highlights),
     description: typeof value.description === 'string' ? value.description.trim() : '',
     bookingMode: value.bookingMode === 'instant' ? 'instant' : 'request-first',
     promotions: stringArray(value.promotions),
     safety: normalizeSafety(value.safety),
     stayRules: normalizeStayRules(value.stayRules),
+    pricing: normalizePricing(value.pricing, basePrice),
+    fees: normalizeFees(value.fees),
+    cancellationPolicy: CANCELLATION_POLICY_IDS.has(value.cancellationPolicy) ? value.cancellationPolicy : 'moderate',
+    arrivalGuide: normalizeArrivalGuide(value.arrivalGuide),
+    status: value.status === 'unlisted' ? 'unlisted' : 'listed',
     roomTypes,
     roomInventory: normalizeRoomInventory(value.roomInventory, type, guestAccess, roomTypes),
     photos: stringArray(value.photos),

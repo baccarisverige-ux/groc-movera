@@ -9,17 +9,21 @@ import {
   readHostWorkspaceSettings,
   writeHostWorkspaceSettings,
 } from '../../../entities/host/hostWorkspaceSettingsStore.js'
-import { OptimizedListingImage } from '../../../shared/media/OptimizedListingImage.jsx'
-import { HostRoomTypeManager } from '../rooms/HostRoomTypeManager.jsx'
+import { HostListingEditor } from '../listings/HostListingEditor.jsx'
+import { HostListingsView } from '../listings/HostListingsView.jsx'
 import { HostMessagesView } from './HostMessagesView.jsx'
 import {
   estimateReservationGross,
   hostListingCompleteness,
-  HOST_WORKSPACE_VIEWS,
+  hostMenuItems,
+  hostNavViewFor,
+  hostPrimaryNavItems,
   reservationStatus,
   roomForReservation,
 } from './hostWorkspaceModel.js'
 import './host-workspace.css'
+// after the base sheet: bottom bar in place of the top rail, white page
+import './host-workspace-shell.css'
 
 function ArrowIcon() {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
@@ -55,16 +59,6 @@ function reservationLabel(status) {
   return 'Confirmée'
 }
 
-function listingCover(listing) {
-  const direct = Array.isArray(listing?.photos) ? listing.photos.find(Boolean) : ''
-  if (direct) return direct
-  for (const room of listing?.roomTypes || []) {
-    const photo = Array.isArray(room.photos) ? room.photos.find(Boolean) : ''
-    if (photo) return photo
-  }
-  return ''
-}
-
 function reservationRows(listing, reservations) {
   return reservations.map((reservation) => {
     const room = roomForReservation(listing, reservation)
@@ -78,40 +72,58 @@ function reservationRows(listing, reservations) {
   })
 }
 
+/* The host bottom bar.
+
+   It was a horizontally scrolling rail of seven pills pinned under a dark
+   green header -- which clipped its last tab at 390px and put a second title
+   above screens that already carry their own. Five fixed tabs, at the bottom
+   where a thumb reaches, and each screen owns its heading. */
 export function HostWorkspaceNav({ active, onNavigate }) {
   return (
     <nav className="host-workspace-nav" aria-label="Navigation Hôte">
-      <div className="host-workspace-nav__rail">
-        {HOST_WORKSPACE_VIEWS.map((item) => (
+      {hostPrimaryNavItems().map((item) => {
+        const current = item.id === active
+        return (
           <button
             type="button"
             key={item.id}
-            data-active={item.id === active ? 'true' : 'false'}
-            aria-current={item.id === active ? 'page' : undefined}
+            data-active={current ? 'true' : 'false'}
+            aria-current={current ? 'page' : undefined}
             onClick={() => onNavigate(item.path)}
           >
             <NavIcon id={item.id} />
             <span>{item.label}</span>
           </button>
-        ))}
-      </div>
+        )
+      })}
     </nav>
   )
 }
 
-function HostHeader({ listing, view, onNavigate }) {
-  const title = HOST_WORKSPACE_VIEWS.find((item) => item.id === view)?.label || 'Espace Hôte'
+function MenuView({ listing, onNavigate }) {
   return (
-    <header className="host-workspace__header">
-      <div className="host-workspace__brand">
-        <span>MH</span>
-        <div><strong>Movera Host</strong><small>{listing.city} · Espace Hôte</small></div>
+    <div className="host-workspace-view host-menu" data-testid="host-menu">
+      <h1 className="host-screen-title">Menu</h1>
+      <section className="host-menu__identity">
+        <span aria-hidden="true">MH</span>
+        <div><strong>{listing.name}</strong><small>{listing.type} · {listing.city}</small></div>
+      </section>
+      <div className="host-menu__rows">
+        {hostMenuItems().map((item) => (
+          <button type="button" key={item.id} onClick={() => onNavigate(item.path)} data-testid={`host-menu-${item.id}`}>
+            <NavIcon id={item.id} />
+            <span><strong>{item.label}</strong></span>
+            <ArrowIcon />
+          </button>
+        ))}
+        <button type="button" onClick={() => onNavigate(`/listing/${encodeURIComponent(listing.id)}`)}>
+          <NavIcon id="listings" />
+          <span><strong>Voir comme voyageur</strong></span>
+          <ArrowIcon />
+        </button>
       </div>
-      <div className="host-workspace__header-row">
-        <div><small>{listing.name}</small><h1>{title}</h1></div>
-        <button type="button" onClick={() => onNavigate('/')} className="host-workspace__traveler">Mode Voyageur</button>
-      </div>
-    </header>
+      <button type="button" className="host-menu__switch" onClick={() => onNavigate('/')}>Revenir en mode Voyageur</button>
+    </div>
   )
 }
 
@@ -134,6 +146,7 @@ function DashboardView({ listing, rows, onNavigate }) {
   const roomCount = Array.isArray(listing.roomTypes) ? listing.roomTypes.length : 0
   return (
     <div className="host-workspace-view" data-testid="host-dashboard">
+      <h1 className="host-screen-title">Aujourd’hui</h1>
       <section className="host-dashboard-hero">
         <div>
           <span>Votre activité</span>
@@ -173,51 +186,6 @@ function DashboardView({ listing, rows, onNavigate }) {
   )
 }
 
-function ListingView({ profile, userId, onNavigate }) {
-  const listing = profile.listing
-  const pooled = Array.isArray(listing.roomTypes) && listing.roomTypes.length > 0
-  const [editing, setEditing] = useState(false)
-  const [feedback, setFeedback] = useState('')
-  const [form, setForm] = useState(() => ({ name: listing.name, description: listing.description, basePrice: listing.basePrice, bookingMode: listing.bookingMode }))
-  useEffect(() => setForm({ name: listing.name, description: listing.description, basePrice: listing.basePrice, bookingMode: listing.bookingMode }), [listing])
-  const cover = listingCover(listing)
-  const save = () => {
-    try {
-      updateHostListing(userId, {
-        name: form.name,
-        description: form.description,
-        basePrice: pooled ? listing.basePrice : Number(form.basePrice),
-        bookingMode: form.bookingMode,
-      })
-      setEditing(false)
-      setFeedback('Annonce mise à jour.')
-    } catch (error) {
-      setFeedback(error?.message || 'Impossible d’enregistrer l’annonce.')
-    }
-  }
-  return (
-    <div className="host-workspace-view" data-testid="host-listings">
-      <section className="host-listing-card">
-        <div className="host-listing-card__media">{cover ? <OptimizedListingImage src={cover} alt="" sizes="160px" /> : <span>MH</span>}<b>Publié</b></div>
-        <div className="host-listing-card__body"><small>{listing.type} · {listing.city}</small><h2>{listing.name}</h2><p>{listing.address || 'Adresse enregistrée dans votre annonce'}</p><div><span>{pooled && listing.roomTypes.length > 1 ? `${listing.roomTypes.length} catégories` : `${listing.roomInventory?.totalUnits || 1} unité${(listing.roomInventory?.totalUnits || 1) > 1 ? 's' : ''}`}</span><strong>{pooled && listing.roomTypes.length > 1 ? `Dès ${Math.min(...listing.roomTypes.map((room) => room.basePrice))}` : listing.basePrice} {listing.currency}</strong></div></div>
-        <div className="host-listing-card__actions"><button type="button" onClick={() => setEditing((value) => !value)}>{editing ? 'Fermer' : 'Modifier'}</button><button type="button" onClick={() => onNavigate(`/listing/${encodeURIComponent(listing.id)}`)}>Voir comme voyageur</button></div>
-      </section>
-
-      {editing ? <section className="host-editor" aria-label="Modifier l’annonce">
-        <div className="host-workspace-section__head"><div><span>Informations publiques</span><h2>Modifier l’annonce</h2></div></div>
-        <label><span>Titre</span><input value={form.name} maxLength={80} onChange={(event) => setForm((state) => ({ ...state, name: event.target.value }))} /></label>
-        <label><span>Description</span><textarea rows="5" maxLength={1000} value={form.description} onChange={(event) => setForm((state) => ({ ...state, description: event.target.value }))} /></label>
-        {!pooled ? <label><span>Prix de base / nuit</span><input type="number" min="1" max="99999" inputMode="numeric" value={form.basePrice} onChange={(event) => setForm((state) => ({ ...state, basePrice: event.target.value }))} /></label> : <p className="host-workspace-note">Pour un hôtel ou une maison d’hôte, les prix sont gérés par catégorie de chambre afin de ne pas écraser les tarifs individuels.</p>}
-        <fieldset><legend>Mode de réservation</legend><button type="button" data-active={form.bookingMode === 'request-first' ? 'true' : 'false'} onClick={() => setForm((state) => ({ ...state, bookingMode: 'request-first' }))}>Demande d’abord</button><button type="button" data-active={form.bookingMode === 'instant' ? 'true' : 'false'} onClick={() => setForm((state) => ({ ...state, bookingMode: 'instant' }))}>Réservation instantanée</button></fieldset>
-        <button type="button" className="host-primary-action" onClick={save}>Enregistrer les modifications</button>
-      </section> : null}
-
-      {feedback ? <p className="host-workspace-feedback" role="status">{feedback}</p> : null}
-      {pooled ? <section className="host-workspace-section host-room-management"><div className="host-workspace-section__head"><div><span>Inventaire</span><h2>Chambres et catégories</h2></div></div><p className="host-workspace-note">La configuration actuelle reste la source de vérité pour les photos, capacités, prix et stocks par catégorie.</p><HostRoomTypeManager profile={profile} userId={userId} onNavigate={onNavigate} /></section> : null}
-    </div>
-  )
-}
-
 function ReservationCard({ item, currency }) {
   return (
     <article className="host-reservation-card" data-status={item.status}>
@@ -234,6 +202,7 @@ function ReservationsView({ listing, rows }) {
   const visible = rows.filter((item) => filter === 'all' || (filter === 'active' ? item.status !== 'past' : item.status === 'past'))
   return (
     <div className="host-workspace-view" data-testid="host-reservations">
+      <h1 className="host-screen-title">Réservations</h1>
       <section className="host-workspace-section host-workspace-section--flush">
         <div className="host-workspace-section__head"><div><span>Opérations</span><h2>Réservations confirmées</h2></div><b>{rows.length}</b></div>
         <div className="host-segmented"><button type="button" data-active={filter === 'active'} onClick={() => setFilter('active')}>À venir</button><button type="button" data-active={filter === 'past'} onClick={() => setFilter('past')}>Terminées</button><button type="button" data-active={filter === 'all'} onClick={() => setFilter('all')}>Toutes</button></div>
@@ -257,6 +226,7 @@ function EarningsView({ listing, rows }) {
   }, [rows])
   return (
     <div className="host-workspace-view" data-testid="host-earnings">
+      <h1 className="host-screen-title">Revenus</h1>
       <section className="host-earnings-hero"><span>Revenu brut calculé</span><strong>{money(total, listing.currency)}</strong><p>Calculé nuit par nuit depuis les tarifs du calendrier et les réservations confirmées enregistrées.</p></section>
       <section className="host-metrics host-metrics--two"><article><span>Séjours terminés</span><strong>{money(completed, listing.currency)}</strong><small>Estimation brute</small></article><article><span>À venir</span><strong>{money(upcoming, listing.currency)}</strong><small>Réservations actives</small></article></section>
       <section className="host-workspace-section"><div className="host-workspace-section__head"><div><span>Historique</span><h2>Par mois d’arrivée</h2></div></div>{monthly.length ? <div className="host-earnings-list">{monthly.map(([month, value]) => <div key={month}><span>{new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(new Date(`${month}-01T12:00:00`))}</span><strong>{money(value, listing.currency)}</strong></div>)}</div> : <EmptyState title="Pas encore de revenu calculable" copy="Les revenus apparaîtront après l’enregistrement de réservations confirmées." />}</section>
@@ -282,6 +252,7 @@ function SettingsView({ listing, userId }) {
   const toggleNotification = (key) => setWorkspaceSettings((state) => ({ ...state, notifications: { ...state.notifications, [key]: !state.notifications[key] } }))
   return (
     <div className="host-workspace-view" data-testid="host-settings">
+      <h1 className="host-screen-title">Réglages</h1>
       <section className="host-editor">
         <div className="host-workspace-section__head"><div><span>Séjours</span><h2>Règles de réservation</h2></div></div>
         <div className="host-settings-grid"><label><span>Nuits minimum</span><input type="number" min="1" max="365" value={rules.minNights} onChange={(event) => setRules((state) => ({ ...state, minNights: Math.max(1, Number(event.target.value) || 1) }))} /></label><label><span>Nuits maximum</span><input type="number" min={rules.minNights} max="365" value={rules.maxNights} onChange={(event) => setRules((state) => ({ ...state, maxNights: Math.max(rules.minNights, Number(event.target.value) || rules.minNights) }))} /></label><label><span>Préavis (jours)</span><input type="number" min="0" max="365" value={rules.advanceNoticeDays} onChange={(event) => setRules((state) => ({ ...state, advanceNoticeDays: Math.max(0, Number(event.target.value) || 0) }))} /></label><label><span>Préparation (jours)</span><input type="number" min="0" max="7" value={rules.preparationDays} onChange={(event) => setRules((state) => ({ ...state, preparationDays: Math.max(0, Number(event.target.value) || 0) }))} /></label><label><span>Arrivée à partir de</span><input type="time" value={rules.checkInFrom} onChange={(event) => setRules((state) => ({ ...state, checkInFrom: event.target.value }))} /></label><label><span>Départ avant</span><input type="time" value={rules.checkOutUntil} onChange={(event) => setRules((state) => ({ ...state, checkOutUntil: event.target.value }))} /></label></div>
@@ -306,16 +277,31 @@ export function HostWorkspacePage({ view, profile, userId, onNavigate }) {
   const rows = useMemo(() => reservationRows(listing, reservations), [listing, reservations])
   return (
     <section className="host-workspace" data-testid="host-workspace" data-view={view}>
-      <HostHeader listing={listing} view={view} onNavigate={onNavigate} />
-      <HostWorkspaceNav active={view} onNavigate={onNavigate} />
       <main className="host-workspace__content">
         {view === 'dashboard' ? <DashboardView listing={listing} rows={rows} onNavigate={onNavigate} /> : null}
-        {view === 'listings' ? <ListingView profile={profile} userId={userId} onNavigate={onNavigate} /> : null}
+        {view === 'listings' ? (
+          <HostListingsView
+            listings={[listing]}
+            onOpenListing={() => onNavigate('/host/listings/editor')}
+            onCreateListing={() => onNavigate('/host?new=1')}
+            onDuplicateListing={() => onNavigate('/host?duplicate=1')}
+          />
+        ) : null}
+        {view === 'listing-editor' ? (
+          <HostListingEditor
+            profile={profile}
+            userId={userId}
+            onNavigate={onNavigate}
+            onBack={() => onNavigate('/host/listings')}
+          />
+        ) : null}
         {view === 'reservations' ? <ReservationsView listing={listing} rows={rows} /> : null}
         {view === 'earnings' ? <EarningsView listing={listing} rows={rows} /> : null}
         {view === 'messages' ? <HostMessagesView listing={listing} rows={rows} onNavigate={onNavigate} /> : null}
         {view === 'settings' ? <SettingsView listing={listing} userId={userId} /> : null}
+        {view === 'menu' ? <MenuView listing={listing} onNavigate={onNavigate} /> : null}
       </main>
+      <HostWorkspaceNav active={hostNavViewFor(view)} onNavigate={onNavigate} />
     </section>
   )
 }

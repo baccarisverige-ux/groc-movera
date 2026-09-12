@@ -190,6 +190,7 @@ export function HostMessagesView({ listing, rows, onNavigate }) {
 
   return (
     <div className="host-workspace-view host-messages" data-testid="host-messages">
+      <h1 className="host-screen-title">Messages</h1>
       <section className="host-workspace-section host-workspace-section--flush">
         <div className="host-workspace-section__head">
           <div><span>Boîte Hôte</span><h2>Messages voyageurs</h2></div>

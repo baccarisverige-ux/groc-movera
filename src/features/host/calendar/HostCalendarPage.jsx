@@ -2,20 +2,28 @@ import { useEffect, useMemo, useState } from 'react'
 import { OptimizedListingImage } from '../../../shared/media/OptimizedListingImage.jsx'
 import { readHostCalendar, readHostCalendarForListing, writeHostCalendarDays } from '../../../entities/host/hostCalendarStore.js'
 import { HOST_PROFILE_EVENT, supportsPooledRoomInventory, updateHostRoomTypeTotal, useHostProfile } from '../../../entities/host/hostProfileStore.js'
-import { HOST_ROOM_INVENTORY_EVENT, readHostRoomInventoryForListing, remainingRoomUnitsForDay } from '../../../entities/host/hostRoomInventoryStore.js'
+import {
+  HOST_ROOM_INVENTORY_EVENT,
+  listConfirmedRoomReservationsForListing,
+  readHostRoomInventoryForListing,
+  remainingRoomUnitsForDay,
+} from '../../../entities/host/hostRoomInventoryStore.js'
 import { useAuthSession } from '../../auth/authSession.js'
 import {
   HOST_WEEKDAYS,
-  bookingRole,
-  buildMonthCells,
+  bookingsFromReservations,
+  buildMonthWeeks,
   dayKey,
   defaultNightlyPrice,
   findBookingForDay,
   isToday,
-  makeDemoBookings,
-  monthLabel,
+  monthName,
+  monthsFrom,
+  weekBookingSegments,
 } from './hostCalendarModel.js'
 import './host-calendar-page.css'
+// after the base sheet: it replaces the dark hero and the old month grid
+import './host-calendar-airbnb.css'
 import './host-room-inventory.css'
 import './host-room-types-calendar.css'
 
@@ -31,16 +39,106 @@ function ClockIcon() {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
 }
 
-function ChevronIcon({ direction = 'right' }) {
-  return <svg viewBox="0 0 24 24" aria-hidden="true" data-direction={direction}><path d="m9 6 6 6-6 6"/></svg>
-}
-
 function dayLabel(day, month, year) {
   return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(year, month, day))
 }
 
 function bookingDateLabel(date) {
   return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' }).format(date)
+}
+
+function isPastDay(year, month, day, now = new Date()) {
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12)
+  return new Date(year, month, day, 12) < today
+}
+
+/* One month of the scroll.
+
+   Bookings are drawn as a bar layer above each week rather than as a mark
+   inside each day cell: a stay is one thing that spans nights, and painting it
+   per-cell is what made the old grid unable to carry the guest's name. The bar
+   layer is a second seven-column grid sitting over the same tracks, so the bar
+   lines up with the days it covers without any pixel arithmetic. */
+function CalendarMonth({ year, month, calendar, bookings, basePrice, selectedKeys, roomInventory, showStock, roomTotal, onSelectDay }) {
+  const weeks = useMemo(() => buildMonthWeeks(year, month), [year, month])
+  return (
+    <section className="host-calendar-month" aria-label={`${monthName(month)} ${year}`} data-month={`${year}-${String(month + 1).padStart(2, '0')}`}>
+      <h2>{monthName(month)}{month === 0 ? ` ${year}` : ''}</h2>
+      <div className="host-calendar-month__dow" aria-hidden="true">
+        {HOST_WEEKDAYS.map((label, index) => <span key={`${label}-${index}`}>{label}</span>)}
+      </div>
+      <div className="host-calendar-month__weeks">
+        {weeks.map((week, weekIndex) => {
+          const segments = weekBookingSegments(bookings, week, year, month)
+          return (
+            <div className="host-calendar-week" key={`week-${weekIndex}`}>
+              {segments.length ? (
+                <div className="host-calendar-week__bars" aria-hidden="true">
+                  {segments.map((segment) => (
+                    <span
+                      key={`${segment.booking.id}-${segment.start}`}
+                      className="host-calendar-bar"
+                      data-opens={segment.opensStay ? 'true' : 'false'}
+                      data-closes={segment.closesInWeek ? 'true' : 'false'}
+                      style={{ gridColumn: `${segment.start + 1} / span ${segment.span}` }}
+                    >
+                      {segment.opensStay ? (
+                        <>
+                          <i className="host-calendar-bar__avatar">{segment.booking.initials}</i>
+                          <b>{segment.booking.guest}</b>
+                        </>
+                      ) : null}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+              <div className="host-calendar-week__days">
+                {week.map((day, dayIndex) => {
+                  if (!day) return <span key={`blank-${weekIndex}-${dayIndex}`} className="host-calendar-day is-blank" aria-hidden="true" />
+                  const key = dayKey(year, month, day)
+                  const data = calendar.days[key] || {}
+                  const booking = findBookingForDay(bookings, year, month, day)
+                  const remaining = roomInventory.enabled ? remainingRoomUnitsForDay(roomInventory, key) : null
+                  const soldOut = roomInventory.enabled && remaining <= 0
+                  const past = isPastDay(year, month, day)
+                  const blocked = (Boolean(data.blocked) || soldOut) && !booking
+                  const unavailable = blocked || past || Boolean(booking)
+                  const price = data.price ?? defaultNightlyPrice(basePrice)
+                  const today = isToday(year, month, day)
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      className="host-calendar-day"
+                      data-calendar-day={day}
+                      data-day-key={key}
+                      data-booking-id={booking?.id || ''}
+                      data-selected={selectedKeys.has(key) ? 'true' : 'false'}
+                      data-unavailable={unavailable ? 'true' : 'false'}
+                      data-blocked={blocked ? 'true' : 'false'}
+                      data-booked={booking ? 'true' : 'false'}
+                      data-today={today ? 'true' : 'false'}
+                      data-past={past ? 'true' : 'false'}
+                      aria-label={booking
+                        ? `${dayLabel(day, month, year)}, réservation ${booking.guest}`
+                        : `${dayLabel(day, month, year)}, ${blocked ? 'indisponible' : `${price} TND`}`}
+                      onClick={() => onSelectDay(year, month, day)}
+                    >
+                      <span className="host-calendar-day__number">{day}</span>
+                      <span className="host-calendar-day__price">{blocked ? '—' : price}</span>
+                      {showStock && !booking && remaining != null
+                        ? <span className="host-calendar-day__stock" data-sold-out={soldOut ? 'true' : 'false'}>{remaining}/{roomTotal}</span>
+                        : null}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </section>
+  )
 }
 
 export function HostCalendarPage({ onNavigate, hostProfile = null }) {
@@ -69,8 +167,15 @@ export function HostCalendarPage({ onNavigate, hostProfile = null }) {
   const selectedRoomTotal = Math.max(1, Number(roomInventory.totalUnits) || Number(selectedRoomType?.totalUnits) || 1)
   const identicalRooms = pooledRooms && !categorizedRooms && selectedRoomTotal > 1
   const showInventoryControls = categorizedRooms || identicalRooms
-  const cells = useMemo(() => buildMonthCells(year, month), [year, month])
-  const bookings = useMemo(() => pooledRooms ? [] : makeDemoBookings(year, month), [pooledRooms, year, month])
+  /* Fourteen months forward, scrolled rather than paged. A host setting a
+     price for next summer should not tap "next" nine times to reach it, and a
+     stay that straddles two months should be readable without a page turn. */
+  const months = useMemo(() => monthsFrom(year, month, 14), [year, month])
+  const [reservations, setReservations] = useState(() => listConfirmedRoomReservationsForListing(listing?.id))
+  const bookings = useMemo(
+    () => bookingsFromReservations(reservations, pooledRooms ? selectedRoomTypeId : ''),
+    [reservations, pooledRooms, selectedRoomTypeId],
+  )
   const selectedArray = useMemo(() => Array.from(selectedKeys), [selectedKeys])
   const selectedRoomStock = selectedArray.length === 1 && roomInventory.enabled
     ? remainingRoomUnitsForDay(roomInventory, selectedArray[0])
@@ -96,7 +201,12 @@ export function HostCalendarPage({ onNavigate, hostProfile = null }) {
   }, [session?.userId, listing?.id, pooledRooms, selectedRoomTypeId])
 
   useEffect(() => {
-    const sync = () => setRoomInventory(readHostRoomInventoryForListing(listing?.id, selectedRoomTypeId))
+    // The same event carries both: a confirmed reservation changes the stock
+    // left for a night and the bar the calendar draws over it.
+    const sync = () => {
+      setRoomInventory(readHostRoomInventoryForListing(listing?.id, selectedRoomTypeId))
+      setReservations(listConfirmedRoomReservationsForListing(listing?.id))
+    }
     sync()
     window.addEventListener(HOST_ROOM_INVENTORY_EVENT, sync)
     window.addEventListener(HOST_PROFILE_EVENT, sync)
@@ -121,23 +231,18 @@ export function HostCalendarPage({ onNavigate, hostProfile = null }) {
     setEditBlocked(Boolean(value.blocked))
   }, [selectedArray, calendar.days, selectedBasePrice])
 
-  const changeMonth = (delta) => {
-    const date = new Date(year, month + delta, 1)
-    setYear(date.getFullYear())
-    setMonth(date.getMonth())
-    setSelectedKeys(new Set())
-    setNotice('')
-  }
-
   const goToday = () => {
     const current = new Date()
     setYear(current.getFullYear())
     setMonth(current.getMonth())
     setSelectedKeys(new Set())
     setNotice('Mois en cours')
+    if (typeof window !== 'undefined') {
+      document.querySelector('[data-calendar-scroll]')?.scrollTo({ top: 0, behavior: 'smooth' })
+    }
   }
 
-  const selectDay = (day) => {
+  const selectDay = (year, month, day) => {
     const booking = findBookingForDay(bookings, year, month, day)
     if (booking) {
       setSelectedBooking(booking)
@@ -232,55 +337,27 @@ export function HostCalendarPage({ onNavigate, hostProfile = null }) {
           </section>
         ) : null}
 
-        <section className="host-calendar" aria-label={`Calendrier ${monthLabel(year, month)}`}>
-          <div className="host-calendar__monthbar">
-            <button type="button" aria-label="Mois précédent" onClick={() => changeMonth(-1)}><ChevronIcon direction="left" /></button>
-            <strong>{monthLabel(year, month)}</strong>
-            <button type="button" aria-label="Mois suivant" onClick={() => changeMonth(1)}><ChevronIcon /></button>
-          </div>
-
-          <div className="host-calendar__grid" data-testid="host-calendar-grid">
-            {HOST_WEEKDAYS.map((label, index) => <div key={`${label}-${index}`} className="host-calendar__dow">{label}</div>)}
-            {cells.map((day, index) => {
-              if (!day) return <span key={`blank-${index}`} className="host-calendar__blank" aria-hidden="true" />
-              const key = dayKey(year, month, day)
-              const data = calendar.days[key] || {}
-              const booking = findBookingForDay(bookings, year, month, day)
-              const role = booking ? bookingRole(booking, year, month, day) : ''
-              const selected = selectedKeys.has(key)
-              const remainingRooms = roomInventory.enabled ? remainingRoomUnitsForDay(roomInventory, key) : null
-              const soldOut = roomInventory.enabled && remainingRooms <= 0
-              const blocked = (Boolean(data.blocked) || soldOut) && !booking
-              const price = data.price ?? defaultNightlyPrice(selectedBasePrice, day)
-              const guestInitial = booking?.guest?.charAt(0) || ''
-              const stockLabel = showInventoryControls && remainingRooms != null ? `${remainingRooms} chambre${remainingRooms > 1 ? 's' : ''} restante${remainingRooms > 1 ? 's' : ''}` : ''
-              const classes = ['host-calendar__day', selected ? 'is-selected' : '', blocked ? 'is-blocked' : '', soldOut ? 'is-sold-out' : '', booking ? 'has-booking' : '', booking ? `book-${role}` : '', isToday(year, month, day) ? 'is-today' : ''].filter(Boolean).join(' ')
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  className={classes}
-                  data-calendar-day={day}
-                  data-day-key={key}
-                  data-booking-id={booking?.id || ''}
-                  data-room-type-id={selectedRoomType?.id || ''}
-                  data-room-stock={showInventoryControls ? remainingRooms : ''}
-                  aria-label={booking ? `${dayLabel(day, month, year)}, réservation ${booking.guest}` : `${dayLabel(day, month, year)}, ${blocked ? 'indisponible' : `${price} TND`}${stockLabel ? `, ${stockLabel}` : ''}`}
-                  onClick={() => selectDay(day)}
-                >
-                  <span className="host-calendar__number">{day}</span>
-                  <span className="host-calendar__price">{blocked ? '—' : `${price}`}</span>
-                  {showInventoryControls && !booking ? <span className="host-calendar__room-stock" data-sold-out={soldOut ? 'true' : 'false'}>{remainingRooms}/{selectedRoomTotal}</span> : null}
-                  {booking ? <i className="host-calendar__booking-bar" aria-hidden="true" /> : null}
-                  {booking && (role === 'start' || role === 'both') ? <span className="host-calendar__guest" aria-hidden="true">{guestInitial}</span> : null}
-                </button>
-              )
-            })}
-          </div>
-
-          <div className="host-calendar__legend"><span><i className="free" />Libre</span><span><i className="booked" />Réservé</span><span><i className="blocked" />Bloqué</span></div>
-          <p className="host-calendar__hint">Touchez des dates libres pour modifier prix et disponibilité.{showInventoryControls ? ` Le compteur de stock reste privé${categorizedRooms && selectedRoomType ? ` pour ${selectedRoomType.name}` : ''}.` : ''}</p>
-        </section>
+        <div className="host-calendar-scroll" data-calendar-scroll data-testid="host-calendar-grid">
+          {months.map(({ year: mYear, month: mMonth }) => (
+            <CalendarMonth
+              key={`${mYear}-${mMonth}`}
+              year={mYear}
+              month={mMonth}
+              calendar={calendar}
+              bookings={bookings}
+              basePrice={selectedBasePrice}
+              selectedKeys={selectedKeys}
+              roomInventory={roomInventory}
+              showStock={showInventoryControls}
+              roomTotal={selectedRoomTotal}
+              onSelectDay={selectDay}
+            />
+          ))}
+          <p className="host-calendar__hint">
+            Touchez des dates libres pour modifier prix et disponibilité. Les séjours confirmés
+            apparaissent en barre grise{showInventoryControls ? ` · le compteur de stock reste privé${categorizedRooms && selectedRoomType ? ` pour ${selectedRoomType.name}` : ''}` : ''}.
+          </p>
+        </div>
 
         {notice ? <div className="host-calendar-page__notice" role="status">{notice}</div> : null}
       </main>
@@ -299,12 +376,13 @@ export function HostCalendarPage({ onNavigate, hostProfile = null }) {
         <aside className="host-booking-sheet" data-testid="host-booking-sheet" aria-label="Détail de la réservation">
           <div className="host-booking-sheet__handle" />
           <button type="button" className="host-booking-sheet__close" aria-label="Fermer le détail" onClick={() => setSelectedBooking(null)}>×</button>
-          <span className="host-booking-sheet__avatar">{selectedBooking.guest.charAt(0)}</span>
-          <small>Réservation {selectedBooking.status.toLowerCase()}</small>
+          <span className="host-booking-sheet__avatar">{selectedBooking.initials}</span>
+          <small>Réservation confirmée</small>
           <h2>{selectedBooking.guest}</h2>
           <p>{listing.name}</p>
-          <div className="host-booking-sheet__meta"><span><small>Arrivée</small><strong>{bookingDateLabel(selectedBooking.checkIn)}</strong></span><span><small>Départ</small><strong>{bookingDateLabel(selectedBooking.checkOut)}</strong></span><span><small>Voyageurs</small><strong>{selectedBooking.guests}</strong></span></div>
-          <div className="host-booking-sheet__total"><span>Total séjour</span><strong>{selectedBooking.total}</strong></div>
+          <div className="host-booking-sheet__meta"><span><small>Arrivée</small><strong>{bookingDateLabel(selectedBooking.checkIn)}</strong></span><span><small>Départ</small><strong>{bookingDateLabel(selectedBooking.checkOut)}</strong></span><span><small>{pooledRooms ? 'Chambres' : 'Unités'}</small><strong>{selectedBooking.units}</strong></span></div>
+          <div className="host-booking-sheet__total"><span>Total séjour</span><strong>{selectedBooking.total ? `${selectedBooking.total} ${listing.currency || 'TND'}` : '—'}</strong></div>
+          <button type="button" className="host-booking-sheet__message" onClick={() => onNavigate('/host/messages')}>Écrire au voyageur</button>
         </aside>
       ) : null}
     </section>
