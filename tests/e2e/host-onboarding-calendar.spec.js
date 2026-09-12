@@ -194,7 +194,7 @@ test('host calendar supports month navigation, day pricing, blocking and booking
   const laterMonth = await months.nth(3).getAttribute('data-month')
   expect(laterMonth).not.toBe(firstMonth)
   await months.nth(3).scrollIntoViewIfNeeded()
-  await page.getByRole('button', { name: 'Aujourd’hui' }).click()
+  await page.getByRole('button', { name: 'Revenir au mois en cours' }).click()
 
   // Every month has a 9th, so the day is addressed inside its own month.
   const septemberNine = months.first().locator('[data-calendar-day="9"]')

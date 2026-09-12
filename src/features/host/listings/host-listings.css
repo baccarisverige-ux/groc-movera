@@ -739,3 +739,138 @@
 @media (prefers-reduced-motion: reduce) {
   .host-listings *, .host-listing-editor *, .host-sheet * { transition: none !important }
 }
+
+/* The shared amenity and highlight pickers inside an edit sheet.
+
+   Same markup as the procedure -- one component renders both -- so these
+   rules only re-space it for a sheet that is narrower than a full screen. */
+.host-sheet .host-onboarding__amenity-groups { display: grid; gap: 24px }
+.host-sheet .host-onboarding__amenity-section h2 {
+  margin: 0 0 10px;
+  color: var(--hl-green, #1f6a43);
+  font-size: 13px;
+  font-weight: 680;
+  letter-spacing: -.01em;
+}
+.host-sheet .host-onboarding__amenity-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px }
+.host-sheet .host-onboarding__amenity-grid button {
+  position: relative;
+  min-height: 70px;
+  padding: 10px 11px;
+  border: 1px solid #e1e2e0;
+  border-radius: 14px;
+  background: #fff;
+  color: #202220;
+  display: grid;
+  grid-template-columns: 29px 1fr;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+}
+.host-sheet .host-onboarding__amenity-grid button[data-active=true] {
+  border-color: var(--hl-green, #1f6a43);
+  background: #fbfdfb;
+  box-shadow: 0 0 0 1px var(--hl-green, #1f6a43);
+}
+.host-sheet .host-onboarding__amenity-copy { display: grid; gap: 2px; min-width: 0 }
+.host-sheet .host-onboarding__amenity-copy strong { font-size: 11.5px; font-weight: 620; line-height: 1.25 }
+.host-sheet .host-onboarding__amenity-copy small { font-size: 9.5px; line-height: 1.35; color: #8a908c }
+.host-sheet .host-onboarding__choice-check {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: var(--hl-green, #1f6a43);
+  color: #fff;
+  display: grid;
+  place-items: center;
+}
+.host-sheet .host-onboarding__choice-check svg { width: 10px; height: 10px; fill: none; stroke: currentColor; stroke-width: 2.6 }
+
+.host-sheet .host-offer-grouped-highlights { display: grid; gap: 20px }
+.host-sheet .host-offer-grouped-highlights__summary {
+  display: grid;
+  gap: 4px;
+  padding: 13px 14px;
+  border-radius: 16px;
+  background: var(--hl-field, #f6f7f5);
+}
+.host-sheet .host-offer-grouped-highlights__summary strong { font-size: 13px; font-weight: 660 }
+.host-sheet .host-offer-grouped-highlights__summary span { font-size: 11px; line-height: 1.45; color: #767b77 }
+.host-sheet .host-offer-grouped-highlights__summary b {
+  justify-self: start;
+  margin-top: 4px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #e9f0eb;
+  color: var(--hl-green, #1f6a43);
+  font-size: 10px;
+  font-weight: 700;
+}
+.host-sheet .host-offer-grouped-highlights__group-head h2 {
+  margin: 0 0 3px;
+  font-size: 15px;
+  font-weight: 680;
+  letter-spacing: -.025em;
+  color: #111312;
+}
+.host-sheet .host-offer-grouped-highlights__group-head p { margin: 0 0 10px; font-size: 11.5px; line-height: 1.45; color: #8a908c }
+.host-sheet .host-offer-grouped-highlights__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px }
+.host-sheet .host-offer-grouped-highlight {
+  position: relative;
+  min-height: 76px;
+  padding: 11px 12px;
+  border: 1px solid #e1e2e0;
+  border-radius: 15px;
+  background: #fff;
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  color: #202220;
+}
+.host-sheet .host-offer-grouped-highlight[data-active=true] {
+  border-color: var(--hl-green, #1f6a43);
+  background: #fbfdfb;
+  box-shadow: 0 0 0 1px var(--hl-green, #1f6a43);
+}
+.host-sheet .host-offer-grouped-highlight__icon { display: grid; place-items: center }
+.host-sheet .host-offer-grouped-highlight__copy { display: grid; gap: 2px; min-width: 0 }
+.host-sheet .host-offer-grouped-highlight__copy strong { font-size: 12px; font-weight: 620; line-height: 1.25 }
+.host-sheet .host-offer-grouped-highlight__copy small { font-size: 10px; line-height: 1.35; color: #8a908c }
+.host-sheet .host-offer-grouped-highlight__check {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: #e7e9e7;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 9px;
+  font-weight: 800;
+}
+.host-sheet .host-offer-grouped-highlight[data-active=true] .host-offer-grouped-highlight__check { background: var(--hl-green, #1f6a43) }
+
+.host-edit-lede { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--hl-muted, #767b77) }
+.host-edit-badge {
+  margin-left: 8px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #e9f0eb;
+  color: var(--hl-green, #1f6a43);
+  font-size: 9.5px;
+  font-style: normal;
+  font-weight: 720;
+  letter-spacing: .01em;
+}
+
+@media (max-width: 350px) {
+  .host-sheet .host-onboarding__amenity-grid,
+  .host-sheet .host-offer-grouped-highlights__grid { grid-template-columns: 1fr }
+}

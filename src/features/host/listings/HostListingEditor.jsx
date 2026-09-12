@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { updateHostListing } from '../../../entities/host/hostProfileStore.js'
 import { OptimizedListingImage } from '../../../shared/media/OptimizedListingImage.jsx'
-import { COMMON_HOST_AMENITY_GROUPS } from '../onboarding/hostOnboardingModel.js'
 import { getOfferFlow } from '../onboarding/offer-flows/offerFlowRegistry.js'
+import { AmenityPicker, guestAccessOptions, HighlightPicker } from '../onboarding/offer-flows/shared/offerPickers.jsx'
 import { HostRoomTypeManager } from '../rooms/HostRoomTypeManager.jsx'
 import { HostListingSettings } from './HostListingSettings.jsx'
 import {
@@ -112,6 +112,8 @@ function TitleSheet({ draft, setDraft }) {
 
 function TypeSheet({ listing, draft, setDraft }) {
   const flow = getOfferFlow(listing.type)
+  const options = guestAccessOptions(flow)
+  const presentation = flow.roomAccessPresentation
   return (
     <>
       <p className="host-edit-note">
@@ -119,8 +121,9 @@ function TypeSheet({ listing, draft, setDraft }) {
         les points forts et la gestion des chambres. Vous pouvez modifier l’accès voyageur.
       </p>
       <div className="host-edit-static"><strong>{listing.type}</strong><small>Catégorie de l’annonce</small></div>
-      <div className="host-edit-choices" role="radiogroup" aria-label="Accès voyageur">
-        {flow.guestAccess.map((item) => (
+      {presentation?.intro ? <p className="host-edit-note">{presentation.intro}</p> : null}
+      <div className="host-edit-choices" role="radiogroup" aria-label={presentation?.title || 'Accès voyageur'}>
+        {options.map((item) => (
           <button
             key={item.id}
             type="button"
@@ -129,11 +132,17 @@ function TypeSheet({ listing, draft, setDraft }) {
             data-active={draft.guestAccess === item.id ? 'true' : 'false'}
             onClick={() => setDraft({ guestAccess: item.id })}
           >
-            <span><strong>{item.label}</strong><small>{item.description}</small></span>
+            <span>
+              <strong>{item.label}{item.badge ? <em className="host-edit-badge">{item.badge}</em> : null}</strong>
+              <small>{item.description}</small>
+            </span>
             {draft.guestAccess === item.id ? <i><CheckIcon /></i> : null}
           </button>
         ))}
       </div>
+      {presentation?.noteTitle ? (
+        <div className="host-edit-static"><strong>{presentation.noteTitle}</strong><small>{presentation.noteText}</small></div>
+      ) : null}
     </>
   )
 }
@@ -151,72 +160,31 @@ function CapacitySheet({ draft, setDraft }) {
 
 function AmenitiesSheet({ listing, draft, setDraft }) {
   const flow = getOfferFlow(listing.type)
-  const groups = flow.amenityGroups.length ? flow.amenityGroups : COMMON_HOST_AMENITY_GROUPS
-  const toggle = (id) => {
-    const next = draft.amenities.includes(id)
+  const toggle = (id) => setDraft({
+    amenities: draft.amenities.includes(id)
       ? draft.amenities.filter((item) => item !== id)
-      : [...draft.amenities, id]
-    setDraft({ amenities: next })
-  }
+      : [...draft.amenities, id],
+  })
   return (
-    <div className="host-edit-groups">
-      {groups.map((group) => {
-        const items = flow.amenities.filter((item) => item.group === group.id)
-        if (!items.length) return null
-        return (
-          <section key={group.id}>
-            <h3>{group.label}</h3>
-            <div className="host-edit-checklist">
-              {items.map((item) => {
-                const active = draft.amenities.includes(item.id)
-                return (
-                  <button key={item.id} type="button" aria-pressed={active} data-active={active ? 'true' : 'false'} onClick={() => toggle(item.id)}>
-                    <span>{item.label}</span>
-                    {active ? <i><CheckIcon /></i> : null}
-                  </button>
-                )
-              })}
-            </div>
-          </section>
-        )
-      })}
-    </div>
+    <>
+      <p className="host-edit-lede">{flow.copy.amenitiesText}</p>
+      <AmenityPicker flow={flow} selected={draft.amenities} onToggle={toggle} />
+    </>
   )
 }
 
 function HighlightsSheet({ listing, draft, setDraft }) {
   const flow = getOfferFlow(listing.type)
-  const { HighlightIcon } = flow.presentation
-  const toggle = (id) => {
-    const next = draft.highlights.includes(id)
+  const toggle = (id) => setDraft({
+    highlights: draft.highlights.includes(id)
       ? draft.highlights.filter((item) => item !== id)
-      : [...draft.highlights, id]
-    setDraft({ highlights: next })
-  }
+      : [...draft.highlights, id],
+  })
   return (
-    <div className="host-edit-groups" data-offer-variant={flow.presentation.variant}>
-      {flow.highlightGroups.map((group) => {
-        const items = flow.highlights.filter((item) => item.group === group.id)
-        if (!items.length) return null
-        return (
-          <section key={group.id}>
-            <h3>{group.title}</h3>
-            <div className="host-edit-highlights">
-              {items.map((item) => {
-                const active = draft.highlights.includes(item.id)
-                return (
-                  <button key={item.id} type="button" aria-pressed={active} data-active={active ? 'true' : 'false'} onClick={() => toggle(item.id)}>
-                    <span className="host-edit-highlights__icon">{HighlightIcon ? <HighlightIcon id={item.id} /> : null}</span>
-                    <span className="host-edit-highlights__copy"><strong>{item.label}</strong>{item.detail ? <small>{item.detail}</small> : null}</span>
-                    {active ? <i><CheckIcon /></i> : null}
-                  </button>
-                )
-              })}
-            </div>
-          </section>
-        )
-      })}
-    </div>
+    <>
+      <p className="host-edit-lede">{flow.copy.highlightsText}</p>
+      <HighlightPicker flow={flow} selected={draft.highlights} onToggle={toggle} />
+    </>
   )
 }
 
@@ -325,6 +293,18 @@ function RoomsSheet({ profile, userId, onNavigate }) {
   return <HostRoomTypeManager profile={profile} userId={userId} onNavigate={onNavigate} />
 }
 
+/* Sheet titles come from the flow wherever the procedure titles the screen,
+   so a villa host reads the same sentence in both places. */
+function sheetTitle(key, listing) {
+  const flow = getOfferFlow(listing.type)
+  if (key === 'amenities') return flow.copy.amenitiesTitle
+  if (key === 'highlights') return flow.copy.highlightsTitle
+  if (key === 'photos') return flow.copy.photosTitle
+  if (key === 'title') return flow.copy.titleTitle
+  if (key === 'description') return flow.copy.descriptionTitle
+  return SHEETS[key]?.title || ''
+}
+
 const SHEETS = {
   photos: { title: 'Visite en photos', Body: PhotoSheet, readOnly: true },
   rooms: { title: 'Chambres et catégories', Body: RoomsSheet, readOnly: true },
@@ -364,7 +344,8 @@ function EditSheet({ editor, profile, listing, userId, onNavigate, onClose, onSa
   const [draft, setDraft] = useState(() => draftFromListing(listing))
   const [error, setError] = useState('')
   if (!config) return null
-  const { Body, title, readOnly } = config
+  const { Body, readOnly } = config
+  const title = sheetTitle(editor, listing)
 
   const patch = (part) => { setDraft((state) => ({ ...state, ...part })); setError('') }
 

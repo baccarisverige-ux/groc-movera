@@ -292,7 +292,10 @@ export function HostCalendarPage({ onNavigate, hostProfile = null }) {
         </div>
         <div className="host-calendar-page__headline">
           <div><span>Gestion des disponibilités</span><h1>Calendrier</h1></div>
-          <button type="button" className="host-calendar-page__today" onClick={goToday} aria-label="Aujourd’hui"><ClockIcon /><span>Aujourd’hui</span></button>
+          {/* Not "Aujourd'hui": the bottom bar's first tab already carries that name,
+              and two controls answering to it on one screen is ambiguous for anyone
+              navigating by label. This one says what it does. */}
+          <button type="button" className="host-calendar-page__today" onClick={goToday} aria-label="Revenir au mois en cours"><ClockIcon /><span>Aujourd’hui</span></button>
         </div>
         <p>Pilotez disponibilités, tarifs et séjours depuis un seul calendrier hôte.</p>
       </header>
