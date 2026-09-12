@@ -1,205 +1,90 @@
 import { useMemo, useState } from 'react'
 import { updateHostListing } from '../../../entities/host/hostProfileStore.js'
 import { HOST_PROMOTIONS } from '../onboarding/hostOnboardingModel.js'
+import '../workspace/host-b225.css'
 import {
   CANCELLATION_POLICIES,
   LISTING_STATUSES,
   listingStatus,
   normalizePricingBounds,
 } from './hostListingEditorModel.js'
-import './host-listings.css'
+import {
+  formatSettingValue,
+  readSettingField,
+  settingsField,
+  unitSuffix,
+  writeSettingField,
+} from './hostListingSettingsModel.js'
 
-/* Listing settings: the gear in the editor.
-
-   Four tabs, each one a policy the host sets once and the rest of the app
-   reads -- the calendar clamps a nightly price to the Smart Pricing bounds,
-   the booking engine reads the stay rules, the offer page shows the fees. The
-   values were already scattered across onboarding screens with no way back to
-   them after publishing; this is that way back. */
+/* Listing settings, in b225's shape.
+ *
+ * The reference calls this mh2Settings: a full-screen page, four tabs, and a
+ * body of read-only value cards -- "Prix de base / nuit · 580 TND". Tapping a
+ * card does not reveal an inline field; it pushes mh2PriceEdit, a second page
+ * that is one enormous centred number and a save button. That two-page model
+ * is the design, not a detail: on a phone a 44px number you can read from
+ * across the room beats a 16px field in a list, and the host only ever edits
+ * one value at a time.
+ *
+ * The draft-and-save logic underneath is the one that was already here and
+ * already covered by tests -- bounds are normalised on save, a max below the
+ * min is corrected rather than stored. Only the shell changed. */
 
 const TABS = Object.freeze([
   { id: 'pricing', label: 'Tarifs' },
-  { id: 'discounts', label: 'Réductions' },
-  { id: 'availability', label: 'Disponibilité' },
-  { id: 'cancellation', label: 'Annulation' },
+  { id: 'discounts', label: 'Réduc.' },
+  { id: 'availability', label: 'Dispo.' },
+  { id: 'cancellation', label: 'Annul.' },
 ])
 
 function CloseIcon() {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
 }
 
-function CheckIcon() {
-  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.2 4.2L19 7" /></svg>
-}
-
-function ChevronIcon() {
-  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7" /></svg>
-}
-
-function PriceField({ label, value, currency, onChange }) {
+function ValueCard({ id, value, currency, onOpen, testId }) {
+  const field = settingsField(id)
   return (
-    <label className="host-price-field">
-      <span>{label}</span>
-      <div>
+    <button type="button" className="mh2-card" onClick={() => onOpen(id)} data-testid={testId}>
+      <label>{field.label}</label>
+      <div className="val">{formatSettingValue(value, field.unit, currency)}</div>
+      {field.hint ? <div className="hint">{field.hint}</div> : null}
+    </button>
+  )
+}
+
+/* The mh2PriceEdit page. One number, one unit line, one save. */
+function EditPage({ fieldId, value, currency, onCancel, onCommit }) {
+  const field = settingsField(fieldId)
+  const [text, setText] = useState(() => String(Math.round(Number(value) || 0)))
+  return (
+    /* The dialog is named "Modifier — X", not "X".
+       Naming it after the field made the dialog and the field it contains
+       announce identically, so a screen-reader user hears the same words for
+       the container and the control, and any by-name lookup matches both. */
+    <div className="host-b225-ov" role="dialog" aria-modal="true" aria-label={`Modifier — ${field.label}`} data-testid="host-settings-edit">
+      <div className="mh2-head">
+        <button type="button" className="mh2-x" aria-label="Annuler" onClick={onCancel}><CloseIcon /></button>
+        <h1>{field.label}</h1>
+        <span style={{ width: '36px' }} />
+      </div>
+      <div className="mh2-body mh2-price-body">
         <input
+          className="mh2-big-input"
           inputMode="numeric"
-          value={value}
-          aria-label={label}
-          onChange={(event) => onChange(event.target.value.replace(/\D/g, '').slice(0, 5))}
+          aria-label={field.label}
+          value={text}
+          autoFocus
+          onChange={(event) => setText(event.target.value.replace(/\D/g, '').slice(0, 6))}
         />
-        <b>{currency}</b>
-      </div>
-    </label>
-  )
-}
-
-function Toggle({ label, detail, checked, onChange }) {
-  return (
-    <label className="host-edit-toggle host-edit-toggle--card">
-      <span><strong>{label}</strong>{detail ? <small>{detail}</small> : null}</span>
-      <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />
-      <i aria-hidden="true" />
-    </label>
-  )
-}
-
-function Stepper({ label, detail, value, min, max, suffix, onChange }) {
-  return (
-    <div className="host-edit-stepper host-edit-stepper--card">
-      <span><strong>{label}</strong>{detail ? <small>{detail}</small> : null}</span>
-      <div>
-        <button type="button" aria-label={`Réduire ${label}`} disabled={value <= min} onClick={() => onChange(Math.max(min, value - 1))}>−</button>
-        <b>{value}{suffix ? <em>{suffix}</em> : null}</b>
-        <button type="button" aria-label={`Augmenter ${label}`} disabled={value >= max} onClick={() => onChange(Math.min(max, value + 1))}>+</button>
-      </div>
-    </div>
-  )
-}
-
-function PricingTab({ draft, setDraft, currency, onOpenFees }) {
-  const bounds = normalizePricingBounds({ min: draft.pricing.min, max: draft.pricing.max, base: draft.basePrice })
-  const inverted = Number(draft.pricing.max) > 0 && Number(draft.pricing.max) < Number(draft.pricing.min)
-  return (
-    <>
-      <div className="host-price-card">
-        <PriceField label="Prix minimum par nuit" currency={currency} value={draft.pricing.min} onChange={(min) => setDraft({ pricing: { ...draft.pricing, min } })} />
-        <PriceField label="Prix maximum par nuit" currency={currency} value={draft.pricing.max} onChange={(max) => setDraft({ pricing: { ...draft.pricing, max } })} />
-      </div>
-      {inverted ? (
-        <p className="host-workspace-feedback" role="status">
-          Le maximum est inférieur au minimum. Il sera ramené à {bounds.max} {currency} à l’enregistrement.
+        <p style={{ textAlign: 'center', color: '#6b7c72', marginTop: '8px' }}>
+          {unitSuffix(field.unit, currency)}{field.unit === 'tnd' ? ' / nuit' : ''}
         </p>
-      ) : null}
-
-      <Toggle
-        label="Tarification intelligente"
-        detail="Vos prix sont ajustés automatiquement selon la demande, sans jamais sortir de la fourchette ci-dessus."
-        checked={draft.pricing.smart}
-        onChange={(smart) => setDraft({ pricing: { ...draft.pricing, smart } })}
-      />
-
-      <button type="button" className="host-settings-row" onClick={onOpenFees} data-testid="host-settings-fees">
-        <span><strong>Frais</strong><small>Ménage, animaux, voyageur supplémentaire</small></span>
-        <ChevronIcon />
-      </button>
-
-      <p className="host-edit-note">
-        Le prix de base actuel est de {Math.round(Number(draft.basePrice) || 0)} {currency}. Une nuit
-        modifiée dans le calendrier reste comprise dans cette fourchette.
-      </p>
-    </>
-  )
-}
-
-function FeesTab({ draft, setDraft, currency }) {
-  const set = (patch) => setDraft({ fees: { ...draft.fees, ...patch } })
-  return (
-    <>
-      <div className="host-price-card">
-        <PriceField label="Frais de ménage" currency={currency} value={draft.fees.cleaning} onChange={(cleaning) => set({ cleaning })} />
-        <PriceField label="Frais animal" currency={currency} value={draft.fees.pet} onChange={(pet) => set({ pet })} />
-        <PriceField label="Voyageur supplémentaire" currency={currency} value={draft.fees.extraGuest} onChange={(extraGuest) => set({ extraGuest })} />
       </div>
-      <Stepper
-        label="À partir du voyageur n°"
-        detail="Le supplément ne s’applique qu’au-delà de ce nombre."
-        value={Math.max(1, Number(draft.fees.extraGuestAfter) || 1)}
-        min={1}
-        max={20}
-        onChange={(extraGuestAfter) => set({ extraGuestAfter })}
-      />
-      <p className="host-edit-note">Laissez un frais à 0 pour ne pas l’appliquer.</p>
-    </>
-  )
-}
-
-function DiscountsTab({ draft, setDraft }) {
-  const toggle = (id) => {
-    const next = draft.promotions.includes(id)
-      ? draft.promotions.filter((item) => item !== id)
-      : [...draft.promotions, id]
-    setDraft({ promotions: next })
-  }
-  return (
-    <div className="host-settings-list">
-      {HOST_PROMOTIONS.map((item) => {
-        const active = draft.promotions.includes(item.id)
-        return (
-          <button key={item.id} type="button" aria-pressed={active} data-active={active ? 'true' : 'false'} onClick={() => toggle(item.id)}>
-            <b>{item.value}%</b>
-            <span><strong>{item.label}</strong><small>{item.detail}</small></span>
-            {active ? <i><CheckIcon /></i> : null}
-          </button>
-        )
-      })}
-    </div>
-  )
-}
-
-function AvailabilityTab({ draft, setDraft }) {
-  const rules = draft.stayRules
-  const set = (patch) => setDraft({ stayRules: { ...rules, ...patch } })
-  return (
-    <>
-      <Stepper label="Nuits minimum" value={rules.minNights} min={1} max={365} suffix=" n" onChange={(minNights) => set({ minNights, maxNights: Math.max(minNights, rules.maxNights) })} />
-      <Stepper label="Nuits maximum" value={rules.maxNights} min={rules.minNights} max={365} suffix=" n" onChange={(maxNights) => set({ maxNights })} />
-      <Stepper label="Préavis d’arrivée" detail="Délai minimum entre la réservation et l’arrivée." value={rules.advanceNoticeDays} min={0} max={365} suffix=" j" onChange={(advanceNoticeDays) => set({ advanceNoticeDays })} />
-      <Stepper label="Temps de préparation" detail="Nuits bloquées automatiquement après un départ." value={rules.preparationDays} min={0} max={7} suffix=" j" onChange={(preparationDays) => set({ preparationDays })} />
-      <div className="host-settings-status" role="radiogroup" aria-label="Visibilité de l’annonce">
-        {LISTING_STATUSES.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            role="radio"
-            aria-checked={draft.status === item.id}
-            data-active={draft.status === item.id ? 'true' : 'false'}
-            onClick={() => setDraft({ status: item.id })}
-          >
-            <span><strong>{item.label}</strong><small>{item.detail}</small></span>
-            {draft.status === item.id ? <i><CheckIcon /></i> : null}
-          </button>
-        ))}
-      </div>
-    </>
-  )
-}
-
-function CancellationTab({ draft, setDraft }) {
-  return (
-    <div className="host-settings-status" role="radiogroup" aria-label="Politique d’annulation">
-      {CANCELLATION_POLICIES.map((item) => (
-        <button
-          key={item.id}
-          type="button"
-          role="radio"
-          aria-checked={draft.cancellationPolicy === item.id}
-          data-active={draft.cancellationPolicy === item.id ? 'true' : 'false'}
-          onClick={() => setDraft({ cancellationPolicy: item.id })}
-        >
-          <span><strong>{item.label}</strong><small>{item.detail}</small></span>
-          {draft.cancellationPolicy === item.id ? <i><CheckIcon /></i> : null}
+      <div className="mh2-foot">
+        <button type="button" className="mh2-save" onClick={() => onCommit(Math.max(0, Number(text) || 0))} data-testid="host-settings-edit-save">
+          Enregistrer
         </button>
-      ))}
+      </div>
     </div>
   )
 }
@@ -208,14 +93,14 @@ function draftFromListing(listing) {
   return {
     basePrice: listing.basePrice,
     pricing: {
-      min: String(listing.pricing?.min ?? ''),
-      max: String(listing.pricing?.max ?? ''),
+      min: Number(listing.pricing?.min ?? 0),
+      max: Number(listing.pricing?.max ?? 0),
       smart: Boolean(listing.pricing?.smart),
     },
     fees: {
-      cleaning: String(listing.fees?.cleaning ?? 0),
-      pet: String(listing.fees?.pet ?? 0),
-      extraGuest: String(listing.fees?.extraGuest ?? 0),
+      cleaning: Number(listing.fees?.cleaning ?? 0),
+      pet: Number(listing.fees?.pet ?? 0),
+      extraGuest: Number(listing.fees?.extraGuest ?? 0),
       extraGuestAfter: Number(listing.fees?.extraGuestAfter ?? 2),
     },
     promotions: [...(listing.promotions || [])],
@@ -227,21 +112,27 @@ function draftFromListing(listing) {
 
 export function HostListingSettings({ listing, userId, onClose, onSaved }) {
   const [tab, setTab] = useState('pricing')
-  const [feesOpen, setFeesOpen] = useState(false)
+  const [editing, setEditing] = useState('')
   const [draft, setDraft] = useState(() => draftFromListing(listing))
   const [error, setError] = useState('')
 
   const currency = listing.currency || 'TND'
-  const patch = (part) => { setDraft((state) => ({ ...state, ...part })); setError('') }
-
-  const activeLabel = useMemo(
-    () => (feesOpen ? 'Frais' : TABS.find((item) => item.id === tab)?.label || 'Réglages'),
-    [tab, feesOpen],
+  const bounds = useMemo(
+    () => normalizePricingBounds({ min: draft.pricing.min, max: draft.pricing.max, base: draft.basePrice }),
+    [draft.pricing.min, draft.pricing.max, draft.basePrice],
   )
+
+  const togglePromotion = (id) => {
+    setDraft((state) => ({
+      ...state,
+      promotions: state.promotions.includes(id)
+        ? state.promotions.filter((item) => item !== id)
+        : [...state.promotions, id],
+    }))
+  }
 
   const save = () => {
     try {
-      const bounds = normalizePricingBounds({ min: draft.pricing.min, max: draft.pricing.max, base: draft.basePrice })
       updateHostListing(userId, {
         pricing: { min: bounds.min, max: bounds.max, smart: draft.pricing.smart },
         fees: {
@@ -255,50 +146,149 @@ export function HostListingSettings({ listing, userId, onClose, onSaved }) {
         cancellationPolicy: draft.cancellationPolicy,
         status: draft.status,
       })
-      onSaved(`${activeLabel} · enregistré`)
+      if (typeof onSaved === 'function') onSaved('Réglages enregistrés')
       onClose()
     } catch (saveError) {
       setError(saveError?.message || 'Impossible d’enregistrer ces réglages.')
     }
   }
 
-  return (
-    <div className="host-sheet host-sheet--settings" role="dialog" aria-modal="true" aria-label="Réglages de l’annonce" data-testid="host-listing-settings">
-      <button type="button" className="host-sheet__scrim" aria-label="Fermer" onClick={onClose} />
-      <div className="host-sheet__panel host-sheet__panel--full">
-        <div className="host-settings__top">
-          <button type="button" aria-label="Fermer" onClick={feesOpen ? () => setFeesOpen(false) : onClose}><CloseIcon /></button>
-          <span className="host-settings__currency">{currency}</span>
-        </div>
-        <h2 className="host-settings__title">{feesOpen ? 'Frais' : 'Réglages'}</h2>
+  if (editing) {
+    return (
+      <EditPage
+        fieldId={editing}
+        value={readSettingField(draft, editing)}
+        currency={currency}
+        onCancel={() => setEditing('')}
+        onCommit={(value) => { setDraft((state) => writeSettingField(state, editing, value)); setEditing(''); setError('') }}
+      />
+    )
+  }
 
-        {feesOpen ? null : (
-          <div className="host-settings__tabs" role="tablist" aria-label="Catégories de réglages">
-            {TABS.map((item) => (
+  return (
+    <div className="host-b225-ov" role="dialog" aria-modal="true" aria-label="Réglages de l’annonce" data-testid="host-listing-settings">
+      <div className="mh2-head">
+        <button type="button" className="mh2-x" aria-label="Fermer" onClick={onClose}><CloseIcon /></button>
+        <h1>Réglages annonce</h1>
+        <span className="mh2-x" aria-hidden="true" style={{ fontSize: '12px', fontWeight: 800 }}>{currency}</span>
+      </div>
+
+      <div className="mh2-tabs" role="tablist" aria-label="Catégories de réglages">
+        {TABS.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            role="tab"
+            aria-selected={tab === item.id}
+            className={tab === item.id ? 'on' : ''}
+            onClick={() => setTab(item.id)}
+          >{item.label}</button>
+        ))}
+      </div>
+
+      <div className="mh2-body">
+        {tab === 'pricing' ? (
+          <>
+            <div className="mh2-card">
+              <label>Prix de base / nuit</label>
+              <div className="val">{formatSettingValue(draft.basePrice, 'tnd', currency)}</div>
+              <div className="hint">Défini dans l’annonce</div>
+            </div>
+            <ValueCard id="min" value={draft.pricing.min || bounds.min} currency={currency} onOpen={setEditing} testId="host-settings-min" />
+            <ValueCard id="max" value={draft.pricing.max || bounds.max} currency={currency} onOpen={setEditing} testId="host-settings-max" />
+            <button
+              type="button"
+              className="toggle-row mh2-card"
+              aria-pressed={draft.pricing.smart}
+              onClick={() => setDraft((state) => ({ ...state, pricing: { ...state.pricing, smart: !state.pricing.smart } }))}
+              data-testid="host-settings-smart"
+            >
+              <span>
+                <strong style={{ fontSize: '14px' }}>Tarification intelligente</strong>
+                <p className="hint" style={{ margin: '4px 0 0' }}>Ajustement automatique selon la demande, sans sortir de la fourchette</p>
+              </span>
+              <span className="toggle" data-on={draft.pricing.smart ? 'true' : 'false'} aria-hidden="true" />
+            </button>
+
+            <h3 className="mh2-sec">Frais</h3>
+            <ValueCard id="cleaning" value={draft.fees.cleaning} currency={currency} onOpen={setEditing} testId="host-settings-cleaning" />
+            <ValueCard id="pet" value={draft.fees.pet} currency={currency} onOpen={setEditing} testId="host-settings-pet" />
+            <ValueCard id="extraGuest" value={draft.fees.extraGuest} currency={currency} onOpen={setEditing} />
+            <ValueCard id="extraGuestAfter" value={draft.fees.extraGuestAfter} currency={currency} onOpen={setEditing} />
+            <p className="mh2-note">Laissez un frais à 0 pour ne pas l’appliquer.</p>
+          </>
+        ) : null}
+
+        {tab === 'discounts' ? (
+          <>
+            {HOST_PROMOTIONS.map((item) => {
+              const active = draft.promotions.includes(item.id)
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  className="mh2-card"
+                  data-on={active ? 'true' : 'false'}
+                  aria-pressed={active}
+                  onClick={() => togglePromotion(item.id)}
+                >
+                  <label>{item.label}</label>
+                  <div className="val">−{item.value} %</div>
+                  <div className="hint">{item.detail}</div>
+                </button>
+              )
+            })}
+            <p className="mh2-note">Les pourcentages s’éditent en %, jamais en montant. Une seule réduction s’applique par séjour.</p>
+          </>
+        ) : null}
+
+        {tab === 'availability' ? (
+          <>
+            <ValueCard id="minNights" value={draft.stayRules.minNights} currency={currency} onOpen={setEditing} testId="host-settings-min-nights" />
+            <ValueCard id="maxNights" value={draft.stayRules.maxNights} currency={currency} onOpen={setEditing} />
+            <ValueCard id="advanceNoticeDays" value={draft.stayRules.advanceNoticeDays} currency={currency} onOpen={setEditing} />
+            <ValueCard id="preparationDays" value={draft.stayRules.preparationDays} currency={currency} onOpen={setEditing} />
+            <h3 className="mh2-sec">Visibilité</h3>
+            {LISTING_STATUSES.map((item) => (
               <button
                 key={item.id}
                 type="button"
-                role="tab"
-                aria-selected={tab === item.id}
-                data-active={tab === item.id ? 'true' : 'false'}
-                onClick={() => setTab(item.id)}
-              >{item.label}</button>
+                className="mh2-card"
+                data-on={draft.status === item.id ? 'true' : 'false'}
+                aria-pressed={draft.status === item.id}
+                onClick={() => setDraft((state) => ({ ...state, status: item.id }))}
+                data-testid={`host-settings-status-${item.id}`}
+              >
+                <label>{item.label}</label>
+                <div className="hint">{item.detail}</div>
+              </button>
             ))}
-          </div>
-        )}
+          </>
+        ) : null}
 
-        <div className="host-settings__body">
-          {feesOpen ? <FeesTab draft={draft} setDraft={patch} currency={currency} /> : null}
-          {!feesOpen && tab === 'pricing' ? <PricingTab draft={draft} setDraft={patch} currency={currency} onOpenFees={() => setFeesOpen(true)} /> : null}
-          {!feesOpen && tab === 'discounts' ? <DiscountsTab draft={draft} setDraft={patch} /> : null}
-          {!feesOpen && tab === 'availability' ? <AvailabilityTab draft={draft} setDraft={patch} /> : null}
-          {!feesOpen && tab === 'cancellation' ? <CancellationTab draft={draft} setDraft={patch} /> : null}
-          {error ? <p className="host-workspace-feedback" role="alert">{error}</p> : null}
-        </div>
+        {tab === 'cancellation' ? CANCELLATION_POLICIES.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            className="mh2-card"
+            data-on={draft.cancellationPolicy === item.id ? 'true' : 'false'}
+            aria-pressed={draft.cancellationPolicy === item.id}
+            onClick={() => setDraft((state) => ({ ...state, cancellationPolicy: item.id }))}
+            data-testid={`host-settings-policy-${item.id}`}
+          >
+            <label>Politique</label>
+            <div className="val sm">{item.label}</div>
+            <div className="hint">{item.detail}</div>
+          </button>
+        )) : null}
 
-        <div className="host-sheet__foot">
-          <button type="button" className="host-primary-action" onClick={save} data-testid="host-settings-save">Enregistrer</button>
-        </div>
+        {error ? <p className="mh2-note" role="alert" style={{ color: '#c1121f' }}>{error}</p> : null}
+      </div>
+
+      <div className="mh2-foot">
+        <button type="button" className="mh2-save" onClick={save} data-testid="host-settings-save">
+          Enregistrer les modifications
+        </button>
       </div>
     </div>
   )

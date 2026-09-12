@@ -1,62 +1,74 @@
 import { useEffect, useMemo, useState } from 'react'
 import { readHostCalendarForListing } from '../../../entities/host/hostCalendarStore.js'
-import { updateHostListing } from '../../../entities/host/hostProfileStore.js'
 import {
   HOST_ROOM_INVENTORY_EVENT,
   listConfirmedRoomReservationsForListing,
 } from '../../../entities/host/hostRoomInventoryStore.js'
-import {
-  readHostWorkspaceSettings,
-  writeHostWorkspaceSettings,
-} from '../../../entities/host/hostWorkspaceSettingsStore.js'
+import { OptimizedListingImage } from '../../../shared/media/OptimizedListingImage.jsx'
 import { HostListingEditor } from '../listings/HostListingEditor.jsx'
-import { HostListingsView } from '../listings/HostListingsView.jsx'
+import { HostListingSettings } from '../listings/HostListingSettings.jsx'
+import { listingCoverPhoto, listingSubtitle } from '../listings/hostListingEditorModel.js'
 import { HostMessagesView } from './HostMessagesView.jsx'
 import {
+  BackIcon,
+  BellIcon,
+  BookIcon,
+  CalendarIcon,
+  ChartIcon,
+  ChevronIcon,
+  GearIcon,
+  HelpIcon,
+  ListingsIcon,
+  MenuIcon,
+  MessagesIcon,
+  MoneyIcon,
+  PlusIcon,
+  ShieldIcon,
+  TodayIcon,
+  UserIcon,
+} from './hostB225Icons.jsx'
+import {
+  HOST_MENU_ROWS,
+  HOST_NAV_ITEMS,
+  formatMoney,
+  formatMonth,
+  formatShortDate,
+  hostFollowUps,
+  hostRevenueBreakdown,
+  hostRevenueByPeriod,
+  hostRevenueSpark,
+  hostReviewSummary,
+  hostTodayRows,
+  initialsFor,
+  reservationCountLabel,
+  todayCardTime,
+  todayCardTitle,
+} from './hostB225Model.js'
+import {
   estimateReservationGross,
-  hostListingCompleteness,
-  hostMenuItems,
   hostNavViewFor,
-  hostPrimaryNavItems,
   reservationStatus,
   roomForReservation,
 } from './hostWorkspaceModel.js'
-import './host-workspace.css'
-// after the base sheet: bottom bar in place of the top rail, white page
-import './host-workspace-shell.css'
+import './host-b225.css'
 
-function ArrowIcon() {
-  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
+const MENU_ICONS = {
+  gear: GearIcon,
+  user: UserIcon,
+  plus: PlusIcon,
+  shield: ShieldIcon,
+  book: BookIcon,
+  money: MoneyIcon,
+  chart: ChartIcon,
+  help: HelpIcon,
 }
 
-function NavIcon({ id }) {
-  const paths = {
-    dashboard: <><path d="M4 4h7v7H4zM13 4h7v4h-7zM13 10h7v10h-7zM4 13h7v7H4z" /></>,
-    listings: <><path d="M4 8 12 3l8 5v12H4z" /><path d="M9 20v-6h6v6" /></>,
-    reservations: <><rect x="4" y="5" width="16" height="15" rx="2" /><path d="M8 3v4M16 3v4M4 10h16M8 14h3M8 17h6" /></>,
-    calendar: <><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M8 3v4M16 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01" /></>,
-    earnings: <><path d="M4 19V9M10 19V5M16 19v-7M3 19h18" /><path d="m4 7 6-4 6 5 4-3" /></>,
-    messages: <><path d="M4 5h16v12H8l-4 4z" /><path d="M8 9h8M8 13h5" /></>,
-    settings: <><circle cx="12" cy="12" r="3" /><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4" /></>,
-  }
-  return <svg viewBox="0 0 24 24" aria-hidden="true">{paths[id]}</svg>
-}
-
-function money(value, currency = 'TND') {
-  return `${Math.round(Number(value) || 0).toLocaleString('fr-FR')} ${currency}`
-}
-
-function shortDate(value) {
-  const date = new Date(`${value}T12:00:00`)
-  if (Number.isNaN(date.getTime())) return value
-  return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' }).format(date)
-}
-
-function reservationLabel(status) {
-  if (status === 'current') return 'En séjour'
-  if (status === 'past') return 'Terminée'
-  if (status === 'upcoming') return 'À venir'
-  return 'Confirmée'
+const NAV_ICONS = {
+  dashboard: TodayIcon,
+  calendar: CalendarIcon,
+  listings: ListingsIcon,
+  messages: MessagesIcon,
+  menu: MenuIcon,
 }
 
 function reservationRows(listing, reservations) {
@@ -72,16 +84,15 @@ function reservationRows(listing, reservations) {
   })
 }
 
-/* The host bottom bar.
-
-   It was a horizontally scrolling rail of seven pills pinned under a dark
-   green header -- which clipped its last tab at 390px and put a second title
-   above screens that already carry their own. Five fixed tabs, at the bottom
-   where a thumb reaches, and each screen owns its heading. */
+/* b225's floating dock: five tabs on a dark ink slab lifted off the bottom
+   edge, mint for the active one. `top: auto` is load-bearing -- the element
+   this replaced inherited a `top: 0` from a retired sticky rule and pinned
+   itself to the top of the screen over the add button. */
 export function HostWorkspaceNav({ active, onNavigate }) {
   return (
-    <nav className="host-workspace-nav" aria-label="Navigation Hôte">
-      {hostPrimaryNavItems().map((item) => {
+    <nav className="host-b225-nav" aria-label="Navigation Hôte">
+      {HOST_NAV_ITEMS.map((item) => {
+        const Icon = NAV_ICONS[item.id]
         const current = item.id === active
         return (
           <button
@@ -91,7 +102,7 @@ export function HostWorkspaceNav({ active, onNavigate }) {
             aria-current={current ? 'page' : undefined}
             onClick={() => onNavigate(item.path)}
           >
-            <NavIcon id={item.id} />
+            <Icon />
             <span>{item.label}</span>
           </button>
         )
@@ -100,207 +111,482 @@ export function HostWorkspaceNav({ active, onNavigate }) {
   )
 }
 
-function MenuView({ listing, onNavigate }) {
+function EmptyBlock({ title, copy }) {
   return (
-    <div className="host-workspace-view host-menu" data-testid="host-menu">
-      <h1 className="host-screen-title">Menu</h1>
-      <section className="host-menu__identity">
-        <span aria-hidden="true">MH</span>
-        <div><strong>{listing.name}</strong><small>{listing.type} · {listing.city}</small></div>
-      </section>
-      <div className="host-menu__rows">
-        {hostMenuItems().map((item) => (
-          <button type="button" key={item.id} onClick={() => onNavigate(item.path)} data-testid={`host-menu-${item.id}`}>
-            <NavIcon id={item.id} />
-            <span><strong>{item.label}</strong></span>
-            <ArrowIcon />
-          </button>
-        ))}
-        <button type="button" onClick={() => onNavigate(`/listing/${encodeURIComponent(listing.id)}`)}>
-          <NavIcon id="listings" />
-          <span><strong>Voir comme voyageur</strong></span>
-          <ArrowIcon />
-        </button>
-      </div>
-      <button type="button" className="host-menu__switch" onClick={() => onNavigate('/')}>Revenir en mode Voyageur</button>
-    </div>
-  )
-}
-
-function EmptyState({ title, copy, action, onAction }) {
-  return (
-    <div className="host-workspace-empty">
-      <span className="host-workspace-empty__mark">MH</span>
+    <div className="hb-empty">
       <strong>{title}</strong>
       <p>{copy}</p>
-      {action ? <button type="button" onClick={onAction}>{action}</button> : null}
     </div>
   )
 }
 
-function DashboardView({ listing, rows, onNavigate }) {
-  const upcoming = rows.filter((item) => item.status === 'upcoming' || item.status === 'current')
-  const revenue = rows.reduce((sum, item) => sum + item.gross, 0)
-  const completeness = hostListingCompleteness(listing)
-  const unitCount = Math.max(1, Number(listing.roomInventory?.totalUnits) || 1)
-  const roomCount = Array.isArray(listing.roomTypes) ? listing.roomTypes.length : 0
+function Avatar({ initials, className = 'avatar' }) {
+  return <span className={className} aria-hidden="true">{initials}</span>
+}
+
+/* ---- Today ----------------------------------------------------------- */
+
+/* b225's cal-prop-bar: the active listing, with its cover, as a row the host
+   can tap to reach it. The reference puts it above the calendar only; it is
+   here too because a Today screen with no arrivals otherwise never names the
+   listing it is reporting on, and a host with a quiet week would be reading
+   an empty screen with nothing to identify it. */
+function PropertyBar({ listing, onNavigate }) {
+  const cover = listingCoverPhoto(listing)
   return (
-    <div className="host-workspace-view" data-testid="host-dashboard">
-      <h1 className="host-screen-title">Aujourd’hui</h1>
-      <section className="host-dashboard-hero">
-        <div>
-          <span>Votre activité</span>
-          <h2>{listing.name}</h2>
-          <p>{listing.type} · {listing.city}</p>
+    <button type="button" className="cal-prop-bar" onClick={() => onNavigate('/host/listings/editor')} data-testid="host-property-bar">
+      {cover
+        ? <OptimizedListingImage className="cal-prop-thumb" src={cover} alt="" sizes="48px" />
+        : <span className="cal-prop-thumb-empty" aria-hidden="true">🏡</span>}
+      <span className="cal-prop-meta">
+        <span className="cal-prop-label">Logement actif</span>
+        <strong>{listing.name}</strong>
+      </span>
+      <span className="cal-prop-chev" aria-hidden="true">›</span>
+    </button>
+  )
+}
+
+function TodayScreen({ listing, rows, onNavigate, onOpenVerify }) {
+  const [tab, setTab] = useState('today')
+  const { today, upcoming } = useMemo(() => hostTodayRows(rows), [rows])
+  const follows = useMemo(() => hostFollowUps(rows), [rows])
+  const visible = tab === 'today' ? today : upcoming
+
+  return (
+    <div className="host-scroll" data-testid="host-dashboard">
+      <div className="host-top">
+        <h1>Aujourd’hui</h1>
+        <div className="acts">
+          <button type="button" aria-label="Notifications" onClick={() => onNavigate('/host/messages')}><BellIcon /></button>
         </div>
-        <button type="button" onClick={() => onNavigate(`/listing/${encodeURIComponent(listing.id)}`)}>Voir l’annonce <ArrowIcon /></button>
-      </section>
+      </div>
 
-      <section className="host-metrics" aria-label="Résumé de l’activité">
-        <article><span>Réservations enregistrées</span><strong>{rows.length}</strong><small>{upcoming.length} active{upcoming.length > 1 ? 's' : ''} ou à venir</small></article>
-        <article><span>Revenu brut estimé</span><strong>{money(revenue, listing.currency)}</strong><small>Sur réservations confirmées locales</small></article>
-        <article><span>Inventaire</span><strong>{unitCount}</strong><small>{roomCount > 1 ? `${roomCount} catégories` : unitCount > 1 ? 'chambres identiques' : 'unité publiée'}</small></article>
-      </section>
+      <PropertyBar listing={listing} onNavigate={onNavigate} />
 
-      <section className="host-workspace-section">
-        <div className="host-workspace-section__head"><div><span>Accès rapides</span><h2>Piloter votre annonce</h2></div></div>
-        <div className="host-quick-grid">
-          <button type="button" onClick={() => onNavigate('/host/calendar')}><NavIcon id="calendar" /><span><strong>Calendrier</strong><small>Prix, blocages et stock</small></span><ArrowIcon /></button>
-          <button type="button" onClick={() => onNavigate('/host/listings')}><NavIcon id="listings" /><span><strong>Annonce</strong><small>Contenu et chambres</small></span><ArrowIcon /></button>
-          <button type="button" onClick={() => onNavigate('/host/reservations')}><NavIcon id="reservations" /><span><strong>Réservations</strong><small>Suivre les séjours confirmés</small></span><ArrowIcon /></button>
-          <button type="button" onClick={() => onNavigate('/host/earnings')}><NavIcon id="earnings" /><span><strong>Revenus</strong><small>Montants issus du calendrier</small></span><ArrowIcon /></button>
+      <div className="host-tabs" role="tablist" aria-label="Séjours">
+        <button type="button" role="tab" aria-selected={tab === 'today'} className={tab === 'today' ? 'on' : ''} onClick={() => setTab('today')}>Aujourd’hui</button>
+        <button type="button" role="tab" aria-selected={tab === 'up'} className={tab === 'up' ? 'on' : ''} onClick={() => setTab('up')}>À venir</button>
+      </div>
+
+      <p className="host-section-label">{reservationCountLabel(visible.length)}</p>
+
+      {visible.length ? visible.map((row) => (
+        <button
+          type="button"
+          className="host-card"
+          key={row.id}
+          data-testid={`host-today-${row.kind}`}
+          onClick={() => onNavigate('/host/reservations')}
+        >
+          <span className="time">{todayCardTime(row, listing)}</span>
+          <span className="who">
+            <Avatar initials={row.initials} />
+            <span className="who-copy">
+              <h3>{todayCardTitle(row)}</h3>
+              <p>{listing.name} · {listing.city}</p>
+            </span>
+          </span>
+        </button>
+      )) : (
+        <EmptyBlock
+          title={tab === 'today' ? 'Rien aujourd’hui' : 'Aucun séjour à venir'}
+          copy="Les réservations confirmées de cette annonce apparaissent ici. Cet écran n’affiche pas de voyageur de démonstration."
+        />
+      )}
+
+      <button type="button" className="mh-verify" onClick={onOpenVerify} data-testid="host-verify-card">
+        <h3>Profil hôte Movera</h3>
+        <p>La confiance passe par la vérification d’identité. Sécurisez votre compte pour rassurer les voyageurs.</p>
+        <span className="badge">Vérification recommandée</span>
+      </button>
+
+      {follows.length ? (
+        <>
+          <p className="host-section-label">Suivis</p>
+          {follows.map((row) => (
+            <button type="button" className="host-follow" key={row.id} data-testid="host-follow-up" onClick={() => onNavigate('/host/reservations')}>
+              <span className="av">{row.initials}</span>
+              <span className="info">
+                <span>{row.daysLeft} jour{row.daysLeft > 1 ? 's' : ''} restant{row.daysLeft > 1 ? 's' : ''}</span>
+                <strong>Laisser un avis à {row.guest}</strong>
+                <p>{listing.name} · {listing.city}</p>
+              </span>
+            </button>
+          ))}
+        </>
+      ) : null}
+    </div>
+  )
+}
+
+/* ---- Menu / dashboard ------------------------------------------------- */
+
+function MenuScreen({ listing, rows, reviews, onNavigate, onOverlay }) {
+  const revenue = useMemo(() => hostRevenueBreakdown(rows), [rows])
+  const spark = useMemo(() => hostRevenueSpark(rows), [rows])
+  const summary = useMemo(() => hostReviewSummary(reviews), [reviews])
+
+  return (
+    <div className="host-scroll" data-testid="host-menu">
+      <div className="host-top">
+        <h1>Tableau de bord</h1>
+        <div className="acts">
+          <button type="button" aria-label="Notifications" onClick={() => onNavigate('/host/messages')}><BellIcon /></button>
         </div>
-      </section>
+      </div>
 
-      <section className="host-workspace-section">
-        <div className="host-workspace-section__head"><div><span>Qualité de l’annonce</span><h2>{completeness}% complétée</h2></div><b>{completeness}%</b></div>
-        <div className="host-completeness"><i style={{ width: `${completeness}%` }} /></div>
-        <p className="host-workspace-note">Le score vérifie titre, localisation, description, équipements, photos et prix. Il n’invente pas de note voyageur.</p>
-      </section>
+      <div className="host-stats-6d">
+        <button type="button" className="hs6-rev" onClick={() => onNavigate('/host/earnings')} data-testid="host-stat-revenue">
+          <span className="hs6-rev-top">
+            <span className="hs6-badge">Revenus</span>
+          </span>
+          <span className="hs6-amount">{Math.round(revenue.net).toLocaleString('fr-FR')} <small>{listing.currency}</small></span>
+          <span className="hs6-sub">Net estimé sur réservations confirmées</span>
+          <span className="hs6-chart" aria-hidden="true">
+            {spark.map((bar, index) => <span key={index} style={{ '--h': `${bar.height}%` }} />)}
+          </span>
+          <span className="hs6-cta">Détail &amp; paiements ›</span>
+        </button>
 
-      <section className="host-workspace-section">
-        <div className="host-workspace-section__head"><div><span>À venir</span><h2>Prochains séjours</h2></div><button type="button" onClick={() => onNavigate('/host/reservations')}>Tout voir</button></div>
-        {upcoming.length ? <div className="host-reservation-list host-reservation-list--compact">{upcoming.slice(0, 3).map((item) => <ReservationCard key={item.id} item={item} currency={listing.currency} />)}</div> : <EmptyState title="Aucun séjour à venir" copy="Les réservations confirmées apparaîtront ici dès qu’elles seront enregistrées dans le moteur de réservation." />}
-      </section>
+        <button type="button" className="hs6-rate" onClick={() => onNavigate('/host/reviews')} data-testid="host-stat-reviews">
+          <span className="hs6-ring" aria-hidden="true">
+            <svg viewBox="0 0 72 72">
+              <circle className="hs6-ring-bg" cx="36" cy="36" r="30" />
+              <circle className="hs6-ring-fg" cx="36" cy="36" r="30" style={{ '--pct': summary.hasReviews ? summary.score / 5 : 0 }} />
+            </svg>
+            <span className="hs6-ring-val">{summary.hasReviews ? summary.score.toFixed(1).replace('.', ',') : '—'}</span>
+          </span>
+          <span className="hs6-rate-body">
+            <span className="hs6-badge light">Avis</span>
+            <strong>{summary.hasReviews ? `${summary.count} avis` : 'Pas encore d’avis'}</strong>
+            <span className="hs6-cta">Lire &amp; répondre ›</span>
+          </span>
+        </button>
+      </div>
+
+      <button type="button" className="host-banner2" onClick={() => onNavigate('/host?new=1')} data-testid="host-create-banner">
+        <span style={{ fontSize: '28px' }} aria-hidden="true">🏡</span>
+        <span><strong>Créer une annonce</strong><span className="sub">Publiez un logement sur Movera</span></span>
+      </button>
+
+      <div className="host-menu-list">
+        {HOST_MENU_ROWS.map((row) => {
+          const Icon = MENU_ICONS[row.icon]
+          return (
+            <button
+              type="button"
+              className="si"
+              key={row.id}
+              data-testid={`host-menu-${row.id}`}
+              onClick={() => (row.kind === 'overlay' ? onOverlay(row.target) : onNavigate(row.target))}
+            >
+              <Icon className="ic" />
+              <span className="label">{row.label}</span>
+              <ChevronIcon />
+            </button>
+          )
+        })}
+      </div>
+
+      <button type="button" className="host-back-travel" onClick={() => onNavigate('/')}>← Mode Voyageur</button>
     </div>
   )
 }
 
-function ReservationCard({ item, currency }) {
-  return (
-    <article className="host-reservation-card" data-status={item.status}>
-      <div className="host-reservation-card__top"><span>{reservationLabel(item.status)}</span><b>{money(item.gross, currency)}</b></div>
-      <strong>{item.room?.name || 'Réservation confirmée'}</strong>
-      <p>{shortDate(item.checkIn)} → {shortDate(item.checkOut)} · {item.units} chambre{item.units > 1 ? 's' : ''}</p>
-      <small>Réf. {item.id}</small>
-    </article>
-  )
-}
+/* ---- Revenue ---------------------------------------------------------- */
 
-function ReservationsView({ listing, rows }) {
-  const [filter, setFilter] = useState('active')
-  const visible = rows.filter((item) => filter === 'all' || (filter === 'active' ? item.status !== 'past' : item.status === 'past'))
-  return (
-    <div className="host-workspace-view" data-testid="host-reservations">
-      <h1 className="host-screen-title">Réservations</h1>
-      <section className="host-workspace-section host-workspace-section--flush">
-        <div className="host-workspace-section__head"><div><span>Opérations</span><h2>Réservations confirmées</h2></div><b>{rows.length}</b></div>
-        <div className="host-segmented"><button type="button" data-active={filter === 'active'} onClick={() => setFilter('active')}>À venir</button><button type="button" data-active={filter === 'past'} onClick={() => setFilter('past')}>Terminées</button><button type="button" data-active={filter === 'all'} onClick={() => setFilter('all')}>Toutes</button></div>
-        {visible.length ? <div className="host-reservation-list">{visible.map((item) => <ReservationCard key={item.id} item={item} currency={listing.currency} />)}</div> : <EmptyState title="Aucune réservation dans cette vue" copy="Cette page ne fabrique pas de voyageurs de démonstration. Elle affiche uniquement les réservations réellement enregistrées dans le stock local de cette annonce." />}
-      </section>
-    </div>
-  )
-}
-
-function EarningsView({ listing, rows }) {
-  const total = rows.reduce((sum, item) => sum + item.gross, 0)
-  const upcoming = rows.filter((item) => item.status !== 'past').reduce((sum, item) => sum + item.gross, 0)
-  const completed = total - upcoming
-  const monthly = useMemo(() => {
+function RevenueScreen({ listing, rows, onNavigate }) {
+  const [period, setPeriod] = useState('month')
+  const scoped = useMemo(() => hostRevenueByPeriod(rows, period), [rows, period])
+  const breakdown = useMemo(() => hostRevenueBreakdown(scoped), [scoped])
+  const history = useMemo(() => {
     const data = new Map()
-    rows.forEach((item) => {
-      const key = String(item.checkIn).slice(0, 7)
-      data.set(key, (data.get(key) || 0) + item.gross)
+    rows.forEach((row) => {
+      const key = String(row.checkIn).slice(0, 7)
+      data.set(key, (data.get(key) || 0) + row.gross)
     })
-    return Array.from(data.entries()).sort(([a], [b]) => b.localeCompare(a))
+    return Array.from(data.entries()).sort(([a], [b]) => b.localeCompare(a)).slice(0, 6)
   }, [rows])
+
   return (
-    <div className="host-workspace-view" data-testid="host-earnings">
-      <h1 className="host-screen-title">Revenus</h1>
-      <section className="host-earnings-hero"><span>Revenu brut calculé</span><strong>{money(total, listing.currency)}</strong><p>Calculé nuit par nuit depuis les tarifs du calendrier et les réservations confirmées enregistrées.</p></section>
-      <section className="host-metrics host-metrics--two"><article><span>Séjours terminés</span><strong>{money(completed, listing.currency)}</strong><small>Estimation brute</small></article><article><span>À venir</span><strong>{money(upcoming, listing.currency)}</strong><small>Réservations actives</small></article></section>
-      <section className="host-workspace-section"><div className="host-workspace-section__head"><div><span>Historique</span><h2>Par mois d’arrivée</h2></div></div>{monthly.length ? <div className="host-earnings-list">{monthly.map(([month, value]) => <div key={month}><span>{new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(new Date(`${month}-01T12:00:00`))}</span><strong>{money(value, listing.currency)}</strong></div>)}</div> : <EmptyState title="Pas encore de revenu calculable" copy="Les revenus apparaîtront après l’enregistrement de réservations confirmées." />}</section>
-      <p className="host-workspace-note host-workspace-note--boxed">Les versements bancaires, commissions, remboursements et documents fiscaux nécessitent un backend de paiement. Aucun faux versement n’est affiché dans cette version.</p>
+    <div className="host-scroll" data-testid="host-earnings">
+      <div className="host-top">
+        <button type="button" className="hs6-back" aria-label="Retour" onClick={() => onNavigate('/host/menu')}><BackIcon /></button>
+        <h1 style={{ flex: 1, fontSize: '18px' }}>Revenus</h1>
+      </div>
+
+      <div className="rev-page">
+        <div className="rev-hero">
+          <div className="rev-period" role="tablist" aria-label="Période">
+            <button type="button" role="tab" aria-selected={period === 'month'} className={period === 'month' ? 'on' : ''} onClick={() => setPeriod('month')}>Ce mois</button>
+            <button type="button" role="tab" aria-selected={period === 'year'} className={period === 'year' ? 'on' : ''} onClick={() => setPeriod('year')}>Année</button>
+            <button type="button" role="tab" aria-selected={period === 'all'} className={period === 'all' ? 'on' : ''} onClick={() => setPeriod('all')}>Tout</button>
+          </div>
+          <div className="rev-hero-amount">{Math.round(breakdown.net).toLocaleString('fr-FR')} <small>{listing.currency}</small></div>
+          <div className="rev-hero-sub">Net estimé après frais de service Movera</div>
+        </div>
+
+        <div className="rev-section">
+          <div className="rev-sec-h"><h3>Ventilation</h3></div>
+          {breakdown.stays.length ? breakdown.stays.map((stay) => (
+            <div className="rev-row" key={stay.id}>
+              <span>{stay.label} · {stay.nights} nuit{stay.nights > 1 ? 's' : ''}</span>
+              <strong>{formatMoney(stay.gross, listing.currency)}</strong>
+            </div>
+          )) : <div className="rev-row muted"><span>Aucune réservation sur la période</span><strong>0 {listing.currency}</strong></div>}
+          <div className="rev-row muted"><span>Frais de service Movera</span><strong>−{formatMoney(breakdown.fee, listing.currency)}</strong></div>
+          <div className="rev-row total"><span>Net à recevoir</span><strong>{formatMoney(breakdown.net, listing.currency)}</strong></div>
+        </div>
+
+        <div className="rev-section">
+          <div className="rev-sec-h"><h3>Historique</h3></div>
+          {history.length ? history.map(([month, value]) => (
+            <div className="rev-hist" key={month}><span>{formatMonth(month)}</span><strong>{formatMoney(value, listing.currency)}</strong></div>
+          )) : <div className="rev-row muted"><span>Pas encore d’historique</span><strong>—</strong></div>}
+        </div>
+      </div>
+
+      <p className="hb-note">
+        Les versements bancaires, commissions réelles, remboursements et documents fiscaux
+        demandent un backend de paiement. Aucun versement n’est simulé ici : les montants
+        ci-dessus sont calculés depuis vos tarifs et vos réservations confirmées.
+      </p>
     </div>
   )
 }
 
-function SettingsView({ listing, userId }) {
-  const [feedback, setFeedback] = useState('')
-  const [rules, setRules] = useState(() => ({ ...listing.stayRules }))
-  const [workspaceSettings, setWorkspaceSettings] = useState(() => readHostWorkspaceSettings(userId))
-  useEffect(() => setRules({ ...listing.stayRules }), [listing.stayRules])
-  const save = () => {
-    try {
-      updateHostListing(userId, { stayRules: rules })
-      writeHostWorkspaceSettings(userId, workspaceSettings)
-      setFeedback('Réglages enregistrés.')
-    } catch (error) {
-      setFeedback(error?.message || 'Impossible d’enregistrer les réglages.')
-    }
-  }
-  const toggleNotification = (key) => setWorkspaceSettings((state) => ({ ...state, notifications: { ...state.notifications, [key]: !state.notifications[key] } }))
+/* ---- Reviews ---------------------------------------------------------- */
+
+function ReviewsScreen({ reviews, onNavigate }) {
+  const [filter, setFilter] = useState('all')
+  const summary = useMemo(() => hostReviewSummary(reviews), [reviews])
+  const visible = reviews.filter((review) => filter === 'all' || (filter === 'pending' ? !review.reply : Boolean(review.reply)))
+
   return (
-    <div className="host-workspace-view" data-testid="host-settings">
-      <h1 className="host-screen-title">Réglages</h1>
-      <section className="host-editor">
-        <div className="host-workspace-section__head"><div><span>Séjours</span><h2>Règles de réservation</h2></div></div>
-        <div className="host-settings-grid"><label><span>Nuits minimum</span><input type="number" min="1" max="365" value={rules.minNights} onChange={(event) => setRules((state) => ({ ...state, minNights: Math.max(1, Number(event.target.value) || 1) }))} /></label><label><span>Nuits maximum</span><input type="number" min={rules.minNights} max="365" value={rules.maxNights} onChange={(event) => setRules((state) => ({ ...state, maxNights: Math.max(rules.minNights, Number(event.target.value) || rules.minNights) }))} /></label><label><span>Préavis (jours)</span><input type="number" min="0" max="365" value={rules.advanceNoticeDays} onChange={(event) => setRules((state) => ({ ...state, advanceNoticeDays: Math.max(0, Number(event.target.value) || 0) }))} /></label><label><span>Préparation (jours)</span><input type="number" min="0" max="7" value={rules.preparationDays} onChange={(event) => setRules((state) => ({ ...state, preparationDays: Math.max(0, Number(event.target.value) || 0) }))} /></label><label><span>Arrivée à partir de</span><input type="time" value={rules.checkInFrom} onChange={(event) => setRules((state) => ({ ...state, checkInFrom: event.target.value }))} /></label><label><span>Départ avant</span><input type="time" value={rules.checkOutUntil} onChange={(event) => setRules((state) => ({ ...state, checkOutUntil: event.target.value }))} /></label></div>
-        <div className="host-toggle-list"><button type="button" aria-pressed={rules.petsAllowed} onClick={() => setRules((state) => ({ ...state, petsAllowed: !state.petsAllowed }))}><span><strong>Animaux autorisés</strong><small>Règle visible dans vos réglages Hôte</small></span><i data-on={rules.petsAllowed} /></button><button type="button" aria-pressed={rules.smokingAllowed} onClick={() => setRules((state) => ({ ...state, smokingAllowed: !state.smokingAllowed }))}><span><strong>Fumeurs autorisés</strong><small>À confirmer dans les règles finales voyageur</small></span><i data-on={rules.smokingAllowed} /></button><button type="button" aria-pressed={rules.eventsAllowed} onClick={() => setRules((state) => ({ ...state, eventsAllowed: !state.eventsAllowed }))}><span><strong>Événements autorisés</strong><small>Préférence de l’annonce</small></span><i data-on={rules.eventsAllowed} /></button></div>
-      </section>
-      <section className="host-editor"><div className="host-workspace-section__head"><div><span>Alertes</span><h2>Notifications Hôte</h2></div></div><div className="host-toggle-list"><button type="button" aria-pressed={workspaceSettings.notifications.reservations} onClick={() => toggleNotification('reservations')}><span><strong>Nouvelles réservations</strong><small>Préférence locale de notification</small></span><i data-on={workspaceSettings.notifications.reservations} /></button><button type="button" aria-pressed={workspaceSettings.notifications.messages} onClick={() => toggleNotification('messages')}><span><strong>Nouveaux messages</strong><small>Préférence locale de notification</small></span><i data-on={workspaceSettings.notifications.messages} /></button><button type="button" aria-pressed={workspaceSettings.notifications.calendar} onClick={() => toggleNotification('calendar')}><span><strong>Alertes calendrier</strong><small>Stock et disponibilité</small></span><i data-on={workspaceSettings.notifications.calendar} /></button></div></section>
-      {feedback ? <p className="host-workspace-feedback" role="status">{feedback}</p> : null}<button type="button" className="host-primary-action host-primary-action--sticky" onClick={save}>Enregistrer les réglages</button>
+    <div className="host-scroll" data-testid="host-reviews">
+      <div className="host-top">
+        <button type="button" className="hs6-back" aria-label="Retour" onClick={() => onNavigate('/host/menu')}><BackIcon /></button>
+        <h1 style={{ flex: 1, fontSize: '18px' }}>Avis voyageurs</h1>
+      </div>
+
+      <div className="rvw-page">
+        <div className="rvw-hero">
+          <div className="rvw-score">{summary.hasReviews ? summary.score.toFixed(1).replace('.', ',') : '—'}</div>
+          <div className="rvw-stars" aria-hidden="true">{'★'.repeat(Math.round(summary.score))}{'☆'.repeat(5 - Math.round(summary.score))}</div>
+          <div className="rvw-meta">{summary.hasReviews ? `${summary.count} avis public${summary.count > 1 ? 's' : ''}` : 'Aucun avis pour le moment'}</div>
+          {summary.hasReviews ? (
+            <div className="rvw-bars">
+              {summary.categories.map((category) => (
+                <div className="rvw-bar" key={category.id}>
+                  <span>{category.label}</span>
+                  <i style={{ '--w': `${category.percent}%` }} />
+                  <b>{category.score.toFixed(1).replace('.', ',')}</b>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </div>
+
+        {summary.hasReviews ? (
+          <>
+            <div className="rvw-filters" role="tablist" aria-label="Filtrer les avis">
+              <button type="button" role="tab" aria-selected={filter === 'all'} className={filter === 'all' ? 'on' : ''} onClick={() => setFilter('all')}>Tous</button>
+              <button type="button" role="tab" aria-selected={filter === 'pending'} className={filter === 'pending' ? 'on' : ''} onClick={() => setFilter('pending')}>À répondre</button>
+              <button type="button" role="tab" aria-selected={filter === 'done'} className={filter === 'done' ? 'on' : ''} onClick={() => setFilter('done')}>Répondus</button>
+            </div>
+            {visible.map((review) => (
+              <article className="rvw-card" key={review.id}>
+                <div className="rvw-head">
+                  <span className="av">{initialsFor(review.guest)}</span>
+                  <div><strong>{review.guest}</strong><span>{formatShortDate(review.date)}</span></div>
+                  <div className="rvw-score-sm">{Number(review.score).toFixed(1).replace('.', ',')}</div>
+                </div>
+                <p>{review.text}</p>
+                {review.reply
+                  ? <div className="rvw-host-reply"><strong>Votre réponse</strong><span>{review.reply}</span></div>
+                  : <button type="button" className="rvw-reply">Répondre</button>}
+              </article>
+            ))}
+          </>
+        ) : (
+          <EmptyBlock
+            title="Pas encore d’avis"
+            copy="Les avis apparaissent après le départ des voyageurs. Cet écran n’affiche pas de note inventée tant qu’aucun avis n’a été déposé."
+          />
+        )}
+      </div>
     </div>
   )
 }
+
+/* ---- Reservations ------------------------------------------------------ */
+
+function ReservationsScreen({ listing, rows, onNavigate }) {
+  const [filter, setFilter] = useState('active')
+  const visible = rows.filter((row) => (filter === 'all' ? true : filter === 'active' ? row.status !== 'past' : row.status === 'past'))
+
+  return (
+    <div className="host-scroll" data-testid="host-reservations">
+      <div className="host-top">
+        <button type="button" className="hs6-back" aria-label="Retour" onClick={() => onNavigate('/host/menu')}><BackIcon /></button>
+        <h1 style={{ flex: 1, fontSize: '18px' }}>Réservations</h1>
+      </div>
+
+      <div className="host-tabs" role="tablist" aria-label="Filtrer les réservations">
+        <button type="button" role="tab" aria-selected={filter === 'active'} className={filter === 'active' ? 'on' : ''} onClick={() => setFilter('active')}>À venir</button>
+        <button type="button" role="tab" aria-selected={filter === 'past'} className={filter === 'past' ? 'on' : ''} onClick={() => setFilter('past')}>Terminées</button>
+        <button type="button" role="tab" aria-selected={filter === 'all'} className={filter === 'all' ? 'on' : ''} onClick={() => setFilter('all')}>Toutes</button>
+      </div>
+
+      {visible.length ? visible.map((row) => (
+        <div className="host-follow" key={row.id}>
+          <span className="av">{initialsFor(row.guestLabel || row.id)}</span>
+          <span className="info">
+            <span>{formatShortDate(row.checkIn)} → {formatShortDate(row.checkOut)}</span>
+            <strong>{row.room?.name || 'Réservation confirmée'}</strong>
+            <p>{formatMoney(row.gross, listing.currency)} · {row.units} chambre{row.units > 1 ? 's' : ''}</p>
+          </span>
+        </div>
+      )) : (
+        <EmptyBlock
+          title="Aucune réservation dans cette vue"
+          copy="Seules les réservations réellement enregistrées dans le stock local de cette annonce sont listées."
+        />
+      )}
+    </div>
+  )
+}
+
+/* ---- Listings ---------------------------------------------------------- */
+
+function ListingsScreen({ listing, onNavigate, onDelete }) {
+  const [selected, setSelected] = useState('')
+  const [tipOpen, setTipOpen] = useState(false)
+  const cover = listingCoverPhoto(listing)
+  const online = listing.status !== 'unlisted'
+
+  return (
+    <div className="host-scroll" data-testid="host-listings">
+      <div className="host-top">
+        <h1>Mes annonces</h1>
+        <div className="acts">
+          <button
+            type="button"
+            aria-label="Édition groupée"
+            aria-pressed={tipOpen}
+            onClick={() => { setTipOpen((value) => !value); setSelected('') }}
+            data-testid="host-bulk-edit"
+          ><ListingsIcon /></button>
+          <button type="button" aria-label="Créer une annonce" onClick={() => onNavigate('/host?new=1')} data-testid="host-listings-add"><PlusIcon /></button>
+        </div>
+      </div>
+
+      {tipOpen && !selected ? (
+        <div className="mh-bulk-tip" data-testid="host-bulk-tip">
+          <div>
+            <strong>Sélection</strong>
+            <p>Une seule annonce à la fois · modifier ou supprimer</p>
+          </div>
+          <button type="button" aria-label="Fermer" onClick={() => setTipOpen(false)}>×</button>
+        </div>
+      ) : null}
+
+      {selected ? (
+        <div className="ls-action-bar" data-testid="host-listing-actions">
+          <div className="ls-action-info">
+            <strong>{listing.name}</strong>
+            <span>Sélectionnée</span>
+          </div>
+          <div className="ls-action-btns">
+            <button type="button" className="ls-edit" onClick={() => onNavigate('/host/listings/editor')}>Modifier</button>
+            <button type="button" className="ls-del" onClick={onDelete}>Supprimer</button>
+          </div>
+        </div>
+      ) : null}
+
+      <button
+        type="button"
+        className="listing-card"
+        data-selected={selected === listing.id ? 'true' : 'false'}
+        data-testid={`host-listing-card-${listing.id}`}
+        onClick={() => (tipOpen ? setSelected((value) => (value ? '' : listing.id)) : onNavigate('/host/listings/editor'))}
+      >
+        <span className="ph">
+          {cover
+            ? <OptimizedListingImage src={cover} alt="" sizes="(max-width:430px) 100vw, 400px" />
+            : <span className="ph-empty" aria-hidden="true">🏡</span>}
+          <span className="status" data-offline={online ? 'false' : 'true'}>
+            <i aria-hidden="true" />{online ? 'En ligne' : 'Masquée'}
+          </span>
+        </span>
+        <span className="bd">
+          <h3>{listing.name}</h3>
+          <p>{listingSubtitle(listing)}</p>
+        </span>
+      </button>
+    </div>
+  )
+}
+
+/* ---- Page -------------------------------------------------------------- */
 
 export function HostWorkspacePage({ view, profile, userId, onNavigate }) {
   const listing = profile.listing
   const [reservations, setReservations] = useState(() => listConfirmedRoomReservationsForListing(listing.id))
+  /* `/host/settings` is a route a host can land on directly -- from the menu,
+     from a bookmark, from the back button -- so the overlay is open whenever
+     the view says settings, not only when a menu row set the state. Deriving
+     it from one of the two sources and not the other is what leaves a route
+     rendering an empty screen. */
+  const [overlay, setOverlay] = useState('')
+  const settingsOpen = overlay === 'settings' || view === 'settings'
+
   useEffect(() => {
     const sync = () => setReservations(listConfirmedRoomReservationsForListing(listing.id))
     sync()
     window.addEventListener(HOST_ROOM_INVENTORY_EVENT, sync)
     window.addEventListener('storage', sync)
-    return () => { window.removeEventListener(HOST_ROOM_INVENTORY_EVENT, sync); window.removeEventListener('storage', sync) }
+    return () => {
+      window.removeEventListener(HOST_ROOM_INVENTORY_EVENT, sync)
+      window.removeEventListener('storage', sync)
+    }
   }, [listing.id])
+
   const rows = useMemo(() => reservationRows(listing, reservations), [listing, reservations])
+  /* No review records exist yet -- there is no store behind them and no
+     backend. The screens read this empty list and say so, rather than
+     rendering b225's hard-coded 5,0 over a listing nobody has stayed in. */
+  const reviews = useMemo(() => [], [])
+
   return (
-    <section className="host-workspace" data-testid="host-workspace" data-view={view}>
-      <main className="host-workspace__content">
-        {view === 'dashboard' ? <DashboardView listing={listing} rows={rows} onNavigate={onNavigate} /> : null}
-        {view === 'listings' ? (
-          <HostListingsView
-            listings={[listing]}
-            onOpenListing={() => onNavigate('/host/listings/editor')}
-            onCreateListing={() => onNavigate('/host?new=1')}
-            onDuplicateListing={() => onNavigate('/host?duplicate=1')}
-          />
-        ) : null}
-        {view === 'listing-editor' ? (
-          <HostListingEditor
-            profile={profile}
-            userId={userId}
-            onNavigate={onNavigate}
-            onBack={() => onNavigate('/host/listings')}
-          />
-        ) : null}
-        {view === 'reservations' ? <ReservationsView listing={listing} rows={rows} /> : null}
-        {view === 'earnings' ? <EarningsView listing={listing} rows={rows} /> : null}
-        {view === 'messages' ? <HostMessagesView listing={listing} rows={rows} onNavigate={onNavigate} /> : null}
-        {view === 'settings' ? <SettingsView listing={listing} userId={userId} /> : null}
-        {view === 'menu' ? <MenuView listing={listing} onNavigate={onNavigate} /> : null}
-      </main>
+    <section className="host-b225" data-testid="host-workspace" data-view={view}>
+      {view === 'dashboard' ? <TodayScreen listing={listing} rows={rows} onNavigate={onNavigate} onOpenVerify={() => onNavigate('/profile')} /> : null}
+      {view === 'listings' ? <ListingsScreen listing={listing} onNavigate={onNavigate} onDelete={() => onNavigate('/host/listings/editor')} /> : null}
+      {view === 'listing-editor' ? (
+        <HostListingEditor
+          profile={profile}
+          userId={userId}
+          onNavigate={onNavigate}
+          onBack={() => onNavigate('/host/listings')}
+        />
+      ) : null}
+      {view === 'reservations' ? <ReservationsScreen listing={listing} rows={rows} onNavigate={onNavigate} /> : null}
+      {view === 'earnings' ? <RevenueScreen listing={listing} rows={rows} onNavigate={onNavigate} /> : null}
+      {view === 'reviews' ? <ReviewsScreen reviews={reviews} onNavigate={onNavigate} /> : null}
+      {view === 'messages' ? <HostMessagesView listing={listing} rows={rows} onNavigate={onNavigate} /> : null}
+      {view === 'menu' || view === 'settings' ? (
+        <MenuScreen listing={listing} rows={rows} reviews={reviews} onNavigate={onNavigate} onOverlay={setOverlay} />
+      ) : null}
+
+      {settingsOpen ? (
+        <HostListingSettings
+          listing={listing}
+          userId={userId}
+          onClose={() => { setOverlay(''); if (view === 'settings') onNavigate('/host/menu') }}
+        />
+      ) : null}
+
       <HostWorkspaceNav active={hostNavViewFor(view)} onNavigate={onNavigate} />
     </section>
   )

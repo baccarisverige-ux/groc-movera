@@ -22,8 +22,16 @@ const COLLECTION_HEADER_LABELS = Object.freeze({
 const screenBackground = 'var(--color-screen-bg)'
 const mapShellStyle = { maxWidth: 430, margin: '0 auto', background: screenBackground }
 const mapContentStyle = { padding: 0, overflow: 'hidden', background: screenBackground }
-const hostShellStyle = { maxWidth: 430, margin: '0 auto', background: screenBackground, gridTemplateColumns: 'minmax(0, 1fr)' }
-const hostContentStyle = { padding: 0, overflow: 'visible', background: screenBackground }
+/* The host surface is white, not the app's off-white screen ground.
+ *
+ * These two are inline styles, so they outrank any stylesheet rule without
+ * !important -- which is why setting the host background in host-b225.css
+ * had no effect and left a band of #f7f7f5 under every host screen shorter
+ * than the viewport. The colour belongs here, with the other host shell
+ * decisions, rather than as an !important fighting them from a feature file. */
+const hostBackground = '#fff'
+const hostShellStyle = { maxWidth: 430, margin: '0 auto', background: hostBackground, gridTemplateColumns: 'minmax(0, 1fr)' }
+const hostContentStyle = { padding: 0, overflow: 'visible', background: hostBackground }
 const collectionContentStyle = { paddingTop: 0, paddingLeft: 0, paddingRight: 0, overflow: 'auto', background: screenBackground }
 const stackedContentStyle = { padding: 0, overflow: 'auto', background: screenBackground }
 const profileContentStyle = { padding: 0, overflow: 'auto', background: screenBackground }

@@ -11,6 +11,7 @@ import {
   listingGallery,
   LISTING_EDITOR_TABS,
 } from './hostListingEditorModel.js'
+import '../workspace/host-b225.css'
 import './host-listings.css'
 
 /* The listing editor.
@@ -39,20 +40,12 @@ function GearIcon() {
   )
 }
 
-function ChevronIcon() {
-  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7" /></svg>
-}
-
 function CloseIcon() {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
 }
 
 function CheckIcon() {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.2 4.2L19 7" /></svg>
-}
-
-function EyeIcon() {
-  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" /><circle cx="12" cy="12" r="3" /></svg>
 }
 
 function Stepper({ label, value, min = 0, max = 50, onChange }) {
@@ -359,22 +352,26 @@ function EditSheet({ editor, profile, listing, userId, onNavigate, onClose, onSa
     }
   }
 
+  /* b225's lsEditSheet: a handled panel off the bottom edge, the field name as
+     the heading, and one full-width gradient save. The close control stays --
+     the reference relies on a backdrop tap alone, which leaves a keyboard user
+     with no way out of the sheet. */
   return (
-    <div className="host-sheet" role="dialog" aria-modal="true" aria-label={title} data-testid={`host-edit-sheet-${editor}`}>
+    <div className="host-sheet host-b225-sheet" role="dialog" aria-modal="true" aria-label={title} data-testid={`host-edit-sheet-${editor}`}>
       <button type="button" className="host-sheet__scrim" aria-label="Fermer" onClick={onClose} />
-      <div className="host-sheet__panel">
+      <div className="host-sheet__panel mh-panel">
+        <span className="mh-handle" aria-hidden="true" />
         <div className="host-sheet__head">
+          <h2>{title}</h2>
           <button type="button" aria-label="Fermer" onClick={onClose}><CloseIcon /></button>
-          <strong>{title}</strong>
-          <span />
         </div>
         <div className="host-sheet__body">
           <Body listing={listing} draft={draft} setDraft={patch} profile={profile} userId={userId} onNavigate={onNavigate} />
-          {error ? <p className="host-workspace-feedback" role="alert">{error}</p> : null}
+          {error ? <p className="hb-feedback" role="alert">{error}</p> : null}
         </div>
         {readOnly ? null : (
           <div className="host-sheet__foot">
-            <button type="button" className="host-primary-action" onClick={save} data-testid={`host-edit-save-${editor}`}>Enregistrer</button>
+            <button type="button" className="mh-save" onClick={save} data-testid={`host-edit-save-${editor}`}>Enregistrer</button>
           </div>
         )}
       </div>
@@ -401,77 +398,78 @@ export function HostListingEditor({ profile, userId, onNavigate, onBack }) {
   const photoCard = cards.find((card) => card.id === 'photos')
 
   return (
-    <div className="host-workspace-view host-listing-editor" data-testid="host-listing-editor">
-      <header className="host-listing-editor__bar">
-        <button type="button" aria-label="Retour" onClick={onBack}><BackIcon /></button>
-        <strong>Éditeur d’annonce</strong>
-        <button type="button" aria-label="Réglages de l’annonce" onClick={() => setSettingsOpen(true)} data-testid="host-editor-settings"><GearIcon /></button>
-      </header>
+    <div className="host-scroll host-listing-editor" data-testid="host-listing-editor">
+      <div className="ls-top">
+        <button type="button" className="ls-back" aria-label="Retour" onClick={onBack}><BackIcon /></button>
+        <h1>Éditeur d’annonce</h1>
+        <button type="button" className="ls-gear" aria-label="Réglages de l’annonce" onClick={() => setSettingsOpen(true)} data-testid="host-editor-settings"><GearIcon /></button>
+      </div>
 
-      <div className="host-listing-editor__tabs" role="tablist" aria-label="Sections de l’annonce">
+      <div className="ls-seg" role="tablist" aria-label="Sections de l’annonce">
         {LISTING_EDITOR_TABS.map((item) => (
           <button
             key={item.id}
             type="button"
             role="tab"
             aria-selected={tab === item.id}
-            data-active={tab === item.id ? 'true' : 'false'}
+            className={tab === item.id ? 'on' : ''}
             onClick={() => setTab(item.id)}
           >{item.label}</button>
         ))}
       </div>
 
-      <div className="host-listing-editor__progress" aria-label={`Annonce complétée à ${progress.percent}%`}>
-        <i style={{ width: `${progress.percent}%` }} />
-        <span>{progress.done}/{progress.total} éléments renseignés</span>
-      </div>
+      <div className="ls-scroll">
+        <div className="ls-progress" aria-label={`Annonce complétée à ${progress.percent}%`}>
+          <span className="track"><i style={{ width: `${progress.percent}%` }} /></span>
+          <b>{progress.done}/{progress.total}</b>
+        </div>
 
-      <div className="host-listing-editor__cards">
+        {/* b225's photo hero: a three-up stack, the middle frame taller, with
+            the count as a badge. It is the one block on the tab that is not a
+            plain row, which is what makes the photos read as the first thing
+            to do. */}
         {photoCard ? (
-          <article className="host-editor-card host-editor-card--photos">
-            <div className="host-editor-card__copy">
-              <strong>{photoCard.label}</strong>
-              <small>{photoCard.hint}</small>
-            </div>
-            <button type="button" className="host-editor-photos" onClick={() => setEditor('photos')} aria-label="Ouvrir la visite en photos">
-              {gallery.length ? (
-                <>
-                  <span className="host-editor-photos__count">{gallery.length} photo{gallery.length > 1 ? 's' : ''}</span>
-                  <span className="host-editor-photos__stack">
-                    {gallery.slice(0, 3).map((photo, index) => (
-                      <span key={`${photo}-${index}`} data-slot={index}><OptimizedListingImage src={photo} alt="" sizes="200px" /></span>
-                    ))}
-                  </span>
-                </>
-              ) : <span className="host-editor-photos__empty">Ajouter des photos</span>}
-            </button>
-          </article>
+          <button
+            type="button"
+            className="ls-block ls-photo-hero"
+            onClick={() => setEditor('photos')}
+            data-testid="host-editor-card-photos"
+          >
+            <h3>Visite photo</h3>
+            <p className="meta">{photoCard.hint}</p>
+            {gallery.length ? (
+              <span className="ls-photo-stack">
+                {gallery.slice(0, 3).map((photo, index) => (
+                  <OptimizedListingImage key={`${photo}-${index}`} className={index === 1 ? 'main' : 'side'} src={photo} alt="" sizes="200px" />
+                ))}
+              </span>
+            ) : <span className="ls-photo-empty">Aucune photo · ajoutez-en pour publier</span>}
+            <p className="ls-link">Gérer les photos</p>
+          </button>
         ) : null}
 
         {cards.filter((card) => card.id !== 'photos').map((card) => (
           <button
             key={card.id}
             type="button"
-            className="host-editor-card host-editor-card--row"
+            className="ls-block ls-tap"
             data-done={card.done ? 'true' : 'false'}
             data-testid={`host-editor-card-${card.id}`}
             onClick={() => setEditor(card.editor)}
           >
-            <span className="host-editor-card__copy">
-              <small>{card.label}</small>
-              <strong>{card.value}</strong>
-              {card.hint && card.done ? <em>{card.hint}</em> : null}
-            </span>
-            <ChevronIcon />
+            <h3>{card.label}</h3>
+            <p className="ls-val">{card.value}</p>
+            {card.hint && card.done ? <p className="meta">{card.hint}</p> : null}
           </button>
         ))}
+
+        <button type="button" className="ls-block ls-tap" onClick={() => onNavigate(`/listing/${encodeURIComponent(listing.id)}`)}>
+          <h3>Aperçu voyageur</h3>
+          <p className="meta">Voir l’annonce telle que les voyageurs la lisent</p>
+        </button>
       </div>
 
-      <button type="button" className="host-listing-editor__preview" onClick={() => onNavigate(`/listing/${encodeURIComponent(listing.id)}`)}>
-        <EyeIcon /> Voir comme voyageur
-      </button>
-
-      {notice ? <p className="host-workspace-feedback host-listing-editor__notice" role="status">{notice}</p> : null}
+      {notice ? <p className="hb-feedback" role="status">{notice}</p> : null}
 
       {editor ? (
         <EditSheet

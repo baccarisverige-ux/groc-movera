@@ -6,6 +6,7 @@ export const HOST_WORKSPACE_VIEWS = Object.freeze([
   { id: 'earnings', label: 'Revenus', path: '/host/earnings' },
   { id: 'messages', label: 'Messages', path: '/host/messages' },
   { id: 'settings', label: 'Réglages', path: '/host/settings' },
+  { id: 'reviews', label: 'Avis', path: '/host/reviews' },
   { id: 'menu', label: 'Menu', path: '/host/menu' },
 ])
 
@@ -18,7 +19,7 @@ export const HOST_WORKSPACE_VIEWS = Object.freeze([
    traveller-mode switch and the account rows belong. */
 export const HOST_PRIMARY_NAV = Object.freeze(['dashboard', 'calendar', 'listings', 'messages', 'menu'])
 
-export const HOST_MENU_VIEWS = Object.freeze(['reservations', 'earnings', 'settings'])
+export const HOST_MENU_VIEWS = Object.freeze(['reservations', 'earnings', 'reviews', 'settings'])
 
 export function hostPrimaryNavItems() {
   return HOST_PRIMARY_NAV.map((id) => HOST_WORKSPACE_VIEWS.find((item) => item.id === id)).filter(Boolean)
@@ -38,16 +39,29 @@ export function hostWorkspaceViewFromPath(pathname = '') {
   if (value.endsWith('/host/reservations')) return 'reservations'
   if (value.endsWith('/host/calendar')) return 'calendar'
   if (value.endsWith('/host/earnings')) return 'earnings'
+  if (value.endsWith('/host/reviews')) return 'reviews'
   if (value.endsWith('/host/messages')) return 'messages'
   if (value.endsWith('/host/settings')) return 'settings'
   return 'dashboard'
 }
 
-/* Which bottom-nav tab is lit for a view. The editor is not a tab of its own;
-   it lights Annonce, because that is where the host came from and where Back
-   returns them. */
+/* Which bottom-nav tab is lit for a view.
+
+   Only five views are tabs. Everything else is a screen a tab leads to, and
+   it lights the tab it came from: the editor belongs to Annonces, and
+   Réservations / Revenus / Avis / Réglages are all opened from Menu. Leaving
+   these unmapped lights no tab at all, so a host three taps deep sees a dock
+   with nothing selected and no clue which section they are in. */
+const HOST_NAV_PARENT = Object.freeze({
+  'listing-editor': 'listings',
+  reservations: 'menu',
+  earnings: 'menu',
+  reviews: 'menu',
+  settings: 'menu',
+})
+
 export function hostNavViewFor(view) {
-  return view === 'listing-editor' ? 'listings' : view
+  return HOST_NAV_PARENT[view] || view
 }
 
 export function stayNightKeys(checkIn, checkOut) {

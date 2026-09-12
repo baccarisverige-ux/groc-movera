@@ -1,0 +1,1327 @@
+/* Movera Host — the b225 host side, on white.
+ *
+ * This is a port, not an interpretation. The screens, their order, the
+ * component anatomy and the class names all come from the b225 reference
+ * file: .host-app holds five .host-scroll screens behind a floating
+ * .host-nav dock; .host-top carries the title and an action pill; .host-tabs
+ * is the segmented control; cards are .host-card / .host-follow /
+ * .listing-card; the editor is the .ls-page / .ls-block tap-row model.
+ *
+ * One deliberate departure, requested: b225 paints the page #F4F7F5 (a green
+ * -tinted grey) and floats white cards on it. Here the page is white. That
+ * single change is what most of the token work below is for -- a white card
+ * on a white page has no edge, so the card border earns its contrast back
+ * (#e4eae6 rather than b225's #e2e8e4) and picks up a soft two-stop shadow.
+ * The accent palette is b225's, untouched: #1B4332 / #2D6A4F / #95D5B2.
+ *
+ * Everything is scoped under .host-b225. `.host-card` already belongs to the
+ * guest listing-detail page and `.toggle` is a name three features could
+ * plausibly want; scoping keeps this port from reaching any of them.
+ */
+
+/* The host area is full-bleed.
+ *
+ * GuestLayout already zeroes the content padding inline for host routes, but
+ * the guest shell also reserves bottom-nav height with !important, and the
+ * host has no app nav -- it carries b225's own floating dock. Left in place
+ * that reservation adds height nothing occupies, which is the 14px of vertical
+ * overflow /host has been carrying. Unsetting an !important takes one. */
+.app-shell--guest:has(.host-b225) > .app-shell__content {
+  padding-bottom: 0 !important;
+}
+
+.host-b225 {
+  --hb-page: #fff;
+  --hb-surface: #fff;
+  --hb-line: #e4eae6;
+  --hb-line-soft: #eef2f0;
+  --hb-track: #f1f5f2;
+  --hb-ink: #0b1f17;
+  --hb-green: #1b4332;
+  --hb-green2: #2d6a4f;
+  --hb-mint: #95d5b2;
+  --hb-soft: #e8f5ee;
+  --hb-muted: #6b7c72;
+  --hb-danger: #c1121f;
+  --hb-gold: #c4a35a;
+  --hb-card-shadow: 0 1px 2px rgba(11, 31, 23, 0.04), 0 10px 28px rgba(11, 31, 23, 0.045);
+  --hb-safe-b: env(safe-area-inset-bottom, 0px);
+  --hb-safe-t: env(safe-area-inset-top, 0px);
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  background: var(--hb-page);
+  color: var(--hb-ink);
+  /* Clears the floating dock: 60px of nav + its 10px lift + the safe area. */
+  padding-bottom: calc(82px + var(--hb-safe-b));
+}
+
+.host-b225 *,
+.host-b225 *::before,
+.host-b225 *::after { box-sizing: border-box; }
+
+.host-b225 button { font: inherit; cursor: pointer; }
+
+/* Stroke icons by default, everywhere in the host area.
+ *
+ * Every icon in this port is an outlined 24x24 path with no fill and no
+ * width of its own. Left to the SVG defaults that is a solid black shape
+ * scaled to its container -- which is what the editor's back arrow and gear
+ * became when their per-element rules were the only thing setting fill, and
+ * those rules keyed off classes the icons were not receiving. The default now
+ * lives on the element. Anything that wants a filled or differently weighted
+ * icon still overrides it with one more class of specificity. */
+.host-b225 svg,
+.host-b225-ov svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.host-b225 .host-scroll {
+  flex: 1;
+  min-width: 0;
+  padding-bottom: 24px;
+}
+
+/* ---- Top bar: title left, actions in a pill right ------------------- */
+
+.host-b225 .host-top {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: calc(14px + var(--hb-safe-t)) 16px 10px;
+  background: var(--hb-page);
+}
+
+.host-b225 .host-top h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  color: var(--hb-ink);
+}
+
+.host-b225 .host-top .acts {
+  display: flex;
+  flex-shrink: 0;
+  gap: 6px;
+  padding: 4px;
+  border: 1px solid var(--hb-line);
+  border-radius: 14px;
+  background: var(--hb-surface);
+}
+
+.host-b225 .host-top .acts button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+}
+
+.host-b225 .host-top .acts button:active { background: var(--hb-soft); }
+
+.host-b225 .host-top .acts button svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: var(--hb-ink);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.host-b225 .hs6-back {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--hb-line);
+  border-radius: 50%;
+  background: var(--hb-surface);
+}
+
+.host-b225 .hs6-back svg { fill: none; stroke: var(--hb-green); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+
+.host-b225 .hs6-chip {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border: 1px solid var(--hb-line);
+  border-radius: 999px;
+  background: var(--hb-surface);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--hb-green);
+}
+
+/* ---- Segmented control ---------------------------------------------- */
+
+.host-b225 .host-tabs {
+  display: flex;
+  gap: 2px;
+  margin: 0 16px 14px;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--hb-track);
+}
+
+.host-b225 .host-tabs button {
+  flex: 1;
+  height: 34px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  color: #5c6b62;
+}
+
+.host-b225 .host-tabs button.on {
+  background: var(--hb-surface);
+  color: var(--hb-green);
+  box-shadow: 0 1px 4px rgba(11, 31, 23, 0.1);
+}
+
+.host-b225 .host-section-label {
+  margin: 0;
+  padding: 12px 16px 8px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* ---- Today ----------------------------------------------------------- */
+
+.host-b225 .host-card {
+  position: relative;
+  overflow: hidden;
+  margin: 0 16px 14px;
+  padding: 20px;
+  border: 1px solid var(--hb-line);
+  border-radius: 20px;
+  background: var(--hb-surface);
+  box-shadow: var(--hb-card-shadow);
+  text-align: left;
+  width: calc(100% - 32px);
+  display: block;
+}
+
+/* The 4px rail is b225's signature on the arrival card. */
+.host-b225 .host-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--hb-green);
+}
+
+.host-b225 .host-card .time {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--hb-green);
+}
+
+.host-b225 .host-card .time { display: block; }
+.host-b225 .host-card .who { display: flex; gap: 14px; align-items: center; margin-top: 12px; }
+/* Named, not positional.
+   This was `.who > span`, which at (0,3,1) outranks `.host-card .avatar` at
+   (0,3,0) -- a bare type selector in the compound is worth more than it looks.
+   It reset the avatar tile from grid to block and the initials fell out of
+   their square. Targeting the copy by its own class keeps the two siblings
+   from competing at all. */
+.host-b225 .host-card .who-copy { display: block; min-width: 0; }
+
+.host-b225 .host-card .avatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: var(--hb-soft);
+  color: var(--hb-green);
+  font-size: 20px;
+  font-weight: 800;
+  object-fit: cover;
+}
+
+.host-b225 .host-card h3 { margin: 0; font-size: 17px; font-weight: 700; color: var(--hb-ink); }
+.host-b225 .host-card p { margin: 4px 0 0; font-size: 13px; color: var(--hb-muted); }
+
+.host-b225 .mh-verify {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  width: calc(100% - 32px);
+  margin: 12px 16px;
+  padding: 18px;
+  border: none;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #0b1f17, #1b4332 60%, #2d6a4f);
+  color: #fff;
+  box-shadow: 0 12px 32px rgba(11, 31, 23, 0.25);
+  /* It is a <button>, and a button centres its text. Every other card on the
+     screen is left-aligned copy, so without this the one call to action reads
+     as a different species of thing. */
+  text-align: left;
+}
+
+.host-b225 .mh-verify h3 { margin: 0; font-size: 16px; font-weight: 800; }
+.host-b225 .mh-verify p { margin: 6px 0 0; font-size: 13px; line-height: 1.45; color: rgba(255, 255, 255, 0.78); }
+
+.host-b225 .mh-verify .badge {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.host-b225 .host-follow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: calc(100% - 32px);
+  margin: 0 16px 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--hb-line);
+  border-radius: 16px;
+  background: var(--hb-surface);
+  box-shadow: var(--hb-card-shadow);
+  text-align: left;
+}
+
+.host-b225 .host-follow .av {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--hb-soft);
+  color: var(--hb-green);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.host-b225 .host-follow .info { display: block; flex: 1; min-width: 0; }
+.host-b225 .host-follow .info > span:not(.av) { display: block; }
+.host-b225 .host-follow .info span { font-size: 12px; color: var(--hb-muted); }
+.host-b225 .host-follow .info strong { display: block; font-size: 14px; color: var(--hb-ink); }
+.host-b225 .host-follow .info p { margin: 2px 0 0; font-size: 12px; color: var(--hb-muted); }
+
+/* ---- Listings -------------------------------------------------------- */
+
+.host-b225 .mh-bulk-tip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 16px 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--hb-line);
+  border-radius: 14px;
+  background: var(--hb-soft);
+}
+
+.host-b225 .mh-bulk-tip strong { font-size: 13px; }
+.host-b225 .mh-bulk-tip p { margin: 2px 0 0; font-size: 12px; color: var(--hb-muted); }
+
+.host-b225 .mh-bulk-tip button {
+  margin-left: auto;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(11, 31, 23, 0.06);
+  font-size: 16px;
+  line-height: 1;
+}
+
+.host-b225 .ls-action-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 16px 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--hb-green);
+  border-radius: 14px;
+  background: var(--hb-surface);
+  box-shadow: var(--hb-card-shadow);
+}
+
+.host-b225 .ls-action-info { flex: 1; min-width: 0; }
+.host-b225 .ls-action-info strong { display: block; font-size: 14px; }
+.host-b225 .ls-action-info span { font-size: 12px; color: var(--hb-muted); }
+.host-b225 .ls-action-btns { display: flex; gap: 8px; }
+
+.host-b225 .ls-action-btns button {
+  height: 36px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.host-b225 .ls-edit { background: var(--hb-green); color: #fff; }
+.host-b225 .ls-del { background: rgba(193, 18, 31, 0.1); color: var(--hb-danger); }
+
+.host-b225 .listing-card {
+  display: block;
+  overflow: hidden;
+  width: calc(100% - 32px);
+  margin: 0 16px 16px;
+  padding: 0;
+  border: 1px solid var(--hb-line);
+  border-radius: 20px;
+  background: var(--hb-surface);
+  box-shadow: var(--hb-card-shadow);
+  text-align: left;
+}
+
+.host-b225 .listing-card[data-selected="true"] {
+  border-color: var(--hb-green);
+  box-shadow: 0 0 0 2px rgba(27, 67, 50, 0.16), var(--hb-card-shadow);
+}
+
+/* `display: block` is doing real work here, not tidying.
+ *
+ * The card is a <button>, so its parts are spans -- a button may not contain
+ * a div. Height, and therefore the 180px photo band, does not apply to a
+ * non-replaced inline element, so the photo collapsed to the height of the
+ * placeholder glyph and took the absolutely-positioned status pill with it.
+ * Every span that owns a box in this file declares its display for the same
+ * reason. */
+.host-b225 .listing-card .ph { position: relative; display: block; height: 180px; background: var(--hb-track); }
+.host-b225 .listing-card .ph img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+.host-b225 .listing-card .ph-empty {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  font-size: 34px;
+}
+
+.host-b225 .listing-card .bd { display: block; }
+
+.host-b225 .listing-card .status {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 8px;
+  background: var(--hb-green);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.host-b225 .listing-card .status i { width: 6px; height: 6px; border-radius: 50%; background: var(--hb-mint); }
+.host-b225 .listing-card .status[data-offline="true"] { background: #5c6b62; }
+.host-b225 .listing-card .status[data-offline="true"] i { background: rgba(255, 255, 255, 0.6); }
+
+.host-b225 .listing-card .bd { padding: 14px 16px 16px; }
+.host-b225 .listing-card .bd h3 { margin: 0; font-size: 16px; font-weight: 700; color: var(--hb-ink); }
+.host-b225 .listing-card .bd p { margin: 3px 0 0; font-size: 13px; color: var(--hb-muted); }
+
+/* ---- Menu / dashboard ------------------------------------------------ */
+
+.host-b225 .host-stats-6d {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 8px 16px 16px;
+}
+
+.host-b225 .hs6-rev,
+.host-b225 .hs6-rate {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  border: 1px solid var(--hb-line);
+  border-radius: 20px;
+  background: var(--hb-surface);
+  box-shadow: var(--hb-card-shadow);
+  text-align: left;
+}
+
+.host-b225 .hs6-amount, .host-b225 .hs6-sub, .host-b225 .hs6-cta { display: block; }
+.host-b225 .hs6-rev-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+
+.host-b225 .hs6-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--hb-soft);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: var(--hb-green);
+}
+
+.host-b225 .hs6-trend { font-size: 12px; font-weight: 800; color: var(--hb-green2); }
+
+.host-b225 .hs6-amount { margin-top: 10px; font-size: 26px; font-weight: 800; color: var(--hb-ink); }
+.host-b225 .hs6-amount small { font-size: 13px; font-weight: 700; color: var(--hb-muted); }
+.host-b225 .hs6-sub { margin-top: 4px; font-size: 11px; color: var(--hb-muted); }
+
+.host-b225 .hs6-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 40px;
+  margin-top: 12px;
+}
+
+.host-b225 .hs6-chart span {
+  flex: 1;
+  height: var(--h, 40%);
+  min-height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: linear-gradient(180deg, var(--hb-green2), var(--hb-green));
+}
+
+.host-b225 .hs6-cta { margin-top: 12px; font-size: 12px; font-weight: 700; color: var(--hb-green); }
+
+.host-b225 .hs6-rate { align-items: center; text-align: center; }
+.host-b225 .hs6-ring { position: relative; display: block; width: 72px; height: 72px; }
+.host-b225 .hs6-ring svg { width: 72px; height: 72px; transform: rotate(-90deg); }
+.host-b225 .hs6-ring-bg { fill: none; stroke: var(--hb-track); stroke-width: 7; }
+
+.host-b225 .hs6-ring-fg {
+  fill: none;
+  stroke: var(--hb-green2);
+  stroke-width: 7;
+  stroke-linecap: round;
+  stroke-dasharray: 188.5;
+  stroke-dashoffset: calc(188.5 - 188.5 * var(--pct, 1));
+}
+
+.host-b225 .hs6-ring-val {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--hb-ink);
+}
+
+.host-b225 .hs6-rate-body { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 10px; }
+.host-b225 .hs6-rate-body strong { font-size: 15px; }
+.host-b225 .hs6-badge.light { background: var(--hb-track); color: var(--hb-muted); }
+
+.host-b225 .host-banner2 {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: calc(100% - 32px);
+  margin: 0 16px 16px;
+  padding: 16px 18px;
+  border: none;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 100%);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(27, 67, 50, 0.25);
+  text-align: left;
+}
+
+.host-b225 .host-banner2 > span:not([aria-hidden]) { display: block; min-width: 0; }
+.host-b225 .host-banner2 strong { display: block; font-size: 14px; }
+.host-b225 .host-banner2 span.sub { display: block; }
+.host-b225 .host-banner2 span.sub { font-size: 12px; opacity: 0.82; }
+
+.host-b225 .host-menu-list { padding: 0 8px 20px; }
+
+.host-b225 .host-menu-list .si {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 15px 12px;
+  border: none;
+  border-bottom: 1px solid var(--hb-line-soft);
+  background: none;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--hb-ink);
+  text-align: left;
+}
+
+/* Sized by element, not by class.
+ *
+ * These were `svg.ic` and `svg.chev`, which meant an icon that did not receive
+ * its class rendered at the SVG intrinsic size -- a 24x24 viewBox with no
+ * width resolves to the full content box, so a 20px cog came out roughly 600px
+ * tall and solid black, since `fill: none` was on the same unmatched rule. That
+ * is exactly what happened: the icon components did not forward props, so the
+ * class never landed. Both ends are fixed now, but binding the size to the
+ * element means a future icon cannot reintroduce it by forgetting a class. */
+.host-b225 .host-menu-list .si svg {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: var(--hb-green);
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.host-b225 .host-menu-list .si .label { flex: 1; min-width: 0; }
+.host-b225 .host-menu-list .si svg.chev { width: 16px; height: 16px; stroke: #9aab9f; stroke-width: 2; }
+
+.host-b225 .host-back-travel {
+  display: block;
+  width: calc(100% - 32px);
+  margin: 4px 16px 8px;
+  padding: 14px;
+  border: 1px solid var(--hb-line);
+  border-radius: 14px;
+  background: var(--hb-surface);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--hb-green);
+}
+
+/* ---- Floating nav dock ------------------------------------------------ */
+
+/* The host area's layer order, in one place:
+ *
+ *   60   this dock
+ *   90   bottom sheets -- the editor's field sheets, the calendar's day
+ *        editor and booking sheet
+ *   150  full-screen overlays -- listing settings and its edit page
+ *
+ * b225 numbers its own dock 95/130, which is meaningless outside its stack;
+ * transplanting 95 put the dock above every 90 sheet in this app. It did not
+ * merely look wrong -- a fixed element on top of a modal swallows the taps
+ * aimed at it, and the dock sits exactly where a sheet puts its save button.
+ * Every host sheet became impossible to save from. The dock is furniture;
+ * it goes under anything modal. */
+.host-b225-nav {
+  position: fixed;
+  left: 50%;
+  top: auto;
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  z-index: 60;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: center;
+  width: min(calc(100% - 24px), 406px);
+  height: 60px;
+  transform: translateX(-50%);
+  border: none;
+  border-radius: 18px;
+  background: #0b1f17;
+  box-shadow: 0 8px 28px rgba(8, 28, 21, 0.35);
+}
+
+.host-b225-nav button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  height: 100%;
+  padding: 6px 0;
+  border: none;
+  background: none;
+  font-size: 9px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.host-b225-nav button[data-active="true"] { color: var(--hb-mint, #95d5b2); }
+
+.host-b225-nav button svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ---- Listing editor (ls-page) ---------------------------------------- */
+
+.host-b225 .ls-top {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: calc(12px + var(--hb-safe-t)) 16px 10px;
+  background: var(--hb-page);
+}
+
+.host-b225 .ls-top h1 { flex: 1; margin: 0; font-size: 17px; font-weight: 800; text-align: center; }
+
+.host-b225 .ls-back,
+.host-b225 .ls-gear {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--hb-line);
+  border-radius: 50%;
+  background: var(--hb-surface);
+  font-size: 17px;
+  color: var(--hb-ink);
+}
+
+.host-b225 .ls-back svg,
+.host-b225 .ls-gear svg { width: 18px; height: 18px; stroke-width: 2; }
+
+.host-b225 .ls-seg {
+  display: flex;
+  gap: 2px;
+  margin: 0 16px 14px;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--hb-track);
+}
+
+.host-b225 .ls-seg button {
+  flex: 1;
+  height: 34px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  color: #5c6b62;
+}
+
+.host-b225 .ls-seg button.on { background: var(--hb-surface); color: var(--hb-green); box-shadow: 0 1px 4px rgba(11, 31, 23, 0.1); }
+
+.host-b225 .ls-scroll { padding: 0 16px 24px; }
+
+.host-b225 .ls-block {
+  display: block;
+  width: 100%;
+  margin: 0 0 12px;
+  padding: 16px;
+  border: 1px solid var(--hb-line);
+  border-radius: 16px;
+  background: var(--hb-surface);
+  box-shadow: var(--hb-card-shadow);
+  text-align: left;
+}
+
+.host-b225 .ls-block h3 { margin: 0; font-size: 14px; font-weight: 700; color: var(--hb-ink); }
+.host-b225 .ls-block .ls-val { margin: 6px 0 0; font-size: 14px; color: var(--hb-ink); line-height: 1.45; }
+.host-b225 .ls-block .meta { margin: 4px 0 0; font-size: 12px; color: var(--hb-muted); }
+.host-b225 .ls-block .ls-link { margin: 10px 0 0; font-size: 13px; font-weight: 700; color: var(--hb-green); }
+
+.host-b225 .ls-tap { position: relative; padding-right: 40px; }
+
+.host-b225 .ls-tap::after {
+  content: "›";
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  font-size: 20px;
+  line-height: 1;
+  color: #9aab9f;
+}
+
+.host-b225 .ls-tap[data-done="false"] .ls-val { color: var(--hb-muted); }
+
+.host-b225 .ls-photo-hero .ls-link { color: var(--hb-green); }
+
+.host-b225 .ls-photo-stack {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr 1fr;
+  gap: 6px;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.host-b225 .ls-photo-stack img { display: block; width: 100%; border-radius: 10px; object-fit: cover; aspect-ratio: 1; }
+.host-b225 .ls-photo-stack img.main { aspect-ratio: 1.1; border-radius: 14px; }
+
+.host-b225 .ls-photo-empty {
+  display: grid;
+  place-items: center;
+  margin-top: 12px;
+  padding: 26px;
+  border: 1px dashed var(--hb-line);
+  border-radius: 14px;
+  color: var(--hb-muted);
+  font-size: 13px;
+}
+
+.host-b225 .ls-amen { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+
+.host-b225 .ls-amen span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: var(--hb-track);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.host-b225 .ls-rule { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 13px; color: var(--hb-ink); }
+.host-b225 .ls-rule .ico { flex-shrink: 0; }
+.host-b225 .ls-rule[data-warn="true"] { color: var(--hb-danger); }
+
+.host-b225 .ls-sleep-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: 13px; }
+.host-b225 .ls-sleep-row .arr { margin-left: auto; color: #9aab9f; }
+
+.host-b225 .ls-map {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 110px;
+  margin-top: 10px;
+  border-radius: 14px;
+  background:
+    repeating-linear-gradient(0deg, var(--hb-line-soft) 0 1px, transparent 1px 22px),
+    repeating-linear-gradient(90deg, var(--hb-line-soft) 0 1px, transparent 1px 22px),
+    var(--hb-track);
+}
+
+.host-b225 .ls-map .pin { font-size: 26px; }
+
+.host-b225 .ls-host-mini { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+
+.host-b225 .ls-host-mini .av {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--hb-soft);
+  color: var(--hb-green);
+  font-weight: 800;
+}
+
+.host-b225 .ls-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--hb-line);
+  border-radius: 14px;
+  background: var(--hb-surface);
+}
+
+.host-b225 .ls-progress .track { flex: 1; height: 6px; border-radius: 3px; background: var(--hb-track); overflow: hidden; }
+.host-b225 .ls-progress .track i { display: block; height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--hb-green2), var(--hb-green)); }
+.host-b225 .ls-progress b { font-size: 13px; font-weight: 800; color: var(--hb-green); }
+
+.host-b225 .ls-pref-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 15px 4px;
+  border: none;
+  border-bottom: 1px solid var(--hb-line-soft);
+  background: none;
+  text-align: left;
+}
+
+.host-b225 .ls-pref-row strong { display: block; font-size: 14px; }
+.host-b225 .ls-pref-row small { font-size: 12px; color: var(--hb-muted); }
+.host-b225 .ls-pref-row .arr { margin-left: auto; color: #9aab9f; }
+
+/* ---- Bottom sheet chrome (b225's lsEditSheet) ------------------------
+ *
+ * Positioning still comes from .host-sheet in host-listings.css -- the two
+ * classes are applied together. Redeclaring inset/flex/max-height here would
+ * mean two rules fighting over the same panel, so this block only restyles
+ * the chrome b225 changes: the grab handle, the heading, and the gradient
+ * save bar in place of the flat primary button. */
+
+.host-b225-sheet .mh-handle {
+  display: block;
+  width: 40px;
+  height: 4px;
+  margin: 10px auto 4px;
+  border-radius: 2px;
+  background: #dfe6e2;
+}
+
+.host-b225-sheet .host-sheet__head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 20px 2px;
+  border-bottom: none;
+}
+
+.host-b225-sheet .host-sheet__head h2 {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  color: #0b1f17;
+  text-align: left;
+}
+
+.host-b225-sheet .mh-save {
+  width: 100%;
+  height: 50px;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #2d6a4f, #1b4332);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.host-b225-sheet .mh-save:active { filter: brightness(0.94); }
+
+/* ---- Settings overlay (mh2) ------------------------------------------ */
+
+.host-b225-ov {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+}
+
+.host-b225-ov .mh2-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 10px;
+  border-bottom: 1px solid #eef2f0;
+}
+
+.host-b225-ov .mh2-head h1 { flex: 1; margin: 0; font-size: 17px; font-weight: 800; text-align: center; }
+
+.host-b225-ov .mh2-x {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: #f1f5f2;
+  font-size: 20px;
+  line-height: 1;
+  color: #0b1f17;
+}
+
+.host-b225-ov .mh2-tabs {
+  display: flex;
+  gap: 2px;
+  margin: 12px 16px 14px;
+  padding: 3px;
+  border-radius: 12px;
+  background: #f1f5f2;
+}
+
+.host-b225-ov .mh2-tabs button {
+  flex: 1;
+  height: 34px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  color: #5c6b62;
+}
+
+.host-b225-ov .mh2-tabs button.on { background: #fff; color: #1b4332; box-shadow: 0 1px 4px rgba(11, 31, 23, 0.1); }
+
+.host-b225-ov .mh2-body { flex: 1; overflow-y: auto; padding: 0 16px 20px; }
+
+.host-b225-ov .mh2-sec { margin: 18px 0 10px; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; color: #6b7c72; }
+
+.host-b225-ov .mh2-card {
+  display: block;
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 14px 16px;
+  border: 1px solid #e4eae6;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(11, 31, 23, 0.04);
+  text-align: left;
+}
+
+.host-b225-ov .mh2-card label { display: block; font-size: 12px; font-weight: 600; color: #6b7c72; }
+.host-b225-ov .mh2-card .val { margin-top: 4px; font-size: 22px; font-weight: 800; color: #0b1f17; }
+.host-b225-ov .mh2-card .val.sm { font-size: 16px; }
+.host-b225-ov .mh2-card .hint { margin-top: 4px; font-size: 12px; color: #6b7c72; }
+.host-b225-ov .mh2-card[data-on="true"] { border-color: #1b4332; box-shadow: inset 0 0 0 1px #1b4332; }
+
+.host-b225-ov .mh2-note { margin: 6px 2px 0; font-size: 12px; color: #6b7c72; line-height: 1.5; }
+
+.host-b225-ov .mh2-foot {
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid #eef2f0;
+  background: #fff;
+}
+
+.host-b225-ov .mh2-save {
+  width: 100%;
+  height: 52px;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #2d6a4f, #1b4332);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.host-b225-ov .mh2-big-input {
+  width: 100%;
+  max-width: 260px;
+  margin: 0 auto;
+  padding: 8px;
+  border: none;
+  border-bottom: 2px solid #1b4332;
+  background: transparent;
+  font-family: inherit;
+  font-size: 44px;
+  font-weight: 800;
+  text-align: center;
+  color: #0b1f17;
+}
+
+.host-b225-ov .mh2-price-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+}
+
+/* ---- Toggle ---------------------------------------------------------- */
+
+.host-b225 .toggle-row,
+.host-b225-ov .toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  width: 100%;
+  padding: 12px 0;
+  border: none;
+  background: none;
+  text-align: left;
+}
+
+.host-b225 .toggle,
+.host-b225-ov .toggle {
+  position: relative;
+  flex-shrink: 0;
+  width: 52px;
+  height: 28px;
+  border: none;
+  border-radius: 14px;
+  background: rgba(11, 31, 23, 0.12);
+  transition: background 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.host-b225 .toggle[data-on="true"],
+.host-b225-ov .toggle[data-on="true"] { background: var(--hb-green2, #2d6a4f); }
+
+.host-b225 .toggle::after,
+.host-b225-ov .toggle::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.14);
+  transition: left 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.host-b225 .toggle[data-on="true"]::after,
+.host-b225-ov .toggle[data-on="true"]::after { left: 28px; }
+
+/* ---- Revenue / reviews ------------------------------------------------ */
+
+.host-b225 .rev-page,
+.host-b225 .rvw-page { padding: 0 16px 24px; }
+
+.host-b225 .rev-hero {
+  padding: 18px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #0b1f17, #1b4332 65%, #2d6a4f);
+  color: #fff;
+  box-shadow: 0 12px 32px rgba(11, 31, 23, 0.22);
+}
+
+.host-b225 .rev-period { display: flex; gap: 2px; padding: 3px; border-radius: 12px; background: rgba(255, 255, 255, 0.12); }
+
+.host-b225 .rev-period button {
+  flex: 1;
+  height: 32px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.host-b225 .rev-period button.on { background: #fff; color: var(--hb-green); }
+
+.host-b225 .rev-hero-amount { margin-top: 16px; font-size: 34px; font-weight: 800; }
+.host-b225 .rev-hero-amount small { font-size: 15px; font-weight: 700; opacity: 0.75; }
+.host-b225 .rev-hero-sub { margin-top: 4px; font-size: 12px; color: rgba(255, 255, 255, 0.72); }
+
+.host-b225 .rev-payout {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.host-b225 .rev-payout strong { display: block; font-size: 13px; }
+.host-b225 .rev-payout span { font-size: 12px; color: rgba(255, 255, 255, 0.7); }
+
+.host-b225 .rev-payout-btn {
+  margin-left: auto;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--hb-green);
+}
+
+.host-b225 .rev-section {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid var(--hb-line);
+  border-radius: 18px;
+  background: var(--hb-surface);
+  box-shadow: var(--hb-card-shadow);
+}
+
+.host-b225 .rev-sec-h { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+.host-b225 .rev-sec-h h3 { margin: 0; font-size: 15px; font-weight: 800; }
+
+.host-b225 .rev-sec-h .link { border: none; background: none; font-size: 13px; font-weight: 700; color: var(--hb-green); }
+
+.host-b225 .rev-row,
+.host-b225 .rev-hist {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 0;
+  border: none;
+  border-bottom: 1px solid var(--hb-line-soft);
+  background: none;
+  font-size: 14px;
+  text-align: left;
+  color: var(--hb-ink);
+}
+
+.host-b225 .rev-row:last-child,
+.host-b225 .rev-hist:last-child { border-bottom: none; }
+.host-b225 .rev-row.muted { color: var(--hb-muted); }
+.host-b225 .rev-row.total { font-weight: 800; color: var(--hb-green); }
+
+.host-b225 .rev-action {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 14px;
+  border: 1px solid var(--hb-line);
+  border-radius: 14px;
+  background: var(--hb-surface);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.host-b225 .rvw-hero {
+  padding: 20px;
+  border: 1px solid var(--hb-line);
+  border-radius: 20px;
+  background: var(--hb-surface);
+  box-shadow: var(--hb-card-shadow);
+  text-align: center;
+}
+
+.host-b225 .rvw-score { font-size: 44px; font-weight: 800; color: var(--hb-ink); }
+.host-b225 .rvw-stars { font-size: 17px; letter-spacing: 2px; color: var(--hb-gold); }
+.host-b225 .rvw-meta { margin-top: 6px; font-size: 13px; color: var(--hb-muted); }
+
+.host-b225 .rvw-bars { margin-top: 16px; text-align: left; }
+.host-b225 .rvw-bar { display: flex; align-items: center; gap: 10px; margin-top: 8px; font-size: 12px; }
+.host-b225 .rvw-bar span { flex: 0 0 118px; color: var(--hb-muted); }
+.host-b225 .rvw-bar i { flex: 1; height: 5px; border-radius: 3px; background: var(--hb-track); }
+.host-b225 .rvw-bar i::after { content: ""; display: block; width: var(--w, 100%); height: 100%; border-radius: 3px; background: var(--hb-green2); }
+.host-b225 .rvw-bar b { flex: 0 0 26px; text-align: right; font-weight: 700; }
+
+.host-b225 .rvw-filters { display: flex; gap: 2px; margin: 14px 0; padding: 3px; border-radius: 12px; background: var(--hb-track); }
+
+.host-b225 .rvw-filters button {
+  flex: 1;
+  height: 34px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  color: #5c6b62;
+}
+
+.host-b225 .rvw-filters button.on { background: var(--hb-surface); color: var(--hb-green); box-shadow: 0 1px 4px rgba(11, 31, 23, 0.1); }
+
+.host-b225 .rvw-card {
+  margin-bottom: 12px;
+  padding: 16px;
+  border: 1px solid var(--hb-line);
+  border-radius: 16px;
+  background: var(--hb-surface);
+  box-shadow: var(--hb-card-shadow);
+}
+
+.host-b225 .rvw-head { display: flex; align-items: center; gap: 12px; }
+
+.host-b225 .rvw-head .av {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--hb-soft);
+  color: var(--hb-green);
+  font-weight: 800;
+}
+
+.host-b225 .rvw-head strong { display: block; font-size: 14px; }
+.host-b225 .rvw-head span { font-size: 12px; color: var(--hb-muted); }
+.host-b225 .rvw-score-sm { margin-left: auto; font-size: 14px; font-weight: 800; color: var(--hb-green); }
+.host-b225 .rvw-card > p { margin: 12px 0 0; font-size: 14px; line-height: 1.5; }
+
+.host-b225 .rvw-reply {
+  margin-top: 12px;
+  padding: 10px 16px;
+  border: 1px solid var(--hb-line);
+  border-radius: 999px;
+  background: var(--hb-surface);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--hb-green);
+}
+
+.host-b225 .rvw-host-reply { margin-top: 12px; padding: 12px 14px; border-radius: 12px; background: var(--hb-track); }
+.host-b225 .rvw-host-reply strong { display: block; font-size: 12px; color: var(--hb-green); }
+.host-b225 .rvw-host-reply span { font-size: 13px; color: var(--hb-ink); }
+
+/* ---- Calendar property bar ------------------------------------------- */
+
+.host-b225 .cal-prop-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: calc(100% - 32px);
+  margin: 0 16px 14px;
+  padding: 10px 14px 10px 10px;
+  border: 1px solid var(--hb-line);
+  border-radius: 16px;
+  background: var(--hb-surface);
+  box-shadow: var(--hb-card-shadow);
+  text-align: left;
+}
+
+.host-b225 .cal-prop-thumb { flex-shrink: 0; width: 48px; height: 48px; border-radius: 12px; object-fit: cover; background: var(--hb-track); }
+
+.host-b225 .cal-prop-thumb-empty {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--hb-track);
+  font-size: 20px;
+}
+
+.host-b225 .cal-prop-meta { flex: 1; min-width: 0; }
+.host-b225 .cal-prop-label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; color: var(--hb-muted); }
+.host-b225 .cal-prop-meta strong { display: block; font-size: 14px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.host-b225 .cal-prop-chev { flex-shrink: 0; font-size: 20px; color: #9aab9f; }
+
+/* ---- Empty state ------------------------------------------------------ */
+
+.host-b225 .hb-empty {
+  margin: 0 16px 14px;
+  padding: 26px 20px;
+  border: 1px dashed var(--hb-line);
+  border-radius: 18px;
+  background: var(--hb-surface);
+  text-align: center;
+}
+
+.host-b225 .hb-empty strong { display: block; font-size: 15px; }
+.host-b225 .hb-empty p { margin: 6px 0 0; font-size: 13px; color: var(--hb-muted); line-height: 1.5; }
+
+.host-b225 .hb-note {
+  margin: 0 16px 14px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--hb-track);
+  font-size: 12px;
+  color: var(--hb-muted);
+  line-height: 1.5;
+}
+
+.host-b225 .hb-feedback {
+  margin: 0 16px 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--hb-soft);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--hb-green);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .host-b225 .toggle,
+  .host-b225 .toggle::after,
+  .host-b225-ov .toggle,
+  .host-b225-ov .toggle::after { transition: none; }
+}

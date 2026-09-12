@@ -45,7 +45,10 @@ test('active host gets a complete workspace instead of being dropped directly in
   await page.goto('/groc-movera/host')
 
   await expect(page.getByTestId('host-workspace')).toHaveAttribute('data-view', 'dashboard')
-  await expect(page.getByTestId('host-dashboard')).toContainText('Hôtel Azur Movera')
+  /* The Today screen names the listing through b225's property bar. Without
+     it a host with a quiet week reads a screen with nothing on it to say
+     which listing it is reporting on. */
+  await expect(page.getByTestId('host-property-bar')).toContainText('Hôtel Azur Movera')
   await expect(page.getByRole('navigation', { name: 'Navigation Hôte' })).toBeVisible()
 
   const nav = page.getByRole('navigation', { name: 'Navigation Hôte' })
@@ -55,9 +58,9 @@ test('active host gets a complete workspace instead of being dropped directly in
   await expect(page.getByTestId('host-listings')).toContainText('Hôtel Azur Movera')
 
   /* The room inventory and the rename both moved into the editor: the
-     listings screen is the Airbnb-shaped index, and editing happens one
-     level down. Same two proofs, through the screens that now own them. */
-  await page.getByTestId('host-listing-tile-host-movera-demo-user').click()
+     listings screen is b225's card index, and editing happens one level
+     down. Same two proofs, through the screens that now own them. */
+  await page.getByTestId('host-listing-card-host-movera-demo-user').click()
   await expect(page).toHaveURL(/\/host\/listings\/editor$/)
   await expect(page.getByTestId('host-editor-card-rooms')).toContainText('2 catégories')
 
@@ -79,14 +82,23 @@ test('active host gets a complete workspace instead of being dropped directly in
   await nav.getByRole('button', { name: 'Menu' }).click()
   await page.getByTestId('host-menu-earnings').click()
   await expect(page.getByTestId('host-earnings')).toContainText('0 TND')
-  await expect(page.getByTestId('host-earnings')).toContainText('Aucun faux versement')
+  await expect(page.getByTestId('host-earnings')).toContainText('Aucun versement n’est simulé')
 
+  /* b225 edits a setting on its own page: the card shows the value, tapping
+     it opens one big number, saving returns to the list with the new value
+     on the card. Both halves are asserted because the pair is where a field
+     read from one branch of the draft and written to another goes unnoticed. */
   await nav.getByRole('button', { name: 'Menu' }).click()
   await page.getByTestId('host-menu-settings').click()
-  await expect(page.getByTestId('host-settings')).toBeVisible()
-  await page.getByLabel('Nuits minimum').fill('2')
-  await page.getByRole('button', { name: 'Enregistrer les réglages' }).click()
-  await expect(page.getByRole('status')).toContainText('Réglages enregistrés')
+  await expect(page.getByTestId('host-listing-settings')).toBeVisible()
+  await page.getByRole('tab', { name: 'Dispo.' }).click()
+  await page.getByTestId('host-settings-min-nights').click()
+  await expect(page.getByTestId('host-settings-edit')).toBeVisible()
+  await page.getByRole('textbox', { name: 'Nuits minimum' }).fill('4')
+  await page.getByTestId('host-settings-edit-save').click()
+  await expect(page.getByTestId('host-settings-min-nights')).toContainText('4')
+  await page.getByTestId('host-settings-save').click()
+  await expect(page.getByTestId('host-listing-settings')).toBeHidden()
 
   await nav.getByRole('button', { name: 'Calendrier' }).click()
   await expect(page).toHaveURL(/\/host\/calendar$/)

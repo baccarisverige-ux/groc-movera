@@ -80,6 +80,7 @@ export const routeDefinitions = [
   hostRoute('/host/reservations', 'vos réservations Hôte'),
   hostRoute('/host/calendar', 'votre calendrier Hôte'),
   hostRoute('/host/earnings', 'vos revenus Hôte'),
+  hostRoute('/host/reviews', 'vos avis voyageurs'),
   hostRoute('/host/messages', 'vos messages Hôte'),
   hostRoute('/host/settings', 'vos réglages Hôte'),
   hostRoute('/host/menu', 'le menu Hôte'),
