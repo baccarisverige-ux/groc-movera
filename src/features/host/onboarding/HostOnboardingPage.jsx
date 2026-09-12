@@ -62,6 +62,18 @@ function CheckIcon() {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.2 4.2L19 7"/></svg>
 }
 
+function CalendarIcon() {
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="m9.5 14.5 1.8 1.8 3.4-3.6"/></svg>
+}
+
+function TagIcon() {
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11.4 3.5H19a1.5 1.5 0 0 1 1.5 1.5v7.6a2 2 0 0 1-.6 1.4l-6 6a2 2 0 0 1-2.8 0l-6.6-6.6a2 2 0 0 1 0-2.8l6-6a2 2 0 0 1 1.4-.6Z"/><circle cx="16" cy="8" r="1.4"/></svg>
+}
+
+function ShieldIcon() {
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2 19 6v6c0 4.1-2.8 7.4-7 8.8-4.2-1.4-7-4.7-7-8.8V6l7-2.8Z"/><path d="m9 12.2 2 2 4-4.2"/></svg>
+}
+
 function PersonIcon() {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="3"/><path d="M5 21c.6-5 3-8 7-8s6.4 3 7 8"/></svg>
 }
@@ -506,7 +518,7 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
       ) : null}
 
       {id === 'intro-presentation' ? (
-        <PhaseIntro eyebrow="Étape 2" title="Mettez votre logement en valeur" text="Choisissez les équipements, préparez les photos et rédigez une présentation claire de votre logement." variant="presentation" />
+        <PhaseIntro eyebrow="Étape 2" title={offerFlow.copy.presentationTitle} text={offerFlow.copy.presentationText} variant="presentation" />
       ) : null}
 
       {id === 'amenities' ? (
@@ -540,15 +552,15 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
       {id === 'photos' ? (
         <main className="host-onboarding__step host-onboarding__step--photos">
           <span className="host-onboarding__eyebrow">Étape {step + 1}</span>
-          <h1>Ajoutez quelques photos de votre logement</h1>
-          <p>Au moins 5 photos seront recommandées. Pour l’instant, les emplacements restent volontairement vides.</p>
+          <h1>{offerFlow.copy.photosTitle}</h1>
+          <p>Au moins {offerFlow.photoPolicy.min} photos seront recommandées. Pour l’instant, les emplacements restent volontairement vides.</p>
           <div className="host-onboarding__photo-uploader">
             <span className="host-onboarding__photo-stack"><PhotoIcon /><i>+</i></span>
             <small>Salon, cuisine, chambres et autres espaces</small>
             <button type="button" disabled>Ajouter des photos <span>+</span></button>
           </div>
           <div className="host-onboarding__photo-slots" data-testid="host-photo-placeholders">
-            {[1, 2, 3, 4, 5].map((item) => <div key={item}><span>+</span></div>)}
+            {Array.from({ length: offerFlow.photoPolicy.min }, (item, index) => <div key={index}><span>+</span></div>)}
           </div>
           <div className="host-onboarding__skip-note">L’upload sera connecté lors d’une prochaine étape.</div>
         </main>
@@ -557,7 +569,7 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
       {id === 'title' ? (
         <main className="host-onboarding__step host-onboarding__step--title">
           <span className="host-onboarding__eyebrow">Étape {step + 1}</span>
-          <h1>{activeRoom ? 'Nommez chaque catégorie de chambre' : 'Donnez un titre mémorable à votre logement'}</h1>
+          <h1>{activeRoom ? 'Nommez chaque catégorie de chambre' : offerFlow.copy.titleTitle}</h1>
           <p>{activeRoom ? 'Choisissez un nom clair pour que les voyageurs distinguent facilement les catégories.' : 'Les titres courts et précis fonctionnent le mieux.'}</p>
           <HotelRoomCategorySelector rooms={hasRoomCategories ? roomConfiguration.roomTypes : []} activeId={activeRoom?.id} onChange={setActiveRoomId} />
           <label className="host-onboarding__big-field"><span>{activeRoom ? `Nom · ${activeRoom.name}` : 'Titre de l’annonce'}</span><textarea rows="7" maxLength="50" value={activeRoom ? activeRoom.name : draft.title} onChange={(event) => { const value = event.target.value; if (activeRoom) { updateActiveRoom({ name: value }); if (roomConfiguration.roomTypes[0]?.id === activeRoom.id) updateDraft({ title: value }) } else updateDraft({ title: value }) }} placeholder={activeRoom ? 'Ex. Chambre Deluxe vue mer' : 'Écrivez votre titre ici'} aria-label={activeRoom ? `Nom de la catégorie ${activeRoom.name}` : 'Titre de l’annonce'} /></label>
@@ -613,7 +625,7 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
       {id === 'description' ? (
         <main className="host-onboarding__step host-onboarding__step--description">
           <span className="host-onboarding__eyebrow">Étape {step + 1}</span>
-          <h1>{activeRoom ? 'Décrivez chaque catégorie de chambre' : 'Présentez ce qui rend votre logement spécial'}</h1>
+          <h1>{activeRoom ? 'Décrivez chaque catégorie de chambre' : offerFlow.copy.descriptionTitle}</h1>
           <p>{activeRoom ? 'Chaque catégorie possède sa propre description visible par les voyageurs.' : 'Une description simple et chaleureuse suffit.'}</p>
           <HotelRoomCategorySelector rooms={hasRoomCategories ? roomConfiguration.roomTypes : []} activeId={activeRoom?.id} onChange={setActiveRoomId} />
           <label className="host-onboarding__big-field"><span>{activeRoom ? `Description · ${activeRoom.name}` : 'Description'}</span><textarea rows="12" maxLength="500" value={activeRoom ? activeRoom.description : draft.description} onChange={(event) => { const value = event.target.value; if (activeRoom) { updateActiveRoom({ description: value }); if (roomConfiguration.roomTypes[0]?.id === activeRoom.id) updateDraft({ description: value }) } else updateDraft({ description: value }) }} placeholder="Décrivez l’ambiance, les espaces et les principaux atouts…" aria-label={activeRoom ? `Description de ${activeRoom.name}` : 'Description du logement'} /></label>
@@ -691,9 +703,9 @@ export function HostOnboardingPage({ onNavigate, onActivated }) {
           <p>Vérifiez vos principaux réglages avant d’activer votre espace Hôte.</p>
           <HotelRoomCategorySelector rooms={hasRoomCategories ? roomConfiguration.roomTypes : []} activeId={activeRoom?.id} onChange={setActiveRoomId} />
           <div className="host-onboarding__review-summary">
-            <section><span className="host-onboarding__review-icon">▣</span><div><strong>Préférence de réservation</strong><small>{(activeRoom?.bookingMode || draft.bookingMode) === 'instant' ? 'Réservation instantanée' : 'Validation des premières demandes'}</small></div><b>›</b></section>
-            <section><span className="host-onboarding__review-icon">◇</span><div><strong>Tarification</strong><small>{activeRoom ? activeRoom.name : 'Prix de base'}</small></div><em>{Number(activeRoom?.basePrice ?? draft.basePrice) || 0} TND</em></section>
-            <section><span className="host-onboarding__review-icon">✓</span><div><strong>Sécurité</strong><small>Informations renseignées</small></div><i>Complet</i></section>
+            <section><span className="host-onboarding__review-icon"><CalendarIcon /></span><div><strong>Préférence de réservation</strong><small>{(activeRoom?.bookingMode || draft.bookingMode) === 'instant' ? 'Réservation instantanée' : 'Validation des premières demandes'}</small></div><b>›</b></section>
+            <section><span className="host-onboarding__review-icon"><TagIcon /></span><div><strong>Tarification</strong><small>{activeRoom ? activeRoom.name : 'Prix de base'}</small></div><em>{Number(activeRoom?.basePrice ?? draft.basePrice) || 0} TND</em></section>
+            <section><span className="host-onboarding__review-icon"><ShieldIcon /></span><div><strong>Sécurité</strong><small>Informations renseignées</small></div><i>Complet</i></section>
           </div>
           <div className="host-onboarding__review-card">
             <span>{draft.propertyType} · {draft.city}</span>

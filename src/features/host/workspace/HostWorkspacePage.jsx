@@ -11,6 +11,7 @@ import {
 } from '../../../entities/host/hostWorkspaceSettingsStore.js'
 import { OptimizedListingImage } from '../../../shared/media/OptimizedListingImage.jsx'
 import { HostRoomTypeManager } from '../rooms/HostRoomTypeManager.jsx'
+import { HostMessagesView } from './HostMessagesView.jsx'
 import {
   estimateReservationGross,
   hostListingCompleteness,
@@ -264,14 +265,6 @@ function EarningsView({ listing, rows }) {
   )
 }
 
-function MessagesView({ rows, onNavigate }) {
-  return (
-    <div className="host-workspace-view" data-testid="host-messages">
-      <section className="host-workspace-section host-workspace-section--flush"><div className="host-workspace-section__head"><div><span>Boîte Hôte</span><h2>Messages voyageurs</h2></div></div><EmptyState title="Aucune conversation Hôte reliée" copy={rows.length ? 'Des réservations existent, mais aucune conversation voyageur n’est encore reliée à ces identifiants. Le workspace ne réutilise pas les conversations voyageur de démonstration comme si elles appartenaient à cet hôte.' : 'Les conversations apparaîtront ici lorsqu’un moteur de réservation et de messagerie relié au voyageur créera un fil pour cette annonce.'} action={rows.length ? 'Voir les réservations' : undefined} onAction={() => onNavigate('/host/reservations')} /></section>
-    </div>
-  )
-}
-
 function SettingsView({ listing, userId }) {
   const [feedback, setFeedback] = useState('')
   const [rules, setRules] = useState(() => ({ ...listing.stayRules }))
@@ -320,7 +313,7 @@ export function HostWorkspacePage({ view, profile, userId, onNavigate }) {
         {view === 'listings' ? <ListingView profile={profile} userId={userId} onNavigate={onNavigate} /> : null}
         {view === 'reservations' ? <ReservationsView listing={listing} rows={rows} /> : null}
         {view === 'earnings' ? <EarningsView listing={listing} rows={rows} /> : null}
-        {view === 'messages' ? <MessagesView rows={rows} onNavigate={onNavigate} /> : null}
+        {view === 'messages' ? <HostMessagesView listing={listing} rows={rows} onNavigate={onNavigate} /> : null}
         {view === 'settings' ? <SettingsView listing={listing} userId={userId} /> : null}
       </main>
     </section>
