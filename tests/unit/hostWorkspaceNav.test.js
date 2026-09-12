@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { readFileSync } from 'node:fs'
 import {
   HOST_MENU_VIEWS,
   HOST_PRIMARY_NAV,
@@ -32,6 +33,21 @@ describe('host navigation', () => {
   it('never lists the same destination twice', () => {
     const all = [...HOST_PRIMARY_NAV, ...HOST_MENU_VIEWS]
     expect(new Set(all).size).toBe(all.length)
+  })
+
+  /* Every path the bar and the menu point at has to be a registered route.
+     Adding the Menu tab without registering /host/menu shipped a tab that
+     navigated to nothing -- the kind of gap that only shows up when someone
+     taps it, because the view model and the router agreed with themselves. */
+  it('points every tab and menu row at a route that exists', () => {
+    // Read the router as source rather than importing it: routes.jsx pulls in
+    // every page, and this only needs the list of paths it registers.
+    const source = readFileSync(new URL('../../src/app/router/routes.jsx', import.meta.url), 'utf8')
+    const registered = new Set([...source.matchAll(/hostRoute\('([^']+)'/g)].map((match) => match[1]))
+    expect(registered.size).toBeGreaterThan(4)
+    for (const item of [...hostPrimaryNavItems(), ...hostMenuItems()]) {
+      expect(registered.has(item.path), `${item.id} -> ${item.path}`).toBe(true)
+    }
   })
 
   it('routes each host path to its view', () => {
