@@ -371,25 +371,27 @@ function ReviewsScreen({ reviews, onNavigate }) {
       </div>
 
       <div className="rvw-page">
-        <div className="rvw-hero">
-          <div className="rvw-score">{summary.hasReviews ? summary.score.toFixed(1).replace('.', ',') : '—'}</div>
-          <div className="rvw-stars" aria-hidden="true">{'★'.repeat(Math.round(summary.score))}{'☆'.repeat(5 - Math.round(summary.score))}</div>
-          <div className="rvw-meta">{summary.hasReviews ? `${summary.count} avis public${summary.count > 1 ? 's' : ''}` : 'Aucun avis pour le moment'}</div>
-          {summary.hasReviews ? (
-            <div className="rvw-bars">
-              {summary.categories.map((category) => (
-                <div className="rvw-bar" key={category.id}>
-                  <span>{category.label}</span>
-                  <i style={{ '--w': `${category.percent}%` }} />
-                  <b>{category.score.toFixed(1).replace('.', ',')}</b>
-                </div>
-              ))}
-            </div>
-          ) : null}
-        </div>
-
+        {/* The score hero is the summary of something. With no reviews it has
+            nothing to summarise, and rendering it anyway stacked two empty
+            states saying the same thing -- with an em-dash at 44px reading as
+            a black bar where the score belongs. One empty state, or the hero. */}
         {summary.hasReviews ? (
           <>
+            <div className="rvw-hero">
+              <div className="rvw-score">{summary.score.toFixed(1).replace('.', ',')}</div>
+              <div className="rvw-stars" aria-hidden="true">{'★'.repeat(Math.round(summary.score))}{'☆'.repeat(5 - Math.round(summary.score))}</div>
+              <div className="rvw-meta">{summary.count} avis public{summary.count > 1 ? 's' : ''}</div>
+              <div className="rvw-bars">
+                {summary.categories.map((category) => (
+                  <div className="rvw-bar" key={category.id}>
+                    <span>{category.label}</span>
+                    <i style={{ '--w': `${category.percent}%` }} />
+                    <b>{category.score.toFixed(1).replace('.', ',')}</b>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <div className="rvw-filters" role="tablist" aria-label="Filtrer les avis">
               <button type="button" role="tab" aria-selected={filter === 'all'} className={filter === 'all' ? 'on' : ''} onClick={() => setFilter('all')}>Tous</button>
               <button type="button" role="tab" aria-selected={filter === 'pending'} className={filter === 'pending' ? 'on' : ''} onClick={() => setFilter('pending')}>À répondre</button>
