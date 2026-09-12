@@ -48,30 +48,47 @@ test('active host gets a complete workspace instead of being dropped directly in
   await expect(page.getByTestId('host-dashboard')).toContainText('Hôtel Azur Movera')
   await expect(page.getByRole('navigation', { name: 'Navigation Hôte' })).toBeVisible()
 
-  await page.getByRole('navigation', { name: 'Navigation Hôte' }).getByRole('button', { name: 'Annonce' }).click()
-  await expect(page).toHaveURL(/\/host\/listings$/)
-  await expect(page.getByTestId('host-listings')).toContainText('2 catégories')
+  const nav = page.getByRole('navigation', { name: 'Navigation Hôte' })
 
-  await page.getByTestId('host-listings').getByRole('button', { name: 'Modifier', exact: true }).click()
-  await page.getByLabel('Titre').fill('Hôtel Azur Premium')
-  await page.getByRole('button', { name: 'Enregistrer les modifications' }).click()
+  await nav.getByRole('button', { name: 'Annonces' }).click()
+  await expect(page).toHaveURL(/\/host\/listings$/)
+  await expect(page.getByTestId('host-listings')).toContainText('Hôtel Azur Movera')
+
+  /* The room inventory and the rename both moved into the editor: the
+     listings screen is the Airbnb-shaped index, and editing happens one
+     level down. Same two proofs, through the screens that now own them. */
+  await page.getByTestId('host-listing-tile-host-movera-demo-user').click()
+  await expect(page).toHaveURL(/\/host\/listings\/editor$/)
+  await expect(page.getByTestId('host-editor-card-rooms')).toContainText('2 catégories')
+
+  await page.getByTestId('host-editor-card-title').click()
+  await page.locator('[data-testid="host-edit-sheet-title"] textarea').fill('Hôtel Azur Premium')
+  await page.getByTestId('host-edit-save-title').click()
+  await expect(page.getByTestId('host-editor-card-title')).toContainText('Hôtel Azur Premium')
+  await page.getByRole('button', { name: 'Retour' }).click()
   await expect(page.getByTestId('host-listings')).toContainText('Hôtel Azur Premium')
 
-  await page.getByRole('navigation', { name: 'Navigation Hôte' }).getByRole('button', { name: 'Réservations' }).click()
+  /* Réservations, Revenus and Réglages are one tap deeper under Menu now --
+     five tabs fit a bottom bar, seven did not. */
+  await nav.getByRole('button', { name: 'Menu' }).click()
+  await expect(page).toHaveURL(/\/host\/menu$/)
+  await page.getByTestId('host-menu-reservations').click()
   await expect(page.getByTestId('host-reservations-canonical')).toBeVisible()
   await expect(page.getByTestId('host-reservations-canonical')).toContainText('Aucune réservation')
 
-  await page.getByRole('navigation', { name: 'Navigation Hôte' }).getByRole('button', { name: 'Revenus' }).click()
+  await nav.getByRole('button', { name: 'Menu' }).click()
+  await page.getByTestId('host-menu-earnings').click()
   await expect(page.getByTestId('host-earnings')).toContainText('0 TND')
   await expect(page.getByTestId('host-earnings')).toContainText('Aucun faux versement')
 
-  await page.getByRole('navigation', { name: 'Navigation Hôte' }).getByRole('button', { name: 'Réglages' }).click()
+  await nav.getByRole('button', { name: 'Menu' }).click()
+  await page.getByTestId('host-menu-settings').click()
   await expect(page.getByTestId('host-settings')).toBeVisible()
   await page.getByLabel('Nuits minimum').fill('2')
   await page.getByRole('button', { name: 'Enregistrer les réglages' }).click()
   await expect(page.getByRole('status')).toContainText('Réglages enregistrés')
 
-  await page.getByRole('navigation', { name: 'Navigation Hôte' }).getByRole('button', { name: 'Calendrier' }).click()
+  await nav.getByRole('button', { name: 'Calendrier' }).click()
   await expect(page).toHaveURL(/\/host\/calendar$/)
   await expect(page.getByTestId('host-calendar-page')).toBeVisible()
   await expect(page.getByTestId('host-workspace-calendar')).toBeVisible()

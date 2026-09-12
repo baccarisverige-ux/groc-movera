@@ -76,10 +76,12 @@ export const routeDefinitions = [
   { path: '/profile', area: 'guest', component: ProfileGatewayPage },
   hostRoute('/host', 'votre espace Hôte'),
   hostRoute('/host/listings', 'vos annonces Hôte'),
+  hostRoute('/host/listings/editor', 'l’éditeur d’annonce'),
   hostRoute('/host/reservations', 'vos réservations Hôte'),
   hostRoute('/host/calendar', 'votre calendrier Hôte'),
   hostRoute('/host/earnings', 'vos revenus Hôte'),
   hostRoute('/host/messages', 'vos messages Hôte'),
   hostRoute('/host/settings', 'vos réglages Hôte'),
+  hostRoute('/host/menu', 'le menu Hôte'),
   ...labRoutes,
 ]

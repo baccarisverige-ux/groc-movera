@@ -1,0 +1,168 @@
+/* The host shell, rebuilt around a bottom bar.
+
+   The rail used to sit at the top: seven pills under a dark green header,
+   scrolling sideways and clipping the last tab at 390px, above screens that
+   carry their own heading -- so every page showed two titles. Five fixed tabs
+   at the bottom, a white page, and each screen owns its title.
+
+   Loaded after host-workspace.css and deliberately replacing its header and
+   rail rules. */
+
+.host-workspace {
+  background: #fff;
+  padding-bottom: 0;
+}
+
+.host-workspace__header { display: none }
+
+.host-workspace__content {
+  width: min(100%, 430px);
+  margin: 0 auto;
+  padding: calc(8px + env(safe-area-inset-top, 0px)) 18px calc(86px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Every screen's own heading, at the size the reference sets it. */
+.host-screen-title {
+  margin: 10px 0 18px;
+  font-size: 34px;
+  line-height: 1.05;
+  letter-spacing: -.045em;
+  font-weight: 760;
+  color: #111312;
+}
+
+/* ---------- bottom bar ---------- */
+
+.host-workspace-nav {
+  position: fixed;
+  z-index: 60;
+  left: 50%;
+  top: auto;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: min(100%, 430px);
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  padding: 8px 4px calc(8px + env(safe-area-inset-bottom, 0px));
+  background: rgba(255, 255, 255, .98);
+  border-top: 1px solid #ececea;
+  box-shadow: 0 -8px 26px rgba(20, 25, 21, .05);
+  backdrop-filter: blur(18px) saturate(1.1);
+  -webkit-backdrop-filter: blur(18px) saturate(1.1);
+}
+
+.host-workspace-nav button {
+  min-width: 0;
+  min-height: 50px;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 5px;
+  padding: 4px 2px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  box-shadow: none;
+  color: #767b77;
+  font-size: 10px;
+  font-weight: 580;
+  letter-spacing: -.005em;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+.host-workspace-nav button svg {
+  width: 23px;
+  height: 23px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.host-workspace-nav button span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.host-workspace-nav button[data-active=true] {
+  background: none;
+  color: #1f6a43;
+  font-weight: 680;
+}
+.host-workspace-nav button[data-active=true] svg { stroke-width: 2 }
+
+/* the calendar is its own page but shares the bar */
+.host-workspace-calendar-wrap .host-calendar-page { padding-bottom: calc(86px + env(safe-area-inset-bottom, 0px)) }
+
+/* ---------- Menu ---------- */
+
+.host-menu__identity {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  align-items: center;
+  gap: 13px;
+  padding: 14px;
+  border: 1px solid #e7e8e6;
+  border-radius: 18px;
+  margin-bottom: 18px;
+}
+.host-menu__identity > span {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: #eef4f0;
+  color: #1f6a43;
+  display: grid;
+  place-items: center;
+  font: 800 15px/1 Inter, sans-serif;
+}
+.host-menu__identity div { display: grid; gap: 3px; min-width: 0 }
+.host-menu__identity strong { font-size: 16px; font-weight: 660; letter-spacing: -.025em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.host-menu__identity small { font-size: 12.5px; color: #767b77 }
+
+.host-menu__rows { display: grid; gap: 2px }
+.host-menu__rows button {
+  display: grid;
+  grid-template-columns: 24px 1fr 16px;
+  align-items: center;
+  gap: 14px;
+  min-height: 62px;
+  padding: 10px 4px;
+  border: 0;
+  border-bottom: 1px solid #f0f1ef;
+  border-radius: 0;
+  background: none;
+  text-align: left;
+  color: #111312;
+}
+.host-menu__rows button:last-child { border-bottom: 0 }
+.host-menu__rows button:active { background: #fafbfa }
+.host-menu__rows button svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.host-menu__rows button svg:last-of-type { stroke: #9aa09c; stroke-width: 2 }
+.host-menu__rows button strong { font-size: 15.5px; font-weight: 580; letter-spacing: -.015em }
+
+.host-menu__switch {
+  width: 100%;
+  min-height: 52px;
+  margin-top: 22px;
+  border: 1px solid #d8dad7;
+  border-radius: 15px;
+  background: #fff;
+  color: #111312;
+  font: 640 14.5px/1 Inter, sans-serif;
+}
+
+@media (max-width: 350px) {
+  .host-workspace__content { padding-left: 13px; padding-right: 13px }
+  .host-screen-title { font-size: 29px }
+  .host-workspace-nav button { font-size: 9px }
+  .host-workspace-nav button svg { width: 21px; height: 21px }
+}

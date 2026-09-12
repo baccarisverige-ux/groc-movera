@@ -1,22 +1,53 @@
 export const HOST_WORKSPACE_VIEWS = Object.freeze([
-  { id: 'dashboard', label: 'Accueil', path: '/host' },
-  { id: 'listings', label: 'Annonce', path: '/host/listings' },
+  { id: 'dashboard', label: 'Aujourd’hui', path: '/host' },
+  { id: 'listings', label: 'Annonces', path: '/host/listings' },
   { id: 'reservations', label: 'Réservations', path: '/host/reservations' },
   { id: 'calendar', label: 'Calendrier', path: '/host/calendar' },
   { id: 'earnings', label: 'Revenus', path: '/host/earnings' },
   { id: 'messages', label: 'Messages', path: '/host/messages' },
   { id: 'settings', label: 'Réglages', path: '/host/settings' },
+  { id: 'menu', label: 'Menu', path: '/host/menu' },
 ])
+
+/* Five tabs, not seven.
+
+   A bottom bar stops being a bar somewhere around five items: at seven the
+   labels truncate and the targets narrow, which is why the rail used to scroll
+   sideways and clip its last tab. These five are the ones a host opens daily;
+   everything else lives one tap deeper under Menu, which is also where the
+   traveller-mode switch and the account rows belong. */
+export const HOST_PRIMARY_NAV = Object.freeze(['dashboard', 'calendar', 'listings', 'messages', 'menu'])
+
+export const HOST_MENU_VIEWS = Object.freeze(['reservations', 'earnings', 'settings'])
+
+export function hostPrimaryNavItems() {
+  return HOST_PRIMARY_NAV.map((id) => HOST_WORKSPACE_VIEWS.find((item) => item.id === id)).filter(Boolean)
+}
+
+export function hostMenuItems() {
+  return HOST_MENU_VIEWS.map((id) => HOST_WORKSPACE_VIEWS.find((item) => item.id === id)).filter(Boolean)
+}
 
 export function hostWorkspaceViewFromPath(pathname = '') {
   const value = String(pathname)
+  // The editor is a child of listings: it keeps the Annonce tab lit while it
+  // replaces the screen, the way a detail page belongs to its section.
+  if (value.endsWith('/host/listings/editor')) return 'listing-editor'
   if (value.endsWith('/host/listings')) return 'listings'
+  if (value.endsWith('/host/menu')) return 'menu'
   if (value.endsWith('/host/reservations')) return 'reservations'
   if (value.endsWith('/host/calendar')) return 'calendar'
   if (value.endsWith('/host/earnings')) return 'earnings'
   if (value.endsWith('/host/messages')) return 'messages'
   if (value.endsWith('/host/settings')) return 'settings'
   return 'dashboard'
+}
+
+/* Which bottom-nav tab is lit for a view. The editor is not a tab of its own;
+   it lights Annonce, because that is where the host came from and where Back
+   returns them. */
+export function hostNavViewFor(view) {
+  return view === 'listing-editor' ? 'listings' : view
 }
 
 export function stayNightKeys(checkIn, checkOut) {

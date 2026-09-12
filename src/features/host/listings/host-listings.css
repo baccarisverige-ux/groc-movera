@@ -1,0 +1,876 @@
+/* Host listings, editor and settings.
+
+   Airbnb's host app is the reference the work was briefed against: a very
+   large page title, generous white, one photo carrying each card, a flat
+   grey field for every editable row, and a black pill for the single action
+   that commits. Movera's own green stays for selection and status, so the
+   screens read as Movera rather than as a clone. */
+
+.host-listings,
+.host-listing-editor {
+  --hl-ink: #111312;
+  --hl-muted: #767b77;
+  --hl-line: #e7e8e6;
+  --hl-field: #f6f7f5;
+  --hl-green: #1f6a43;
+}
+
+/* ---------- Vos annonces ---------- */
+
+.host-listings__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 4px 0 2px;
+}
+.host-listings__actions button {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--hl-field);
+  color: var(--hl-ink);
+  display: grid;
+  place-items: center;
+  transition: background .15s ease, transform .12s ease;
+}
+.host-listings__actions button svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.host-listings__actions button:active { transform: scale(.94) }
+.host-listings__actions button[aria-pressed=true] { background: #e9f0eb; color: var(--hl-green) }
+
+.host-listings__title {
+  margin: 10px 0 18px;
+  font-size: 34px;
+  line-height: 1.05;
+  letter-spacing: -.045em;
+  font-weight: 760;
+  color: var(--hl-ink);
+}
+
+.host-listings__search {
+  position: relative;
+  display: block;
+  margin: 0 0 18px;
+}
+.host-listings__search input {
+  width: 100%;
+  box-sizing: border-box;
+  height: 50px;
+  padding: 0 16px 0 44px;
+  border: 1px solid var(--hl-line);
+  border-radius: 16px;
+  background: #fff;
+  font-size: 15px;
+  color: var(--hl-ink);
+  outline: 0;
+}
+.host-listings__search input:focus { border-color: var(--hl-ink); box-shadow: 0 0 0 1px var(--hl-ink) inset }
+.host-listings__search-icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  translate: 0 -50%;
+  display: grid;
+  place-items: center;
+  color: var(--hl-muted);
+  pointer-events: none;
+}
+.host-listings__search-icon svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.9 }
+
+.host-listings__grid { display: grid; gap: 26px }
+.host-listings__grid[data-compact=true] { gap: 14px }
+
+.host-listing-tile {
+  display: grid;
+  gap: 14px;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  color: var(--hl-ink);
+}
+.host-listing-tile__media {
+  position: relative;
+  display: block;
+  aspect-ratio: 1 / 1;
+  max-width: 100%;
+  border-radius: 22px;
+  overflow: hidden;
+  background: var(--hl-field);
+}
+.host-listing-tile__media img { width: 100%; height: 100%; object-fit: cover; display: block }
+.host-listing-tile__placeholder {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  font: 800 22px/1 Inter, sans-serif;
+  color: #a9b0ab;
+}
+.host-listing-tile__status {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 660;
+  letter-spacing: -.01em;
+  box-shadow: 0 2px 8px rgba(17, 20, 18, .12);
+}
+.host-listing-tile__status i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--hl-green);
+}
+.host-listing-tile__status[data-status=unlisted] i { background: #b5bbb7 }
+
+.host-listing-tile__body { display: grid; gap: 4px }
+.host-listing-tile__body strong { font-size: 18px; font-weight: 660; letter-spacing: -.025em }
+.host-listing-tile__body small { font-size: 14px; color: var(--hl-muted) }
+
+.host-listing-tile[data-compact=true] {
+  grid-template-columns: 104px 1fr;
+  align-items: center;
+  gap: 14px;
+}
+.host-listing-tile[data-compact=true] .host-listing-tile__media { aspect-ratio: 1 / 1; border-radius: 16px }
+.host-listing-tile[data-compact=true] .host-listing-tile__status {
+  top: 7px; left: 7px; height: 24px; padding: 0 8px; font-size: 10px; gap: 5px;
+}
+.host-listing-tile[data-compact=true] .host-listing-tile__status i { width: 6px; height: 6px }
+.host-listing-tile[data-compact=true] .host-listing-tile__body strong { font-size: 15px }
+.host-listing-tile[data-compact=true] .host-listing-tile__body small { font-size: 12px }
+
+/* ---------- sheets ---------- */
+
+.host-sheet { position: fixed; inset: 0; z-index: 90; display: flex; align-items: flex-end; justify-content: center }
+.host-sheet__scrim {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  background: rgba(14, 18, 15, .42);
+  backdrop-filter: blur(2px);
+}
+.host-sheet__panel {
+  position: relative;
+  width: min(100%, 430px);
+  max-height: 88svh;
+  display: flex;
+  flex-direction: column;
+  border-radius: 26px 26px 0 0;
+  background: #fff;
+  box-shadow: 0 -18px 48px rgba(16, 22, 18, .18);
+  animation: host-sheet-rise .22s ease;
+}
+.host-sheet__panel--full { max-height: 100svh; height: 100svh; border-radius: 0 }
+@keyframes host-sheet-rise { from { transform: translateY(14px); opacity: .6 } to { transform: none; opacity: 1 } }
+@media (prefers-reduced-motion: reduce) { .host-sheet__panel { animation: none } }
+
+.host-sheet__head {
+  display: grid;
+  grid-template-columns: 40px 1fr 40px;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid var(--hl-line, #e7e8e6);
+}
+.host-sheet__head strong { text-align: center; font-size: 15px; font-weight: 680; letter-spacing: -.02em }
+.host-sheet__head button,
+.host-sheet__close,
+.host-settings__top button {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: #f4f5f3;
+  color: #171917;
+  display: grid;
+  place-items: center;
+}
+.host-sheet__head button svg,
+.host-sheet__close svg,
+.host-settings__top button svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2 }
+
+.host-sheet__body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 18px 20px 20px; display: grid; gap: 16px; align-content: start }
+.host-sheet__foot {
+  flex: 0 0 auto;
+  padding: 12px 20px calc(16px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--hl-line, #e7e8e6);
+  background: #fff;
+}
+.host-sheet__foot .host-primary-action { width: 100% }
+
+.host-sheet__close { position: absolute; top: calc(14px + env(safe-area-inset-top, 0px)); left: 16px; z-index: 2 }
+.host-sheet__title {
+  margin: calc(72px + env(safe-area-inset-top, 0px)) 20px 10px;
+  font-size: 31px;
+  line-height: 1.06;
+  letter-spacing: -.04em;
+  font-weight: 760;
+}
+.host-sheet__lede { margin: 0 20px 22px; font-size: 14px; line-height: 1.5; color: var(--hl-muted, #767b77) }
+.host-sheet__rows { display: grid; gap: 4px; padding: 0 12px }
+.host-sheet__rows button {
+  display: grid;
+  grid-template-columns: 32px 1fr 18px;
+  align-items: center;
+  gap: 14px;
+  min-height: 72px;
+  padding: 12px 10px;
+  border: 0;
+  border-radius: 16px;
+  background: none;
+  text-align: left;
+  color: #111312;
+}
+.host-sheet__rows button:disabled { opacity: .42 }
+.host-sheet__rows button:not(:disabled):active { background: #f6f7f5 }
+.host-sheet__rows button svg { width: 100%; height: auto; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round }
+.host-sheet__rows button > span { display: grid; gap: 3px; min-width: 0 }
+.host-sheet__rows button strong { font-size: 16px; font-weight: 640; letter-spacing: -.02em }
+.host-sheet__rows button small { font-size: 12.5px; line-height: 1.45; color: #767b77 }
+
+/* ---------- listing editor ---------- */
+
+.host-listing-editor { display: grid; gap: 0 }
+.host-listing-editor__bar {
+  display: grid;
+  grid-template-columns: 40px 1fr 40px;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0 16px;
+}
+.host-listing-editor__bar strong { text-align: center; font-size: 17px; font-weight: 700; letter-spacing: -.025em }
+.host-listing-editor__bar button {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--hl-field);
+  color: var(--hl-ink);
+  display: grid;
+  place-items: center;
+}
+.host-listing-editor__bar button svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round }
+
+.host-listing-editor__tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--hl-field);
+}
+.host-listing-editor__tabs button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: #5f6460;
+  font-size: 14.5px;
+  font-weight: 640;
+  letter-spacing: -.02em;
+  transition: background .16s ease, color .16s ease, box-shadow .16s ease;
+}
+.host-listing-editor__tabs button[data-active=true] {
+  background: #fff;
+  color: var(--hl-ink);
+  box-shadow: 0 2px 8px rgba(17, 20, 18, .09);
+}
+
+.host-listing-editor__progress {
+  position: relative;
+  margin: 18px 0 6px;
+  display: grid;
+  gap: 8px;
+}
+.host-listing-editor__progress i {
+  display: block;
+  height: 4px;
+  border-radius: 99px;
+  background: var(--hl-green);
+  transition: width .25s ease;
+}
+.host-listing-editor__progress::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  border-radius: 99px;
+  background: #eceeeb;
+}
+.host-listing-editor__progress span { font-size: 11.5px; color: var(--hl-muted); font-weight: 560 }
+
+.host-listing-editor__cards { display: grid; gap: 12px; margin-top: 14px }
+
+.host-editor-card {
+  border: 1px solid var(--hl-line);
+  border-radius: 18px;
+  background: #fff;
+  text-align: left;
+  color: var(--hl-ink);
+}
+.host-editor-card--row {
+  display: grid;
+  grid-template-columns: 1fr 16px;
+  align-items: center;
+  gap: 12px;
+  min-height: 74px;
+  padding: 14px 16px;
+  transition: background .14s ease;
+}
+.host-editor-card--row:active { background: #fafbfa }
+.host-editor-card--row svg { width: 16px; height: 16px; fill: none; stroke: #9aa09c; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round }
+.host-editor-card__copy { display: grid; gap: 3px; min-width: 0 }
+.host-editor-card__copy small { font-size: 12px; color: var(--hl-muted); font-weight: 560 }
+.host-editor-card__copy strong {
+  font-size: 15.5px;
+  font-weight: 600;
+  letter-spacing: -.02em;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.host-editor-card__copy em { font-style: normal; font-size: 11.5px; color: #9aa09c }
+.host-editor-card--row[data-done=false] .host-editor-card__copy strong { color: #9aa09c; font-weight: 560 }
+
+.host-editor-card--photos { padding: 16px; display: grid; gap: 12px }
+.host-editor-card--photos .host-editor-card__copy strong { font-size: 16px; font-weight: 680 }
+.host-editor-photos {
+  position: relative;
+  min-height: 190px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--hl-field);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: 14px;
+}
+.host-editor-photos__stack { position: relative; display: flex; align-items: center; justify-content: center; width: 100% }
+.host-editor-photos__stack span {
+  display: block;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #e6e9e7;
+  box-shadow: 0 6px 18px rgba(18, 24, 20, .14);
+}
+.host-editor-photos__stack span img { width: 100%; height: 100%; object-fit: cover; display: block }
+.host-editor-photos__stack span[data-slot="0"] { width: 74px; height: 138px; margin-right: -18px; opacity: .85 }
+.host-editor-photos__stack span[data-slot="1"] { width: 168px; height: 158px; position: relative; z-index: 2 }
+.host-editor-photos__stack span[data-slot="2"] { width: 74px; height: 138px; margin-left: -18px; opacity: .85 }
+.host-editor-photos__count {
+  position: absolute;
+  top: 22px;
+  left: 50%;
+  translate: -50% 0;
+  z-index: 3;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  font-size: 12.5px;
+  font-weight: 640;
+  box-shadow: 0 2px 8px rgba(17, 20, 18, .14);
+}
+.host-editor-photos__empty { font-size: 14px; font-weight: 620; color: #6d736f }
+
+.host-listing-editor__preview {
+  margin-top: 18px;
+  min-height: 50px;
+  width: 100%;
+  border: 1px solid #d8dad7;
+  border-radius: 15px;
+  background: #fff;
+  color: var(--hl-ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  font-size: 14.5px;
+  font-weight: 640;
+}
+.host-listing-editor__preview svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8 }
+.host-listing-editor__notice { margin-top: 12px }
+
+/* ---------- shared edit controls ---------- */
+
+.host-edit-field { display: grid; gap: 8px }
+.host-edit-field > span { font-size: 12.5px; font-weight: 640; color: #5f6460 }
+/* Same (0,2,0) clash as the price field: scoped through .host-sheet so the
+   font size actually lands. */
+.host-sheet .host-edit-field input,
+.host-sheet .host-edit-field textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #d8dad7;
+  border-radius: 16px;
+  background: #fff;
+  color: #151715;
+  outline: 0;
+  font: inherit;
+  font-size: 15px;
+}
+.host-sheet .host-edit-field input { height: 54px; padding: 0 15px }
+.host-sheet .host-edit-field textarea { padding: 14px 15px; line-height: 1.5; resize: vertical }
+.host-sheet .host-edit-field input:focus,
+.host-sheet .host-edit-field textarea:focus { border-color: #111; box-shadow: 0 0 0 1px #111 inset }
+.host-edit-field small { font-size: 11.5px; color: #8a908c }
+
+.host-edit-note { margin: 0; font-size: 12.5px; line-height: 1.55; color: #767b77 }
+.host-edit-static {
+  display: grid;
+  gap: 3px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--hl-field, #f6f7f5);
+}
+.host-edit-static strong { font-size: 15.5px; font-weight: 660 }
+.host-edit-static small { font-size: 12px; color: #8a908c }
+
+.host-edit-times { display: grid; grid-template-columns: 1fr 1fr; gap: 12px }
+
+.host-edit-steppers, .host-edit-toggles { display: grid; gap: 4px }
+.host-edit-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 64px;
+  padding: 8px 2px;
+  border-bottom: 1px solid #eff0ee;
+}
+.host-edit-stepper:last-child { border-bottom: 0 }
+.host-edit-stepper > span { font-size: 15px; font-weight: 600; letter-spacing: -.015em; display: grid; gap: 2px }
+.host-edit-stepper > span small { font-size: 11.5px; font-weight: 500; color: #8a908c; letter-spacing: 0 }
+.host-edit-stepper > div { display: flex; align-items: center; gap: 14px }
+.host-edit-stepper button {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #d5d8d6;
+  border-radius: 50%;
+  background: #fff;
+  color: #222;
+  font-size: 19px;
+  line-height: 1;
+}
+.host-edit-stepper button:disabled { opacity: .3 }
+.host-edit-stepper b { min-width: 34px; text-align: center; font-size: 16px; font-weight: 680 }
+.host-edit-stepper b em { font-style: normal; font-size: 11px; font-weight: 560; color: #8a908c }
+.host-edit-stepper--card {
+  min-height: 72px;
+  padding: 12px 16px;
+  border: 1px solid var(--hl-line, #e7e8e6);
+  border-radius: 16px;
+  margin-bottom: 10px;
+}
+
+.host-edit-toggle {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 64px;
+  padding: 10px 2px;
+  border-bottom: 1px solid #eff0ee;
+  cursor: pointer;
+}
+.host-edit-toggle:last-child { border-bottom: 0 }
+.host-edit-toggle--card {
+  min-height: 76px;
+  padding: 14px 16px;
+  border: 1px solid var(--hl-line, #e7e8e6);
+  border-radius: 16px;
+  margin-bottom: 10px;
+}
+.host-edit-toggle > span { display: grid; gap: 3px; min-width: 0 }
+.host-edit-toggle strong { font-size: 15px; font-weight: 620; letter-spacing: -.015em }
+.host-edit-toggle small { font-size: 12px; line-height: 1.45; color: #8a908c }
+.host-edit-toggle input { position: absolute; opacity: 0; pointer-events: none }
+.host-edit-toggle i {
+  flex: 0 0 auto;
+  position: relative;
+  width: 52px;
+  height: 31px;
+  border-radius: 999px;
+  background: #dcdedb;
+  transition: background .18s ease;
+}
+.host-edit-toggle i::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(16, 20, 17, .3);
+  transition: translate .18s ease;
+}
+.host-edit-toggle input:checked ~ i { background: #171917 }
+.host-edit-toggle input:checked ~ i::after { translate: 21px 0 }
+.host-edit-toggle input:focus-visible ~ i { box-shadow: 0 0 0 3px rgba(31, 106, 67, .28) }
+
+.host-edit-groups { display: grid; gap: 22px }
+.host-edit-groups h3 { margin: 0 0 10px; font-size: 13px; font-weight: 680; color: var(--hl-green, #1f6a43) }
+.host-edit-checklist { display: grid; gap: 8px }
+.host-edit-checklist button,
+.host-settings-list button,
+.host-settings-status button,
+.host-edit-choices button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 54px;
+  padding: 12px 15px;
+  border: 1px solid #e1e2e0;
+  border-radius: 14px;
+  background: #fff;
+  text-align: left;
+  color: #202220;
+  font-size: 14.5px;
+  transition: border-color .14s ease, background .14s ease;
+}
+.host-edit-checklist button[data-active=true],
+.host-settings-list button[data-active=true],
+.host-settings-status button[data-active=true],
+.host-edit-choices button[data-active=true] {
+  border-color: var(--hl-green, #1f6a43);
+  background: #fbfdfb;
+  box-shadow: 0 0 0 1px var(--hl-green, #1f6a43);
+}
+.host-edit-checklist button i,
+.host-settings-list button i,
+.host-settings-status button i,
+.host-edit-choices button i {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--hl-green, #1f6a43);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-style: normal;
+}
+.host-edit-checklist button i svg,
+.host-settings-list button i svg,
+.host-settings-status button i svg,
+.host-edit-choices button i svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2.6 }
+
+.host-edit-choices, .host-settings-status { display: grid; gap: 10px }
+.host-edit-choices button > span,
+.host-settings-status button > span { display: grid; gap: 3px; min-width: 0 }
+.host-edit-choices strong,
+.host-settings-status strong { font-size: 15px; font-weight: 640 }
+.host-edit-choices small,
+.host-settings-status small { font-size: 12px; line-height: 1.45; color: #8a908c }
+
+.host-edit-highlights { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px }
+.host-edit-highlights button {
+  position: relative;
+  min-height: 76px;
+  padding: 11px 12px;
+  border: 1px solid #e1e2e0;
+  border-radius: 15px;
+  background: #fff;
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  color: #202220;
+}
+.host-edit-highlights button[data-active=true] { border-color: var(--hl-green, #1f6a43); background: #fbfdfb; box-shadow: 0 0 0 1px var(--hl-green, #1f6a43) }
+.host-edit-highlights__icon { display: grid; place-items: center }
+.host-edit-highlights__copy { display: grid; gap: 2px; min-width: 0 }
+.host-edit-highlights__copy strong { font-size: 12.5px; font-weight: 620; line-height: 1.25 }
+.host-edit-highlights__copy small { font-size: 10.5px; line-height: 1.35; color: #8a908c }
+.host-edit-highlights button i { position: absolute; top: 8px; right: 8px; width: 18px; height: 18px }
+.host-edit-highlights button i svg { width: 10px; height: 10px }
+
+.host-edit-gallery { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px }
+.host-edit-gallery figure { position: relative; margin: 0; aspect-ratio: 1; border-radius: 12px; overflow: hidden; background: #eef1ef }
+.host-edit-gallery img { width: 100%; height: 100%; object-fit: cover; display: block }
+.host-edit-gallery figcaption {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .94);
+  font-size: 9.5px;
+  font-weight: 700;
+}
+
+/* ---------- settings overlay ---------- */
+
+.host-settings__top { display: flex; align-items: center; justify-content: space-between; padding: calc(14px + env(safe-area-inset-top, 0px)) 18px 0 }
+.host-settings__currency {
+  min-height: 40px;
+  padding: 0 18px;
+  border: 1px solid #d8dad7;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 620;
+}
+.host-settings__title { margin: 14px 18px 18px; font-size: 33px; line-height: 1.04; letter-spacing: -.045em; font-weight: 760 }
+.host-settings__tabs {
+  display: flex;
+  gap: 8px;
+  padding: 0 18px 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.host-settings__tabs::-webkit-scrollbar { display: none }
+.host-settings__tabs button {
+  flex: 0 0 auto;
+  min-height: 42px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--hl-field, #f6f7f5);
+  color: #4d524e;
+  font-size: 14px;
+  font-weight: 620;
+  letter-spacing: -.015em;
+}
+.host-settings__tabs button[data-active=true] { background: #171917; color: #fff }
+.host-settings__body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 18px }
+
+.host-price-card {
+  border: 1px solid var(--hl-line, #e7e8e6);
+  border-radius: 18px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+.host-price-field { display: grid; gap: 4px; padding: 16px 18px; border-bottom: 1px solid var(--hl-line, #e7e8e6) }
+.host-price-field:last-child { border-bottom: 0 }
+.host-price-field > span { font-size: 14px; color: #5f6460; font-weight: 560 }
+.host-price-field > div { display: flex; align-items: baseline; gap: 8px }
+/* Scoped through .host-sheet on purpose. host-workspace.css declares
+   `.host-workspace input{font:inherit}` at (0,2,0), which expands to a
+   font-size that outranks a plain `.host-price-field input` at (0,1,1) -- the
+   large price would silently render at body size. Adding the panel class
+   makes this (0,2,1) and wins on merit rather than with !important, and the
+   min-height keeps the tap target correct whatever the font resolves to. */
+.host-sheet .host-price-field input {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  border: 0;
+  background: none;
+  outline: 0;
+  font: inherit;
+  font-size: 34px;
+  font-weight: 760;
+  letter-spacing: -.04em;
+  line-height: 1.15;
+  color: #111312;
+}
+.host-price-field b { font-size: 26px; font-weight: 720; color: #111312 }
+
+.host-settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 76px;
+  padding: 14px 16px;
+  border: 1px solid var(--hl-line, #e7e8e6);
+  border-radius: 16px;
+  background: #fff;
+  text-align: left;
+  color: #111312;
+}
+.host-settings-row > span { display: grid; gap: 3px }
+.host-settings-row strong { font-size: 15px; font-weight: 640 }
+.host-settings-row small { font-size: 12px; color: #8a908c }
+.host-settings-row svg { width: 16px; height: 16px; fill: none; stroke: #9aa09c; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round }
+
+.host-settings-list { display: grid; gap: 10px }
+.host-settings-list button { min-height: 74px }
+.host-settings-list button > b {
+  flex: 0 0 auto;
+  min-width: 50px;
+  font-size: 19px;
+  font-weight: 740;
+  letter-spacing: -.03em;
+  color: var(--hl-green, #1f6a43);
+}
+.host-settings-list button > span { display: grid; gap: 3px; min-width: 0; flex: 1 1 auto }
+.host-settings-list strong { font-size: 14.5px; font-weight: 640 }
+.host-settings-list small { font-size: 11.5px; line-height: 1.4; color: #8a908c }
+
+@media (max-width: 350px) {
+  .host-listings__title { font-size: 29px }
+  .host-settings__title { font-size: 28px }
+  .host-edit-highlights { grid-template-columns: 1fr }
+  .host-edit-times { grid-template-columns: 1fr }
+  .host-price-field input { font-size: 28px }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .host-listings *, .host-listing-editor *, .host-sheet * { transition: none !important }
+}
+
+/* The shared amenity and highlight pickers inside an edit sheet.
+
+   Same markup as the procedure -- one component renders both -- so these
+   rules only re-space it for a sheet that is narrower than a full screen. */
+.host-sheet .host-onboarding__amenity-groups { display: grid; gap: 24px }
+.host-sheet .host-onboarding__amenity-section h2 {
+  margin: 0 0 10px;
+  color: var(--hl-green, #1f6a43);
+  font-size: 13px;
+  font-weight: 680;
+  letter-spacing: -.01em;
+}
+.host-sheet .host-onboarding__amenity-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px }
+.host-sheet .host-onboarding__amenity-grid button {
+  position: relative;
+  min-height: 70px;
+  padding: 10px 11px;
+  border: 1px solid #e1e2e0;
+  border-radius: 14px;
+  background: #fff;
+  color: #202220;
+  display: grid;
+  grid-template-columns: 29px 1fr;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+}
+.host-sheet .host-onboarding__amenity-grid button[data-active=true] {
+  border-color: var(--hl-green, #1f6a43);
+  background: #fbfdfb;
+  box-shadow: 0 0 0 1px var(--hl-green, #1f6a43);
+}
+.host-sheet .host-onboarding__amenity-copy { display: grid; gap: 2px; min-width: 0 }
+.host-sheet .host-onboarding__amenity-copy strong { font-size: 11.5px; font-weight: 620; line-height: 1.25 }
+.host-sheet .host-onboarding__amenity-copy small { font-size: 9.5px; line-height: 1.35; color: #8a908c }
+.host-sheet .host-onboarding__choice-check {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: var(--hl-green, #1f6a43);
+  color: #fff;
+  display: grid;
+  place-items: center;
+}
+.host-sheet .host-onboarding__choice-check svg { width: 10px; height: 10px; fill: none; stroke: currentColor; stroke-width: 2.6 }
+
+.host-sheet .host-offer-grouped-highlights { display: grid; gap: 20px }
+.host-sheet .host-offer-grouped-highlights__summary {
+  display: grid;
+  gap: 4px;
+  padding: 13px 14px;
+  border-radius: 16px;
+  background: var(--hl-field, #f6f7f5);
+}
+.host-sheet .host-offer-grouped-highlights__summary strong { font-size: 13px; font-weight: 660 }
+.host-sheet .host-offer-grouped-highlights__summary span { font-size: 11px; line-height: 1.45; color: #767b77 }
+.host-sheet .host-offer-grouped-highlights__summary b {
+  justify-self: start;
+  margin-top: 4px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #e9f0eb;
+  color: var(--hl-green, #1f6a43);
+  font-size: 10px;
+  font-weight: 700;
+}
+.host-sheet .host-offer-grouped-highlights__group-head h2 {
+  margin: 0 0 3px;
+  font-size: 15px;
+  font-weight: 680;
+  letter-spacing: -.025em;
+  color: #111312;
+}
+.host-sheet .host-offer-grouped-highlights__group-head p { margin: 0 0 10px; font-size: 11.5px; line-height: 1.45; color: #8a908c }
+.host-sheet .host-offer-grouped-highlights__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px }
+.host-sheet .host-offer-grouped-highlight {
+  position: relative;
+  min-height: 76px;
+  padding: 11px 12px;
+  border: 1px solid #e1e2e0;
+  border-radius: 15px;
+  background: #fff;
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  color: #202220;
+}
+.host-sheet .host-offer-grouped-highlight[data-active=true] {
+  border-color: var(--hl-green, #1f6a43);
+  background: #fbfdfb;
+  box-shadow: 0 0 0 1px var(--hl-green, #1f6a43);
+}
+.host-sheet .host-offer-grouped-highlight__icon { display: grid; place-items: center }
+.host-sheet .host-offer-grouped-highlight__copy { display: grid; gap: 2px; min-width: 0 }
+.host-sheet .host-offer-grouped-highlight__copy strong { font-size: 12px; font-weight: 620; line-height: 1.25 }
+.host-sheet .host-offer-grouped-highlight__copy small { font-size: 10px; line-height: 1.35; color: #8a908c }
+.host-sheet .host-offer-grouped-highlight__check {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: #e7e9e7;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 9px;
+  font-weight: 800;
+}
+.host-sheet .host-offer-grouped-highlight[data-active=true] .host-offer-grouped-highlight__check { background: var(--hl-green, #1f6a43) }
+
+.host-edit-lede { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--hl-muted, #767b77) }
+.host-edit-badge {
+  margin-left: 8px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #e9f0eb;
+  color: var(--hl-green, #1f6a43);
+  font-size: 9.5px;
+  font-style: normal;
+  font-weight: 720;
+  letter-spacing: .01em;
+}
+
+@media (max-width: 350px) {
+  .host-sheet .host-onboarding__amenity-grid,
+  .host-sheet .host-offer-grouped-highlights__grid { grid-template-columns: 1fr }
+}
